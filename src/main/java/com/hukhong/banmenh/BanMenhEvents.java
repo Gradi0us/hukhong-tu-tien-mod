@@ -160,4 +160,17 @@ public final class BanMenhEvents {
         if (s.is(ModItems.BAN_MENH_KIEM.get()) && !BanMenhKiemItem.isOwner(s, e.getPlayer()))
             e.setCanPickup(TriState.FALSE);
     }
+
+    /** Tôi Kiếm trên đe: Shift + chuột phải đe khi cầm Bản Mệnh Kiếm (Hồn Tinh lấy trong túi). */
+    @SubscribeEvent
+    public static void onAnvil(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock e) {
+        if (e.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;
+        Player pl = e.getEntity();
+        ItemStack s = pl.getMainHandItem();
+        if (!pl.isShiftKeyDown() || !s.is(ModItems.BAN_MENH_KIEM.get())) return;
+        if (!pl.level().getBlockState(e.getPos()).is(net.minecraft.tags.BlockTags.ANVIL)) return;
+        e.setCanceled(true);
+        e.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+        if (pl instanceof ServerPlayer sp && !pl.level().isClientSide) BanMenhService.tryEvolve(sp, s, false);
+    }
 }

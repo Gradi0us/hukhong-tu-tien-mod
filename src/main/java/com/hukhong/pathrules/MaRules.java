@@ -100,12 +100,22 @@ public final class MaRules {
 
     public static void addAcTinh(ServerPlayer p, double delta) {
         MaData m = data(p);
-        m.acTinh = Math.max(0, Math.min(100, m.acTinh + delta));
+        m.acTinh = Math.max(0, Math.min(100, m.acTinh + com.hukhong.honcot.HonCotMath.acTinhDelta(delta,
+                com.hukhong.honcot.HonCotService.has(p, com.hukhong.honcot.Bone.TINH_TAM))));
     }
 
     public static void activateThan(ServerPlayer p) {
         data(p).thanTicks = THAN_TICKS;
         addAcTinh(p, 15);
+    }
+
+    /** Đổi lộ (UI Ma Lộ + lệnh). absorb=false (Tu Luyện thường) xóa Huyết Tế. Chỉ Ma tu; trả true nếu đổi được. */
+    public static boolean setLo(ServerPlayer p, boolean absorb) {
+        if (!isMa(p)) return false;
+        MaData m = data(p);
+        m.absorb = absorb;
+        if (!absorb) m.huyetTe = 0;
+        return true;
     }
 
     public static void setAcTinh(ServerPlayer p, double v) { data(p).acTinh = Math.max(0, Math.min(100, v)); }
@@ -338,9 +348,10 @@ public final class MaRules {
 
     private static void sync(ServerPlayer p, MaData m) {
         boolean lost = m.lostTicks > 0;
-        if (m.sentAc == (float) m.acTinh && m.sentCd == m.countdown && m.sentLost == lost && m.sentHt == (int) m.huyetTe) return;
-        m.sentAc = (float) m.acTinh; m.sentCd = m.countdown; m.sentLost = lost; m.sentHt = (int) m.huyetTe;
-        PacketDistributor.sendToPlayer(p, new MaSyncPayload((float) m.acTinh, m.countdown, lost, (int) m.huyetTe));
+        int ab = m.absorb ? 1 : 0;
+        if (m.sentAc == (float) m.acTinh && m.sentCd == m.countdown && m.sentLost == lost && m.sentHt == (int) m.huyetTe && m.sentAb == ab) return;
+        m.sentAc = (float) m.acTinh; m.sentCd = m.countdown; m.sentLost = lost; m.sentHt = (int) m.huyetTe; m.sentAb = ab;
+        PacketDistributor.sendToPlayer(p, new MaSyncPayload((float) m.acTinh, m.countdown, lost, (int) m.huyetTe, m.absorb));
     }
 
     // ------------------------------------------------------------------ Tẩu Hỏa Nhập Ma (R23)
@@ -369,6 +380,6 @@ public final class MaRules {
         CharCreateService.reroll(p);   // xóa đạo/tư chất, roll mới, tuổi khởi đầu, mở màn tạo nhân vật
         StatService.refresh(p);
         SkillService.sync(p);
-        PacketDistributor.sendToPlayer(p, new MaSyncPayload(0f, -1, false, 0));
+        PacketDistributor.sendToPlayer(p, new MaSyncPayload(0f, -1, false, 0, true));
     }
 }

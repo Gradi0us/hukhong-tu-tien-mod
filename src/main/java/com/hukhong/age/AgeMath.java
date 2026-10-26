@@ -43,4 +43,13 @@ public final class AgeMath {
     public static final double[] HP_MULT = {0, 0, 0, -0.10, -0.20, -0.40};
     public static final double[] DMG_MULT = {0, 0, 0, -0.15, -0.25, -0.35};
     public static double regenMult(int stage) { return stage <= 0 ? 1.0 : 0.9; }
+
+    /** GĐ II+: -10% tài nguyên tối đa (S6 §1.5). */
+    public static double maxResourceMult(int stage) { return stage >= 2 ? -0.10 : 0; }
+
+    /** GĐ V: cấm bay. */
+    public static boolean flightBanned(int stage) { return stage >= MAX_STAGE; }
+
+    /** GĐ V: thiền hiệu quả x0,5. */
+    public static double meditationMult(int stage) { return stage >= MAX_STAGE ? 0.5 : 1.0; }
 }

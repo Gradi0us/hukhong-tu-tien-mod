@@ -41,4 +41,15 @@ class AgeMathTest {
         assertTrue(AgeMath.stage(age, AgeMath.lifespan(0, 0)) > 0);
         assertEquals(0, AgeMath.stage(age, AgeMath.lifespan(1, 0)));
     }
+
+    @Test
+    void nguSuyResourceFlightMeditation() {
+        assertEquals(0, AgeMath.maxResourceMult(1));
+        assertEquals(-0.10, AgeMath.maxResourceMult(2));
+        assertEquals(-0.10, AgeMath.maxResourceMult(5));
+        assertFalse(AgeMath.flightBanned(4));
+        assertTrue(AgeMath.flightBanned(5));
+        assertEquals(1.0, AgeMath.meditationMult(4));
+        assertEquals(0.5, AgeMath.meditationMult(5));
+    }
 }

@@ -79,6 +79,15 @@ public final class HonCotService {
         return st == null ? 0 : HonCotMath.tierMult(HonCotItem.tierOf(st)) * HonCotMath.rollMult(HonCotItem.rollOf(st));
     }
 
+    /** Đang mang và đủ cấp dùng Hồn Cốt b. */
+    public static boolean has(ServerPlayer p, Bone b) {
+        int lv = CultivationService.get(p).level();
+        for (ItemStack st : get(p).items()) {
+            if (BoneSlots.boneOf(st) == b && HonCotMath.canEquip(lv, HonCotItem.tierOf(st))) return true;
+        }
+        return false;
+    }
+
     public static int equippedCount(ServerPlayer p) { return get(p).count(); }
 
     // ------------------------------------------------------------------ chỉ số

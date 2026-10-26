@@ -35,6 +35,7 @@ public final class FlightService {
     private static final int SLOW_FALL_TICKS = 60;
     private static final int FALL_GRACE_TICKS = 100;
     private static final int JUMP_COOLDOWN = 6;
+    private static final int COMBAT_TICKS = 100;
 
     private static final class State {
         FlightMode mode; int pairs; double acc; int jumps; long lastJump;
@@ -63,7 +64,8 @@ public final class FlightService {
         if (p.isCreative() || p.isSpectator()) return;
         FlightMode m = modeFor(p);
         if (m == null) { msg(p, "hukhong.flight.locked"); return; }
-        if (FlightBans.isFlightBanned(p)) { msg(p, "hukhong.flight.banned"); return; }
+        String ban = FlightBans.banKey(p, m);
+        if (ban != null) { msgFb(p, ban); return; }
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         if (d.resource() < m.startMin) { msg(p, "hukhong.flight.empty"); return; }
         State s = new State();
@@ -91,7 +93,7 @@ public final class FlightService {
         int level = p.getData(ModAttachments.CULTIVATION).level();
         int max = level >= 95 ? 5 : level >= 80 ? 4 : 3;
         if (s.jumps >= max) return;
-        if (!Resources.tryConsume(p, 3)) { stop(p, "hukhong.flight.empty", true); return; }
+        if (!Resources.tryConsume(p, 3, moveFactor(p))) { stop(p, "hukhong.flight.empty", true); return; }
         s.jumps++; s.lastJump = now;
         Vec3 v = p.getDeltaMovement();
         p.setDeltaMovement(v.x, 0.55, v.z);
@@ -126,7 +128,21 @@ public final class FlightService {
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(p, new FlightSyncPayload(p.getId(), s.mode.ordinal(), s.pairs));
     }
 
-    private static void msg(ServerPlayer p, String key) { p.displayClientMessage(Component.translatable(key), true); }
+    /** Phong Hành Cốt: bay/lướt -15% tiêu hao. */
+    private static double moveFactor(ServerPlayer p) {
+        return com.hukhong.honcot.HonCotService.has(p, com.hukhong.honcot.Bone.PHONG_HANH) ? com.hukhong.honcot.HonCotMath.PHONG_HANH_COST_FACTOR : 1.0;
+    }
+
+    private static void msgFb(ServerPlayer p, String key) {
+        String vi = switch (key) {
+            case "hukhong.flight.banned_age" -> "Thiên Nhân Ngũ Suy giai đoạn V: không thể bay.";
+            case "hukhong.flight.banned_hu_hoa" -> "Đang nhiễm Hư Hóa: không thể ngự kiếm.";
+            default -> null;
+        };
+        p.displayClientMessage(vi == null ? Component.translatable(key) : Component.translatableWithFallback(key, vi), true);
+    }
+
+    private static void msg(ServerPlayer p, String key) { msgFb(p, key); }
 
     @SubscribeEvent
     public static void onTick(PlayerTickEvent.Post e) {
@@ -136,7 +152,10 @@ public final class FlightService {
         if (p.isCreative() || p.isSpectator() || !p.isAlive()) { stop(p, null, false); return; }
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         if (d.level() < s.mode.minLevel) { stop(p, "hukhong.flight.locked", true); return; }
-        if (p.tickCount % 20 == 0 && FlightBans.isFlightBanned(p)) { stop(p, "hukhong.flight.banned", true); return; }
+        if (p.tickCount % 20 == 0) {
+            String ban = FlightBans.banKey(p, s.mode);
+            if (ban != null) { stop(p, ban, true); return; }
+        }
 
         if (s.mode == FlightMode.THE) {
             if (p.onGround()) s.jumps = 0;
@@ -151,6 +170,9 @@ public final class FlightService {
 
         Vec3 v = p.getDeltaMovement();
         double rate = v.horizontalDistanceSqr() < 0.0004 ? s.mode.hoverCost : p.isSprinting() ? s.mode.fastCost : s.mode.cost;
+        boolean combat = p.level().getGameTime() - p.getData(com.hukhong.skill.SkillAttachments.STATE).lastCombat <= COMBAT_TICKS;
+        if (s.mode == FlightMode.KIEM && com.hukhong.banmenh.BanMenhService.freeFlight(p, combat)) rate = 0; // Ngọc Tâm Lv80
+        rate *= moveFactor(p);
         s.acc += rate / 20.0;
         int whole = (int) s.acc;
         if (whole > 0) {

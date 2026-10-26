@@ -14,6 +14,7 @@ public final class SkillNet {
         r.playToClient(SkillSyncPayload.TYPE, SkillSyncPayload.STREAM_CODEC,
                 (pl, ctx) -> ctx.enqueueWork(() -> ClientSkillState.update(pl)));
         r.playToClient(MaSyncPayload.TYPE, MaSyncPayload.STREAM_CODEC, MaSyncPayload::handle);
+        r.playToServer(SetMaLoPayload.TYPE, SetMaLoPayload.STREAM_CODEC, SetMaLoPayload::handle);
         r.playToServer(CastSkillPayload.TYPE, CastSkillPayload.STREAM_CODEC, (pl, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> SkillService.cast(sp, pl.slot()));
         });

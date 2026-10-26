@@ -150,7 +150,7 @@ public final class HuKhongCommand {
     /** Đổi lộ Ma (tạm: lệnh; Ma Môn sẽ gọi cùng hàm). Sang Tu Luyện thường xóa Huyết Tế. */
     private static int setLo(CommandSourceStack src, boolean absorb) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
-        var m = com.hukhong.pathrules.MaRules.data(p);
+        var m = com.hukhong.pathrules.MaRules.data(p); // lệnh giữ nguyên hành vi cũ (không đòi đạo Ma, để test)
         m.absorb = absorb;
         if (!absorb) m.huyetTe = 0;
         msg(src, "ma lo=" + (absorb ? "hapthu" : "thuong"));

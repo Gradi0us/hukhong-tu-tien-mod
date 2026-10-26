@@ -21,7 +21,7 @@ public final class MaData {
     public int thanTicks;          // Ma Thần Giáng Thế còn lại
     public int hitSecond;          // số ÔUL nhận từ đòn trong giây hiện tại
     public int lastTier;           // tầng cảnh báo đã thông báo
-    public float sentAc = -1; public int sentCd = -2; public boolean sentLost; public int sentHt = -1;
+    public float sentAc = -1; public int sentCd = -2; public boolean sentLost; public int sentHt = -1; public int sentAb = -1;
 
     public static final Codec<MaData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.DOUBLE.optionalFieldOf("ac_tinh", 0.0).forGetter(m -> m.acTinh),
@@ -40,6 +40,6 @@ public final class MaData {
     /** Xóa sạch (Tẩu Hỏa Nhập Ma / bỏ đạo Ma), giữ lộ mặc định Hấp Thu. */
     public void reset() {
         acTinh = 0; huyetTe = 0; absorb = true; acDanh = 0; day = -1; dayGain = 0; countdown = -1;
-        lostTicks = 0; thanTicks = 0; hitSecond = 0; lastTier = 0; sentAc = -1; sentCd = -2; sentLost = false; sentHt = -1;
+        lostTicks = 0; thanTicks = 0; hitSecond = 0; lastTier = 0; sentAc = -1; sentCd = -2; sentLost = false; sentHt = -1; sentAb = -1;
     }
 }

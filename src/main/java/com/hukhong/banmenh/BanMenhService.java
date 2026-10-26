@@ -23,17 +23,13 @@ public final class BanMenhService {
 
     public static final long SUMMON_COOLDOWN_TICKS = 1200; // 60s
     /** Cấp tối thiểu cho từng giai đoạn: Phàm, Linh, Huyền, Địa, Thiên, Tiên, Thần. */
-    public static final int[] STAGE_LEVELS = {1, 20, 40, 60, 80, 90, 100};
+    public static final int[] STAGE_LEVELS = BanMenhMath.STAGE_LEVELS;
     /** Hệ số Công theo phẩm (S2 §2.1). */
     public static final float[] QUALITY = {1.0f, 1.15f, 1.35f, 1.6f, 1.9f, 2.3f, 3.0f};
 
     private static final Map<UUID, Long> SUMMON_CD = new HashMap<>();
 
-    public static int stageForLevel(int level) {
-        int s = 0;
-        for (int i = 0; i < STAGE_LEVELS.length; i++) if (level >= STAGE_LEVELS[i]) s = i;
-        return s;
-    }
+    public static int stageForLevel(int level) { return BanMenhMath.stageForLevel(level); }
 
     /** CHỮ KÝ CỐ ĐỊNH. Roll (seed lưu trước, không reroll) + trao kiếm nếu chưa có trong túi. */
     public static void grant(ServerPlayer p) {
@@ -44,7 +40,7 @@ public final class BanMenhService {
         }
         if (!d.hasType()) {
             BanMenhType t = roll(d.seed(), p);
-            d = d.withType(t.id(), p.getUUID()).withStage(stageNow(p));
+            d = d.withType(t.id(), p.getUUID()).withStage(0);
             p.setData(BanMenhAttachments.BAN_MENH.get(), d);
         } else if (!p.getUUID().equals(d.owner())) {
             d = d.withType(d.type(), p.getUUID());
@@ -66,9 +62,7 @@ public final class BanMenhService {
         return all[0];
     }
 
-    static int stageNow(ServerPlayer p) {
-        return stageForLevel(p.getData(ModAttachments.CULTIVATION).level());
-    }
+    static int cultivationLevel(ServerPlayer p) { return p.getData(ModAttachments.CULTIVATION).level(); }
 
     public static ItemStack create(BanMenhData d) {
         BanMenhType t = BanMenhType.byId(d.type());
@@ -93,7 +87,7 @@ public final class BanMenhService {
     }
 
     private static void give(ServerPlayer p, BanMenhData d) {
-        ItemStack s = create(d.withStage(stageNow(p)));
+        ItemStack s = create(d.withStage(BanMenhMath.effectiveStage(d.stage(), cultivationLevel(p))));
         if (!p.getInventory().add(s)) p.drop(s, false);
     }
 
@@ -124,5 +118,107 @@ public final class BanMenhService {
         give(p, d);
         p.sendSystemMessage(Component.translatable("hukhong.banmenh.msg.summoned"));
         return true;
+    }
+
+    // ------------------------------------------------------------------ tiến hóa bằng Hồn Tinh
+
+    public static int countTinh(ServerPlayer p, boolean offhandOnly) {
+        int n = 0;
+        var inv = p.getInventory();
+        for (ItemStack s : inv.offhand) if (s.is(ModItems.HON_TINH.get())) n += s.getCount();
+        if (!offhandOnly) for (ItemStack s : inv.items) if (s.is(ModItems.HON_TINH.get())) n += s.getCount();
+        return n;
+    }
+
+    private static void takeTinh(ServerPlayer p, int n, boolean offhandOnly) {
+        var inv = p.getInventory();
+        for (ItemStack s : inv.offhand) {
+            if (n <= 0) return;
+            if (!s.is(ModItems.HON_TINH.get())) continue;
+            int t = Math.min(n, s.getCount());
+            s.shrink(t); n -= t;
+        }
+        if (offhandOnly) return;
+        for (ItemStack s : inv.items) {
+            if (n <= 0) return;
+            if (!s.is(ModItems.HON_TINH.get())) continue;
+            int t = Math.min(n, s.getCount());
+            s.shrink(t); n -= t;
+        }
+    }
+
+    /**
+     * Tôi Kiếm: tiến hóa 1 giai đoạn, tốn Hồn Tinh, trần theo cảnh giới. offhandOnly = dùng kiếm với Hồn Tinh ở tay phụ;
+     * false = đập kiếm trên đe (lấy Hồn Tinh trong cả túi). Trả true nếu tiến hóa.
+     */
+    public static boolean tryEvolve(ServerPlayer p, ItemStack sword, boolean offhandOnly) {
+        if (!sword.is(ModItems.BAN_MENH_KIEM.get()) || !BanMenhKiemItem.isOwner(sword, p)) return false;
+        BanMenhData d = p.getData(BanMenhAttachments.BAN_MENH.get());
+        int cur = BanMenhKiemItem.stageOf(sword);
+        int have = countTinh(p, offhandOnly);
+        int code = BanMenhMath.check(cur, cultivationLevel(p), have);
+        switch (code) {
+            case BanMenhMath.MAXED -> { msg(p, "hukhong.banmenh.evolve.max", "Kiếm đã đạt Thần phẩm."); return false; }
+            case BanMenhMath.REALM_CAP -> { msg(p, "hukhong.banmenh.evolve.realm", "Cảnh giới chưa đủ để tiến hóa tiếp (trần theo cấp)."); return false; }
+            case BanMenhMath.NEED_TINH -> {
+                p.displayClientMessage(Component.translatableWithFallback("hukhong.banmenh.evolve.need",
+                        "Cần %s Hồn Tinh (hiện có %s).", BanMenhMath.tinhCost(cur + 1), have), true);
+                return false;
+            }
+            default -> { }
+        }
+        takeTinh(p, BanMenhMath.tinhCost(cur + 1), offhandOnly);
+        int ns = cur + 1;
+        sword.set(ModItems.BAN_MENH_STAGE.get(), ns);
+        p.setData(BanMenhAttachments.BAN_MENH.get(), d.withStage(ns));
+        com.hukhong.stats.StatService.refresh(p);
+        if (p.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT, p.getX(), p.getY() + 1.2, p.getZ(), 30, 0.5, 0.6, 0.5, 0.5);
+            sl.playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.ANVIL_USE, net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 1.4f);
+        }
+        p.sendSystemMessage(Component.translatableWithFallback("hukhong.banmenh.evolve.done", "Bản Mệnh Kiếm tiến hóa: %s",
+                Component.translatable("hukhong.banmenh.stage." + ns)));
+        return true;
+    }
+
+    private static void msg(ServerPlayer p, String key, String vi) {
+        p.displayClientMessage(Component.translatableWithFallback(key, vi), true);
+    }
+
+    // ------------------------------------------------------------------ hiệu ứng loại (Ngọc Tâm / Trọng Nhạc)
+
+    private static final net.minecraft.resources.ResourceLocation PASSIVE_ID =
+            com.hukhong.stats.ModAttributes.id("banmenh/passive");
+
+    private static BanMenhType typeOf(ServerPlayer p) {
+        return BanMenhType.byId(p.getData(BanMenhAttachments.BAN_MENH.get()).type());
+    }
+
+    private static int stageOf(ServerPlayer p) {
+        return BanMenhMath.effectiveStage(p.getData(BanMenhAttachments.BAN_MENH.get()).stage(), cultivationLevel(p));
+    }
+
+    /** Hệ số chi phí kỹ năng (Ngọc Tâm Lv40: 0.9). */
+    public static double skillCostFactor(ServerPlayer p) { return BanMenhMath.skillCostFactor(typeOf(p), stageOf(p)); }
+
+    /** Ngự kiếm miễn phí (Ngọc Tâm Lv80, trong combat). */
+    public static boolean freeFlight(ServerPlayer p, boolean inCombat) {
+        return BanMenhMath.freeFlight(typeOf(p), stageOf(p), inCombat);
+    }
+
+    /** Gỡ + áp lại modifier transient: Ngọc Tâm (hồi/tối đa tài nguyên), Trọng Nhạc (tốc -6%). Gọi từ StatService.refresh. */
+    public static void applyPassives(ServerPlayer p) {
+        BanMenhType t = typeOf(p);
+        passive(p, com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.RESOURCE_REGEN), BanMenhMath.regenBonus(t));
+        passive(p, com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.MAX_RESOURCE), BanMenhMath.maxResourceBonus(t));
+        passive(p, net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, BanMenhMath.speedBonus(t));
+    }
+
+    private static void passive(ServerPlayer p, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attr, double v) {
+        var inst = p.getAttribute(attr);
+        if (inst == null) return;
+        if (v == 0) { inst.removeModifier(PASSIVE_ID); return; }
+        inst.addOrUpdateTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                PASSIVE_ID, v, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
     }
 }

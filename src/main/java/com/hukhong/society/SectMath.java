@@ -61,6 +61,11 @@ public final class SectMath {
     /** Phí Bế Quan mỗi giờ thực (trừ vào Cống Hiến khả dụng). */
     public static int altarFeePerHour(Tier t) { return new int[]{30, 60, 120}[t.ordinal()]; }
 
+    public static final int FEE_PERIOD_SECONDS = 3600;
+
+    /** Thu phí đúng 1 lần mỗi 3600 giây NGỒI cộng dồn (không reset khi đứng lên ngồi lại). */
+    public static boolean feeDue(int sitSeconds) { return sitSeconds % FEE_PERIOD_SECONDS == 0; }
+
     /** Trả phí: ví mới, hoặc -1 nếu không đủ. */
     public static int chargeFee(int wallet, int fee) { return wallet >= fee ? wallet - fee : -1; }
 

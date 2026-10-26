@@ -68,7 +68,7 @@ public final class SkillService {
         }
         long now = p.level().getGameTime();
         if (st.cooldownEnd[slot] > now) return;
-        if (!Resources.tryConsume(p, s.cost)) {
+        if (!Resources.tryConsume(p, s.cost, com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
             return;
         }

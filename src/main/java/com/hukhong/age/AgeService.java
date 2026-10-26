@@ -25,6 +25,7 @@ public final class AgeService {
     private static final ResourceLocation HP_ID = ResourceLocation.fromNamespaceAndPath("hukhong", "ngu_suy_hp");
     private static final ResourceLocation DMG_ID = ResourceLocation.fromNamespaceAndPath("hukhong", "ngu_suy_dmg");
     private static final ResourceLocation SPD_ID = ResourceLocation.fromNamespaceAndPath("hukhong", "ngu_suy_spd");
+    private static final ResourceLocation RES_ID = ResourceLocation.fromNamespaceAndPath("hukhong", "ngu_suy_res");
 
     /** Giai đoạn Ngũ Suy hiện tại (0 = không). */
     public static int stageOf(ServerPlayer p) {
@@ -37,7 +38,8 @@ public final class AgeService {
     public static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || p.tickCount % 20 != 0) return;
         AgeData a = p.getData(ModAttachments.AGE);
-        if (!AfkTracker.check(p)) {
+        boolean afk = AfkTracker.check(p);
+        if (!afk || com.hukhong.society.SectEvents.isBeQuan(p)) { // R22: AFK hợp lệ trong Bế Quan vẫn già (S6 §1.2)
             long before = a.onlineTicks(), after = before + 20;
             a = a.withOnlineTicks(after);
             p.setData(ModAttachments.AGE, a);
@@ -71,16 +73,20 @@ public final class AgeService {
         mod(p, Attributes.MAX_HEALTH, HP_ID, AgeMath.HP_MULT[stage]);
         mod(p, Attributes.ATTACK_DAMAGE, DMG_ID, AgeMath.DMG_MULT[stage]);
         mod(p, Attributes.MOVEMENT_SPEED, SPD_ID, stage >= 5 ? -0.15 : 0);
+        if (mod(p, com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.MAX_RESOURCE), RES_ID, AgeMath.maxResourceMult(stage)))
+            com.hukhong.stats.StatService.syncResourceMax(p); // GĐ II: -10% tài nguyên tối đa
         if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
     }
 
-    private static void mod(ServerPlayer p, Holder<Attribute> attr, ResourceLocation id, double v) {
+    /** true nếu modifier thực sự đổi. */
+    private static boolean mod(ServerPlayer p, Holder<Attribute> attr, ResourceLocation id, double v) {
         AttributeInstance inst = p.getAttribute(attr);
-        if (inst == null) return;
+        if (inst == null) return false;
         AttributeModifier cur = inst.getModifier(id);
-        if (v == 0) { if (cur != null) inst.removeModifier(id); return; }
-        if (cur != null && cur.amount() == v) return;
+        if (v == 0) { if (cur != null) { inst.removeModifier(id); return true; } return false; }
+        if (cur != null && cur.amount() == v) return false;
         inst.addOrUpdateTransientModifier(new AttributeModifier(id, v, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        return true;
     }
 
     @SubscribeEvent

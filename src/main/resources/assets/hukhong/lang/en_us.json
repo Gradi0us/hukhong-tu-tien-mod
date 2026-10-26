@@ -790,5 +790,21 @@
   "hukhong.dlg.mo_dao.ch6_seal.p2": "But a seal needs a guardian. And I have a feeling this is not finished.",
   "hukhong.dlg.mo_dao.ch6_absorb.p1": "You swallowed it. Everyone out there looks at you, and they are afraid.",
   "hukhong.dlg.mo_dao.ch6_absorb.p2": "I am not afraid. But I will not pretend you are the same as before.",
-  "entity.hukhong.story_npc": "Storyteller"
+  "entity.hukhong.story_npc": "Storyteller",
+  "hukhong.ma.lo.title": "Demonic Path Mode",
+  "hukhong.ma.lo.button": "[Ma Mode]",
+  "hukhong.ma.lo.absorb": "Absorb",
+  "hukhong.ma.lo.normal": "Normal Cultivation",
+  "hukhong.ma.lo.current": "Current mode:",
+  "hukhong.ma.lo.hint": "Absorb: x1.45 EXP but builds Malice. Normal: no build-up, clears Blood Sacrifice.",
+  "hukhong.ma.lo.set_absorb": "Absorb mode",
+  "hukhong.ma.lo.set_normal": "Normal cultivation mode",
+  "hukhong.banmenh.evolve.max": "The sword is already at Divine grade.",
+  "hukhong.banmenh.evolve.realm": "Realm too low to evolve further (level cap).",
+  "hukhong.banmenh.evolve.need": "Needs %s Soul Essence (you have %s).",
+  "hukhong.banmenh.evolve.done": "Bound sword evolved: %s",
+  "hukhong.banmenh.tip.evolve": "Forge: hold Soul Essence in the offhand + right-click (or Shift+right-click an anvil): needs %s, capped by realm (level %s).",
+  "hukhong.flight.banned_age": "Five Decays stage V: flight is forbidden.",
+  "hukhong.flight.banned_hu_hoa": "Void-corrupted: cannot ride the sword.",
+  "hukhong.sect.trial.fail.unloaded": "Grand Contest failed: enemies were lost from the arena (chunk unload)."
 }

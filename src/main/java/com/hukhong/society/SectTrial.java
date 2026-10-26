@@ -75,7 +75,9 @@ public final class SectTrial {
             else if (p.level() != ow || p.distanceToSqr(t.center.getX() + .5, t.center.getY(), t.center.getZ() + .5) > (ARENA_RADIUS + 4) * (ARENA_RADIUS + 4)) why = "left";
             else if (ow.getGameTime() >= t.endTick) why = "time";
             if (why != null) { it.remove(); finish(server, ow, p, t, false, why); continue; }
-            t.mobs.removeIf(id -> ow.getEntity(id) == null);
+            int before = t.mobs.size();
+            t.mobs.removeIf(id -> ow.getEntity(id) == null); // chết đã bị onMobDeath gỡ trước; mất tích = chunk unload
+            if (t.mobs.size() < before) { it.remove(); finish(server, ow, p, t, false, "unloaded"); continue; }
             while (t.mobs.size() < MAX_ALIVE && t.spawned < t.need) spawn(ow, p, t);
             p.displayClientMessage(Component.translatable("hukhong.sect.trial.hud", t.kills, t.need, (t.endTick - ow.getGameTime()) / 20), true);
         }
@@ -123,7 +125,11 @@ public final class SectTrial {
         }
         t.mobs.clear();
         if (p == null) return;
-        if (!win) { p.sendSystemMessage(Component.translatable("hukhong.sect.trial.fail." + why)); return; }
+        if (!win) {
+            p.sendSystemMessage(Component.translatableWithFallback("hukhong.sect.trial.fail." + why,
+                    "unloaded".equals(why) ? "Đại Bỉ thất bại: quái bị mất khỏi sân (chunk unload)." : why));
+            return;
+        }
         SectData d = SectService.get(p);
         if (!d.sect().equals(t.sect)) return;
         p.setData(SocietyRegistry.SECT, d.withDaiBi(d.daiBi() + 1));

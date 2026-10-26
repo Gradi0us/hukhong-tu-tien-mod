@@ -232,16 +232,22 @@ public final class SkillEffects {
     }
 
     /** Trảm Khí: kiếm khí xuyên tầm 8 block, 120% Công. */
+    /** Kiếm Ý Cốt: kiếm khí +25% tầm. */
+    private static double qiRange(ServerPlayer p) {
+        return com.hukhong.honcot.HonCotService.has(p, com.hukhong.honcot.Bone.KIEM_Y) ? com.hukhong.honcot.HonCotMath.KIEM_Y_RANGE_MULT : 1.0;
+    }
+
     private static void tramKhi(ServerLevel lv, ServerPlayer p) {
-        for (LivingEntity e : lineTargets(lv, p, 8, 1.2)) slash(p, e, Skill.KIEM_1_COEF);
+        final double range = 8 * qiRange(p);
+        for (LivingEntity e : lineTargets(lv, p, range, 1.2)) slash(p, e, Skill.KIEM_1_COEF);
         Vec3 eye = p.getEyePosition().subtract(0, 0.3, 0), look = p.getLookAngle();
-        for (double t = 1.0; t <= 8; t += 0.5) {
+        for (double t = 1.0; t <= range; t += 0.5) {
             Vec3 q = eye.add(look.scale(t));
             lv.sendParticles(com.hukhong.vfx.ModParticles.KIEM_KHI.get(), q.x, q.y, q.z, 1, 0.05, 0.05, 0.05, 0);
         }
         arc(lv, p, 2.4, 0.9, 10, com.hukhong.vfx.ModParticles.KIEM_KHI.get(), 0.4);
         arc(lv, p, 3.2, 0.7, 8, ParticleTypes.CRIT, 0.3);
-        helixBeam(lv, eye.add(look.scale(1.5)), eye.add(look.scale(8)), 0.3, 4, 24, ParticleTypes.END_ROD);
+        helixBeam(lv, eye.add(look.scale(1.5)), eye.add(look.scale(range)), 0.3, 4, 24, ParticleTypes.END_ROD);
         lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.6f);
         layer(lv, p.position(), SoundEvents.TRIDENT_THROW.value(), 0.6f, 1.8f);
         layer(lv, p.position(), SoundEvents.AMETHYST_BLOCK_CHIME, 0.6f, 1.5f);
@@ -249,11 +255,12 @@ public final class SkillEffects {
 
     /** Liên Hoàn Trảm: 3 nhát quạt 6 block, mỗi nhát 70% Công, cách nhau 6 tick. */
     private static void lienHoanTram(ServerLevel lv, ServerPlayer p) {
+        final double reach = 6 * qiRange(p);
         for (int i = 0; i < 3; i++) {
             final int k = i;
             Runnable r = () -> {
                 if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
-                for (LivingEntity e : coneTargets(l2, p, 6, 0.45)) slash(p, e, Skill.KIEM_2_COEF);
+                for (LivingEntity e : coneTargets(l2, p, reach, 0.45)) slash(p, e, Skill.KIEM_2_COEF);
                 arc(l2, p, 2.0 + k * 0.6, 1.0, 12, com.hukhong.vfx.ModParticles.KIEM_KHI.get(), (k - 1) * 0.5);
                 arc(l2, p, 2.6 + k * 0.6, 1.0, 6, ParticleTypes.CRIT, (k - 1) * 0.5);
                 l2.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.3f + 0.15f * k);
@@ -275,7 +282,7 @@ public final class SkillEffects {
 
     private static void kiemVucPulse(ServerPlayer p, int n) {
         if (n >= 8 || p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel lv)) return;
-        double r = 5;
+        double r = 5 * qiRange(p);
         for (LivingEntity e : lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(r, 2, r),
                 e -> valid(p, e) && e.distanceToSqr(p) <= r * r)) slash(p, e, Skill.KIEM_ULT_COEF);
         double rot = n * 0.5;

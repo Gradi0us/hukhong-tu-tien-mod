@@ -61,4 +61,19 @@ public final class HonCotMath {
         int n = Math.max(0, Math.min(BoneSlot.COUNT, equipped));
         return 1.0 + 0.5 * n + (n == BoneSlot.COUNT ? 1.0 : 0.0);
     }
+
+    // ---- bonus đặc biệt (S3 §5) ----
+    public static final double KIEM_Y_RANGE_MULT = 1.25;      // Kiếm Ý Cốt: kiếm khí +25% tầm
+    public static final double PHONG_HANH_COST_FACTOR = 0.85; // Phong Hành Cốt: bay/lướt -15% tiêu hao
+    public static final double TINH_TAM_GAIN_FACTOR = 0.80;   // Tĩnh Tâm Cốt: Tâm Ma (Ác Tính) tích -20%
+
+    /** Chi phí sau hệ số (tối thiểu 1 nếu gốc > 0). */
+    public static int scaleCost(int cost, double factor) {
+        return cost <= 0 ? 0 : Math.max(1, (int) Math.round(cost * factor));
+    }
+
+    /** Lượng Ác Tính thực nhận: chỉ giảm phần tăng. */
+    public static double acTinhDelta(double delta, boolean tinhTam) {
+        return delta > 0 && tinhTam ? delta * TINH_TAM_GAIN_FACTOR : delta;
+    }
 }

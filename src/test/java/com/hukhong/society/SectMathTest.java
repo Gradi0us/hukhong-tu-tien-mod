@@ -144,4 +144,15 @@ class SectMathTest {
         assertTrue(SectMath.questNeed(SectMath.Q_CHAIN, Tier.NHAN, 2) > SectMath.questNeed(SectMath.Q_CHAIN, Tier.NHAN, 0));
         assertTrue(SectMath.questCh(SectMath.Q_CHAIN, Tier.NHAN, 0) > SectMath.questCh(SectMath.Q_KILL, Tier.NHAN));
     }
+
+    @Test
+    void altarFeeOncePerSittingHour() {
+        int charges = 0;
+        for (int secs = 0; secs < 7200; secs++) if (SectMath.feeDue(secs)) charges++;
+        assertEquals(2, charges); // 2 giờ ngồi cộng dồn = 2 lần thu, bất kể đứng/ngồi lại
+        assertTrue(SectMath.feeDue(0));
+        assertFalse(SectMath.feeDue(1));
+        assertFalse(SectMath.feeDue(3599));
+        assertTrue(SectMath.feeDue(3600));
+    }
 }

@@ -9,7 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 /** Server -> client: Ác Tính, đếm ngược Tẩu Hỏa (tick, -1 = tắt), Mất Kiểm Soát, Huyết Tế. */
-public record MaSyncPayload(float acTinh, int countdown, boolean lost, int huyetTe) implements CustomPacketPayload {
+public record MaSyncPayload(float acTinh, int countdown, boolean lost, int huyetTe, boolean absorb) implements CustomPacketPayload {
     public static final Type<MaSyncPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "ma_sync"));
     public static final StreamCodec<RegistryFriendlyByteBuf, MaSyncPayload> STREAM_CODEC = StreamCodec.composite(
@@ -17,6 +17,7 @@ public record MaSyncPayload(float acTinh, int countdown, boolean lost, int huyet
             ByteBufCodecs.VAR_INT, MaSyncPayload::countdown,
             ByteBufCodecs.BOOL, MaSyncPayload::lost,
             ByteBufCodecs.VAR_INT, MaSyncPayload::huyetTe,
+            ByteBufCodecs.BOOL, MaSyncPayload::absorb,
             MaSyncPayload::new);
 
     @Override

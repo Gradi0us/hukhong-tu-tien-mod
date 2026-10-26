@@ -81,6 +81,11 @@ public class ProfileScreen extends Screen {
         g.fill(x0 - 1, y0 - 1, x0 + pw + 1, y0 + ph + 1, 0xFF555555);
         g.fill(x0, y0, x0 + pw, y0 + ph, 0xEE111119);
         g.drawCenteredString(font, title, width / 2, y0 + 6, GOLD);
+        if (ClientCache.cultivation().paths().contains(Path.MA)) {
+            Component lo = t("hukhong.ma.lo.button", "[Lộ Ma]");
+            int bx = x0 + pw - font.width(lo) - 8;
+            g.drawString(font, lo, bx, y0 + 6, (mx >= bx && mx < bx + font.width(lo) && my >= y0 + 4 && my < y0 + 16) ? 0xFFFFFFFF : 0xFFFF5555);
+        }
 
         int tw = pw / TABS - 6;
         for (int i = 0; i < TABS; i++) {
@@ -323,6 +328,14 @@ public class ProfileScreen extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         layout();
+        if (ClientCache.cultivation().paths().contains(Path.MA)) {
+            int bw = font.width(t("hukhong.ma.lo.button", "[Lộ Ma]"));
+            int bx = x0 + pw - bw - 8;
+            if (mx >= bx && mx < bx + bw && my >= y0 + 4 && my < y0 + 16) {
+                Minecraft.getInstance().setScreen(new com.hukhong.client.screen.ma.MaLoScreen());
+                return true;
+            }
+        }
         int tw = pw / TABS - 6;
         for (int i = 0; i < TABS; i++) {
             int tx = x0 + 8 + i * (tw + 6), ty = y0 + 20;

@@ -790,5 +790,21 @@
   "hukhong.dlg.mo_dao.ch6_seal.p2": "Nhưng phong ấn cần người canh. Và ta có linh cảm chuyện này chưa xong.",
   "hukhong.dlg.mo_dao.ch6_absorb.p1": "Ngươi đã nuốt nó. Mọi người ngoài kia nhìn ngươi, và họ sợ.",
   "hukhong.dlg.mo_dao.ch6_absorb.p2": "Ta thì không sợ. Nhưng ta sẽ không giả vờ rằng ngươi vẫn như trước.",
-  "entity.hukhong.story_npc": "Truyện Nhân"
+  "entity.hukhong.story_npc": "Truyện Nhân",
+  "hukhong.ma.lo.title": "Lộ Ma Tu",
+  "hukhong.ma.lo.button": "[Lộ Ma]",
+  "hukhong.ma.lo.absorb": "Hấp Thu",
+  "hukhong.ma.lo.normal": "Tu Luyện thường",
+  "hukhong.ma.lo.current": "Lộ hiện tại:",
+  "hukhong.ma.lo.hint": "Hấp Thu: EXP x1.45 nhưng tích Ác Tính. Tu Luyện thường: không tích, xóa Huyết Tế.",
+  "hukhong.ma.lo.set_absorb": "Lộ Hấp Thu",
+  "hukhong.ma.lo.set_normal": "Lộ Tu Luyện thường",
+  "hukhong.banmenh.evolve.max": "Kiếm đã đạt Thần phẩm.",
+  "hukhong.banmenh.evolve.realm": "Cảnh giới chưa đủ để tiến hóa tiếp (trần theo cấp).",
+  "hukhong.banmenh.evolve.need": "Cần %s Hồn Tinh (hiện có %s).",
+  "hukhong.banmenh.evolve.done": "Bản Mệnh Kiếm tiến hóa: %s",
+  "hukhong.banmenh.tip.evolve": "Tôi Kiếm: tay phụ cầm Hồn Tinh + chuột phải (hoặc Shift+chuột phải lên đe): cần %s Hồn Tinh, trần theo cảnh giới (cấp %s).",
+  "hukhong.flight.banned_age": "Thiên Nhân Ngũ Suy giai đoạn V: không thể bay.",
+  "hukhong.flight.banned_hu_hoa": "Đang nhiễm Hư Hóa: không thể ngự kiếm.",
+  "hukhong.sect.trial.fail.unloaded": "Đại Bỉ thất bại: quái bị mất khỏi sân (chunk unload)."
 }

@@ -39,8 +39,9 @@ public final class SectEvents {
     public static final int GEN_RADIUS = 110;
     /** Tích EXP lẻ (EXP/giây rất nhỏ ở cấp thấp). */
     private static final Map<UUID, Double> ACCUM = new ConcurrentHashMap<>();
-    /** Giây Bế Quan liên tục của người trả phí (phí thu mỗi 3600 giây, thu trước). */
-    private static final Map<UUID, Integer> FEE_SECONDS = new ConcurrentHashMap<>();
+    /** Người đang Bế Quan hợp lệ (đủ điều kiện + ghế + trả phí): tuổi vẫn trôi dù AFK (R22). */
+    private static final java.util.Set<UUID> BE_QUAN = ConcurrentHashMap.newKeySet();
+    private static final String SIT_KEY = "hk_altar_sit_s"; // giây ngồi cộng dồn (persistent: không reset khi ngồi lại/relog)
     public static final AltarSeats SEATS = new AltarSeats();
 
     public static BlockPos site(ServerLevel ow, SectDef d) {
@@ -100,9 +101,11 @@ public final class SectEvents {
         if (e.getEntity() instanceof ServerPlayer p) SectTrial.onPlayerGone(p);
     }
 
+    public static boolean isBeQuan(ServerPlayer p) { return BE_QUAN.contains(p.getUUID()); }
+
     private static void stopMeditating(UUID id) {
         ACCUM.remove(id);
-        FEE_SECONDS.remove(id);
+        BE_QUAN.remove(id);
         SEATS.release(id);
     }
 
@@ -149,8 +152,8 @@ public final class SectEvents {
                 if (p.tickCount % 100 == 0) p.displayClientMessage(Component.translatable("hukhong.lkd.full", SectMath.seats(def.tier())), true);
                 return;
             }
-            int secs = FEE_SECONDS.getOrDefault(p.getUUID(), 0);
-            if (secs % 3600 == 0) {
+            int secs = p.getPersistentData().getInt(SIT_KEY);
+            if (SectMath.feeDue(secs)) { // 1 lần mỗi 3600 giây ngồi cộng dồn (không tính lại mỗi lần ngồi)
                 int fee = SectMath.altarFeePerHour(def.tier());
                 int left = SectMath.chargeFee(sd.wallet(), fee);
                 if (left < 0) {
@@ -161,9 +164,11 @@ public final class SectEvents {
                 p.setData(SocietyRegistry.SECT, sd.withWallet(left));
                 p.sendSystemMessage(Component.translatable("hukhong.lkd.fee_paid", fee, left));
             }
-            FEE_SECONDS.put(p.getUUID(), secs + 1);
+            p.getPersistentData().putInt(SIT_KEY, secs + 1);
             mult = SectMath.rankMult(SectService.rankOf(p, sd));
         }
+        mult *= com.hukhong.age.AgeMath.meditationMult(com.hukhong.age.AgeService.stageOf(p)); // Ngũ Suy V: thiền x0,5
+        BE_QUAN.add(p.getUUID());
         double perSec = SectMath.afkExpPerSecond(CultivationService.expToNext(d.level()), mult);
         double acc = ACCUM.merge(p.getUUID(), perSec, Double::sum);
         long whole = (long) Math.floor(acc);

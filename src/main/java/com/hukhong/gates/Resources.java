@@ -16,6 +16,19 @@ public final class Resources {
 
     public static int costFor(CultivationData d, int baseCost) { return baseCost * pathMultiplier(d); }
 
+    /** Chi phí có thêm hệ số giảm (Ngọc Tâm, Phong Hành Cốt...). */
+    public static int costFor(CultivationData d, int baseCost, double factor) {
+        return com.hukhong.honcot.HonCotMath.scaleCost(baseCost * pathMultiplier(d), factor);
+    }
+
+    public static boolean tryConsume(ServerPlayer p, int baseCost, double factor) {
+        CultivationData d = p.getData(ModAttachments.CULTIVATION);
+        int c = costFor(d, baseCost, factor);
+        if (d.resource() < c) return false;
+        set(p, d, d.resource() - c);
+        return true;
+    }
+
     public static boolean tryConsume(ServerPlayer p, int baseCost) {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         int c = costFor(d, baseCost);

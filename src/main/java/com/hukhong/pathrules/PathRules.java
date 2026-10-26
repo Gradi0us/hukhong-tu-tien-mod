@@ -98,11 +98,12 @@ public final class PathRules {
 
         if (now % 20 == 0) {
             double rg = com.hukhong.stats.StatService.regen(p);
-            if (dao) Resources.add(p, (int) Math.round((med ? DAO_MEDITATE_REGEN : DAO_REGEN) * rg));
+            double mm = med ? com.hukhong.age.AgeMath.meditationMult(com.hukhong.age.AgeService.stageOf(p)) : 1.0; // Ngũ Suy V: thiền x0,5
+            if (dao) Resources.add(p, (int) Math.round((med ? DAO_MEDITATE_REGEN * mm : DAO_REGEN) * rg));
             if (d.paths().contains(Path.KIEM)) Resources.add(p, (int) Math.round((now - st.lastCombat > 60 ? KIEM_REGEN_IDLE : KIEM_REGEN_COMBAT) * rg));
             if (the) {
                 if (med) {
-                    if (d.resource() < 60) Resources.add(p, Math.min((int) Math.round(5 * rg), 60 - d.resource()));
+                    if (d.resource() < 60) Resources.add(p, Math.min((int) Math.round(5 * rg * mm), 60 - d.resource()));
                 } else if (now - st.lastCombat > 100) {
                     Resources.add(p, -4);
                 }

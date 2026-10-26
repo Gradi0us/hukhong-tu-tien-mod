@@ -47,15 +47,26 @@ public class BanMenhKiemItem extends SwordItem {
                 Component.translatable("hukhong.banmenh.stage." + stageOf(stack)));
     }
 
-    /** Tự tiến hóa theo cảnh giới của chủ: cập nhật giai đoạn trên item + attachment. */
+    /** Giai đoạn do Hồn Tinh quyết định (attachment); cảnh giới chỉ là trần. Đồng bộ item theo attachment. */
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         if (level.isClientSide || !(entity instanceof ServerPlayer p) || !isOwner(stack, p)) return;
         if (entity.tickCount % 20 != 0) return;
-        int st = BanMenhService.stageForLevel(p.getData(ModAttachments.CULTIVATION).level());
-        if (stageOf(stack) != st) stack.set(ModItems.BAN_MENH_STAGE.get(), st);
         BanMenhData d = p.getData(BanMenhAttachments.BAN_MENH.get());
+        int st = BanMenhMath.effectiveStage(d.stage(), p.getData(ModAttachments.CULTIVATION).level());
+        if (stageOf(stack) != st) stack.set(ModItems.BAN_MENH_STAGE.get(), st);
         if (d.stage() != st) p.setData(BanMenhAttachments.BAN_MENH.get(), d.withStage(st));
+    }
+
+    /** Tôi Kiếm: cầm kiếm, Hồn Tinh ở tay phụ, chuột phải. */
+    @Override
+    public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (hand == net.minecraft.world.InteractionHand.MAIN_HAND && player.getOffhandItem().is(ModItems.HON_TINH.get())) {
+            if (!level.isClientSide && player instanceof ServerPlayer sp) BanMenhService.tryEvolve(sp, stack, true);
+            return net.minecraft.world.InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+        }
+        return super.use(level, player, hand);
     }
 
     @Override
@@ -72,7 +83,9 @@ public class BanMenhKiemItem extends SwordItem {
         tip.add(Component.translatable("hukhong.banmenh.fx." + t.id() + ".0").withStyle(ChatFormatting.GREEN));
         if (st >= 2) tip.add(Component.translatable("hukhong.banmenh.fx." + t.id() + ".1").withStyle(ChatFormatting.GREEN));
         if (st >= 4) tip.add(Component.translatable("hukhong.banmenh.fx." + t.id() + ".2").withStyle(ChatFormatting.GREEN));
-        if (st < 4) tip.add(Component.translatable("hukhong.banmenh.tip.next", st < 2 ? 40 : 80).withStyle(ChatFormatting.DARK_GRAY));
+        if (st < BanMenhMath.MAX_STAGE) tip.add(Component.translatableWithFallback("hukhong.banmenh.tip.evolve",
+                "Tôi Kiếm: tay phụ cầm Hồn Tinh + chuột phải (hoặc Shift+chuột phải lên đe): cần %s Hồn Tinh, trần theo cảnh giới (cấp %s).",
+                BanMenhMath.tinhCost(st + 1), BanMenhMath.STAGE_LEVELS[st + 1]).withStyle(ChatFormatting.DARK_GRAY));
         tip.add(Component.translatable("hukhong.banmenh.tip.bound").withStyle(ChatFormatting.DARK_PURPLE));
     }
 }

@@ -54,7 +54,7 @@ final class BanMenhSkillEffects {
             return;
         }
         int cost = res ? RESONANCE_COST : s.cost, cd = res ? RESONANCE_CD : s.cooldownTicks;
-        if (!Resources.tryConsume(p, cost)) {
+        if (!Resources.tryConsume(p, cost, com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
             return;
         }

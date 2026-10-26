@@ -158,6 +158,7 @@ public final class StatService {
         applyVitals(p, d);
         CoreService.applyAll(p); // gỡ + áp lại bị động Lõi (transient)
         com.hukhong.honcot.HonCotService.apply(p); // Hồn Cốt
+        com.hukhong.banmenh.BanMenhService.applyPassives(p); // Ngọc Tâm / Trọng Nhạc
         boolean than = isThan(d);
         var mid = ModAttributes.id("than");
         for (String name : ModAttributes.names()) {
@@ -194,7 +195,7 @@ public final class StatService {
         if (inst != null && inst.getBaseValue() != v) inst.setBaseValue(v);
     }
 
-    private static void syncResourceMax(ServerPlayer p) {
+    public static void syncResourceMax(ServerPlayer p) {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         int max = (int) Math.max(1, Math.round(value(p, ModAttributes.MAX_RESOURCE)));
         if (max == d.resourceMax()) return;
@@ -208,7 +209,8 @@ public final class StatService {
 
     private static int signature(ServerPlayer p) {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
-        return Objects.hash(d.level(), d.paths(), d.aptitude(), CoreService.get(p).picked());
+        var bm = p.getData(com.hukhong.banmenh.BanMenhAttachments.BAN_MENH.get());
+        return Objects.hash(d.level(), d.paths(), d.aptitude(), CoreService.get(p).picked(), bm.type(), bm.stage());
     }
 
     @SubscribeEvent
