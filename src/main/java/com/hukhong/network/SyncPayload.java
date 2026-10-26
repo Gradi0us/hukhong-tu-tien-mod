@@ -34,8 +34,9 @@ public record SyncPayload(CultivationData cultivation, AgeData age) implements C
     }
 
     public static void register(RegisterPayloadHandlersEvent e) {
-        e.registrar("1").playToClient(TYPE, STREAM_CODEC,
+        var r = e.registrar("1").playToClient(TYPE, STREAM_CODEC,
                 (payload, ctx) -> ctx.enqueueWork(() -> ClientCache.update(payload.cultivation(), payload.age())));
+        SkillNet.register(r);
     }
 
     @SubscribeEvent

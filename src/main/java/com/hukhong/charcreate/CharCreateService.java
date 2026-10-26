@@ -1,0 +1,73 @@
+package com.hukhong.charcreate;
+
+import com.hukhong.HuKhong;
+import com.hukhong.age.AgeData;
+import com.hukhong.core.Aptitude;
+import com.hukhong.core.CultivationData;
+import com.hukhong.core.CultivationService;
+import com.hukhong.core.ModAttachments;
+import com.hukhong.core.Path;
+import com.hukhong.network.OpenCharCreatePayload;
+import com.hukhong.network.SyncPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+
+/** Server: roll lần đầu, mở màn tạo nhân vật, xác thực lựa chọn. */
+@EventBusSubscriber(modid = HuKhong.MODID)
+public final class CharCreateService {
+    private CharCreateService() {}
+
+    /** P0: chỉ Đạo Tu và Thể Tu. */
+    public static final Set<Path> UNLOCKED = Set.of(Path.DAO, Path.THE);
+
+    public static int requiredPicks(CharRoll roll) { return Math.min(roll.slots(), UNLOCKED.size()); }
+
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        CultivationData d = CultivationService.get(p);
+        if (!d.paths().isEmpty()) return;
+        if (d.roll() == null) reroll(p); else open(p, d.roll());
+    }
+
+    /** Roll mới (lần đầu hoặc /hukhong reroll): xóa đạo, ghi tuổi khởi đầu, mở màn. */
+    public static void reroll(ServerPlayer p) {
+        CharRoll roll = CharRoll.roll(p.getRandom().nextLong());
+        CultivationData d = CultivationService.get(p);
+        p.setData(ModAttachments.CULTIVATION, d.withCharacter(Set.of(), Map.of(), roll.origin().id, roll));
+        AgeData a = p.getData(ModAttachments.AGE);
+        p.setData(ModAttachments.AGE, new AgeData(a.onlineTicks(), roll.startAge()));
+        SyncPayload.send(p);
+        open(p, roll);
+    }
+
+    private static void open(ServerPlayer p, CharRoll roll) {
+        PacketDistributor.sendToPlayer(p, new OpenCharCreatePayload(roll));
+    }
+
+    /** Xác thực lựa chọn từ client (mask bit = Path.ordinal). */
+    public static void confirm(ServerPlayer p, int mask) {
+        CultivationData d = CultivationService.get(p);
+        CharRoll roll = d.roll();
+        if (roll == null || !d.paths().isEmpty()) return;
+        Set<Path> set = EnumSet.noneOf(Path.class);
+        for (Path x : Path.values()) if ((mask & (1 << x.ordinal())) != 0) set.add(x);
+        boolean extraBits = (mask >>> Path.values().length) != 0;
+        if (extraBits || set.size() != requiredPicks(roll) || !UNLOCKED.containsAll(set)) {
+            open(p, roll); // yêu cầu không hợp lệ: mở lại
+            return;
+        }
+        Map<Path, Aptitude> apt = new EnumMap<>(Path.class);
+        for (Path x : set) apt.put(x, roll.aptitude().get(x));
+        p.setData(ModAttachments.CULTIVATION, d.withCharacter(set, apt, roll.origin().id, roll));
+        SyncPayload.send(p);
+    }
+}

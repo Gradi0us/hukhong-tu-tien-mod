@@ -42,6 +42,12 @@ public final class HuKhongCommand {
                             msg(c.getSource(), "level=" + d.level() + " exp=" + d.exp());
                             return 1;
                         })))
+                .then(Commands.literal("reroll").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    com.hukhong.charcreate.CharCreateService.reroll(p);
+                    msg(c.getSource(), "reroll: " + CultivationService.get(p).roll());
+                    return 1;
+                }))
                 .then(Commands.literal("age").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     AgeData a = p.getData(ModAttachments.AGE);
