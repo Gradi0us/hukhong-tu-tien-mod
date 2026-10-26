@@ -12,6 +12,10 @@ from pathlib import Path
 
 from PIL import Image
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pixel_shade import mask, render
+
 ROOT = Path(__file__).resolve().parents[1]
 A = ROOT / "src" / "main" / "resources" / "assets" / "hukhong"
 OUTLINE = (20, 14, 22, 255)
@@ -47,21 +51,72 @@ def outline(im, neigh):
     return out
 
 
-def bone_sprite(col, seed):
-    im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-    px = im.load()
-    pts = []
-    for i in range(3, 13):
-        pts += [(i, 15 - i), (i, 14 - i)]
-    pts += [(2, 12), (3, 13), (2, 13), (3, 12), (12, 2), (13, 3), (12, 3), (13, 2)]
-    for x, y in pts:
-        px[x, y] = shade(col, 1.0 if (x + y) % 3 else 1.2)
-    rnd = random.Random(seed)
-    for _ in range(4):
-        x, y = rnd.randint(4, 11), rnd.randint(4, 11)
-        if px[x, y][3]:
-            px[x, y] = shade(col, 0.6)
-    return outline(im, N4)
+def _poly(pts):
+    return lambda d: d.polygon(pts, fill=255)
+
+
+def _ell(*boxes):
+    def f(d):
+        for bx in boxes:
+            d.ellipse(bx, fill=255)
+    return f
+
+
+def _crescent(d):
+    d.ellipse((2, 2, 13, 13), fill=255)
+    d.ellipse((6, 0, 17, 11), fill=0)
+
+
+def _heart(d):
+    d.ellipse((2, 3, 8, 9), fill=255)
+    d.ellipse((7, 3, 13, 9), fill=255)
+    d.polygon([(2, 7), (13, 7), (8, 14)], fill=255)
+
+
+def _femur(d):
+    d.rectangle((4, 5, 11, 10), fill=255)
+    for bx in ((1, 3, 5, 7), (1, 8, 5, 12), (10, 3, 14, 7), (10, 8, 14, 12)):
+        d.ellipse(bx, fill=255)
+
+
+def _claws(d):
+    for pts in ([(1, 2), (4, 2), (3, 13)], [(6, 1), (9, 1), (8, 15)], [(11, 2), (14, 2), (13, 13)]):
+        d.polygon(pts, fill=255)
+
+
+def _blade(d):
+    d.polygon([(15, 0), (15, 3), (8, 10), (5, 7)], fill=255)
+    d.line([(2, 14), (6, 10)], fill=255, width=2)
+    d.line([(3, 9), (9, 15)], fill=255, width=1)
+
+
+# id -> (ham ve mat na, accents) : moi Hon Cot mot hinh dang rieng
+WHITE, DARK, GOLD = (255, 255, 255), (20, 10, 30), (255, 220, 120)
+SHAPES = {
+    "thien_muc": (_poly([(0, 8), (4, 4), (8, 2), (12, 4), (15, 8), (12, 12), (8, 14), (4, 12)]),
+                  [(7, 7, DARK), (8, 7, DARK), (7, 8, DARK), (8, 8, DARK), (6, 6, WHITE), (9, 6, (230, 200, 255))]),
+    "tinh_tam": (_ell((2, 2, 13, 13)), [(7, 5, WHITE), (8, 5, WHITE), (6, 6, WHITE), (7, 8, GOLD), (8, 8, GOLD), (7, 9, GOLD), (8, 9, GOLD)]),
+    "long_hon": (_poly([(3, 15), (4, 9), (6, 5), (9, 2), (13, 0), (12, 4), (11, 8), (9, 15)]),
+                 [(5, 12, GOLD), (6, 9, GOLD), (8, 6, WHITE), (10, 3, WHITE)]),
+    "hu_khong_hach": (_ell((1, 1, 14, 14)), [(x, y, DARK) for x in range(6, 10) for y in range(6, 10)]
+                      + [(5, 5, (190, 130, 255)), (10, 10, (190, 130, 255)), (4, 8, (190, 130, 255)), (11, 7, (190, 130, 255))]),
+    "loi_chuong": (_poly([(9, 0), (3, 8), (7, 8), (5, 15), (13, 6), (8, 6), (11, 0)]),
+                   [(9, 1, WHITE), (7, 7, WHITE), (11, 2, WHITE)]),
+    "ho_the": (_poly([(3, 1), (12, 1), (14, 8), (8, 15), (1, 8)]),
+               [(x, 8, WHITE) for x in range(5, 11)] + [(7, y, WHITE) for y in range(4, 12)] + [(8, y, WHITE) for y in range(4, 12)]),
+    "huyet_trao": (_claws, [(3, 3, (255, 150, 150)), (8, 2, (255, 150, 150)), (13, 3, (255, 150, 150))]),
+    "kiem_y": (_blade, [(14, 1, WHITE), (13, 2, WHITE), (12, 3, WHITE), (2, 14, (150, 100, 60)), (3, 13, (150, 100, 60))]),
+    "phong_hanh": (_poly([(0, 11), (2, 5), (7, 1), (14, 2), (10, 5), (14, 7), (9, 9), (11, 13), (4, 13)]),
+                   [(4, 6, WHITE), (7, 4, WHITE), (10, 3, WHITE)]),
+    "cu_tuong": (_femur, [(3, 6, (220, 200, 160)), (2, 4, (220, 200, 160)), (12, 5, (220, 200, 160))]),
+    "anh_thiem": (_crescent, [(4, 5, (170, 170, 255)), (3, 8, (170, 170, 255)), (4, 11, (170, 170, 255))]),
+    "hoi_sinh": (_heart, [(4, 5, WHITE), (5, 4, WHITE), (9, 4, (255, 220, 230))]),
+}
+
+
+def bone_sprite(col, seed, bid):
+    fn, acc = SHAPES[bid]
+    return render(mask(fn), col, seed, accents=acc)
 
 
 def icon(kind):
@@ -105,7 +160,7 @@ def main():
     (A / "models" / "item").mkdir(parents=True, exist_ok=True)
     (A / "textures" / "gui" / "skill").mkdir(parents=True, exist_ok=True)
     for i, (bid, col) in enumerate(BONES.items()):
-        bone_sprite(col, 1700 + i).save(A / "textures" / "item" / f"hon_cot_{bid}.png")
+        bone_sprite(col, 1700 + i, bid).save(A / "textures" / "item" / f"hon_cot_{bid}.png")
         model = {"parent": "minecraft:item/generated", "textures": {"layer0": f"hukhong:item/hon_cot_{bid}"}}
         (A / "models" / "item" / f"hon_cot_{bid}.json").write_text(json.dumps(model), encoding="utf-8")
     for k in ("kiem", "dao", "the", "ma", "bone"):

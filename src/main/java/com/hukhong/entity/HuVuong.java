@@ -79,9 +79,12 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
         setPersistenceRequired();
     }
 
+    /** Chỉ số gốc (Bước 27: cân bằng; BalanceSimTest khóa TTK theo các hằng này). */
+    public static final double HP = 9700, DMG = 14, ARMOR = 5;
+
     public static AttributeSupplier.Builder attrs() {
         return Monster.createMonsterAttributes()
-                .add(Attributes.MAX_HEALTH, 600).add(Attributes.ATTACK_DAMAGE, 14).add(Attributes.ARMOR, 12)
+                .add(Attributes.MAX_HEALTH, HP).add(Attributes.ATTACK_DAMAGE, DMG).add(Attributes.ARMOR, ARMOR)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.9).add(Attributes.MOVEMENT_SPEED, 0.27)
                 .add(Attributes.FOLLOW_RANGE, 48);
     }

@@ -40,6 +40,9 @@ public final class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<HuVuong>> HU_VUONG = TYPES.register("hu_vuong",
             () -> EntityType.Builder.of(HuVuong::new, MobCategory.MONSTER).sized(2.4f, 3.6f).fireImmune().clientTrackingRange(10).build("hu_vuong"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<TamMa>> TAM_MA = TYPES.register("tam_ma",
+            () -> EntityType.Builder.of(TamMa::new, MobCategory.MONSTER).sized(0.6f, 1.8f).fireImmune().clientTrackingRange(10).build("tam_ma"));
+
     public static final DeferredItem<SpawnEggItem> HU_THI_EGG = EGGS.register("hu_thi_spawn_egg",
             () -> new SpawnEggItem(HU_THI.get(), 0x4B2A6B, 0x9B30FF, new Item.Properties()));
     public static final DeferredItem<SpawnEggItem> HU_COT_EGG = EGGS.register("hu_cot_spawn_egg",
@@ -59,6 +62,7 @@ public final class ModEntities {
         e.put(HU_COT.get(), AbstractSkeleton.createAttributes().build());
         e.put(HU_CHU.get(), Spider.createAttributes().build());
         e.put(HU_VUONG.get(), HuVuong.attrs().build());
+        e.put(TAM_MA.get(), TamMa.attrs().build());
     }
 
     @SubscribeEvent

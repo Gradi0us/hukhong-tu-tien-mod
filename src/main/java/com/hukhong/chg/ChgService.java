@@ -94,7 +94,7 @@ public final class ChgService {
                 double d2 = dx * dx + dz * dz;
                 if (d2 > ChgKit.LAIR_REVEAL_DIST * (double) ChgKit.LAIR_REVEAL_DIST) continue;
                 if (!data.built(idx)) {
-                    int y = Math.max(ow.getHeight(Heightmap.Types.WORLD_SURFACE_WG, xz[0], xz[1]), ow.getSeaLevel() + 1);
+                    int y = Math.max(ow.getHeight(Heightmap.Types.WORLD_SURFACE, xz[0], xz[1]), ow.getSeaLevel() + 1);
                     ChgArena.build(ow, xz[0], y, xz[1], idx);
                     data.setBuilt(idx, y);
                 }

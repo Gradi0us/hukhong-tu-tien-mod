@@ -25,6 +25,8 @@ public final class EndgameKit {
     public static double rewardMul(int tier) { return REWARD[clampTier(tier) - 1]; }
 
     // ------------------------------------------------------------ boss cuối
+    /** Chỉ số gốc boss cuối (Bước 27: BalanceSimTest khóa TTK theo các hằng này). */
+    public static final double BOSS_HP = 510000, BOSS_DMG = 60, BOSS_ARMOR = 10;
     public static final int PHASES = 4;
     public static final double[] PHASE_DMG = {1.0, 1.15, 1.3, 1.5};
     public static final double[] PHASE_SPEED = {1.0, 1.05, 1.1, 1.2};

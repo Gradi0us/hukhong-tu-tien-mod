@@ -354,7 +354,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
             }
             case DRAIN -> {
                 int n = burst(sl, position(), r, dmg, k.fx());
-                heal((float) (dmg * 0.5 * n));
+                heal((float) (dmg * 0.5 * n) * com.hukhong.entity.HuHoa.ehpScale(this));
                 sl.sendParticles(ParticleTypes.DAMAGE_INDICATOR, getX(), getY() + 1.5, getZ(), 20, 1, 1, 1, 0.1);
             }
             default -> burst(sl, position(), r, dmg, k.fx());  // AOE
@@ -443,7 +443,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
             triggerAnim("skill", "attack");
             if (e instanceof LivingEntity le) HuSkill.hu(le, 100);
             if (phase() >= 3 && def.passive() == ChgKit.Passive.LEECH)
-                heal((float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * ChgKit.LEECH_FRAC));
+                heal((float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * ChgKit.LEECH_FRAC) * com.hukhong.entity.HuHoa.ehpScale(this));
         }
         return r;
     }

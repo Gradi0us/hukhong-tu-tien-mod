@@ -18,7 +18,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.monster.Husk;
+import com.hukhong.entity.ModEntities;
+import com.hukhong.entity.TamMa;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -91,7 +92,8 @@ public final class TrialService {
 
     private static void spawnClone(ServerPlayer p, Session s) {
         ServerLevel lv = p.serverLevel();
-        Husk h = EntityType.HUSK.create(lv);
+        TamMa h = ModEntities.TAM_MA.get().create(lv);
+        if (h != null) h.setOwnerId(p.getUUID());
         if (h == null) { finish(p, s); return; }
         double sc = TrialMath.cloneScale(s.level);
         h.setPos(s.center.x + 5, s.center.y, s.center.z);
@@ -175,7 +177,7 @@ public final class TrialService {
         var c = s.clone == null ? null : lv.getEntity(s.clone);
         if (s.ticks % 5 == 0 && c != null)
             lv.sendParticles(com.hukhong.vfx.ModParticles.MA_KHI.get(), c.getX(), c.getY() + 1, c.getZ(), 4, 0.3, 0.7, 0.3, 0.02);
-        if (c instanceof Husk h && h.getTarget() == null) h.setTarget(p);
+        if (c instanceof TamMa h && h.getTarget() == null) h.setTarget(p);
         if (c == null || !c.isAlive()) { finish(p, s); return; }
         if (s.ticks > TAM_MA_TIMEOUT) fail(p, s);
     }

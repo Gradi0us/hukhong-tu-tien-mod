@@ -52,7 +52,7 @@ public final class CityBuilder {
     public static int prepare(ServerLevel l, int cx, int cz, int half) {
         for (int x = (cx - half - 2) >> 4; x <= (cx + half + 2) >> 4; x++)
             for (int z = (cz - half - 2) >> 4; z <= (cz + half + 2) >> 4; z++) l.getChunk(x, z);
-        int y = l.getHeight(Heightmap.Types.WORLD_SURFACE_WG, cx, cz) - 1;
+        int y = l.getHeight(Heightmap.Types.WORLD_SURFACE, cx, cz) - 1;
         while (y > l.getMinBuildHeight() + 8) {
             BlockState s = l.getBlockState(new BlockPos(cx, y, cz));
             if (s.isAir() || s.is(BlockTags.LEAVES) || s.is(BlockTags.LOGS) || s.canBeReplaced()) y--; else break;

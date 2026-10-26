@@ -91,7 +91,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
 
     public static AttributeSupplier.Builder attrs() {
         return Monster.createMonsterAttributes()
-                .add(Attributes.MAX_HEALTH, 24000).add(Attributes.ATTACK_DAMAGE, 60).add(Attributes.ARMOR, 30)
+                .add(Attributes.MAX_HEALTH, EndgameKit.BOSS_HP).add(Attributes.ATTACK_DAMAGE, EndgameKit.BOSS_DMG).add(Attributes.ARMOR, EndgameKit.BOSS_ARMOR)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0).add(Attributes.MOVEMENT_SPEED, 0.28)
                 .add(Attributes.FOLLOW_RANGE, 64);
     }

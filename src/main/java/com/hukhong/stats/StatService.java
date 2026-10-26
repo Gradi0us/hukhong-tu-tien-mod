@@ -32,6 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class StatService {
     private StatService() {}
 
+    /** Hồi tài nguyên: resource_regen = 1 + REGEN_PER_LEVEL x (cấp-1) (Bước 27: cũ 1.0 cố định). */
+    public static final double REGEN_PER_LEVEL = 0.03;
     public static final int THAN_LEVEL = 100;
     public static final double THAN_BONUS = 0.5;
     public static final long BAT_DIET_COOLDOWN = 12000; // 10 phút
@@ -47,9 +49,9 @@ public final class StatService {
     private static double[] table(Path p) {
         return switch (p) {
             case KIEM -> new double[]{4, 1.6, 2, 0.6, 0, 0.35, 0.05, 0.003, 0, 0, 100, 5};
-            case DAO -> new double[]{2, 0.8, 6, 2.0, 0, 0.30, 0.03, 0.0015, 0, 0, 120, 6};
-            case THE -> new double[]{3, 1.3, 1, 0.2, 2, 0.85, 0.03, 0.001, 0, 0, 100, 0};
-            case MA -> new double[]{3.5, 1.2, 3, 1.0, 1, 0.50, 0.05, 0.002, 0.06, 0.0004, 100, 3};
+            case DAO -> new double[]{2, 0.8, 8, 2.0, 0, 0.30, 0.03, 0.0015, 0, 0, 120, 6};
+            case THE -> new double[]{3.9, 1.55, 1, 0.2, 2, 0.85, 0.03, 0.0035, 0, 0, 100, 0};
+            case MA -> new double[]{3.5, 1.2, 3, 1.0, 1, 0.50, 0.05, 0.003, 0.06, 0.0004, 100, 3};
         };
     }
 
@@ -81,7 +83,7 @@ public final class StatService {
         int n = paths.size();
         double off = n >= 3 ? 0.70 : n == 2 ? 0.80 : 1.0, tank = n >= 3 ? 0.85 : n == 2 ? 0.90 : 1.0;
         return new Stats(atk * off, sp * off, def * tank, Math.min(1, crit), ModAttributes.DEFAULT_CRIT_DAMAGE,
-                ls * off, 1.0, Math.round(res));
+                ls * off, 1.0 + REGEN_PER_LEVEL * g, Math.round(res));
     }
 
     // ---- Sinh Lực + Tốc (S2 §1): {hpBase, hpGrow, speedBase(1.0), speedGrow(phân số/cấp)}

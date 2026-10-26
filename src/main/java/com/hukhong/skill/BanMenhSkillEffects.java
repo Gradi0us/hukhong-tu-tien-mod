@@ -95,6 +95,9 @@ final class BanMenhSkillEffects {
         }
         Vec3 to = from.add(dir.scale(range));
         SkillEffects.beam(lv, p.getEyePosition().subtract(0, 0.3, 0), to.add(0, 1, 0));
+        SkillEffects.helixBeam(lv, p.position().add(0, 1, 0), to.add(0, 1, 0), 0.5, Math.max(2, range / 2), 36, ParticleTypes.END_ROD);
+        SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, 1f, 0.8f);
+        SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.TRIDENT_RIPTIDE_3.value(), 0.6f, 1.6f);
         p.teleportTo(to.x, p.getY(), to.z); // lướt (kiểm tra va chạm đơn giản: server tự đẩy ra nếu kẹt)
         lv.sendParticles(ParticleTypes.SWEEP_ATTACK, to.x, p.getY(1), to.z, 3, 0.5, 0.3, 0.5, 0);
     }
@@ -111,7 +114,12 @@ final class BanMenhSkillEffects {
             end = hit.getLocation();
             lv.sendParticles(ParticleTypes.END_ROD, t.getX(), t.getY(1), t.getZ(), 25, 0.4, 0.6, 0.4, 0.1);
         }
-        SkillEffects.beam(lv, eye.add(look.scale(0.8)).subtract(0, 0.2, 0), end);
+        Vec3 from = eye.add(look.scale(0.8)).subtract(0, 0.2, 0);
+        SkillEffects.beam(lv, from, end);
+        SkillEffects.helixBeam(lv, from, end, 0.4, Math.max(2, from.distanceTo(end) / 2), 32, ParticleTypes.ENCHANT);
+        SkillEffects.ring(lv, end, 1.0, 14, ParticleTypes.END_ROD);
+        SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_THUNDER, 0.4f, 1.8f);
+        SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.BEACON_POWER_SELECT, 0.9f, 1.5f);
     }
 
     private static void diaLiet(ServerLevel lv, ServerPlayer p, BanMenhSkill s, int level) {
@@ -123,7 +131,15 @@ final class BanMenhSkillEffects {
             t.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, Math.min(80, stun), 6));
             t.setDeltaMovement(t.getDeltaMovement().add(0, 0.4, 0));
         }
-        SkillEffects.ring(lv, p.position().add(0, 0.2, 0), r, 64, ParticleTypes.CAMPFIRE_COSY_SMOKE);
+        SkillEffects.ring(lv, p.position().add(0, 0.2, 0), r, 48, ParticleTypes.CAMPFIRE_COSY_SMOKE);
+        SkillEffects.ringLater(lv, p.position().add(0, 0.2, 0), r * 0.6, 28, 3, ParticleTypes.LAVA);
+        for (int i = 0; i < 10; i++) { // khe nứt
+            double a = i * Math.PI / 5;
+            for (double q = 1; q <= r; q += 1.6)
+                lv.sendParticles(ParticleTypes.FLAME, p.getX() + Math.cos(a) * q, p.getY() + 0.15, p.getZ() + Math.sin(a) * q, 1, 0.05, 0, 0.05, 0.01);
+        }
+        SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(), 0.7f, 0.5f);
+        SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.ANVIL_LAND, 0.7f, 0.4f);
     }
 
     /** Huyết Hải: 6 nhịp, mỗi nhịp coef x Công + hút một phần thành máu. */
@@ -140,7 +156,9 @@ final class BanMenhSkillEffects {
                     healed += dmg * 0.5f;
                 }
                 if (healed > 0) p.heal(Math.min(healed, p.getMaxHealth() * 0.05f));
-                SkillEffects.ring(lv, c.add(0, 0.2, 0), r, 48, ParticleTypes.CRIMSON_SPORE);
+                SkillEffects.ring(lv, c.add(0, 0.2, 0), r, 36, ParticleTypes.CRIMSON_SPORE);
+                SkillEffects.spiral(lv, c, r, 0.5, 2.5, 2, 24, ParticleTypes.DAMAGE_INDICATOR);
+                SkillEffects.layer(lv, c, net.minecraft.sounds.SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_INSIDE, 0.6f, 0.6f);
             });
         }
     }
@@ -151,7 +169,11 @@ final class BanMenhSkillEffects {
         float dmg = (float) (coef * Math.max(StatService.attackPower(p), StatService.spellPower(p)));
         double r = 5 + n;
         for (LivingEntity t : around(lv, p, p.position(), r)) DamageRules.hurtBySkill(p, t, dmg);
-        SkillEffects.ring(lv, p.position().add(0, 0.2, 0), r, 64, ParticleTypes.SOUL_FIRE_FLAME);
+        SkillEffects.ring(lv, p.position().add(0, 0.2, 0), r, 48, ParticleTypes.SOUL_FIRE_FLAME);
+        SkillEffects.ringLater(lv, p.position().add(0, 0.2, 0), r * 0.5, 24, 4, ParticleTypes.SOUL);
+        SkillEffects.spiral(lv, p.position(), r * 0.4, 0.3, 4, 3, 40, ParticleTypes.SOUL_FIRE_FLAME);
+        SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.SOUL_ESCAPE.value(), 1f, 0.6f);
+        SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.WITHER_AMBIENT, 0.5f, 0.7f);
         lv.sendParticles(ParticleTypes.EXPLOSION, p.getX(), p.getY(1), p.getZ(), 1, 0, 0, 0, 0);
     }
 }

@@ -65,13 +65,21 @@ save(noise("#2f2b36", "#25222b", "#3e3946", 3), "block", "dan_lo_bottom.png")
 
 # ---- herbs ----
 def herb(name, stem, leaf, leaf2, flower=None):
-    im = new(); d = ImageDraw.Draw(im)
-    d.line((8, 14, 8, 6), fill=c(stem))
-    d.polygon([(8, 10), (3, 6), (4, 9)], fill=c(leaf))
-    d.polygon([(8, 9), (13, 5), (12, 8)], fill=c(leaf2))
-    d.polygon([(8, 6), (6, 2), (10, 2)], fill=c(leaf))
-    if flower: d.rectangle((7, 1, 9, 3), fill=c(flower))
-    save(outline(im), "item", name + ".png")
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from pixel_shade import mask, render
+    out = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+
+    def layer(fn, col, seed):
+        out.alpha_composite(render(mask(fn), c(col)[:3], seed, outline=False))
+
+    layer(lambda d: d.line((8, 15, 8, 6), fill=255, width=1), stem, 1)
+    layer(lambda d: d.polygon([(8, 11), (2, 6), (3, 10)], fill=255), leaf, 2)
+    layer(lambda d: d.polygon([(8, 10), (14, 5), (13, 9)], fill=255), leaf2, 3)
+    layer(lambda d: d.polygon([(8, 7), (5, 1), (11, 1)], fill=255), leaf, 4)
+    if flower:
+        layer(lambda d: d.ellipse((6, 0, 10, 4), fill=255), flower, 5)
+    save(outline(out), "item", name + ".png")
 
 
 herb("linh_thao", "#2e7d32", "#66bb6a", "#a5d6a7", "#e1f5fe")
@@ -90,21 +98,44 @@ save(outline(im), "item", "di_hoa_chau.png")
 
 
 # ---- pills ----
-def pill(name, body, hi, ring):
-    im = new(); d = ImageDraw.Draw(im)
-    d.ellipse((3, 3, 12, 12), fill=c(body))
-    d.arc((3, 3, 12, 12), 200, 340, fill=c(ring))
-    d.ellipse((5, 5, 7, 7), fill=c(hi))
-    save(outline(im), "item", name + ".png")
+def pill(name, body, hi, ring, shape="round", mark="dot"):
+    """Dan duoc: shading 4 tong (pixel_shade); moi dan mot hinh dang + dau hieu rieng."""
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from pixel_shade import mask, render
+    shapes = {
+        "round": lambda d: d.ellipse((2, 2, 13, 13), fill=255),
+        "diamond": lambda d: d.polygon([(7, 1), (14, 7), (7, 14), (1, 7)], fill=255),
+        "hex": lambda d: d.polygon([(4, 2), (11, 2), (14, 7), (11, 13), (4, 13), (1, 7)], fill=255),
+        "egg": lambda d: d.ellipse((3, 1, 12, 14), fill=255),
+        "square": lambda d: d.rounded_rectangle((2, 2, 13, 13), radius=3, fill=255),
+        "capsule": lambda d: d.rounded_rectangle((1, 4, 14, 11), radius=3, fill=255),
+    }
+    m = mask(shapes[shape])
+    HI, RG = c(hi)[:3], c(ring)[:3]
+    acc = []
+    if mark == "dot":
+        acc = [(5, 5, HI), (6, 5, HI), (5, 6, HI)]
+    elif mark == "cross":
+        acc = [(7, y, RG) for y in range(4, 11)] + [(x, 7, RG) for x in range(4, 11)] + [(5, 4, HI)]
+    elif mark == "swirl":
+        acc = [(6, 5, RG), (7, 5, RG), (8, 6, RG), (8, 8, RG), (7, 9, RG), (5, 8, RG), (5, 6, HI), (4, 4, HI)]
+    elif mark == "bands":
+        acc = [(x, y, RG) for y in (6, 9) for x in range(3, 13)] + [(4, 4, HI), (5, 4, HI)]
+    elif mark == "ring":
+        acc = [(x, y, RG) for x in range(16) for y in range(16) if 9 <= (x - 7.5) ** 2 + (y - 7.5) ** 2 <= 14] + [(5, 5, HI)]
+    elif mark == "flame":
+        acc = [(7, 4, HI), (7, 5, HI), (6, 6, RG), (8, 6, RG), (7, 7, HI), (6, 8, RG), (7, 9, RG), (8, 8, RG)]
+    save(render(m, c(body)[:3], sum(map(ord, name)), speckle=0.0, accents=acc), "item", name + ".png")
 
 
-pill("thong_huyen_dan", "#3f8ae0", "#bbdefb", "#1565c0")
-pill("tu_vuong_dan", "#8e44ad", "#e1bee7", "#4a148c")
-pill("hoang_cuc_dan", "#e6a817", "#fff8e1", "#8d6e00")
-pill("de_hoan_dan", "#d4382c", "#ffcdd2", "#7f0000")
-pill("chi_huyet_dan", "#ef5350", "#ffebee", "#b71c1c")
-pill("hoi_xuan_dan", "#66bb6a", "#e8f5e9", "#1b5e20")
-pill("giai_doc_dan", "#26c6da", "#e0f7fa", "#006064")
+pill("thong_huyen_dan", "#3f8ae0", "#e3f2fd", "#bbdefb", "round", "swirl")
+pill("tu_vuong_dan", "#8e44ad", "#f3e5f5", "#e1bee7", "diamond", "dot")
+pill("hoang_cuc_dan", "#e6a817", "#fff8e1", "#fff3b0", "hex", "ring")
+pill("de_hoan_dan", "#c9302a", "#ffcdd2", "#ffd54f", "square", "flame")
+pill("chi_huyet_dan", "#e53935", "#ffebee", "#ffffff", "capsule", "bands")
+pill("hoi_xuan_dan", "#4caf50", "#e8f5e9", "#c8e6c9", "egg", "cross")
+pill("giai_doc_dan", "#26c6da", "#e0f7fa", "#006064", "round", "bands")
 
 # ---- GUI 256x256, dung 176x166 ----
 g = Image.new("RGBA", (256, 256), (0, 0, 0, 0))

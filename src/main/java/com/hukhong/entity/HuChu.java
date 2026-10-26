@@ -37,7 +37,7 @@ public class HuChu extends Spider implements GeoEntity, HuMob {
         SpawnGroupData r = super.finalizeSpawn(l, d, t, g);
         int lv = HuHoa.levelFor(l, blockPosition(), getRandom());
         entityData.set(LEVEL, lv);
-        HuHoa.applyStats(this, lv, 1.8, 1.5);
+        HuHoa.applyStats(this, lv, 1.8, 1.2);
         return r;
     }
 

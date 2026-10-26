@@ -18,6 +18,9 @@ import net.minecraft.world.item.TridentItem;
 public final class DamageRules {
     private DamageRules() {}
 
+    /** Đòn tay Thể Tu = Công x (1 + FIST_AURA_COEF x Bá Khí%). */
+    public static final double FIST_AURA_COEF = 1.80;
+
     private static boolean skillActive = false;
 
     public static boolean isSkill() { return skillActive; }
@@ -41,7 +44,7 @@ public final class DamageRules {
     /** Đòn tay Thể Tu = Công x (1 + 0.3 x Bá Khí%). */
     public static float fistDamage(ServerPlayer p, CultivationData d) {
         float aura = d.resourceMax() <= 0 ? 0 : (float) d.resource() / d.resourceMax();
-        return (float) (com.hukhong.stats.StatService.attackPower(p) * (1f + 0.3f * aura));
+        return (float) (com.hukhong.stats.StatService.attackPower(p) * (1f + FIST_AURA_COEF * aura));
     }
 
     /** Trả sát thương cuối cho đòn của người chơi attacker (đã gồm Công, Bạo Kích, Hấp Huyết). */

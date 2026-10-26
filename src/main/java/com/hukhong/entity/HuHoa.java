@@ -28,21 +28,34 @@ public final class HuHoa {
 
     public static final String TAG_LEVEL = "HuLevel";
     /** Vong 1: 0..R1 block -> cap 1-15; vong 2: R1..R2 -> cap 15-30. */
-    static final double R1 = 1500, R2 = 3500;
+    static final double R1 = 1500, R2 = 3500, R3 = 12000;
+    /** Vòng 3 (Bước 27): R2..R3 -> cấp 30-100 để người chơi cấp cao còn quái cùng cấp (trước đây trần 30). */
+    public static final int MAX_MOB_LEVEL = 100;
 
     public static int levelFor(ServerLevelAccessor lvl, BlockPos pos, net.minecraft.util.RandomSource r) {
         BlockPos sp = lvl.getLevel().getSharedSpawnPos();
         double dx = pos.getX() - sp.getX(), dz = pos.getZ() - sp.getZ();
         double d = Math.sqrt(dx * dx + dz * dz);
-        int base = d < R1 ? 1 + (int) (14 * d / R1) : 15 + (int) Math.min(15, 15 * (d - R1) / (R2 - R1));
-        return Math.max(1, Math.min(30, base + r.nextInt(3) - 1));
+        int base = d < R1 ? 1 + (int) (14 * d / R1)
+                : d < R2 ? 15 + (int) (15 * (d - R1) / (R2 - R1))
+                : 30 + (int) Math.min(MAX_MOB_LEVEL - 30, (MAX_MOB_LEVEL - 30) * (d - R2) / (R3 - R2));
+        return Math.max(1, Math.min(MAX_MOB_LEVEL, base + r.nextInt(3) - 1));
     }
 
     /** He so cap: hp x(1+0.38(L-1)), sat thuong x(1+0.10(L-1)), giap +0.25/cap (toi da 20), toc do +0.5%/cap (toi da +30%). */
-    public static double hpScale(int level) { return 1 + HP_PER_LEVEL * (level - 1); }
-    /** Chỉnh ở Bước 9 (R5-balance-p0): 0.12 -> 0.38 để người cùng cấp cần 6-10 đòn kỹ năng. */
-    public static final double HP_PER_LEVEL = 0.38;
-    public static double dmgScale(int level) { return 1 + 0.10 * (level - 1); }
+    public static double hpScale(int level) {
+        int g = Math.max(0, level - 1);
+        double s = HP_BASE + HP_LIN * g + HP_QUAD * g * g + HP_CUBE * g * g * g;
+        return level >= com.hukhong.stats.StatService.THAN_LEVEL ? s * THAN_HP_MUL : s;
+    }
+    /** Bước 27 (R5 mở rộng): đường cong HP quái theo cấp, khớp sát thương người chơi (BalanceSimTest). THAN_HP_MUL: người cấp 100 có bộ chỉ số Thần. */
+    public static final double HP_BASE = 2.48, HP_LIN = 0.713, HP_QUAD = -0.003817, HP_CUBE = 0.0000929, THAN_HP_MUL = 2.0;
+    public static double dmgScale(int level) {
+        int g = Math.max(0, level - 1);
+        return 1 + 0.10 * g + DMG_QUAD * g * g;
+    }
+    /** Bước 27: thành phần bậc hai để quái cấp cao còn đe dọa (BalanceSimTest: 8-70 đòn hạ người). */
+    public static final double DMG_QUAD = 0.0017;
 
     /** Sat thuong ky nang: 3 x dmgScale x mult. */
     public static double skillDamage(int level, double mult) { return 3.0 * dmgScale(level) * mult; }
@@ -86,11 +99,49 @@ public final class HuHoa {
                     m.getRandomX(0.6), m.getRandomY(), m.getRandomZ(0.6), 0, 0.05, 0);
     }
 
-    /** w * E(L)/200, E(L)=40*L^2.15; x0.1 neu quai thap hon nguoi choi >= 10 cap. */
+    /** Chia EXP mỗi quái (Bước 27: chỉnh để ~500h tới cấp 100 không tính vật phẩm đột phá). */
+    public static final double EXP_DIV = 540.0;
+
+    /** w * E(L)/EXP_DIV, E(L)=40*L^2.15; x0.1 neu quai thap hon nguoi choi >= 10 cap. */
     public static long exp(double w, int level, int playerLevel) {
-        double e = 40 * Math.pow(level, 2.15) / 200.0;
+        double e = 40 * Math.pow(level, 2.15) / EXP_DIV;
         double f = level <= playerLevel - 10 ? 0.1 : 1.0;
         return Math.round(w * e * f);
+    }
+
+    /** Trần max_health vanilla (RangedAttribute). HP thiết kế vượt trần được quy đổi thành giảm sát thương nhận. */
+    public static final double VANILLA_HP_CAP = 1024.0;
+
+    /** HP thiết kế (chưa bị kẹp 1024) = base cộng ADD_VALUE, nhân ADD_MULTIPLIED_BASE rồi TOTAL. */
+    public static double designHp(LivingEntity e) {
+        var inst = e.getAttribute(Attributes.MAX_HEALTH);
+        if (inst == null) return e.getMaxHealth();
+        double base = inst.getBaseValue(), v = base;
+        for (var m : inst.getModifiers()) if (m.operation() == net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE) v += m.amount();
+        double sum = 0;
+        for (var m : inst.getModifiers()) if (m.operation() == net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE) sum += m.amount();
+        v += base * sum;
+        for (var m : inst.getModifiers()) if (m.operation() == net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL) v *= 1 + m.amount();
+        return v;
+    }
+
+    /** Hệ số (<= 1) nhân sát thương nhận / lượng hồi tuyệt đối: HP thiết kế / HP thực (kẹp 1024) = số lần "dày" hơn. */
+    public static float ehpScale(LivingEntity e) {
+        double real = e.getMaxHealth();
+        double design = designHp(e);
+        return design <= real || real <= 0 ? 1f : (float) (real / design);
+    }
+
+    private static boolean scaledByDesignHp(LivingEntity e) {
+        return e instanceof HuMob || e instanceof com.hukhong.chg.ChapHanhGia || e instanceof com.hukhong.endgame.NguyenThuyTichDiet;
+    }
+
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+    public static void onIncomingDamage(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent e) {
+        LivingEntity v = e.getEntity();
+        if (v.level().isClientSide || !scaledByDesignHp(v)) return;
+        float s = ehpScale(v);
+        if (s < 1f) e.setAmount(e.getAmount() * s);
     }
 
     @SubscribeEvent

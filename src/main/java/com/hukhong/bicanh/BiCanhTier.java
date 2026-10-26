@@ -5,11 +5,11 @@ import java.util.Locale;
 /** 5 cấp nguy hiểm của Bí Cảnh (S4 §5.1). Thuần Java, kiểm thử được. */
 public enum BiCanhTier {
     //   minLv maxLv phút party waves mobLv weight
-    BACH(1, 25, 20, 4, 2, 8, 40),
-    HOANG(15, 45, 25, 5, 3, 14, 28),
-    TU(35, 65, 30, 6, 3, 20, 18),
-    HAC(55, 85, 40, 8, 4, 26, 10),
-    HONG(75, 100, 45, 10, 5, 30, 4);
+    BACH(1, 25, 20, 4, 2, 10, 40),
+    HOANG(15, 45, 25, 5, 3, 28, 28),
+    TU(35, 65, 30, 6, 3, 48, 18),
+    HAC(55, 85, 40, 8, 4, 68, 10),
+    HONG(75, 100, 45, 10, 5, 88, 4);
 
     public final int minLevel, maxLevel, minutes, maxParty, waves, mobLevel, weight;
 

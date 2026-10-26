@@ -24,7 +24,7 @@ public final class ChgKit {
     public static final double[] PHASE_DMG = {1.0, 1.15, 1.35};
     public static final double[] PHASE_SPEED = {1.0, 1.1, 1.2};
     public static final double[] PHASE_CD = {1.0, 0.8, 0.6};
-    public static final double SWIFT_CD_EXTRA = 0.75, ARMOR_BONUS = 10, REGEN_FRAC_PER_SEC = 0.004, LEECH_FRAC = 0.25;
+    public static final double SWIFT_CD_EXTRA = 0.75, ARMOR_BONUS = 4, REGEN_FRAC_PER_SEC = 0.004, LEECH_FRAC = 0.25;
     public static final int LAIR_RADIUS = 18, LAIR_REVEAL_DIST = 80, LAIR_TRIGGER_DIST = 22;
     public static final int LAIR_RESPAWN_TICKS = 24000, EVENT_COOLDOWN_TICKS = 36000, EVENT_CHECK_TICKS = 1200;
     public static final double EVENT_CHANCE = 0.05;
@@ -34,19 +34,19 @@ public final class ChgKit {
     }
 
     private static final Def[] DEFS = {
-            new Def(1, "thach_hong", 67, 3200, 24, 18, 0.25, 100, Passive.ARMOR, new Skill[]{
+            new Def(1, "thach_hong", 67, 71000, 24, 6, 0.25, 100, Passive.ARMOR, new Skill[]{
                     s("da_chan", Shape.AOE, 7, 1.3, 30, 1, Fx.KNOCK, "skill_a"),
                     s("dia_chan", Shape.AOE, 13, 0.8, 40, 2, Fx.SLOW, "skill_b"),
                     s("da_mua", Shape.RAIN, 8, 1.0, 45, 3, Fx.NONE, "skill_c")}),
-            new Def(2, "bach_tu_am", 78, 4400, 28, 20, 0.28, 90, Passive.REGEN, new Skill[]{
+            new Def(2, "bach_tu_am", 78, 86000, 28, 7, 0.28, 90, Passive.REGEN, new Skill[]{
                     s("quang_tru", Shape.RAIN, 8, 0.9, 35, 1, Fx.BLIND, "skill_a"),
                     s("dong_hoa", Shape.AOE, 10, 0.6, 40, 2, Fx.WEAK, "skill_b"),
                     s("hoi_sinh_quang", Shape.HEAL, 6, 0.5, 50, 3, Fx.WEAK, "skill_c")}),
-            new Def(3, "lang_uyen", 86, 5600, 36, 22, 0.32, 80, Passive.SWIFT, new Skill[]{
+            new Def(3, "lang_uyen", 86, 97000, 36, 8, 0.32, 80, Passive.SWIFT, new Skill[]{
                     s("kiem_thiet", Shape.DASH, 3.5, 1.4, 20, 1, Fx.KNOCK, "skill_a"),
                     s("kiem_vu", Shape.RAIN, 9, 1.0, 35, 2, Fx.NONE, "skill_b"),
                     s("kiem_vuc", Shape.AOE, 15, 1.1, 70, 3, Fx.SLOW, "skill_c")}),
-            new Def(4, "co_vo_tan", 98, 8000, 48, 26, 0.30, 90, Passive.LEECH, new Skill[]{
+            new Def(4, "co_vo_tan", 98, 130000, 48, 10, 0.30, 90, Passive.LEECH, new Skill[]{
                     s("huyet_hap", Shape.DRAIN, 8, 0.9, 35, 1, Fx.WEAK, "skill_a"),
                     s("trieu_ma", Shape.SUMMON, 0, 0, 40, 2, Fx.NONE, "skill_b"),
                     s("tam_ma", Shape.AOE, 12, 0.7, 45, 3, Fx.NAUSEA, "skill_c")}),

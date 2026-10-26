@@ -27,6 +27,7 @@ public final class HuRenderers {
                 c -> glow(new GeoEntityRenderer<HuChu>(c, new DefaultedEntityGeoModel<>(rl("hu_chu")))));
         e.registerEntityRenderer(ModEntities.HU_VUONG.get(),
                 c -> glow(new GeoEntityRenderer<com.hukhong.entity.HuVuong>(c, new DefaultedEntityGeoModel<>(rl("hu_vuong")))));
+        e.registerEntityRenderer(ModEntities.TAM_MA.get(), TamMaRenderer::new);
     }
 
     /** Thêm glowmask nếu có <id>_glowmask.png (kiểm tra lười + cache, thiếu file thì bỏ qua). */

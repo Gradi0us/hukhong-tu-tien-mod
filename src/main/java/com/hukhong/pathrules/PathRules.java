@@ -26,6 +26,10 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 /** Luật cứng theo đạo (Đạo Tu, Thể Tu) + hồi tài nguyên + thiền. */
 @EventBusSubscriber(modid = HuKhong.MODID)
 public final class PathRules {
+    /** Hồi tài nguyên mỗi giây (x resource_regen). Bước 27: BalanceSimTest dùng các hằng này. */
+    public static final int DAO_REGEN = 5, DAO_MEDITATE_REGEN = 14, KIEM_REGEN_COMBAT = 9, KIEM_REGEN_IDLE = 8;
+    public static final int THE_HIT_SMALL = 1, THE_HIT_BIG = 3, THE_MELEE_GAIN = 2, MA_HIT_GAIN = 1;
+
     private PathRules() {}
 
     private static boolean has(ServerPlayer p, Path path) {
@@ -49,7 +53,7 @@ public final class PathRules {
                 }
                 if (after > 0f && has(atk, Path.MA)) MaRules.onHit(atk);
                 if (after > 0f && !DamageRules.isSkill() && src.getDirectEntity() == atk && has(atk, Path.THE)) {
-                    Resources.add(atk, 2);
+                    Resources.add(atk, THE_MELEE_GAIN);
                 }
             }
         }
@@ -60,7 +64,7 @@ public final class PathRules {
         }
         if (target instanceof ServerPlayer tp && has(tp, Path.THE) && e.getAmount() > 0f) {
             tp.getData(SkillAttachments.STATE).lastCombat = tp.level().getGameTime();
-            Resources.add(tp, e.getAmount() < tp.getMaxHealth() * 0.03f ? 1 : 3);
+            Resources.add(tp, e.getAmount() < tp.getMaxHealth() * 0.03f ? THE_HIT_SMALL : THE_HIT_BIG);
         }
     }
 
@@ -94,8 +98,8 @@ public final class PathRules {
 
         if (now % 20 == 0) {
             double rg = com.hukhong.stats.StatService.regen(p);
-            if (dao) Resources.add(p, (int) Math.round((med ? 14 : 3) * rg));
-            if (d.paths().contains(Path.KIEM)) Resources.add(p, (int) Math.round((now - st.lastCombat > 60 ? 8 : 4) * rg));
+            if (dao) Resources.add(p, (int) Math.round((med ? DAO_MEDITATE_REGEN : DAO_REGEN) * rg));
+            if (d.paths().contains(Path.KIEM)) Resources.add(p, (int) Math.round((now - st.lastCombat > 60 ? KIEM_REGEN_IDLE : KIEM_REGEN_COMBAT) * rg));
             if (the) {
                 if (med) {
                     if (d.resource() < 60) Resources.add(p, Math.min((int) Math.round(5 * rg), 60 - d.resource()));
