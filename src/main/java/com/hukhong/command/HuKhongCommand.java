@@ -57,6 +57,15 @@ public final class HuKhongCommand {
                     msg(c.getSource(), "give an_hon_dai + 5 hon_tinh");
                     return 1;
                 }))
+                .then(Commands.literal("give_bone")
+                        .executes(c -> giveBone(c.getSource(), null, 1))
+                        .then(Commands.argument("id", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .suggests((cx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.stream(com.hukhong.honcot.Bone.values()).map(com.hukhong.honcot.Bone::id), b))
+                                .executes(c -> giveBone(c.getSource(), com.mojang.brigadier.arguments.StringArgumentType.getString(c, "id"), 1))
+                                .then(Commands.argument("tier", IntegerArgumentType.integer(0, 2))
+                                        .executes(c -> giveBone(c.getSource(), com.mojang.brigadier.arguments.StringArgumentType.getString(c, "id"),
+                                                IntegerArgumentType.getInteger(c, "tier"))))))
                 .then(Commands.literal("core_unstuck").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     p.setData(com.hukhong.cores.CoreAttachments.CORE_SLOTS, com.hukhong.cores.CoreService.get(p).withStuckCleared());
@@ -108,6 +117,10 @@ public final class HuKhongCommand {
                         })))
                         .then(Commands.literal("lo").then(Commands.literal("hapthu").executes(c -> setLo(c.getSource(), true)))
                                 .then(Commands.literal("thuong").executes(c -> setLo(c.getSource(), false)))))
+                .then(Commands.literal("apostle")
+                        .executes(c -> apostle(c.getSource(), -1))
+                        .then(Commands.argument("variant", IntegerArgumentType.integer(0, 2))
+                                .executes(c -> apostle(c.getSource(), IntegerArgumentType.getInteger(c, "variant")))))
                 .then(Commands.literal("age").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     AgeData a = p.getData(ModAttachments.AGE);
@@ -124,6 +137,23 @@ public final class HuKhongCommand {
         m.absorb = absorb;
         if (!absorb) m.huyetTe = 0;
         msg(src, "ma lo=" + (absorb ? "hapthu" : "thuong"));
+        return 1;
+    }
+
+    private static int apostle(CommandSourceStack src, int v) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        var s = com.hukhong.story.StoryService.spawnNear(src.getPlayerOrException(), v);
+        msg(src, s == null ? "spawn failed" : "apostle variant=" + s.variant() + " level=" + s.suLevel());
+        return 1;
+    }
+
+    /** /hukhong give_bone [id] [tier 0..2]: Hồn Cốt thử (không id = ngẫu nhiên). */
+    private static int giveBone(CommandSourceStack src, String id, int tier) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        com.hukhong.honcot.Bone b = id == null ? null : com.hukhong.honcot.Bone.byId(id);
+        if (id != null && b == null) { src.sendFailure(Component.literal("unknown bone: " + id)); return 0; }
+        var st = com.hukhong.honcot.HonCotEvents.testStack(p.getRandom(), b, tier);
+        if (!p.getInventory().add(st)) p.drop(st, false);
+        msg(src, "give " + st.getHoverName().getString());
         return 1;
     }
 

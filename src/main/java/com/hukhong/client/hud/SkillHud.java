@@ -77,17 +77,21 @@ public final class SkillHud {
             int x = x0 + i * (SIZE + GAP);
             Skill s = Skill.of(sp, i);
             g.fill(x, y, x + SIZE, y + SIZE, stance ? 0xCC000000 : 0x88000000);
-            ResourceLocation icon = tex(s == null ? "locked" : s.icon);
+            com.hukhong.skill.BanMenhSkill bm = i == 2 ? com.hukhong.skill.BanMenhSkill.of(sp, d.level()) : null;
+            boolean bones = i == 2 && bm == null && com.hukhong.honcot.ClientBones.get().count() > 0;
+            boolean has = s != null || bm != null || bones;
+            int baseCost = s != null ? s.cost : bm != null ? bm.cost : 50;
+            ResourceLocation icon = tex(s != null ? s.icon : bm != null ? bm.icon : bones ? "bm_bone" : "locked");
             if (exists(icon)) g.blit(icon, x + 2, y + 2, 0, 0, 16, 16, 16, 16);
             else g.fill(x + 2, y + 2, x + 18, y + 18, s == null ? 0xFF444444 : (sp.argb & 0x00FFFFFF) | 0xFF000000);
-            if (s != null) {
+            if (has) {
                 int rem = ClientSkillState.remaining(i);
                 if (rem > 0) {
                     int h = Math.max(1, 16 * rem / ClientSkillState.total(i));
                     g.fill(x + 2, y + 2, x + 18, y + 2 + h, 0xBB000000);
                     String sec = String.valueOf((rem + 19) / 20);
                     g.drawString(mc.font, sec, x + (SIZE - mc.font.width(sec)) / 2, y + 6, 0xFFFFFFFF, true);
-                } else if (d.resource() < Resources.costFor(d, s.cost)) {
+                } else if (d.resource() < Resources.costFor(d, baseCost)) {
                     g.fill(x + 2, y + 2, x + 18, y + 18, 0x66FF0000);
                 }
             }

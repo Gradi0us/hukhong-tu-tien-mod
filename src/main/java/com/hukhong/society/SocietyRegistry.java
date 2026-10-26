@@ -43,6 +43,10 @@ public final class SocietyRegistry {
     public static final DeferredItem<BlockItem> TONG_MON_BANG_ITEM = ITEMS.registerSimpleBlockItem("tong_mon_bang", TONG_MON_BANG);
     public static final DeferredItem<BlockItem> THANH_BANG_ITEM = ITEMS.registerSimpleBlockItem("thanh_bang", THANH_BANG);
 
+    /** Lệnh bài Huyết Ảnh: manh mối vật lý đi kèm tin đồn tông ẩn. */
+    public static final DeferredItem<net.minecraft.world.item.Item> HUYET_ANH_LENH = ITEMS.registerSimpleItem("huyet_anh_lenh",
+            new net.minecraft.world.item.Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE));
+
     public static final Supplier<MenuType<SectMenu>> SECT_MENU =
             MENUS.register("sect", () -> IMenuTypeExtension.create(SectMenu::new));
     public static final Supplier<MenuType<CityMenu>> CITY_MENU =
@@ -63,6 +67,7 @@ public final class SocietyRegistry {
                 e.accept(LINH_KHI_DAI_ITEM.get());
                 e.accept(TONG_MON_BANG_ITEM.get());
                 e.accept(THANH_BANG_ITEM.get());
+                e.accept(HUYET_ANH_LENH.get());
             }
         });
     }

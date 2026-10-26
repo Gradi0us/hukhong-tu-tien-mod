@@ -51,7 +51,7 @@ public final class SocietyScreens {
         SectScreen(SectMenu m, Inventory inv, Component title) {
             super(m, inv, title);
             imageWidth = 236;
-            imageHeight = 176;
+            imageHeight = 196;
             inventoryLabelY = 10000;
             titleLabelY = 8;
         }
@@ -67,17 +67,19 @@ public final class SocietyScreens {
                 if (s.applyCode() == SectMath.OK) btn("hukhong.sect.btn.apply", SectMenu.B_APPLY, bx, y, 100);
                 if (s.boardSect().equals(s.invite())) btn("hukhong.sect.btn.accept", SectMenu.B_ACCEPT, bx + 106, y, 106);
             } else {
-                btn("hukhong.sect.btn.leave", SectMenu.B_LEAVE, bx + 130, topPos + 148, 82);
+                btn("hukhong.sect.btn.leave", SectMenu.B_LEAVE, bx + 130, topPos + 168, 82);
                 if (here) {
                     if (s.quest().isEmpty()) {
                         btn("hukhong.sect.btn.quest_kill", SectMenu.B_KILL, bx, y, 100);
                         btn("hukhong.sect.btn.quest_herb", SectMenu.B_HERB, bx + 106, y, 106);
+                        btn("hukhong.sect.btn.chain", SectMenu.B_CHAIN, bx, y + 22, 100);
                     } else {
                         boolean done = s.need() > 0 && s.progress() >= s.need();
                         if (done) btn("hukhong.sect.btn.claim", SectMenu.B_CLAIM, bx, y, 100);
-                        else if (SectMath.Q_HERB.equals(s.quest())) btn("hukhong.sect.btn.submit", SectMenu.B_SUBMIT, bx, y, 100);
+                        else if (SectMath.Q_HERB.equals(SectMath.questKind(s.quest(), s.chain()))) btn("hukhong.sect.btn.submit", SectMenu.B_SUBMIT, bx, y, 100);
                         btn("hukhong.sect.btn.abandon", SectMenu.B_ABANDON, bx + 106, y, 106);
                     }
+                    if (s.trial() == 1) btn("hukhong.sect.btn.daibi", SectMenu.B_DAIBI, bx + 106, y + 22, 106);
                 }
             }
         }
@@ -126,16 +128,23 @@ public final class SocietyScreens {
                 g.drawString(font, Component.translatable("hukhong.sect.next_rank", Component.translatable(nx.key()),
                         SectMath.rankLevelNeeded(mine.tier(), nx), SectMath.rankChNeeded(mine.tier(), nx)), 12, y, DIM, false);
             }
+            y += 12;
+            g.drawString(font, Component.translatable("hukhong.sect.wallet_line", s.wallet(), s.daiBi(),
+                    mine == null ? 0 : SectMath.altarFeePerHour(mine.tier()), mine == null ? 0 : SectMath.seats(mine.tier())), 12, y, DIM, false);
             y += 14;
             if (!s.memberSect().equals(s.boardSect())) {
                 g.drawString(font, Component.translatable("hukhong.sect.other_board"), 12, y, BAD, false);
                 return;
             }
+            if (s.trial() == 2) g.drawString(font, Component.translatable("hukhong.sect.trial.running"), 12, y + 36, GOLD, false);
+            else if (s.trial() == 0 && s.daiBi() < 2) g.drawString(font, Component.translatable("hukhong.sect.trial.locked", s.daiBi() + 1), 12, y + 36, DIM, false);
             if (s.quest().isEmpty()) {
                 g.drawString(font, Component.translatable("hukhong.sect.no_quest"), 12, y, DIM, false);
             } else {
                 boolean done = s.progress() >= s.need();
                 g.drawString(font, Component.translatable("hukhong.sect.quest." + s.quest()), 12, y, GOLD, false);
+                if (SectMath.Q_CHAIN.equals(s.quest()))
+                    g.drawString(font, Component.translatable("hukhong.sect.chain." + s.memberSect() + "." + Math.min(s.chain(), 2)), 12, y + 24, DIM, false);
                 g.drawString(font, Component.translatable("hukhong.sect.quest_progress_line", Math.min(s.progress(), s.need()), s.need()), 12, y + 12,
                         done ? GOOD : TEXT, false);
             }

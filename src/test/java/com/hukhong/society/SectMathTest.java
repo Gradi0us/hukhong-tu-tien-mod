@@ -79,7 +79,7 @@ class SectMathTest {
         assertEquals(12, SectMath.questNeed(SectMath.Q_KILL, Tier.DIA));
         assertEquals(60, SectMath.questCh(SectMath.Q_KILL, Tier.NHAN));
         assertEquals(90, SectMath.questCh(SectMath.Q_KILL, Tier.DIA));
-        assertEquals(4, SectDef.ALL.stream().filter(SectDef::buildable).count());
+        assertEquals(7, SectDef.ALL.stream().filter(SectDef::buildable).count());
         assertEquals(7, SectDef.ALL.size());
     }
 
@@ -92,5 +92,56 @@ class SectMathTest {
         SectData n = d.withEarned(4, 10);
         assertEquals(160, n.totalCh());
         assertEquals(10, n.earnedIn(4));
+        assertEquals(160, n.wallet());
+    }
+
+    @Test
+    void daiBiGatesHigherRanks() {
+        assertEquals(SectMath.Rank.NOI, SectMath.rankFor(Tier.NHAN, 70, 99999, 0));
+        assertEquals(SectMath.Rank.CHAN_TRUYEN, SectMath.rankFor(Tier.NHAN, 70, 99999, 1));
+        assertEquals(SectMath.Rank.TRUONG_LAO, SectMath.rankFor(Tier.NHAN, 70, 99999, 2));
+        assertEquals(SectMath.Rank.CHAN_TRUYEN, SectMath.rankFor(Tier.NHAN, 40, 3000, 2));
+    }
+
+    @Test
+    void trialTargetNeedsLevelAndCh() {
+        assertNull(SectMath.trialTarget(Tier.NHAN, 20, 400, 0));
+        assertEquals(SectMath.Rank.CHAN_TRUYEN, SectMath.trialTarget(Tier.NHAN, 40, 3000, 0));
+        assertEquals(SectMath.Rank.TRUONG_LAO, SectMath.trialTarget(Tier.NHAN, 60, 12000, 1));
+        assertNull(SectMath.trialTarget(Tier.NHAN, 99, 99999, 2));
+        assertTrue(SectMath.trialKills(Tier.THIEN, 1) > SectMath.trialKills(Tier.NHAN, 0));
+    }
+
+    @Test
+    void hiddenSectNeedsInviteAndBadName() {
+        SectDef h = def("huyet_anh_ma_mon");
+        assertTrue(h.hidden());
+        assertEquals(SectMath.NEED_INVITE, SectMath.checkHidden(h, false, 5));
+        assertEquals(SectMath.NO_BAD_NAME, SectMath.checkHidden(h, true, 0));
+        assertEquals(SectMath.OK, SectMath.checkHidden(h, true, 1));
+        assertEquals(SectMath.OK, SectMath.checkHidden(def("ba_the_mon"), false, 0));
+        assertEquals(SectMath.OK, SectMath.check(h, 10, Aptitude.C, 30, Set.of(Path.MA), true, 2));
+        assertEquals(SectMath.NEED_INVITE, SectMath.check(h, 10, Aptitude.C, 30, Set.of(Path.MA), false, 2));
+    }
+
+    @Test
+    void altarSeatsAndFee() {
+        AltarSeats s = new AltarSeats();
+        java.util.UUID a = java.util.UUID.randomUUID(), b = java.util.UUID.randomUUID();
+        assertTrue(s.tryTake("x", a, 1));
+        assertTrue(s.tryTake("x", a, 1));
+        assertFalse(s.tryTake("x", b, 1));
+        s.release(a);
+        assertTrue(s.tryTake("x", b, 1));
+        assertEquals(70, SectMath.chargeFee(100, 30));
+        assertEquals(-1, SectMath.chargeFee(10, 30));
+    }
+
+    @Test
+    void chainQuestEscalates() {
+        assertEquals(SectMath.Q_KILL, SectMath.questKind(SectMath.Q_CHAIN, 0));
+        assertEquals(SectMath.Q_HERB, SectMath.questKind(SectMath.Q_CHAIN, 1));
+        assertTrue(SectMath.questNeed(SectMath.Q_CHAIN, Tier.NHAN, 2) > SectMath.questNeed(SectMath.Q_CHAIN, Tier.NHAN, 0));
+        assertTrue(SectMath.questCh(SectMath.Q_CHAIN, Tier.NHAN, 0) > SectMath.questCh(SectMath.Q_KILL, Tier.NHAN));
     }
 }

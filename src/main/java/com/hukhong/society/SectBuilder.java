@@ -29,6 +29,9 @@ public final class SectBuilder {
             case "dan_dinh_tong" -> Blocks.RED_NETHER_BRICKS;
             case "thien_cong_khi_cac" -> Blocks.POLISHED_ANDESITE;
             case "thien_kiem_tong" -> Blocks.QUARTZ_BRICKS;
+            case "quang_minh_dao_cung" -> Blocks.SMOOTH_QUARTZ;
+            case "van_tuong_thanh_tong" -> Blocks.PURPUR_BLOCK;
+            case "huyet_anh_ma_mon" -> Blocks.CRIMSON_PLANKS;
             default -> Blocks.STONE_BRICKS;
         };
     }
@@ -82,6 +85,24 @@ public final class SectBuilder {
             s.setWaxed(true);
             s.setChanged();
         }
+        decorate(l, def.id(), cx, y0, cz);
         return new BlockPos(cx, y0, cz);
+    }
+
+    /** Nét riêng của từng sơn môn (4 góc sân, ngoài bệ trung tâm và chính điện). */
+    private static void decorate(ServerLevel l, String id, int cx, int y0, int cz) {
+        for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) {
+            int x = cx + sx * 9, z = cz + sz * 4 + 5;
+            switch (id) {
+                case "ba_the_mon" -> { set(l, x, y0 + 1, z, Blocks.HAY_BLOCK); set(l, x, y0 + 2, z, Blocks.CARVED_PUMPKIN); set(l, x, y0 + 1, z + 2, Blocks.ANVIL); }
+                case "dan_dinh_tong" -> { set(l, x, y0 + 1, z, Blocks.CAULDRON); set(l, x, y0 + 1, z + 2, Blocks.BREWING_STAND); set(l, x + sx, y0 + 1, z, Blocks.SMOKER); }
+                case "thien_cong_khi_cac" -> { set(l, x, y0 + 1, z, Blocks.SMITHING_TABLE); set(l, x, y0 + 1, z + 2, Blocks.GRINDSTONE); set(l, x + sx, y0 + 1, z, Blocks.IRON_BLOCK); }
+                case "thien_kiem_tong" -> { for (int h = 1; h <= 4; h++) set(l, x, y0 + h, z, Blocks.QUARTZ_PILLAR); set(l, x, y0 + 5, z, Blocks.LIGHTNING_ROD); }
+                case "quang_minh_dao_cung" -> { set(l, x, y0 + 1, z, Blocks.GOLD_BLOCK); set(l, x, y0 + 2, z, Blocks.GLOWSTONE); set(l, x, y0 + 3, z, Blocks.WHITE_STAINED_GLASS); }
+                case "van_tuong_thanh_tong" -> { for (int h = 1; h <= 3; h++) set(l, x, y0 + h, z, Blocks.AMETHYST_BLOCK); set(l, x, y0 + 4, z, Blocks.AMETHYST_CLUSTER); set(l, x + sx, y0 + 1, z, Blocks.LECTERN); }
+                case "huyet_anh_ma_mon" -> { set(l, x, y0, z, Blocks.CRIMSON_NYLIUM); set(l, x, y0 + 1, z, Blocks.RED_NETHER_BRICK_WALL); set(l, x, y0 + 2, z, Blocks.SOUL_LANTERN); set(l, x, y0 + 1, z + 2, Blocks.REDSTONE_BLOCK); }
+                default -> { }
+            }
+        }
     }
 }

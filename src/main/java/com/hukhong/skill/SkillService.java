@@ -55,6 +55,11 @@ public final class SkillService {
         SkillState st = state(p);
         if (!st.stance) return; // server chỉ nhận cast khi thế bật
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
+        if (slot == 2) { // phím R: Bản Mệnh / Vạn Cốt Cộng Minh
+            BanMenhSkillEffects.castR(p, st);
+            sync(p);
+            return;
+        }
         Skill s = Skill.of(Skill.skillPath(d, st.page), slot);
         if (s == null) return;
         if (com.hukhong.pathrules.MaRules.isLost(p)) { // Mất Kiểm Soát: khóa phím kỹ năng
@@ -80,7 +85,7 @@ public final class SkillService {
         for (int i = 0; i < 4; i++) {
             Skill s = Skill.of(Skill.skillPath(p.getData(ModAttachments.CULTIVATION), st.page), i);
             rem.add((int) Math.max(0, st.cooldownEnd[i] - now));
-            tot.add(s == null ? 1 : s.cooldownTicks);
+            tot.add(i == 2 ? Math.max(1, st.rTotal) : s == null ? 1 : s.cooldownTicks);
         }
         PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot, st.page));
     }

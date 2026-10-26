@@ -33,6 +33,8 @@ public class ProfileScreen extends Screen {
     private static final int GOLD = 0xFFFFD34F, GREEN = 0xFF55FF55, GREY = 0xFF888888;
     private static final int ROW = 14, TAB_H = 14;
 
+    private static final int TABS = 4;
+    private final List<int[]> boneRows = new ArrayList<>(); // {y, slot}
     private int tab = 0;
     private double scroll = 0;
     private int x0, y0, pw, ph, cx, cy, cw, ch; // khung + vùng nội dung
@@ -67,6 +69,7 @@ public class ProfileScreen extends Screen {
         return switch (i) {
             case 0 -> t("hukhong.profile.tab.stats", "Chỉ số");
             case 1 -> t("hukhong.profile.tab.cores", "Lõi");
+            case 3 -> t("hukhong.profile.tab.bones", "Hồn Cốt");
             default -> t("hukhong.profile.tab.systems", "Hệ");
         };
     }
@@ -79,8 +82,8 @@ public class ProfileScreen extends Screen {
         g.fill(x0, y0, x0 + pw, y0 + ph, 0xEE111119);
         g.drawCenteredString(font, title, width / 2, y0 + 6, GOLD);
 
-        int tw = pw / 3 - 6;
-        for (int i = 0; i < 3; i++) {
+        int tw = pw / TABS - 6;
+        for (int i = 0; i < TABS; i++) {
             int tx = x0 + 8 + i * (tw + 6), ty = y0 + 20;
             boolean sel = i == tab, hov = mx >= tx && mx < tx + tw && my >= ty && my < ty + TAB_H;
             g.fill(tx, ty, tx + tw, ty + TAB_H, sel ? 0xFF3A3A55 : hov ? 0xFF2A2A3A : 0xFF1C1C28);
@@ -94,6 +97,7 @@ public class ProfileScreen extends Screen {
         contentH = switch (tab) {
             case 0 -> renderStats(g);
             case 1 -> renderCores(g, mx, my);
+            case 3 -> renderBones(g, mx, my);
             default -> renderSystems(g);
         };
         g.disableScissor();
@@ -254,6 +258,42 @@ public class ProfileScreen extends Screen {
         return y - top;
     }
 
+    // ------------------------------------------------------------------ tab 3 (Hồn Cốt)
+    private int renderBones(GuiGraphics g, int mx, int my) {
+        int top = cy - (int) scroll;
+        boneRows.clear();
+        var slots = com.hukhong.honcot.ClientBones.get();
+        int y = top;
+        for (var bs : com.hukhong.honcot.BoneSlot.values()) {
+            var st = slots.get(bs);
+            boolean hov = mx >= cx && mx < cx + cw && my >= Math.max(y, cy) && my < Math.min(y + ROW * 2, cy + ch);
+            if (hov) g.fill(cx, y, cx + cw, y + ROW * 2, 0x33FFFFFF);
+            g.drawString(font, Component.translatable(bs.langKey()), cx + 4, y + 3, 0xFF999999);
+            if (st.isEmpty()) {
+                g.drawString(font, t("hukhong.honcot.empty", "(trống)"), cx + 80, y + 3, GREY);
+            } else {
+                g.renderItem(st, cx + 62, y - 1);
+                g.drawString(font, st.getHoverName(), cx + 82, y + 3, 0xFFFFFFFF);
+                var bone = com.hukhong.honcot.BoneSlots.boneOf(st);
+                if (bone != null) {
+                    int tier = com.hukhong.honcot.HonCotItem.tierOf(st), roll = com.hukhong.honcot.HonCotItem.rollOf(st);
+                    StringBuilder sb = new StringBuilder();
+                    for (var stat : bone.stats) sb.append(com.hukhong.honcot.HonCotItem.statLine(stat, tier, roll).getString()).append("  ");
+                    g.drawString(font, sb.toString(), cx + 82, y + 3 + ROW - 3, GREEN);
+                    if (hov) {
+                        tooltip.add(Component.translatable(bone.fxKey()).withStyle(net.minecraft.ChatFormatting.GREEN));
+                        tooltip.add(t("hukhong.honcot.click_unequip", "Bấm để tháo").copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+                    }
+                }
+                boneRows.add(new int[]{y, bs.ordinal()});
+            }
+            y += ROW * 2 + 2;
+        }
+        y += 4;
+        g.drawString(font, t("hukhong.honcot.hint_r", "Phím R: Kỹ năng Bản Mệnh (cấp 40) · Shift+R: Vạn Cốt Cộng Minh"), cx + 4, y, 0xFFBBBBBB);
+        return y + ROW - top;
+    }
+
     // ------------------------------------------------------------------ tab 2
     private int renderSystems(GuiGraphics g) {
         int top = cy - (int) scroll;
@@ -283,12 +323,20 @@ public class ProfileScreen extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         layout();
-        int tw = pw / 3 - 6;
-        for (int i = 0; i < 3; i++) {
+        int tw = pw / TABS - 6;
+        for (int i = 0; i < TABS; i++) {
             int tx = x0 + 8 + i * (tw + 6), ty = y0 + 20;
             if (mx >= tx && mx < tx + tw && my >= ty && my < ty + TAB_H) {
                 if (tab != i) { tab = i; scroll = 0; }
                 return true;
+            }
+        }
+        if (tab == 3 && mx >= cx && mx < cx + cw && my >= cy && my < cy + ch) {
+            for (int[] r : boneRows) {
+                if (my >= r[0] && my < r[0] + ROW * 2) {
+                    net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.hukhong.honcot.BoneUnequipPayload(r[1]));
+                    return true;
+                }
             }
         }
         return super.mouseClicked(mx, my, button);

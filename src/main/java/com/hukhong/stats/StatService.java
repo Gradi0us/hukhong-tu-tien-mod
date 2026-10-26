@@ -155,6 +155,7 @@ public final class StatService {
         set(p, ModAttributes.MAX_RESOURCE, s.maxResource());
         applyVitals(p, d);
         CoreService.applyAll(p); // gỡ + áp lại bị động Lõi (transient)
+        com.hukhong.honcot.HonCotService.apply(p); // Hồn Cốt
         boolean than = isThan(d);
         var mid = ModAttributes.id("than");
         for (String name : ModAttributes.names()) {

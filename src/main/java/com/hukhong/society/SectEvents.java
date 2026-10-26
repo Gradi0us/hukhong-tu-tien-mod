@@ -14,10 +14,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -36,6 +39,9 @@ public final class SectEvents {
     public static final int GEN_RADIUS = 110;
     /** Tích EXP lẻ (EXP/giây rất nhỏ ở cấp thấp). */
     private static final Map<UUID, Double> ACCUM = new ConcurrentHashMap<>();
+    /** Giây Bế Quan liên tục của người trả phí (phí thu mỗi 3600 giây, thu trước). */
+    private static final Map<UUID, Integer> FEE_SECONDS = new ConcurrentHashMap<>();
+    public static final AltarSeats SEATS = new AltarSeats();
 
     public static BlockPos site(ServerLevel ow, SectDef d) {
         BlockPos c = SectSavedData.get(ow).center(d.id());
@@ -50,6 +56,7 @@ public final class SectEvents {
     public static void onServerTick(ServerTickEvent.Post e) {
         MinecraftServer server = e.getServer();
         int t = server.getTickCount();
+        if (t % 20 == 7) SectTrial.tick(server);
         if (t % 40 != 19 || t < 100) return;
         ServerLevel ow = server.getLevel(Level.OVERWORLD);
         if (ow == null) return;
@@ -88,10 +95,26 @@ public final class SectEvents {
     }
 
     @SubscribeEvent
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) { ACCUM.remove(e.getEntity().getUUID()); }
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
+        stopMeditating(e.getEntity().getUUID());
+        if (e.getEntity() instanceof ServerPlayer p) SectTrial.onPlayerGone(p);
+    }
+
+    private static void stopMeditating(UUID id) {
+        ACCUM.remove(id);
+        FEE_SECONDS.remove(id);
+        SEATS.release(id);
+    }
+
+    @SubscribeEvent
+    public static void onTrialDrops(LivingDropsEvent e) { if (SectTrial.isTrialMob(e.getEntity())) e.setCanceled(true); }
+
+    @SubscribeEvent
+    public static void onTrialXp(LivingExperienceDropEvent e) { if (SectTrial.isTrialMob(e.getEntity())) e.setDroppedExperience(0); }
 
     @SubscribeEvent
     public static void onKill(LivingDeathEvent e) {
+        SectTrial.onMobDeath(e.getEntity());
         if (e.getEntity() instanceof HuMob && RewardGate.canReward(e.getEntity()) && e.getSource().getEntity() instanceof ServerPlayer p)
             SectService.onHuKill(p);
     }
@@ -104,16 +127,43 @@ public final class SectEvents {
     }
 
     private static void meditate(ServerPlayer p, ServerLevel lv) {
-        if (!onAltar(p) || p.hurtTime > 0) { ACCUM.remove(p.getUUID()); return; }
+        if (!onAltar(p) || p.hurtTime > 0) { stopMeditating(p.getUUID()); return; }
         CultivationData d = CultivationService.get(p);
         if (d.milestoneLocked() || d.inBottleneck() || CultivationService.inLightBottleneck(d) || d.level() >= CultivationData.MAX_LEVEL) {
+            stopMeditating(p.getUUID());
             if (p.tickCount % 100 == 0) p.displayClientMessage(Component.translatable("hukhong.lkd.blocked"), true);
             return;
         }
         double mult = 1.0;
         SectData sd = SectService.get(p);
         String altarSect = SectSavedData.get(lv).nearest(p.getX(), p.getZ(), SectService.BOARD_RADIUS);
-        if (altarSect != null && altarSect.equals(sd.sect())) mult = SectMath.rankMult(SectService.rankOf(p, sd));
+        if (altarSect != null) {
+            // Đài tông: chỉ đệ tử tông đó, có ghế, trả phí mỗi giờ bằng Cống Hiến khả dụng (R22).
+            SectDef def = SectDef.byId(altarSect);
+            if (def == null || !altarSect.equals(sd.sect())) {
+                stopMeditating(p.getUUID());
+                if (p.tickCount % 100 == 0) p.displayClientMessage(Component.translatable("hukhong.lkd.not_disciple"), true);
+                return;
+            }
+            if (!SEATS.tryTake(altarSect, p.getUUID(), SectMath.seats(def.tier()))) {
+                if (p.tickCount % 100 == 0) p.displayClientMessage(Component.translatable("hukhong.lkd.full", SectMath.seats(def.tier())), true);
+                return;
+            }
+            int secs = FEE_SECONDS.getOrDefault(p.getUUID(), 0);
+            if (secs % 3600 == 0) {
+                int fee = SectMath.altarFeePerHour(def.tier());
+                int left = SectMath.chargeFee(sd.wallet(), fee);
+                if (left < 0) {
+                    stopMeditating(p.getUUID());
+                    if (p.tickCount % 100 == 0) p.displayClientMessage(Component.translatable("hukhong.lkd.no_fee", fee, sd.wallet()), true);
+                    return;
+                }
+                p.setData(SocietyRegistry.SECT, sd.withWallet(left));
+                p.sendSystemMessage(Component.translatable("hukhong.lkd.fee_paid", fee, left));
+            }
+            FEE_SECONDS.put(p.getUUID(), secs + 1);
+            mult = SectMath.rankMult(SectService.rankOf(p, sd));
+        }
         double perSec = SectMath.afkExpPerSecond(CultivationService.expToNext(d.level()), mult);
         double acc = ACCUM.merge(p.getUUID(), perSec, Double::sum);
         long whole = (long) Math.floor(acc);
@@ -135,13 +185,27 @@ public final class SectEvents {
         List<SectDef> pool = new ArrayList<>();
         SectSavedData reg = SectSavedData.get(lv);
         for (SectDef d : SectDef.ALL)
-            if (d.buildable() && reg.isBuilt(d.id()) && SectService.checkApply(p, d, true) == SectMath.OK) pool.add(d);
-        if (pool.isEmpty()) return;
-        SectDef d = pool.get(p.getRandom().nextInt(pool.size()));
-        if (p.getRandom().nextDouble() >= SectMath.inviteChance(d.tier(), apt)) return;
-        p.setData(SocietyRegistry.SECT, sd.withInvite(d.id()));
-        BlockPos c0 = reg.center(d.id());
-        p.sendSystemMessage(Component.translatable("hukhong.sect.invited", Component.translatable(d.nameKey()), c0.getX(), c0.getZ()));
+            if (!d.hidden() && d.buildable() && reg.isBuilt(d.id()) && SectService.checkApply(p, d, true) == SectMath.OK) pool.add(d);
+        if (!pool.isEmpty()) {
+            SectDef d = pool.get(p.getRandom().nextInt(pool.size()));
+            if (p.getRandom().nextDouble() < SectMath.inviteChance(d.tier(), apt)) {
+                p.setData(SocietyRegistry.SECT, sd.withInvite(d.id()));
+                BlockPos c0 = reg.center(d.id());
+                p.sendSystemMessage(Component.translatable("hukhong.sect.invited", Component.translatable(d.nameKey()), c0.getX(), c0.getZ()));
+                return;
+            }
+        }
+        // Tông ẩn: tin đồn + Huyết Ảnh Lệnh, chỉ tới Ma tu mang Ác Danh (tọa độ làm tròn 100 block).
+        for (SectDef d : SectDef.ALL) {
+            if (!d.hidden() || SectService.checkApply(p, d, true) != SectMath.OK) continue;
+            if (p.getRandom().nextDouble() >= SectMath.inviteChance(d.tier(), apt) * 3) return;
+            p.setData(SocietyRegistry.SECT, sd.withInvite(d.id()));
+            BlockPos s = site(lv, d);
+            ItemStack token = new ItemStack(SocietyRegistry.HUYET_ANH_LENH.get());
+            if (!p.getInventory().add(token)) p.drop(token, false);
+            p.sendSystemMessage(Component.translatable("hukhong.sect.rumor", Math.round(s.getX() / 100.0) * 100, Math.round(s.getZ() / 100.0) * 100));
+            return;
+        }
     }
 
     // ---- lệnh ----

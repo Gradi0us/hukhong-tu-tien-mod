@@ -14,11 +14,12 @@ import net.minecraft.world.item.ItemStack;
  * server xác thực lại mọi thứ rồi mở lại menu với ảnh chụp mới.
  */
 public class SectMenu extends AbstractContainerMenu {
-    public static final int B_APPLY = 0, B_ACCEPT = 1, B_LEAVE = 2, B_KILL = 3, B_HERB = 4, B_SUBMIT = 5, B_CLAIM = 6, B_ABANDON = 7;
+    public static final int B_APPLY = 0, B_ACCEPT = 1, B_LEAVE = 2, B_KILL = 3, B_HERB = 4, B_SUBMIT = 5, B_CLAIM = 6, B_ABANDON = 7, B_DAIBI = 8, B_CHAIN = 9;
 
     /** boardSect: tông sở hữu bảng này; memberSect: tông của người chơi ("" nếu chưa vào). */
     public record Snapshot(BlockPos pos, String boardSect, String memberSect, int rank, int totalCh, String quest,
-                           int progress, int need, String invite, int applyCode, int capLeft, int level) {
+                           int progress, int need, String invite, int applyCode, int capLeft, int level,
+                           int daiBi, int trial, int wallet, int chain) {
         public void write(FriendlyByteBuf b) {
             b.writeBlockPos(pos);
             b.writeUtf(boardSect);
@@ -32,11 +33,15 @@ public class SectMenu extends AbstractContainerMenu {
             b.writeVarInt(applyCode);
             b.writeVarInt(capLeft);
             b.writeVarInt(level);
+            b.writeVarInt(daiBi);
+            b.writeVarInt(trial);
+            b.writeVarInt(wallet);
+            b.writeVarInt(chain);
         }
 
         public static Snapshot read(FriendlyByteBuf b) {
             return new Snapshot(b.readBlockPos(), b.readUtf(), b.readUtf(), b.readVarInt(), b.readVarInt(), b.readUtf(),
-                    b.readVarInt(), b.readVarInt(), b.readUtf(), b.readVarInt(), b.readVarInt(), b.readVarInt());
+                    b.readVarInt(), b.readVarInt(), b.readUtf(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt());
         }
     }
 

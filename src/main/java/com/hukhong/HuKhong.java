@@ -18,6 +18,7 @@ public class HuKhong {
         com.hukhong.item.ModItems.register(modBus);
         com.hukhong.entity.ModEntities.register(modBus);
         com.hukhong.vfx.ModParticles.register(modBus);
+        com.hukhong.story.StoryRegistry.register(modBus);
         modBus.addListener(SyncPayload::register);
         modBus.addListener((net.neoforged.neoforge.event.RegisterGameTestsEvent e) -> e.register(com.hukhong.gametest.HuKhongGameTests.class));
         NeoForge.EVENT_BUS.register(com.hukhong.item.PillDrops.class);

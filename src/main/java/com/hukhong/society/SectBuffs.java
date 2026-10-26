@@ -11,7 +11,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 
 /**
  * Buff tông theo bậc (S6 §2.2, rút gọn thành 1 buff/tông): Bá Thể +15% HP, Thiên Kiếm +15% sát thương,
- * Thiên Công +2 hiệu suất đào, Đan Đỉnh +10% tỉ lệ thành đan (đọc ở DanLoBlockEntity). Nhân hệ số bậc 25/50/100/100%.
+ * Thiên Công +2 hiệu suất đào, Đan Đỉnh +10% tỉ lệ thành đan (đọc ở DanLoBlockEntity),
+ * Quang Minh +6 giáp hấp thụ, Vạn Tượng +2 may mắn, Huyết Ảnh +12% tốc độ di chuyển. Nhân hệ số bậc 25/50/100/100%.
  */
 public final class SectBuffs {
     private SectBuffs() {}
@@ -21,7 +22,8 @@ public final class SectBuffs {
 
     @SuppressWarnings("unchecked")
     private static Holder<Attribute>[] holders() {
-        return new Holder[]{Attributes.MAX_HEALTH, Attributes.ATTACK_DAMAGE, Attributes.MINING_EFFICIENCY};
+        return new Holder[]{Attributes.MAX_HEALTH, Attributes.ATTACK_DAMAGE, Attributes.MINING_EFFICIENCY,
+                Attributes.MAX_ABSORPTION, Attributes.LUCK, Attributes.MOVEMENT_SPEED};
     }
 
     public static double factor(ServerPlayer p) {
@@ -47,6 +49,9 @@ public final class SectBuffs {
             case "ba_the_mon" -> add(p, Attributes.MAX_HEALTH, 0.15 * f, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
             case "thien_kiem_tong" -> add(p, Attributes.ATTACK_DAMAGE, 0.15 * f, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
             case "thien_cong_khi_cac" -> add(p, Attributes.MINING_EFFICIENCY, 2.0 * f, AttributeModifier.Operation.ADD_VALUE);
+            case "quang_minh_dao_cung" -> add(p, Attributes.MAX_ABSORPTION, 6.0 * f, AttributeModifier.Operation.ADD_VALUE);
+            case "van_tuong_thanh_tong" -> add(p, Attributes.LUCK, 2.0 * f, AttributeModifier.Operation.ADD_VALUE);
+            case "huyet_anh_ma_mon" -> add(p, Attributes.MOVEMENT_SPEED, 0.12 * f, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
             default -> { }
         }
     }

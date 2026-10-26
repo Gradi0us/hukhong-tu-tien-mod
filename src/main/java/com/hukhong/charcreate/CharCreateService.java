@@ -70,5 +70,6 @@ public final class CharCreateService {
         p.setData(ModAttachments.CULTIVATION, d.withCharacter(set, apt, roll.origin().id, roll));
         SyncPayload.send(p);
         if (set.contains(Path.KIEM)) com.hukhong.banmenh.BanMenhService.grant(p); // Kiếm Tu nhận Bản Mệnh Kiếm
+        com.hukhong.story.StoryService.promptIfNeeded(p); // Bước 19: chọn Truyện/Tự do
     }
 }

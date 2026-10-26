@@ -7,6 +7,8 @@ public final class SkillState {
     public int page = 0;
     public long lastSwitch = Long.MIN_VALUE / 2;
     public final long[] cooldownEnd = new long[4];
+    /** Tổng CD của lần cast R gần nhất (cho HUD). */
+    public int rTotal = 900;
     public long lastCombat = Long.MIN_VALUE / 2;
     public int still = 0;
     public double lx, ly, lz;
