@@ -119,6 +119,11 @@ public class CharCreateScreen extends Screen {
         return super.mouseClicked(mx, my, button);
     }
 
+    /** 1.21: super.render() gọi renderBackground() (có blur) SAU khi ta đã vẽ → làm mờ cả nội dung. Tắt ở đây, nền tự vẽ trong render(). */
+    @Override
+    public void renderBackground(GuiGraphics g, int mx, int my, float partial) {
+    }
+
     @Override
     public void render(GuiGraphics g, int mx, int my, float partial) {
         renderTransparentBackground(g);
