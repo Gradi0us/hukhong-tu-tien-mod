@@ -6,3 +6,6 @@ build/
 *.iml
 out/
 .vscode/
+run/
+build/
+.gradle/

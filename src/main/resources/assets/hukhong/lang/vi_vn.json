@@ -1,0 +1,45 @@
+{
+  "key.categories.hukhong": "Hư Không Tu Tiên",
+  "key.hukhong.skill_1": "Kỹ Năng 1",
+  "key.hukhong.skill_2": "Kỹ Năng 2",
+  "key.hukhong.skill_3": "Kỹ Năng 3",
+  "key.hukhong.skill_ultimate": "Tuyệt Kỹ",
+  "key.hukhong.toggle_cultivation": "Thế Tu Luyện",
+  "key.hukhong.page": "Mở Trang Tu Luyện",
+
+  "hukhong.realm.0": "Thường Dân",
+  "hukhong.realm.1": "Tu Hành Nhất Giả",
+  "hukhong.realm.2": "Tu Hành Tông Sư",
+  "hukhong.realm.3": "Tu Hành Đại Tông Sư",
+  "hukhong.realm.4": "Tu Hành Vương Giả",
+  "hukhong.realm.5": "Tu Hành Hoàng Giả",
+  "hukhong.realm.6": "Tu Hành Đế Giả",
+  "hukhong.realm.7": "Tu Hành Thánh Giả",
+  "hukhong.realm.8": "Tu Hành Đấu Giả",
+  "hukhong.realm.9": "Tu Hành Đấu Kình",
+  "hukhong.realm.10": "Luyện Thần Giả",
+  "hukhong.realm.11": "Bán Thần",
+  "hukhong.realm.12": "Thần",
+
+  "hukhong.path.sword": "Kiếm Tu",
+  "hukhong.path.dao": "Đạo Tu",
+  "hukhong.path.body": "Thể Tu",
+  "hukhong.path.demon": "Ma Tu",
+
+  "hukhong.resource.mana": "Linh Lực",
+  "hukhong.resource.holy": "Thánh Lực",
+  "hukhong.resource.aura": "Bá Khí",
+  "hukhong.resource.corrupt": "Ô Uế Lực",
+
+  "hukhong.aptitude.d": "D",
+  "hukhong.aptitude.c": "C",
+  "hukhong.aptitude.b": "B",
+  "hukhong.aptitude.a": "A",
+  "hukhong.aptitude.s": "S",
+  "hukhong.aptitude.ss": "SS",
+  "hukhong.aptitude.sss": "SSS",
+
+  "hukhong.hud.level": "Cấp %s",
+  "hukhong.hud.age": "Tuổi %s",
+  "hukhong.hud.bottleneck": "Bình Cảnh"
+}
