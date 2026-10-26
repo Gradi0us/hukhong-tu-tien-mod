@@ -12,7 +12,7 @@ import java.util.List;
 /** Tiến trình tuyến chính: chương hiện tại (0 = chưa bắt đầu, coi như 1) và các cờ truyện. */
 public record QuestData(int chapter, List<String> flags) {
     public static final QuestData DEFAULT = new QuestData(0, List.of());
-    public static final int LAST_CHAPTER = 5;
+    public static final int LAST_CHAPTER = 6;
 
     public static final Codec<QuestData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.optionalFieldOf("chapter", 0).forGetter(QuestData::chapter),

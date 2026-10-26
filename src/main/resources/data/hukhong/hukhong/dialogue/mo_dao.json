@@ -5,6 +5,47 @@
  "entry": [
   {
    "if": {
+    "flags": [
+     "ending_seal"
+    ],
+    "not_flags": [
+     "ch6_done"
+    ]
+   },
+   "node": "ch6_seal"
+  },
+  {
+   "if": {
+    "flags": [
+     "ending_absorb"
+    ],
+    "not_flags": [
+     "ch6_done"
+    ]
+   },
+   "node": "ch6_absorb"
+  },
+  {
+   "if": {
+    "chapter_min": 5,
+    "min_level": 99,
+    "not_flags": [
+     "ch5_done"
+    ]
+   },
+   "node": "ch5"
+  },
+  {
+   "if": {
+    "chapter_min": 5,
+    "not_flags": [
+     "ch5_done"
+    ]
+   },
+   "node": "ch5_wait"
+  },
+  {
+   "if": {
     "chapter_min": 5
    },
    "node": "idle"
@@ -160,6 +201,75 @@
   "ch4_doubt": {
    "text": [
     "hukhong.dlg.mo_dao.ch4_doubt.p1"
+   ]
+  },
+  "ch5_wait": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch5_wait.p1"
+   ]
+  },
+  "ch5": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch5.p1",
+    "hukhong.dlg.mo_dao.ch5.p2",
+    "hukhong.dlg.mo_dao.ch5.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.mo_dao.ch5.c1",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "ch5_done"
+      },
+      {
+       "type": "message",
+       "key": "hukhong.dlg.mo_dao.ch5.msg"
+      },
+      {
+       "type": "exp",
+       "amount": 5000
+      }
+     ],
+     "next": "ch5_end"
+    }
+   ]
+  },
+  "ch5_end": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch5_end.p1"
+   ]
+  },
+  "ch6_seal": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch6_seal.p1",
+    "hukhong.dlg.mo_dao.ch6_seal.p2"
+   ],
+   "actions": [
+    {
+     "type": "set_flag",
+     "flag": "ch6_done"
+    },
+    {
+     "type": "exp",
+     "amount": 8000
+    }
+   ]
+  },
+  "ch6_absorb": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch6_absorb.p1",
+    "hukhong.dlg.mo_dao.ch6_absorb.p2"
+   ],
+   "actions": [
+    {
+     "type": "set_flag",
+     "flag": "ch6_done"
+    },
+    {
+     "type": "exp",
+     "amount": 8000
+    }
    ]
   }
  }

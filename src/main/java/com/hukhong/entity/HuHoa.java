@@ -59,8 +59,8 @@ public final class HuHoa {
     public static void applyStats(Mob m, int level, double hpMul, double dmgMul) {
         var mul = net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE;
         var add = net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE;
-        mod(m, Attributes.MAX_HEALTH, "hu_lv_hp", hpMul * hpScale(level) - 1, mul);
-        mod(m, Attributes.ATTACK_DAMAGE, "hu_lv_atk", dmgMul * dmgScale(level) - 1, mul);
+        mod(m, Attributes.MAX_HEALTH, "hu_lv_hp", hpMul * com.hukhong.endgame.WorldTier.hpMul() * hpScale(level) - 1, mul);
+        mod(m, Attributes.ATTACK_DAMAGE, "hu_lv_atk", dmgMul * com.hukhong.endgame.WorldTier.dmgMul() * dmgScale(level) - 1, mul);
         mod(m, Attributes.ARMOR, "hu_lv_armor", Math.min(20, 0.25 * (level - 1)), add);
         mod(m, Attributes.MOVEMENT_SPEED, "hu_lv_speed", Math.min(0.30, 0.005 * (level - 1)), mul);
         m.setHealth(m.getMaxHealth());
@@ -100,7 +100,7 @@ public final class HuHoa {
         if (!(e.getSource().getEntity() instanceof ServerPlayer p)) return;
         float mult = RewardGate.reward(v);
         if (mult <= 0f) return;
-        long exp = Math.round(exp(h.huWeight(), h.huLevel(), CultivationService.get(p).level()) * mult);
+        long exp = Math.round(exp(h.huWeight(), h.huLevel(), CultivationService.get(p).level()) * mult * com.hukhong.endgame.WorldTier.rewardMul());
         if (exp > 0) CultivationService.addExp(p, exp);
         if (v.getRandom().nextFloat() < h.honTinhChance() * mult) {
             var item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "hon_tinh"));

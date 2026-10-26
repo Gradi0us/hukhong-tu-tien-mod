@@ -42,6 +42,15 @@ public final class HuKhongCommand {
                             msg(c.getSource(), "level=" + d.level() + " exp=" + d.exp());
                             return 1;
                         })))
+                .then(Commands.literal("trial")
+                        .then(Commands.literal("tam_ma").executes(c -> {
+                            com.hukhong.trial.TrialService.test(c.getSource().getPlayerOrException(), com.hukhong.trial.TrialService.Type.TAM_MA);
+                            return 1;
+                        }))
+                        .then(Commands.literal("loi_kiep").executes(c -> {
+                            com.hukhong.trial.TrialService.test(c.getSource().getPlayerOrException(), com.hukhong.trial.TrialService.Type.LOI_KIEP);
+                            return 1;
+                        })))
                 .then(Commands.literal("unlock").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     boolean ok = CultivationService.unlockMilestone(p);
@@ -128,6 +137,7 @@ public final class HuKhongCommand {
                             return b == null ? 0 : 1;
                         })))
                 .then(com.hukhong.bicanh.BiCanhCommand.node())
+                .then(com.hukhong.endgame.EndgameCommand.node())
                 .then(Commands.literal("age").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     AgeData a = p.getData(ModAttachments.AGE);

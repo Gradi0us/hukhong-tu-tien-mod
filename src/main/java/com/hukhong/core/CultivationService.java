@@ -88,8 +88,18 @@ public final class CultivationService {
     public static boolean unlockMilestone(ServerPlayer p) {
         CultivationData d = get(p);
         if (!d.milestoneLocked()) return false;
+        if (com.hukhong.trial.TrialMath.requiresTrial(d.level())) { // Khảo Hạch bắt buộc từ mốc 90+
+            com.hukhong.trial.TrialService.begin(p);
+            return true;
+        }
         update(p, d.withMilestoneUnlocked(true));
         return true;
+    }
+
+    /** Mở khóa mốc sau khi qua Khảo Hạch (chỉ TrialService gọi). */
+    public static void forceUnlockMilestone(ServerPlayer p) {
+        CultivationData d = get(p);
+        if (d.milestoneLocked()) update(p, d.withMilestoneUnlocked(true));
     }
 
     public static void addExp(ServerPlayer p, long amount) {
