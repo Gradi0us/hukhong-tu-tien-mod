@@ -1,0 +1,9 @@
+# Bản Mệnh Kiếm - 8 id (texture: assets/hukhong/textures/item/ban_menh/<id>.png, 16x16)
+thanh_phong
+liet_diem
+han_bang
+loi_dinh
+huyet_anh
+trong_nhac
+ngoc_tam
+tinh_than

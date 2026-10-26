@@ -47,6 +47,7 @@ public final class PathRules {
                 if (after <= 0f && before > 0f && has(atk, Path.DAO) && !(target instanceof Player)) {
                     atk.displayClientMessage(Component.translatable("hukhong.msg.void"), true);
                 }
+                if (after > 0f && has(atk, Path.MA)) MaRules.onHit(atk);
                 if (after > 0f && !DamageRules.isSkill() && src.getDirectEntity() == atk && has(atk, Path.THE)) {
                     Resources.add(atk, 2);
                 }

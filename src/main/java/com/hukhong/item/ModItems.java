@@ -26,6 +26,16 @@ public final class ModItems {
             COMPONENTS.registerComponentType("bound_to",
                     b -> b.persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC));
 
+    /** Bản Mệnh Kiếm (Bước 10B): loại + giai đoạn ở data component, model theo custom_model_data. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> BAN_MENH_TYPE =
+            COMPONENTS.registerComponentType("ban_menh_type",
+                    b -> b.persistent(com.mojang.serialization.Codec.STRING).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.STRING_UTF8));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> BAN_MENH_STAGE =
+            COMPONENTS.registerComponentType("ban_menh_stage",
+                    b -> b.persistent(com.mojang.serialization.Codec.INT).networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT));
+    public static final DeferredItem<com.hukhong.banmenh.BanMenhKiemItem> BAN_MENH_KIEM =
+            ITEMS.register("ban_menh_kiem", com.hukhong.banmenh.BanMenhKiemItem::new);
+
     public static final DeferredItem<PhaCanhDanItem> KHAI_MACH_DAN = ITEMS.register("khai_mach_dan",
             () -> new PhaCanhDanItem(1, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<PhaCanhDanItem> NGUNG_NGUYEN_DAN = ITEMS.register("ngung_nguyen_dan",
@@ -45,10 +55,12 @@ public final class ModItems {
         com.hukhong.block.ModBlocks.BLOCKS.register(bus);
         com.hukhong.menu.ModMenus.MENUS.register(bus);
         com.hukhong.cores.CoreAttachments.ATTACHMENTS.register(bus);
+        com.hukhong.banmenh.BanMenhAttachments.ATTACHMENTS.register(bus);
         ITEMS.register(bus);
         COMPONENTS.register(bus);
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) e.accept(AN_HON_DAI.get());
+            if (e.getTabKey() == CreativeModeTabs.COMBAT) e.accept(BAN_MENH_KIEM.get());
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 e.accept(KHAI_MACH_DAN.get());
                 e.accept(NGUNG_NGUYEN_DAN.get());

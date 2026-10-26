@@ -41,6 +41,12 @@ public final class SkillEffects {
             case THE_1 -> chanDia(lv, p, d);
             case THE_2 -> thietBoSam(lv, p);
             case THE_ULT -> kimThan(lv, p);
+            case KIEM_1 -> tramKhi(lv, p);
+            case KIEM_2 -> lienHoanTram(lv, p);
+            case KIEM_ULT -> kiemVuc(lv, p);
+            case MA_1 -> huyetTrao(lv, p);
+            case MA_2 -> maKhiHoThe(lv, p);
+            case MA_ULT -> maThanGiangThe(lv, p);
         }
     }
 
@@ -66,7 +72,8 @@ public final class SkillEffects {
 
     /** Ban Phúc: đồng đội gần nhất trong 20 block nhận Tấn Công+Tốc Độ+Giáp Phép; không có thì bản thân (yếu hơn). */
     private static void banPhuc(ServerLevel lv, ServerPlayer p) {
-        ServerPlayer target = lv.players().stream()
+        boolean ma = p.getData(ModAttachments.CULTIVATION).paths().contains(com.hukhong.core.Path.MA); // Ma Tu: không hỗ trợ người khác
+        ServerPlayer target = ma ? null : lv.players().stream()
                 .filter(o -> o != p && o.isAlive() && !o.isSpectator() && o.distanceToSqr(p) <= 400)
                 .min(Comparator.comparingDouble(o -> o.distanceToSqr(p))).orElse(null);
         if (target == null) {
@@ -88,6 +95,7 @@ public final class SkillEffects {
         for (ServerPlayer o : lv.players()) {
             if (!o.isAlive() || o.isSpectator() || o.distanceToSqr(p) > 144) continue;
             boolean self = o == p;
+            if (!self && p.getData(ModAttachments.CULTIVATION).paths().contains(com.hukhong.core.Path.MA)) continue;
             float sp = (float) com.hukhong.stats.StatService.spellPower(p);
             o.heal(Math.max(4f, sp * (self ? 0.8f : 0.6f)));
             o.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
@@ -135,6 +143,148 @@ public final class SkillEffects {
         ring(lv, p.position().add(0, 0.2, 0), 1.2, 24, com.hukhong.vfx.ModParticles.BA_KHI.get());
         lv.sendParticles(com.hukhong.vfx.ModParticles.BA_KHI.get(), p.getX(), p.getY() + 1, p.getZ(), 30, 0.5, 0.9, 0.5, 0.25);
         com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_BA_KHI, 1.5f, 0.5f);
+    }
+
+
+    // ---- Kiếm Tu ----
+
+    private static boolean valid(ServerPlayer p, LivingEntity e) {
+        return e != p && !(e instanceof Player) && e.isAlive() && !e.isSpectator();
+    }
+
+    /** Gây sát thương kỹ năng = coef x Công; bỏ khung bất tử để nhiều nhát liên tiếp đều trúng. Trả sát thương đã đặt. */
+    private static float slash(ServerPlayer p, LivingEntity t, double coef) {
+        float dmg = (float) (coef * com.hukhong.stats.StatService.attackPower(p));
+        t.invulnerableTime = 0;
+        DamageRules.hurtBySkill(p, t, dmg);
+        return dmg;
+    }
+
+    /** Mục tiêu nằm gần tia nhìn dài `range`, bán kính `width`. */
+    private static List<LivingEntity> lineTargets(ServerLevel lv, ServerPlayer p, double range, double width) {
+        Vec3 eye = p.getEyePosition(), look = p.getLookAngle();
+        AABB box = p.getBoundingBox().expandTowards(look.scale(range)).inflate(width + 1);
+        return lv.getEntitiesOfClass(LivingEntity.class, box, e -> {
+            if (!valid(p, e)) return false;
+            Vec3 c = e.getBoundingBox().getCenter().subtract(eye);
+            double t = c.dot(look);
+            if (t < 0 || t > range + 0.5) return false;
+            return c.subtract(look.scale(t)).length() <= width + e.getBbWidth() / 2;
+        });
+    }
+
+    /** Mục tiêu trong hình quạt phía trước (cosHalf = cos nửa góc). */
+    private static List<LivingEntity> coneTargets(ServerLevel lv, ServerPlayer p, double range, double cosHalf) {
+        Vec3 look = p.getLookAngle(), eye = p.getEyePosition();
+        return lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(range, 1.5, range), e -> {
+            if (!valid(p, e)) return false;
+            Vec3 c = e.getBoundingBox().getCenter().subtract(eye);
+            double d = c.length();
+            return d <= range + e.getBbWidth() / 2 && (d < 0.8 || c.normalize().dot(look) >= cosHalf);
+        });
+    }
+
+    /** Vòng cung particle trước mặt (lưỡi trăng): nửa góc `half` rad, bán kính r. */
+    private static void arc(ServerLevel lv, ServerPlayer p, double r, double half, int n,
+                            net.minecraft.core.particles.ParticleOptions type, double tilt) {
+        Vec3 eye = p.getEyePosition().subtract(0, 0.4, 0), look = p.getLookAngle();
+        Vec3 flat = new Vec3(look.x, 0, look.z);
+        flat = flat.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : flat.normalize();
+        Vec3 right = new Vec3(-flat.z, 0, flat.x);
+        for (int i = 0; i <= n; i++) {
+            double a = -half + 2 * half * i / n;
+            Vec3 q = eye.add(flat.scale(Math.cos(a) * r)).add(right.scale(Math.sin(a) * r)).add(0, Math.sin(a) * tilt, 0);
+            lv.sendParticles(type, q.x, q.y, q.z, 1, 0.02, 0.02, 0.02, 0);
+        }
+    }
+
+    /** Trảm Khí: kiếm khí xuyên tầm 8 block, 120% Công. */
+    private static void tramKhi(ServerLevel lv, ServerPlayer p) {
+        for (LivingEntity e : lineTargets(lv, p, 8, 1.2)) slash(p, e, Skill.KIEM_1_COEF);
+        Vec3 eye = p.getEyePosition().subtract(0, 0.3, 0), look = p.getLookAngle();
+        for (double t = 1.0; t <= 8; t += 0.5) {
+            Vec3 q = eye.add(look.scale(t));
+            lv.sendParticles(com.hukhong.vfx.ModParticles.KIEM_KHI.get(), q.x, q.y, q.z, 1, 0.05, 0.05, 0.05, 0);
+        }
+        arc(lv, p, 2.4, 0.9, 10, com.hukhong.vfx.ModParticles.KIEM_KHI.get(), 0.4);
+        lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.6f);
+    }
+
+    /** Liên Hoàn Trảm: 3 nhát quạt 6 block, mỗi nhát 70% Công, cách nhau 6 tick. */
+    private static void lienHoanTram(ServerLevel lv, ServerPlayer p) {
+        for (int i = 0; i < 3; i++) {
+            final int k = i;
+            Runnable r = () -> {
+                if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
+                for (LivingEntity e : coneTargets(l2, p, 6, 0.45)) slash(p, e, Skill.KIEM_2_COEF);
+                arc(l2, p, 2.0 + k * 0.6, 1.0, 12, com.hukhong.vfx.ModParticles.KIEM_KHI.get(), (k - 1) * 0.5);
+                arc(l2, p, 2.6 + k * 0.6, 1.0, 6, ParticleTypes.CRIT, (k - 1) * 0.5);
+                l2.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.3f + 0.15f * k);
+            };
+            if (i == 0) r.run(); else SkillScheduler.later(6 * i, r);
+        }
+    }
+
+    /** Kiếm Vực (tối thượng): vòng kiếm khí bán kính 5 quanh người 4s, mỗi 0,5s 55% Công. */
+    private static void kiemVuc(ServerLevel lv, ServerPlayer p) {
+        lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 0.7f);
+        kiemVucPulse(p, 0);
+    }
+
+    private static void kiemVucPulse(ServerPlayer p, int n) {
+        if (n >= 8 || p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel lv)) return;
+        double r = 5;
+        for (LivingEntity e : lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(r, 2, r),
+                e -> valid(p, e) && e.distanceToSqr(p) <= r * r)) slash(p, e, Skill.KIEM_ULT_COEF);
+        double rot = n * 0.5;
+        for (int i = 0; i < 24; i++) {
+            double a = rot + 2 * Math.PI * i / 24;
+            double yy = p.getY() + 0.9 + 0.5 * Math.sin(a * 2 + n);
+            lv.sendParticles(com.hukhong.vfx.ModParticles.KIEM_KHI.get(), p.getX() + Math.cos(a) * r, yy,
+                    p.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
+        }
+        for (int i = 0; i < 4; i++) {
+            double a = rot + Math.PI / 2 * i;
+            lv.sendParticles(ParticleTypes.SWEEP_ATTACK, p.getX() + Math.cos(a) * r * 0.8, p.getY() + 1,
+                    p.getZ() + Math.sin(a) * r * 0.8, 1, 0, 0, 0, 0);
+        }
+        if (n % 2 == 0) lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 0.9f);
+        SkillScheduler.later(10, () -> kiemVucPulse(p, n + 1));
+    }
+
+    // ---- Ma Tu ----
+
+    private static final DustParticleOptions BLOOD = new DustParticleOptions(new Vector3f(0.7f, 0.05f, 0.08f), 1.1f);
+
+    /** Huyết Trảo: 3 vệt móng cận chiến 4 block, 125% Công, Hấp Huyết nhân đôi trên đòn này. */
+    private static void huyetTrao(ServerLevel lv, ServerPlayer p) {
+        float total = 0;
+        for (LivingEntity e : coneTargets(lv, p, 4, 0.5)) total += slash(p, e, Skill.MA_1_COEF);
+        double ls = com.hukhong.stats.StatService.value(p, com.hukhong.stats.ModAttributes.LIFESTEAL);
+        if (total > 0 && ls > 0) p.heal(Math.min((float) (total * ls), p.getMaxHealth() * 0.04f)); // phần nhân đôi (phần 1 ở DamageRules)
+        for (int i = -1; i <= 1; i++) arc(lv, p, 2.2 + 0.1 * i, 0.9, 10, BLOOD, i * 0.45);
+        arc(lv, p, 2.0, 0.9, 8, com.hukhong.vfx.ModParticles.MA_KHI.get(), 0);
+        if (total > 0) lv.sendParticles(BLOOD, p.getX(), p.getY() + 1.2, p.getZ(), 8, 0.3, 0.3, 0.3, 0.05);
+        lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
+    }
+
+    /** Ma Khí Hộ Thể: lá chắn 15% HP tối đa trong 6s (chỉ bản thân, qua Absorption). */
+    private static void maKhiHoThe(ServerLevel lv, ServerPlayer p) {
+        float shield = p.getMaxHealth() * 0.15f;
+        int amp = Math.max(0, (int) Math.ceil(shield / 4f) - 1);
+        p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 120, amp, false, false));
+        p.setAbsorptionAmount(Math.max(p.getAbsorptionAmount(), shield));
+        for (int h = 0; h < 3; h++) ring(lv, p.position().add(0, 0.3 + 0.7 * h, 0), h == 1 ? 1.1 : 0.8, 14,
+                com.hukhong.vfx.ModParticles.MA_KHI.get());
+        lv.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.9f, 0.5f);
+    }
+
+    /** Ma Thần Giáng Thế (tối thượng): 12s +40% Công, +Hấp Huyết; Ác Tính +15. Bonus áp ở MaRules. */
+    private static void maThanGiangThe(ServerLevel lv, ServerPlayer p) {
+        com.hukhong.pathrules.MaRules.activateThan(p);
+        lv.sendParticles(com.hukhong.vfx.ModParticles.MA_KHI.get(), p.getX(), p.getY() + 1, p.getZ(), 50, 0.6, 1.0, 0.6, 0.25);
+        ring(lv, p.position().add(0, 0.1, 0), 3, 36, com.hukhong.vfx.ModParticles.MA_KHI.get());
+        lv.playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.8f, 0.6f);
     }
 
     // ---- VFX helpers ----

@@ -90,6 +90,15 @@ public final class HuKhongCommand {
                     msg(c.getSource(), "city rebuilt at " + pos);
                     return 1;
                 }))
+                .then(Commands.literal("ma")
+                        .then(Commands.literal("ac").then(Commands.argument("n", IntegerArgumentType.integer(0, 100)).executes(c -> {
+                            ServerPlayer p = c.getSource().getPlayerOrException();
+                            com.hukhong.pathrules.MaRules.setAcTinh(p, IntegerArgumentType.getInteger(c, "n"));
+                            msg(c.getSource(), "ac_tinh=" + com.hukhong.pathrules.MaRules.data(p).acTinh);
+                            return 1;
+                        })))
+                        .then(Commands.literal("lo").then(Commands.literal("hapthu").executes(c -> setLo(c.getSource(), true)))
+                                .then(Commands.literal("thuong").executes(c -> setLo(c.getSource(), false)))))
                 .then(Commands.literal("age").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     AgeData a = p.getData(ModAttachments.AGE);
@@ -97,6 +106,16 @@ public final class HuKhongCommand {
                             + " months=" + a.onlineTicks() / AgeData.TICKS_PER_MONTH);
                     return 1;
                 })));
+    }
+
+    /** Đổi lộ Ma (tạm: lệnh; Ma Môn sẽ gọi cùng hàm). Sang Tu Luyện thường xóa Huyết Tế. */
+    private static int setLo(CommandSourceStack src, boolean absorb) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        var m = com.hukhong.pathrules.MaRules.data(p);
+        m.absorb = absorb;
+        if (!absorb) m.huyetTe = 0;
+        msg(src, "ma lo=" + (absorb ? "hapthu" : "thuong"));
+        return 1;
     }
 
     private static void msg(CommandSourceStack s, String text) {

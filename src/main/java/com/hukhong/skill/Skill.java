@@ -5,6 +5,12 @@ import com.hukhong.core.Path;
 
 /** Kỹ năng P0. Slot: 0=Q, 1=E, 2=R (chưa dùng), 3=T (tối thượng). */
 public enum Skill {
+    KIEM_1(Path.KIEM, 0, "kiem_1", 10, 12),
+    KIEM_2(Path.KIEM, 1, "kiem_2", 25, 160),
+    KIEM_ULT(Path.KIEM, 3, "kiem_ult", 80, 1200),
+    MA_1(Path.MA, 0, "ma_1", 0, 16),
+    MA_2(Path.MA, 1, "ma_2", 20, 400),
+    MA_ULT(Path.MA, 3, "ma_ult", 60, 2400),
     DAO_1(Path.DAO, 0, "dao_1", 8, 16),
     DAO_2(Path.DAO, 1, "dao_2", 25, 400),
     DAO_ULT(Path.DAO, 3, "dao_ult", 100, 1800),
@@ -14,6 +20,8 @@ public enum Skill {
 
     /** Hệ số sát thương kỹ năng 1 (nhân Phép lực / Công lực) - dùng chung với bài test cân bằng. */
     public static final double DAO_1_COEF = 0.90, THE_1_COEF = 1.00;
+    /** Hệ số x Công (attack_power): Trảm Khí 120%, Liên Hoàn 3 x 70%, Kiếm Vực 55%/nhịp; Huyết Trảo 125%. */
+    public static final double KIEM_1_COEF = 1.20, KIEM_2_COEF = 0.70, KIEM_ULT_COEF = 0.55, MA_1_COEF = 1.25;
 
     public final Path path;
     public final int slot;
@@ -37,10 +45,9 @@ public enum Skill {
         return null;
     }
 
-    /** Đạo có bộ kỹ năng dùng cho phím (P0: Đạo trước, rồi Thể). */
+    /** Đạo có bộ kỹ năng dùng cho phím (một trang; chuyển trang đa đạo = bước sau): Kiếm, Đạo, Thể, Ma. */
     public static Path skillPath(CultivationData d) {
-        if (d.paths().contains(Path.DAO)) return Path.DAO;
-        if (d.paths().contains(Path.THE)) return Path.THE;
+        for (Path p : new Path[]{Path.KIEM, Path.DAO, Path.THE, Path.MA}) if (d.paths().contains(p)) return p;
         return null;
     }
 }

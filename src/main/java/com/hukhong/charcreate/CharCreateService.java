@@ -25,8 +25,8 @@ import java.util.Set;
 public final class CharCreateService {
     private CharCreateService() {}
 
-    /** P0: chỉ Đạo Tu và Thể Tu. */
-    public static final Set<Path> UNLOCKED = Set.of(Path.DAO, Path.THE);
+    /** 10A: mở cả 4 đạo (Kiếm, Đạo, Thể, Ma). */
+    public static final Set<Path> UNLOCKED = Set.of(Path.KIEM, Path.DAO, Path.THE, Path.MA);
 
     public static int requiredPicks(CharRoll roll) { return Math.min(roll.slots(), UNLOCKED.size()); }
 
@@ -69,5 +69,6 @@ public final class CharCreateService {
         for (Path x : set) apt.put(x, roll.aptitude().get(x));
         p.setData(ModAttachments.CULTIVATION, d.withCharacter(set, apt, roll.origin().id, roll));
         SyncPayload.send(p);
+        if (set.contains(Path.KIEM)) com.hukhong.banmenh.BanMenhService.grant(p); // Kiếm Tu nhận Bản Mệnh Kiếm
     }
 }

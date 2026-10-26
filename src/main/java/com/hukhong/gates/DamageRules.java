@@ -67,7 +67,7 @@ public final class DamageRules {
                 out *= (float) com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_DAMAGE);
             }
             double ls = com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.LIFESTEAL);
-            if (ls > 0) atk.heal(Math.min((float) (out * ls), atk.getMaxHealth() * 0.04f));
+            if (ls > 0 && !com.hukhong.pathrules.MaRules.noLifesteal(atk)) atk.heal(Math.min((float) (out * ls), atk.getMaxHealth() * 0.04f));
         }
         return out;
     }

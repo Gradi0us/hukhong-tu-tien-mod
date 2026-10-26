@@ -1,0 +1,56 @@
+{
+ "parent": "minecraft:item/handheld",
+ "textures": {
+  "layer0": "hukhong:item/ban_menh/thanh_phong"
+ },
+ "overrides": [
+  {
+   "predicate": {
+    "custom_model_data": 1
+   },
+   "model": "hukhong:item/ban_menh/thanh_phong"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 2
+   },
+   "model": "hukhong:item/ban_menh/liet_diem"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 3
+   },
+   "model": "hukhong:item/ban_menh/han_bang"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 4
+   },
+   "model": "hukhong:item/ban_menh/loi_dinh"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 5
+   },
+   "model": "hukhong:item/ban_menh/huyet_anh"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 6
+   },
+   "model": "hukhong:item/ban_menh/trong_nhac"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 7
+   },
+   "model": "hukhong:item/ban_menh/ngoc_tam"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 8
+   },
+   "model": "hukhong:item/ban_menh/tinh_than"
+  }
+ ]
+}

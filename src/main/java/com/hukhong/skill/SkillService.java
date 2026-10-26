@@ -41,6 +41,10 @@ public final class SkillService {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         Skill s = Skill.of(Skill.skillPath(d), slot);
         if (s == null) return;
+        if (com.hukhong.pathrules.MaRules.isLost(p)) { // Mất Kiểm Soát: khóa phím kỹ năng
+            p.displayClientMessage(Component.translatable("hukhong.ma.lost_control"), true);
+            return;
+        }
         long now = p.level().getGameTime();
         if (st.cooldownEnd[slot] > now) return;
         if (!Resources.tryConsume(p, s.cost)) {

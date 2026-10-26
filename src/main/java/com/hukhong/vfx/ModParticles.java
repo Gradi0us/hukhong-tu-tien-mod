@@ -19,5 +19,8 @@ public final class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BA_KHI = PARTICLES.register("ba_khi", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HU_KHONG = PARTICLES.register("hu_khong", () -> new SimpleParticleType(false));
 
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> KIEM_KHI = PARTICLES.register("kiem_khi", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MA_KHI = PARTICLES.register("ma_khi", () -> new SimpleParticleType(false));
+
     public static void register(IEventBus bus) { PARTICLES.register(bus); ModSounds.SOUNDS.register(bus); }
 }

@@ -61,6 +61,8 @@ public class HuParticle extends TextureSheetParticle {
             e.registerSpriteSet(ModParticles.THANH_QUANG.get(), s -> new Provider(s, 0.01f, 0.16f, 22, true));
             e.registerSpriteSet(ModParticles.LINH_KHI.get(), s -> new Provider(s, 0.02f, 0.12f, 26, false));
             e.registerSpriteSet(ModParticles.BA_KHI.get(), s -> new Provider(s, 0.04f, 0.2f, 18, true));
+            e.registerSpriteSet(ModParticles.KIEM_KHI.get(), s -> new Provider(s, 0.0f, 0.22f, 14, true));
+            e.registerSpriteSet(ModParticles.MA_KHI.get(), s -> new Provider(s, 0.03f, 0.2f, 22, true));
             e.registerSpriteSet(ModParticles.HU_KHONG.get(), s -> new Provider(s, 0.015f, 0.18f, 24, true));
         }
     }

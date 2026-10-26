@@ -18,6 +18,8 @@ public final class GateEvents {
     @SubscribeEvent
     public static void onFinalize(FinalizeSpawnEvent e) {
         MobSpawnType t = e.getSpawnType();
+        if (t == MobSpawnType.BREEDING)
+            e.getEntity().getPersistentData().putBoolean(com.hukhong.pathrules.MaRules.BRED_TAG, true);
         if (t == MobSpawnType.SPAWNER || t == MobSpawnType.TRIAL_SPAWNER) {
             e.getEntity().setData(SpawnerMarks.MARK, true);
         }
@@ -27,10 +29,16 @@ public final class GateEvents {
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent e) {
         if (e.getEntity() instanceof Player) return;
-        if (e.getEntity() instanceof com.hukhong.entity.HuMob) return; // quái Hư Hóa tự thưởng trong entity/ (tránh EXP đôi)
+        if (e.getEntity() instanceof com.hukhong.entity.HuMob) { // quái Hư Hóa tự thưởng trong entity/ (tránh EXP đôi)
+            if (e.getSource().getEntity() instanceof ServerPlayer p)
+                com.hukhong.pathrules.MaRules.onKill(p, e.getEntity(), RewardGate.canReward(e.getEntity()) ? 1f : 0f);
+            return;
+        }
         if (e.getSource().getEntity() instanceof ServerPlayer p) {
-            long exp = Math.round(e.getEntity().getMaxHealth() * RewardGate.reward(e.getEntity()));
+            float rg = RewardGate.reward(e.getEntity()); // ghi KillRateGate đúng 1 lần
+            long exp = Math.round(e.getEntity().getMaxHealth() * rg * com.hukhong.pathrules.MaRules.expMultiplier(p, e.getEntity()));
             if (exp > 0) CultivationService.addExp(p, exp);
+            com.hukhong.pathrules.MaRules.onKill(p, e.getEntity(), rg);
         }
     }
 

@@ -16,11 +16,15 @@ public final class SkillAttachments {
 
     public static final AttachmentType<SkillState> STATE = AttachmentType.builder(SkillState::new).build();
 
+    public static final AttachmentType<com.hukhong.pathrules.MaData> MA = AttachmentType.builder(com.hukhong.pathrules.MaData::new)
+            .serialize(com.hukhong.pathrules.MaData.CODEC).copyOnDeath().build();
+
     @SubscribeEvent
     public static void onRegister(RegisterEvent e) {
         e.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, h -> {
             h.register(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "skill_state"), STATE);
             h.register(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "spawner_mark"), SpawnerMarks.MARK);
+            h.register(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "ma_state"), MA);
         });
     }
 }
