@@ -146,6 +146,10 @@ public class ProfileScreen extends Screen {
         y += 4;
         g.drawString(font, t("hukhong.profile.age", "Tuổi: %s", ClientCache.age().ageYears()), lx, y, 0xFFBBBBBB);
         y += 11;
+        int life = ClientCache.age().lifespan(d.realmIndex());
+        g.drawString(font, life == com.hukhong.age.AgeMath.UNLIMITED ? Component.translatable("hukhong.profile.lifespan.inf")
+                : Component.translatable("hukhong.profile.lifespan", life), lx, y, 0xFFBBBBBB);
+        y += 11;
         int leftEnd = y;
 
         // cột phải: bảng chỉ số

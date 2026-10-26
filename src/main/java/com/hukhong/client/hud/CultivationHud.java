@@ -86,8 +86,13 @@ public final class CultivationHud {
         g.drawString(font, d.resource() + "/" + d.resourceMax(), x + BAR_W + 4, y - 1, color, true);
         y += BAR_H + 4;
 
-        g.drawString(font, Component.translatable("hukhong.hud.age", ClientCache.age().ageYears()),
-                x, y, 0xFFE0C080, true);
+        int lifeHud = ClientCache.age().lifespan(d.realmIndex());
+        int leftHud = lifeHud - ClientCache.age().ageYears();
+        boolean showLife = d.level() >= 10 && lifeHud != com.hukhong.age.AgeMath.UNLIMITED;
+        int ageCol = !showLife ? 0xFFE0C080 : leftHud <= 3 ? 0xFFFF5555 : leftHud <= 10 ? 0xFFFFD040 : 0xFFE0C080;
+        g.drawString(font, showLife ? Component.translatable("hukhong.hud.age.life", ClientCache.age().ageYears(), lifeHud)
+                : Component.translatable("hukhong.hud.age", ClientCache.age().ageYears()),
+                x, y, ageCol, true);
         if (d.inBottleneck()) {
             g.drawString(font, Component.translatable("hukhong.hud.bottleneck"), x + 60, y, 0xFFFF5555, true);
         }

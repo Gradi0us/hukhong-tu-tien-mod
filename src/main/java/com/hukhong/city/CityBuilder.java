@@ -48,20 +48,17 @@ public final class CityBuilder {
 
     private static void set(ServerLevel l, int x, int y, int z, Block b) { set(l, x, y, z, b.defaultBlockState()); }
 
-    /** Dựng thành tại site (x,z); trả tâm (y = mặt nền). */
-    public static BlockPos build(ServerLevel l, BlockPos site) {
-        int cx = site.getX(), cz = site.getZ();
-        for (int x = (cx - HALF - 2) >> 4; x <= (cx + HALF + 2) >> 4; x++)
-            for (int z = (cz - HALF - 2) >> 4; z <= (cz + HALF + 2) >> 4; z++) l.getChunk(x, z);
+    /** Tìm mặt nền tại (cx,cz), nạp chunk, san phẳng ô (2*half+1)^2 (cỏ, đất đệm, dọn trống phía trên). Trả y0. */
+    public static int prepare(ServerLevel l, int cx, int cz, int half) {
+        for (int x = (cx - half - 2) >> 4; x <= (cx + half + 2) >> 4; x++)
+            for (int z = (cz - half - 2) >> 4; z <= (cz + half + 2) >> 4; z++) l.getChunk(x, z);
         int y = l.getHeight(Heightmap.Types.WORLD_SURFACE_WG, cx, cz) - 1;
         while (y > l.getMinBuildHeight() + 8) {
             BlockState s = l.getBlockState(new BlockPos(cx, y, cz));
             if (s.isAir() || s.is(BlockTags.LEAVES) || s.is(BlockTags.LOGS) || s.canBeReplaced()) y--; else break;
         }
         int y0 = Math.max(y, l.getSeaLevel());
-
-        // 1) san phẳng: cỏ ở y0, đất bên dưới, dọn trống phía trên
-        for (int dx = -HALF; dx <= HALF; dx++) for (int dz = -HALF; dz <= HALF; dz++) {
+        for (int dx = -half; dx <= half; dx++) for (int dz = -half; dz <= half; dz++) {
             int x = cx + dx, z = cz + dz;
             set(l, x, y0, z, Blocks.GRASS_BLOCK);
             for (int d = 1; d <= 16; d++) {
@@ -75,6 +72,34 @@ public final class CityBuilder {
                 if (!l.getBlockState(bp).isAir()) l.setBlock(bp, Blocks.AIR.defaultBlockState(), FLAGS);
             }
         }
+        return y0;
+    }
+
+    /** Né đại dương/sông: thử tối đa 2 vòng x 8 hướng (96 / 192 block), tất định theo seed + biome. */
+    public static BlockPos adjustSite(ServerLevel l, BlockPos site) {
+        if (!wet(l, site)) return site;
+        for (int ring = 1; ring <= 2; ring++) for (int k = 0; k < 8; k++) {
+            double ang = k * Math.PI / 4;
+            BlockPos p = new BlockPos(site.getX() + (int) Math.round(Math.cos(ang) * 96 * ring), 64,
+                    site.getZ() + (int) Math.round(Math.sin(ang) * 96 * ring));
+            if (!wet(l, p)) return p;
+        }
+        return site;
+    }
+
+    private static boolean wet(ServerLevel l, BlockPos p) {
+        var b = l.getBiome(p);
+        return b.is(BiomeTags.IS_OCEAN) || b.is(BiomeTags.IS_RIVER);
+    }
+
+    /** Dựng Lưu Ly Cảng (thành gốc, cấp Nhân). */
+    public static BlockPos build(ServerLevel l, BlockPos site) { return build(l, site, "hukhong.city.name", Tier.NHAN); }
+
+    /** Dựng thành tại site (x,z); trả tâm (y = mặt nền). tier quyết định độ cao tường. */
+    public static BlockPos build(ServerLevel l, BlockPos site, String nameKey, Tier tier) {
+        int cx = site.getX(), cz = site.getZ();
+        int y0 = prepare(l, cx, cz, HALF);
+        int ex = tier.ordinal(); // tường cao thêm theo cấp
         // 2) đường + quảng trường
         for (int dx = -HALF; dx <= HALF; dx++) for (int dz = -HALF; dz <= HALF; dz++) {
             boolean plaza = Math.abs(dx) <= 5 && Math.abs(dz) <= 5;
@@ -88,14 +113,14 @@ public final class CityBuilder {
             boolean corner = Math.abs(dx) == HALF && Math.abs(dz) == HALF;
             int along = Math.abs(dx) == HALF ? dz : dx;
             boolean gate = Math.abs(along) <= 2;
-            int top = corner ? 8 : 5;
+            int top = (corner ? 8 : 5) + ex;
             for (int h = 1; h <= top; h++) {
                 if (gate && h <= 3) continue;
                 set(l, cx + dx, y0 + h, cz + dz, Blocks.STONE_BRICKS);
             }
-            if (!corner && ((dx + dz) & 1) == 0) set(l, cx + dx, y0 + 6, cz + dz, Blocks.STONE_BRICKS);
-            if (!corner && Math.abs(along) == 3) set(l, cx + dx, y0 + 6, cz + dz, Blocks.LANTERN);
-            if (corner) set(l, cx + dx, y0 + 9, cz + dz, Blocks.LANTERN);
+            if (!corner && ((dx + dz) & 1) == 0) set(l, cx + dx, y0 + 6 + ex, cz + dz, Blocks.STONE_BRICKS);
+            if (!corner && Math.abs(along) == 3) set(l, cx + dx, y0 + 6 + ex, cz + dz, Blocks.LANTERN);
+            if (corner) set(l, cx + dx, y0 + 9 + ex, cz + dz, Blocks.LANTERN);
         }
         // 4) bệ + Ấn Hồn Đài + cột sáng (end rod)
         for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) set(l, cx + dx, y0, cz + dz, Blocks.CHISELED_STONE_BRICKS);
@@ -104,11 +129,13 @@ public final class CityBuilder {
         // 5) nhà
         for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) house(l, cx + sx * 11, cz + sz * 11, y0, sx);
         // 6) biển tên
-        sign(l, cx, y0 + 1, cz + 23, 0, "hukhong.city.name");
-        sign(l, cx, y0 + 1, cz - 23, 8, "hukhong.city.name");
-        sign(l, cx + 23, y0 + 1, cz, 12, "hukhong.city.name");
-        sign(l, cx - 23, y0 + 1, cz, 4, "hukhong.city.name");
+        sign(l, cx, y0 + 1, cz + 23, 0, nameKey);
+        sign(l, cx, y0 + 1, cz - 23, 8, nameKey);
+        sign(l, cx + 23, y0 + 1, cz, 12, nameKey);
+        sign(l, cx - 23, y0 + 1, cz, 4, nameKey);
         sign(l, cx, y0 + 1, cz + 3, 0, "hukhong.city.altar_sign");
+        // 6b) bảng Thành (chức vị) cạnh Ấn Hồn Đài
+        set(l, cx + 3, y0 + 1, cz - 2, com.hukhong.society.SocietyRegistry.THANH_BANG.get());
         // 7) dân làng
         int[][] vp = {{3, 3}, {-3, 3}, {3, -3}};
         for (int[] p : vp) {

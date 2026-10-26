@@ -69,21 +69,30 @@ public final class HuKhongCommand {
                     msg(c.getSource(), "reroll: " + CultivationService.get(p).roll());
                     return 1;
                 }))
-                .then(Commands.literal("locate_city").executes(c -> {
-                    var ow = c.getSource().getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
-                    var d = com.hukhong.city.CitySavedData.get(ow);
-                    if (!d.isBuilt()) { c.getSource().sendFailure(Component.translatable("hukhong.city.not_built")); return 0; }
-                    var cp = d.center();
-                    c.getSource().sendSuccess(() -> Component.translatable("hukhong.city.locate", cp.getX(), cp.getY(), cp.getZ(),
-                            d.state().name(), d.residentCount()), false);
+                .then(Commands.literal("invade")
+                        .then(Commands.literal("warn").executes(c -> {
+                            var ow = c.getSource().getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
+                            String err = com.hukhong.events.InvasionManager.warn(ow, 400);
+                            if (err != null) { c.getSource().sendFailure(Component.translatable(err)); return 0; }
+                            return 1;
+                        }))
+                        .executes(c -> {
+                            var ow = c.getSource().getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
+                            String err = com.hukhong.events.InvasionManager.start(ow);
+                            if (err != null) { c.getSource().sendFailure(Component.translatable(err)); return 0; }
+                            return 1;
+                        }))
+                .then(Commands.literal("boss").executes(c -> {
+                    var pl = c.getSource().getPlayerOrException();
+                    com.hukhong.events.CorruptionManager.spawnBoss(pl.serverLevel(), pl.blockPosition().offset(6, 0, 0));
                     return 1;
                 }))
-                .then(Commands.literal("invade").executes(c -> {
-                    var ow = c.getSource().getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
-                    String err = com.hukhong.events.InvasionManager.start(ow);
-                    if (err != null) { c.getSource().sendFailure(Component.translatable(err)); return 0; }
+                .then(Commands.literal("corrupt").then(Commands.argument("chunks", IntegerArgumentType.integer(1, 200)).executes(c -> {
+                    var pl = c.getSource().getPlayerOrException();
+                    int n = com.hukhong.events.CorruptionManager.seedAround(pl.serverLevel(), pl.blockPosition(), IntegerArgumentType.getInteger(c, "chunks"));
+                    msg(c.getSource(), "corrupted +" + n + " chunks");
                     return 1;
-                }))
+                })))
                 .then(Commands.literal("city_restore").executes(c -> {
                     com.hukhong.events.InvasionManager.cancel();
                     var pos = com.hukhong.city.CityEvents.ensureBuilt(c.getSource().getServer(), true);

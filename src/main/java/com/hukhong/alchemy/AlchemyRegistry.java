@@ -92,6 +92,9 @@ public final class AlchemyRegistry {
     public static final DeferredItem<UtilityPillItem> GIAI_DOC_DAN = ITEMS.register("giai_doc_dan",
             () -> new UtilityPillItem(UtilityPillItem.Kind.DETOX, 2, 30, 0, new Item.Properties().stacksTo(16)));
 
+    public static final DeferredItem<com.hukhong.age.ThoNguyenDanItem> THO_NGUYEN_DAN = ITEMS.register("tho_nguyen_dan",
+            () -> new com.hukhong.age.ThoNguyenDanItem(5, new Item.Properties().stacksTo(16)));
+
     private static DeferredItem<PhaCanhDanItem> pha(String id, int tier) {
         return ITEMS.register(id, () -> new PhaCanhDanItem(tier, new Item.Properties().stacksTo(16)));
     }
@@ -111,7 +114,7 @@ public final class AlchemyRegistry {
             if (e.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) e.accept(DAN_LO_ITEM.get());
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 for (var i : new Supplier[]{LINH_THAO, HUYET_THAM, HOA_LIEN, THANH_DIEP, DI_HOA_CHAU, THONG_HUYEN_DAN,
-                        TU_VUONG_DAN, HOANG_CUC_DAN, DE_HOAN_DAN, CHI_HUYET_DAN, HOI_XUAN_DAN, GIAI_DOC_DAN})
+                        TU_VUONG_DAN, HOANG_CUC_DAN, DE_HOAN_DAN, CHI_HUYET_DAN, HOI_XUAN_DAN, GIAI_DOC_DAN, THO_NGUYEN_DAN})
                     e.accept((Item) i.get());
             }
         });

@@ -34,7 +34,9 @@ public final class AlchemyRecipes {
             new Recipe("hoi_xuan", 1, List.of(n(AlchemyRegistry.LINH_THAO, 2), n(AlchemyRegistry.THANH_DIEP, 2)),
                     AlchemyRegistry.HOI_XUAN_DAN, 2),
             new Recipe("giai_doc", 2, List.of(n(AlchemyRegistry.THANH_DIEP, 3), n(AlchemyRegistry.HOA_LIEN, 1)),
-                    AlchemyRegistry.GIAI_DOC_DAN, 2));
+                    AlchemyRegistry.GIAI_DOC_DAN, 2),
+            new Recipe("tho_nguyen", 3, List.of(n(AlchemyRegistry.LINH_THAO, 2), n(AlchemyRegistry.HUYET_THAM, 2), n(AlchemyRegistry.HOA_LIEN, 1)),
+                    AlchemyRegistry.THO_NGUYEN_DAN, 1));
 
     private static int total(List<ItemStack> in, Item item) {
         int c = 0;

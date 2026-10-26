@@ -49,13 +49,60 @@ public final class InvasionManager {
         final ServerBossEvent bar = new ServerBossEvent(Component.translatable("hukhong.invade.bossbar", 1, WAVE_SIZE.length),
                 BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
         final List<Mob> mobs = new ArrayList<>();
-        int wave = 1, toSpawn = WAVE_SIZE[0], killedTotal, plannedTotal = WAVE_SIZE[0] + WAVE_SIZE[1] + WAVE_SIZE[2];
+        final int players;
+        final int[] sizes = new int[WAVE_SIZE.length];
+        int wave = 1, toSpawn, killedTotal, plannedTotal;
         int age, lossTicks, waveDelay, tries;
 
-        Invasion(ServerLevel l, CitySavedData d) { level = l; center = d.center(); altar = d.altarPos(); }
+        Invasion(ServerLevel l, CitySavedData d) {
+            level = l; center = d.center(); altar = d.altarPos();
+            int n = 0;
+            for (ServerPlayer p : l.players())
+                if (p.distanceToSqr(altar.getX(), altar.getY(), altar.getZ()) < 160 * 160) n++;
+            players = BossScaling.clamp(n);
+            for (int i = 0; i < sizes.length; i++) { sizes[i] = BossScaling.waveSize(WAVE_SIZE[i], players); plannedTotal += sizes[i]; }
+            toSpawn = sizes[0];
+        }
     }
 
     private static Invasion cur;
+
+    // ---- cảnh báo trước khi quân Hư Hóa tới ----
+    public static final int WARN_TICKS = 1200;
+    private static int warnLeft;
+    private static ServerLevel warnLevel;
+    private static final ServerBossEvent WARN_BAR = new ServerBossEvent(Component.translatable("hukhong.invade.warn_bar", 60),
+            BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.NOTCHED_10);
+
+    public static boolean warning() { return warnLeft > 0; }
+
+    /** Báo trước {@code ticks} tick rồi tự khởi động tập kích. @return null nếu OK, hoặc key lỗi. */
+    public static String warn(ServerLevel ow, int ticks) {
+        if (cur != null || warnLeft > 0) return "hukhong.invade.err_active";
+        CitySavedData d = CitySavedData.get(ow);
+        if (!d.isBuilt()) return "hukhong.city.not_built";
+        if (d.state() == CitySavedData.State.RUIN) return "hukhong.invade.err_ruin";
+        warnLeft = Math.max(1, ticks);
+        warnLevel = ow;
+        title(ow, Component.translatable("hukhong.invade.warn_title"), Component.translatable("hukhong.invade.warn_sub", Math.max(1, ticks / 20)));
+        return null;
+    }
+
+    private static void tickWarn() {
+        if (warnLeft <= 0) return;
+        ServerLevel ow = warnLevel;
+        warnLeft--;
+        if (warnLeft % 20 == 0 || warnLeft == 0) {
+            WARN_BAR.setName(Component.translatable("hukhong.invade.warn_bar", warnLeft / 20));
+            WARN_BAR.setProgress(Math.max(0f, Math.min(1f, warnLeft / (float) WARN_TICKS)));
+            for (ServerPlayer p : ow.players()) WARN_BAR.addPlayer(p);
+        }
+        if (warnLeft == 0) {
+            WARN_BAR.removeAllPlayers();
+            warnLevel = null;
+            start(ow);
+        }
+    }
 
     public static boolean active() { return cur != null; }
 
@@ -75,10 +122,12 @@ public final class InvasionManager {
     @SubscribeEvent
     public static void onStopping(ServerStoppingEvent e) {
         if (cur != null) { cur.bar.removeAllPlayers(); cur = null; }
+        warnLeft = 0; warnLevel = null; WARN_BAR.removeAllPlayers();
     }
 
     @SubscribeEvent
     public static void onTick(ServerTickEvent.Post e) {
+        tickWarn();
         Invasion inv = cur;
         if (inv == null) return;
         inv.age++;
@@ -112,7 +161,7 @@ public final class InvasionManager {
         if (inv.toSpawn == 0 && inv.mobs.isEmpty() && inv.waveDelay <= 0) {
             if (inv.wave >= WAVE_SIZE.length) { win(inv); return; }
             inv.wave++;
-            inv.toSpawn = WAVE_SIZE[inv.wave - 1];
+            inv.toSpawn = inv.sizes[inv.wave - 1];
             inv.waveDelay = 100;
             broadcast(inv, Component.translatable("hukhong.invade.wave", inv.wave, WAVE_SIZE.length));
         }
@@ -143,6 +192,13 @@ public final class InvasionManager {
             m.moveTo(x + 0.5, y, z + 0.5, inv.level.random.nextFloat() * 360f, 0f);
             m.finalizeSpawn(inv.level, inv.level.getCurrentDifficultyAt(bp), MobSpawnType.EVENT, null);
             m.setPersistenceRequired();
+            var hpAttr = m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            if (hpAttr != null && inv.players > 1) {
+                hpAttr.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "invasion_hp"),
+                        BossScaling.mobHpMul(inv.players) - 1, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+                m.setHealth(m.getMaxHealth());
+            }
             inv.level.addFreshEntityWithPassengers(m);
             inv.mobs.add(m);
             inv.toSpawn--;
@@ -151,7 +207,9 @@ public final class InvasionManager {
     }
 
     private static void win(Invasion inv) {
-        CitySavedData.get(inv.level).addWin();
+        CitySavedData cd = CitySavedData.get(inv.level);
+        cd.addWin();
+        CorruptionData.get(inv.level).cleanseNear(inv.center.getX(), inv.center.getZ(), BossScaling.cleanseCount(cd.invasionsWon()));
         for (ServerPlayer p : inv.level.players()) {
             if (p.distanceToSqr(inv.altar.getX(), inv.altar.getY(), inv.altar.getZ()) > 160 * 160) continue;
             ItemStack st = new ItemStack(ModItems.HON_TINH.get(), 5);

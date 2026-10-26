@@ -129,7 +129,10 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
 
     private void finish(Level level, BlockPos pos) {
         brewing = false;
-        var q = AlchemyMath.qualityFor(inBand / (double) AlchemyMath.BREW_TICKS);
+        double ratio = inBand / (double) AlchemyMath.BREW_TICKS;
+        if (level.getNearestPlayer(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 8, false) instanceof net.minecraft.server.level.ServerPlayer sp)
+            ratio = Math.min(1.0, ratio + com.hukhong.society.SectBuffs.alchemyBonus(sp)); // buff Đan Đỉnh Tông
+        var q = AlchemyMath.qualityFor(ratio);
         if (q == null) { notifyNear(level, pos, "hukhong.alchemy.wasted"); return; }
         var r = AlchemyRecipes.ALL.get(recipeIdx);
         ItemStack out = new ItemStack(r.result().get(), r.yield());

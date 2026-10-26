@@ -57,6 +57,7 @@ public final class ModItems {
         com.hukhong.cores.CoreAttachments.ATTACHMENTS.register(bus);
         com.hukhong.banmenh.BanMenhAttachments.ATTACHMENTS.register(bus);
         com.hukhong.alchemy.AlchemyRegistry.register(bus);
+        com.hukhong.society.SocietyRegistry.register(bus);
         ITEMS.register(bus);
         COMPONENTS.register(bus);
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {

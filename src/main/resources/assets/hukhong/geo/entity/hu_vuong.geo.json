@@ -1,0 +1,231 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.hu_vuong",
+        "texture_width": 128,
+        "texture_height": 128,
+        "visible_bounds_width": 4.5,
+        "visible_bounds_height": 5,
+        "visible_bounds_offset": [
+          0,
+          1.8,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "body",
+          "pivot": [
+            0,
+            42,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -9,
+                20,
+                -5
+              ],
+              "size": [
+                18,
+                22,
+                10
+              ],
+              "uv": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "head",
+          "pivot": [
+            0,
+            42,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6,
+                42,
+                -6
+              ],
+              "size": [
+                12,
+                12,
+                12
+              ],
+              "uv": [
+                56,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "horn_r",
+          "pivot": [
+            -4,
+            54,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -5,
+                54,
+                -1
+              ],
+              "size": [
+                2,
+                9,
+                2
+              ],
+              "uv": [
+                104,
+                0
+              ]
+            }
+          ],
+          "parent": "head"
+        },
+        {
+          "name": "horn_l",
+          "pivot": [
+            4,
+            54,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                3,
+                54,
+                -1
+              ],
+              "size": [
+                2,
+                9,
+                2
+              ],
+              "uv": [
+                112,
+                0
+              ]
+            }
+          ],
+          "parent": "head"
+        },
+        {
+          "name": "right_arm",
+          "pivot": [
+            -12,
+            40,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -15,
+                18,
+                -4
+              ],
+              "size": [
+                6,
+                24,
+                8
+              ],
+              "uv": [
+                0,
+                32
+              ]
+            }
+          ]
+        },
+        {
+          "name": "left_arm",
+          "pivot": [
+            12,
+            40,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                9,
+                18,
+                -4
+              ],
+              "size": [
+                6,
+                24,
+                8
+              ],
+              "uv": [
+                28,
+                32
+              ]
+            }
+          ]
+        },
+        {
+          "name": "right_leg",
+          "pivot": [
+            -4.5,
+            20,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -4
+              ],
+              "size": [
+                7,
+                20,
+                8
+              ],
+              "uv": [
+                56,
+                32
+              ]
+            }
+          ]
+        },
+        {
+          "name": "left_leg",
+          "pivot": [
+            4.5,
+            20,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                1,
+                0,
+                -4
+              ],
+              "size": [
+                7,
+                20,
+                8
+              ],
+              "uv": [
+                86,
+                32
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
