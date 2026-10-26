@@ -51,4 +51,25 @@ class CoreRollerTest {
             assertEquals(100, s);
         }
     }
+
+    @Test
+    void thanCoreOnlyAtMilestone12AndOnlyOwnPath() throws Exception {
+        var all = load();
+        for (String n : new String[]{"kiem", "dao", "the", "ma"}) {
+            try (var in = CoreRollerTest.class.getResourceAsStream("/data/hukhong/hukhong/core/than_" + n + ".json")) {
+                var def = CoreDef.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(new java.io.InputStreamReader(in))).getOrThrow();
+                assertEquals(CoreTier.KIM, def.minTier());
+                all.put(ResourceLocation.fromNamespaceAndPath("hukhong", "than_" + n), def);
+            }
+        }
+        var p = CoreRoller.roll(12, 7L, 0, Aptitude.B, Set.of("dao"), Set.of(), all);
+        assertEquals(java.util.List.of(ResourceLocation.fromNamespaceAndPath("hukhong", "than_dao")), p.ids());
+        assertEquals(CoreTier.KIM.ordinal(), p.tier());
+        assertFalse(p.stuckRoll());
+        for (int m = 1; m <= 11; m++) {
+            var r = CoreRoller.roll(m, 9L + m, 5, Aptitude.A, Set.of("dao"), Set.of(), all);
+            assertTrue(r.ids().stream().noneMatch(x -> x.getPath().startsWith("than_")));
+            assertFalse(r.fourth().getPath().startsWith("than_"));
+        }
+    }
 }

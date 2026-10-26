@@ -70,11 +70,11 @@ public final class CultivationHud {
         y += 11;
 
         boolean full = d.level() >= CultivationData.MAX_LEVEL || d.milestoneLocked();
-        double expRatio = full ? 1.0 : (double) d.exp() / CultivationService.expToNext(d.level());
+        double expRatio = full ? 1.0 : (double) d.exp() / CultivationService.barSize(d.level());
         if (d.inBottleneck()) g.setColor(1f, 0.35f, 0.15f, 1f); // thanh Chướng
         bar(g, x, y, expRatio, "exp_bar_bg", "exp_bar_fill", full ? 0xFFAAAAAA : d.inBottleneck() ? 0xFFD2501E : 0xFF7CFC00);
         g.setColor(1f, 1f, 1f, 1f);
-        String expTxt = full ? "MAX" : d.exp() + "/" + CultivationService.expToNext(d.level());
+        String expTxt = full ? "MAX" : d.exp() + "/" + CultivationService.barSize(d.level());
         g.drawString(font, expTxt, x + BAR_W + 4, y - 1, 0xFFDDDDDD, true);
         y += BAR_H + 3;
 

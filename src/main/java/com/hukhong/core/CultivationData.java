@@ -70,8 +70,8 @@ public record CultivationData(int level, long exp, int resource, int resourceMax
     /** Khóa ở mốc 10/20/.../90 cho tới khi mở khóa mốc (Ấn Hồn Đài / lệnh test). */
     public boolean milestoneLocked() { return isMilestoneLevel(level) && !milestoneUnlocked; }
 
-    /** Mốc Lõi R29: 10,20,...,90, 95, 99 (cấp 100 = Thần Lõi tự động, không khóa). */
-    public static boolean isMilestoneLevel(int l) { return l < MAX_LEVEL && (l % 10 == 0 || l == 95 || l == 99); }
+    /** Mốc Lõi R29: 10,20,...,90, 95, 99, 100 (cấp 100 = Thần Lõi, chọn tại Ấn Hồn Đài). */
+    public static boolean isMilestoneLevel(int l) { return l <= MAX_LEVEL && (l % 10 == 0 || l == 95 || l == 99); }
 
     public CultivationData withResource(int r) {
         return new CultivationData(level, exp, r, resourceMax, paths, aptitude, bottleneck, origin, roll, milestoneUnlocked);

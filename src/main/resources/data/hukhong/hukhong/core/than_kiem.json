@@ -1,0 +1,9 @@
+{
+  "name": "core.hukhong.than_kiem",
+  "system": "than",
+  "path": "kiem",
+  "min_tier": "kim",
+  "passives": [
+    {"attribute": "hukhong:attack_power", "operation": "add_multiplied_base", "values": [0.15]}
+  ]
+}

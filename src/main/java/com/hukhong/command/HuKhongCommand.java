@@ -69,6 +69,27 @@ public final class HuKhongCommand {
                     msg(c.getSource(), "reroll: " + CultivationService.get(p).roll());
                     return 1;
                 }))
+                .then(Commands.literal("locate_city").executes(c -> {
+                    var ow = c.getSource().getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
+                    var d = com.hukhong.city.CitySavedData.get(ow);
+                    if (!d.isBuilt()) { c.getSource().sendFailure(Component.translatable("hukhong.city.not_built")); return 0; }
+                    var cp = d.center();
+                    c.getSource().sendSuccess(() -> Component.translatable("hukhong.city.locate", cp.getX(), cp.getY(), cp.getZ(),
+                            d.state().name(), d.residentCount()), false);
+                    return 1;
+                }))
+                .then(Commands.literal("invade").executes(c -> {
+                    var ow = c.getSource().getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
+                    String err = com.hukhong.events.InvasionManager.start(ow);
+                    if (err != null) { c.getSource().sendFailure(Component.translatable(err)); return 0; }
+                    return 1;
+                }))
+                .then(Commands.literal("city_restore").executes(c -> {
+                    com.hukhong.events.InvasionManager.cancel();
+                    var pos = com.hukhong.city.CityEvents.ensureBuilt(c.getSource().getServer(), true);
+                    msg(c.getSource(), "city rebuilt at " + pos);
+                    return 1;
+                }))
                 .then(Commands.literal("age").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     AgeData a = p.getData(ModAttachments.AGE);

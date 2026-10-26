@@ -68,8 +68,29 @@ public final class CoreRoller {
 
     public record Pending0(int tier) {}
 
+    /** Mốc cấp 100 (R29): Thần Lõi. */
+    public static final int THAN_MILESTONE = 12;
+
+    /** Cấp 100: chỉ Thần Lõi (phẩm Kim) của các đạo người chơi; không ô úp / Mắc Kẹt. ids rỗng nếu chưa có đạo. */
+    private static CoreSlots.Pending rollThan(int milestone, long seed, int luck, Set<String> pathIds,
+                                              Map<ResourceLocation, CoreDef> all) {
+        List<ResourceLocation> ids = new ArrayList<>();
+        for (var e : all.entrySet()) {
+            CoreDef c = e.getValue();
+            if (c.minTier() == CoreTier.KIM && pathIds.contains(c.path())) ids.add(e.getKey());
+        }
+        int kim = CoreTier.KIM.ordinal();
+        ResourceLocation first = ids.isEmpty() ? ResourceLocation.fromNamespaceAndPath("hukhong", "none") : ids.get(0);
+        return new CoreSlots.Pending(milestone, seed, luck, kim, ids, first, kim, false);
+    }
+
     public static CoreSlots.Pending roll(int milestone, long seed, int luck, Aptitude apt, Set<String> pathIds,
                                          Set<ResourceLocation> owned, Map<ResourceLocation, CoreDef> all) {
+        if (milestone >= THAN_MILESTONE) return rollThan(milestone, seed, luck, pathIds, all);
+        // Lõi thường: loại Thần Lõi (min_tier Kim) khỏi mọi pool/fallback.
+        Map<ResourceLocation, CoreDef> normal = new java.util.LinkedHashMap<>();
+        all.forEach((k, v) -> { if (v.minTier() != CoreTier.KIM) normal.put(k, v); });
+        all = normal;
         Random rnd = new Random(seed);
         int tier = rollTier(milestone, luck, rnd).tier();
 

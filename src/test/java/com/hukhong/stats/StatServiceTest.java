@@ -31,4 +31,16 @@ class StatServiceTest {
     void defenseDiminishing() {
         assertEquals(50f, StatService.mitigate(100f, 100), 0.01);
     }
+
+    @Test
+    void vitals() {
+        var K = java.util.Set.of(com.hukhong.core.Path.KIEM);
+        var T = java.util.Set.of(com.hukhong.core.Path.THE);
+        var B = java.util.Map.<com.hukhong.core.Path, com.hukhong.core.Aptitude>of();
+        assertEquals(20, StatService.maxHealth(1, K, B), 1e-9);
+        assertEquals(465.5, StatService.maxHealth(100, K, B), 1e-9);
+        assertEquals(24 + 7.0 * 99, StatService.maxHealth(100, T, B), 1e-9);
+        assertEquals(0.099, StatService.speedBonus(100, K, B), 1e-9);
+        assertEquals(20, StatService.maxHealth(50, java.util.Set.of(), B), 1e-9);
+    }
 }

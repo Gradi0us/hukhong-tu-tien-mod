@@ -1,0 +1,9 @@
+{
+  "name": "core.hukhong.than_ma",
+  "system": "than",
+  "path": "ma",
+  "min_tier": "kim",
+  "passives": [
+    {"attribute": "hukhong:lifesteal", "operation": "add_value", "values": [0.2]}
+  ]
+}

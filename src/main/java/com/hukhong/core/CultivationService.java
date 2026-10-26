@@ -16,6 +16,20 @@ public final class CultivationService {
     }
 
     public static final double BOTTLENECK_EXP_MULT = 0.25;
+    /** Bình Cảnh nhẹ (S3 §1.3.2): thanh cấp 94 (vào 95) và 98 (vào 99) dài x3, vạch 1/3 = điểm dùng Tiểu Phá Đan. */
+    public static final int LIGHT_BAR_MULT = 3;
+
+    public static boolean isLightBottleneckLevel(int level) { return level == 94 || level == 98; }
+
+    /** Kích thước thanh EXP thực của cấp (x3 ở 94/98). */
+    public static long barSize(int level) {
+        return isLightBottleneckLevel(level) ? expToNext(level) * LIGHT_BAR_MULT : expToNext(level);
+    }
+
+    /** Đang ở Bình Cảnh nhẹ: cấp 94/98 và EXP đã chạm vạch 1/3. */
+    public static boolean inLightBottleneck(CultivationData d) {
+        return isLightBottleneckLevel(d.level()) && d.exp() >= expToNext(d.level());
+    }
 
     public static int resourceMaxFor(int level) { return 100 + 10 * (level - 1); }
 
@@ -31,7 +45,7 @@ public final class CultivationService {
         long exp = d.exp() + amount;
         int level = d.level();
         while (level < CultivationData.MAX_LEVEL) {
-            long need = expToNext(level);
+            long need = barSize(level);
             if (exp < need) break;
             exp -= need;
             level++;
@@ -43,6 +57,18 @@ public final class CultivationService {
     /** Qua Bình Cảnh: lên ngay cấp mốc (thuần). Không đổi nếu không ở Bình Cảnh. */
     public static CultivationData applyBreakthrough(CultivationData d) {
         return d.inBottleneck() ? d.withLevel(d.level() + 1) : d;
+    }
+
+    /** Tiểu Phá Đan qua Bình Cảnh nhẹ: lên ngay cấp kế (95/99, khóa mốc). Không đổi nếu chưa tới vạch 1/3. */
+    public static CultivationData applyLightBreakthrough(CultivationData d, int lightLevel) {
+        return d.level() == lightLevel && inLightBottleneck(d) ? d.withLevel(d.level() + 1) : d;
+    }
+
+    public static boolean tryLightBreakthrough(ServerPlayer p, int lightLevel) {
+        CultivationData d = get(p);
+        if (d.level() != lightLevel || !inLightBottleneck(d)) return false;
+        update(p, applyLightBreakthrough(d, lightLevel));
+        return true;
     }
 
     /** Phẩm đan cần cho Bình Cảnh hiện tại (1 = cấp 9, 2 = cấp 19...), 0 nếu không ở Bình Cảnh. */

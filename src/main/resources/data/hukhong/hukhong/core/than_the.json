@@ -1,0 +1,9 @@
+{
+  "name": "core.hukhong.than_the",
+  "system": "than",
+  "path": "the",
+  "min_tier": "kim",
+  "passives": [
+    {"attribute": "hukhong:defense", "operation": "add_multiplied_base", "values": [0.25]}
+  ]
+}

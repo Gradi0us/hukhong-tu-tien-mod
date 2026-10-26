@@ -1,0 +1,9 @@
+{
+  "name": "core.hukhong.than_dao",
+  "system": "than",
+  "path": "dao",
+  "min_tier": "kim",
+  "passives": [
+    {"attribute": "hukhong:spell_power", "operation": "add_multiplied_base", "values": [0.15]}
+  ]
+}

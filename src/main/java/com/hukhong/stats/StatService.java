@@ -84,6 +84,41 @@ public final class StatService {
                 ls * off, 1.0, Math.round(res));
     }
 
+    // ---- Sinh Lực + Tốc (S2 §1): {hpBase, hpGrow, speedBase(1.0), speedGrow(phân số/cấp)}
+    private static double[] vitals(Path p) {
+        return switch (p) {
+            case KIEM -> new double[]{20, 4.5, 0.0010};
+            case DAO -> new double[]{20, 3.5, 0.0005};
+            case THE -> new double[]{24, 7.0, 0.0002};
+            case MA -> new double[]{22, 5.0, 0.0007};
+        };
+    }
+
+    public static final double VANILLA_HP = 20.0;
+    public static final double MAX_HP_CAP = 1024.0;     // trần RangedAttribute vanilla max_health
+    public static final double SPEED_CAP = 0.25;        // tối đa +25% movement_speed
+
+    /** Sinh Lực tối đa mục tiêu (tư chất theo cả base lẫn tăng trưởng; Phân Tâm giảm theo hệ số Phòng). 20 nếu chưa có đạo. */
+    public static double maxHealth(int level, Set<Path> paths, Map<Path, Aptitude> apt) {
+        int g = Math.max(0, level - 1);
+        double hp = VANILLA_HP;
+        for (Path p : paths) {
+            double[] t = vitals(p);
+            hp = Math.max(hp, (t[0] + t[1] * g) * aptFactor(apt.getOrDefault(p, Aptitude.B)));
+        }
+        int n = paths.size();
+        double tank = n >= 3 ? 0.85 : n == 2 ? 0.90 : 1.0;
+        return Math.min(MAX_HP_CAP, Math.max(VANILLA_HP, hp * tank));
+    }
+
+    /** Tốc cộng thêm (phân số so vanilla, vd 0.10 = +10%), trần SPEED_CAP. */
+    public static double speedBonus(int level, Set<Path> paths, Map<Path, Aptitude> apt) {
+        int g = Math.max(0, level - 1);
+        double b = 0;
+        for (Path p : paths) b = Math.max(b, vitals(p)[2] * g * aptFactor(apt.getOrDefault(p, Aptitude.B)));
+        return Math.min(SPEED_CAP, b);
+    }
+
     // ------------------------------------------------------------------ truy cập
 
     public static double value(ServerPlayer p, String attr) { return p.getAttributeValue(ModAttributes.holder(attr)); }
@@ -118,6 +153,7 @@ public final class StatService {
         set(p, ModAttributes.LIFESTEAL, s.lifesteal());
         set(p, ModAttributes.RESOURCE_REGEN, s.regen());
         set(p, ModAttributes.MAX_RESOURCE, s.maxResource());
+        applyVitals(p, d);
         CoreService.applyAll(p); // gỡ + áp lại bị động Lõi (transient)
         boolean than = isThan(d);
         var mid = ModAttributes.id("than");
@@ -130,6 +166,24 @@ public final class StatService {
         }
         syncResourceMax(p);
         SIG.put(p.getUUID(), signature(p));
+    }
+
+    /** max_health / movement_speed vanilla qua AttributeModifier transient (gọi lại sau login/respawn qua refresh). */
+    private static void applyVitals(ServerPlayer p, CultivationData d) {
+        var hp = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        var spd = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+        var hid = ModAttributes.id("stat/max_health");
+        var sid = ModAttributes.id("stat/speed");
+        double extra = d.paths().isEmpty() ? 0 : maxHealth(d.level(), d.paths(), d.aptitude()) - VANILLA_HP;
+        double sb = d.paths().isEmpty() ? 0 : speedBonus(d.level(), d.paths(), d.aptitude());
+        if (hp != null) {
+            if (extra > 0) hp.addOrUpdateTransientModifier(new AttributeModifier(hid, extra, AttributeModifier.Operation.ADD_VALUE));
+            else hp.removeModifier(hid);
+        }
+        if (spd != null) {
+            if (sb > 0) spd.addOrUpdateTransientModifier(new AttributeModifier(sid, sb, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+            else spd.removeModifier(sid);
+        }
     }
 
     private static void set(ServerPlayer p, String name, double v) {

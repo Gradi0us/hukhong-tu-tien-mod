@@ -14,6 +14,7 @@ public class HuKhong {
 
     public HuKhong(IEventBus modBus) {
         ModAttachments.ATTACHMENTS.register(modBus);
+        com.hukhong.onboarding.OnboardingAttachments.ATTACHMENTS.register(modBus);
         com.hukhong.item.ModItems.register(modBus);
         com.hukhong.entity.ModEntities.register(modBus);
         modBus.addListener(SyncPayload::register);

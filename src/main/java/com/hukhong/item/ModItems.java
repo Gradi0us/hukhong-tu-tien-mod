@@ -30,6 +30,11 @@ public final class ModItems {
             () -> new PhaCanhDanItem(1, new Item.Properties().stacksTo(16)));
     public static final DeferredItem<PhaCanhDanItem> NGUNG_NGUYEN_DAN = ITEMS.register("ngung_nguyen_dan",
             () -> new PhaCanhDanItem(2, new Item.Properties().stacksTo(16)));
+    /** Tiểu Phá Đan (S7 §2.A2): Bình Cảnh nhẹ cấp 94 -> mốc 95 (Tiểu Kình Đan V, phẩm 5) và cấp 98 -> mốc 99 (phẩm 9). */
+    public static final DeferredItem<PhaCanhDanItem> TIEU_KINH_DAN_V = ITEMS.register("tieu_kinh_dan_v",
+            () -> new PhaCanhDanItem(5, 94, new Item.Properties().stacksTo(16)));
+    public static final DeferredItem<PhaCanhDanItem> TIEU_BAN_THAN_DAN = ITEMS.register("tieu_ban_than_dan",
+            () -> new PhaCanhDanItem(9, 98, new Item.Properties().stacksTo(16)));
 
     public static final DeferredItem<Item> HON_TINH = ITEMS.register("hon_tinh", () -> new Item(new Item.Properties()));
     public static final DeferredItem<net.minecraft.world.item.BlockItem> AN_HON_DAI =
@@ -47,6 +52,8 @@ public final class ModItems {
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 e.accept(KHAI_MACH_DAN.get());
                 e.accept(NGUNG_NGUYEN_DAN.get());
+                e.accept(TIEU_KINH_DAN_V.get());
+                e.accept(TIEU_BAN_THAN_DAN.get());
                 e.accept(HON_TINH.get());
             }
         });

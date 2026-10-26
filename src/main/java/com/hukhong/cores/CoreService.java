@@ -54,6 +54,11 @@ public final class CoreService {
         return level / 10;
     }
 
+    /** Ngược của milestoneOfLevel: 1..9 -> x10, 10 -> 95, 11 -> 99, 12 -> 100. */
+    public static int milestoneLevel(int m) {
+        return m <= 9 ? m * 10 : m == 10 ? 95 : m == 11 ? 99 : 100;
+    }
+
     /** Điểm Vận = tư chất cao nhất + Hồn Tinh trong túi (không tiêu hao). */
     public static int luckOf(ServerPlayer p, CultivationData d) {
         int apt = CoreRoller.aptitudeLuck(bestAptitude(d));
@@ -86,6 +91,7 @@ public final class CoreService {
         Set<ResourceLocation> owned = new HashSet<>();
         s.picked().forEach(x -> owned.add(x.core()));
         CoreSlots.Pending pend = CoreRoller.roll(m, p.getRandom().nextLong(), luckOf(p, d), bestAptitude(d), pathIds, owned, all);
+        if (pend.ids().isEmpty()) return null; // cấp 100 nhưng chưa có đạo -> không có Thần Lõi để hiện
         set(p, s.withPending(pend));
         return pend;
     }
@@ -99,6 +105,8 @@ public final class CoreService {
         int m = milestoneOf(d);
         if (pend.milestone() != m) return false;
 
+        boolean than = m == CoreRoller.THAN_MILESTONE;
+        if (than && (index > 2 || pend.ids().isEmpty())) return false; // Thần Lõi: không có ô úp
         if (index == 3 && pend.stuckRoll()) {
             set(p, s.withStuck(m));
             p.displayClientMessage(Component.translatable("hukhong.altar.stuck"), false);
@@ -107,7 +115,7 @@ public final class CoreService {
             CoreSyncPayload.send(p);
             return true;
         }
-        ResourceLocation core = index == 3 ? pend.fourth() : pend.ids().get(index);
+        ResourceLocation core = index == 3 ? pend.fourth() : pend.ids().get(Math.min(index, pend.ids().size() - 1));
         int tier = index == 3 ? pend.fourthTier() : pend.tier();
         set(p, s.withPicked(new CoreSlots.Picked(m, core, tier)));
         CultivationService.unlockMilestone(p);
@@ -161,7 +169,9 @@ public final class CoreService {
         Map<String, Integer> out = new HashMap<>();
         for (CoreSlots.Picked pk : s.picked()) {
             CoreDef def = lookup.apply(pk.core());
-            if (def != null) out.merge(def.system(), 1, Integer::sum);
+            if (def == null) continue;
+            if (def.minTier() == CoreTier.KIM) SET_BONUS.keySet().forEach(k -> out.merge(k, 1, Integer::sum)); // Thần Lõi: +1 mọi Hệ
+            else out.merge(def.system(), 1, Integer::sum);
         }
         return out;
     }

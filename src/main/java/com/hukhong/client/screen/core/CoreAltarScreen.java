@@ -59,7 +59,10 @@ public class CoreAltarScreen extends Screen implements MenuAccess<CoreAltarMenu>
     @Override
     public boolean isPauseScreen() { return false; }
 
+    private boolean than() { return menu.milestone == com.hukhong.cores.CoreRoller.THAN_MILESTONE; }
+
     private int cardX(int i) {
+        if (than()) return width / 2 - CW / 2;
         int total = 4 * CW + 3 * GAP;
         return width / 2 - total / 2 + i * (CW + GAP);
     }
@@ -95,7 +98,7 @@ public class CoreAltarScreen extends Screen implements MenuAccess<CoreAltarMenu>
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         if (button == 0 && !done && !waiting) {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < (than() ? 1 : 4); i++) {
                 int x = cardX(i), y = cardY();
                 if (mx >= x && mx < x + CW && my >= y && my < y + CH) {
                     selected = i;
@@ -117,12 +120,12 @@ public class CoreAltarScreen extends Screen implements MenuAccess<CoreAltarMenu>
         renderTransparentBackground(g);
         float time = openTicks + partial;
         g.drawCenteredString(font, title, width / 2, cardY() - 28, 0xFFFFFFFF);
-        Component sub = Component.translatable("hukhong.altar.subtitle", (menu.milestone <= 9 ? menu.milestone * 10 : menu.milestone == 10 ? 95 : 99),
+        Component sub = Component.translatable("hukhong.altar.subtitle", com.hukhong.cores.CoreService.milestoneLevel(menu.milestone),
                 Component.translatable(CoreTier.of(menu.tier).langKey()));
         g.drawCenteredString(font, sub, width / 2, cardY() - 15, 0xFFFFD34F);
 
         int hover = -1;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < (than() ? 1 : 4); i++) {
             int x = cardX(i), y = cardY();
             boolean over = !done && mx >= x && mx < x + CW && my >= y && my < y + CH;
             if (over) hover = i;

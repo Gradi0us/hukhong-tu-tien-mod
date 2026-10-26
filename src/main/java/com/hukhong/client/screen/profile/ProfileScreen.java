@@ -121,8 +121,14 @@ public class ProfileScreen extends Screen {
                 .append(Component.translatable("hukhong.realm." + d.realmIndex())), lx, y, 0xFFFFFFFF);
         y += 12;
         g.drawString(font, Component.translatable("hukhong.profile.exp", d.exp(),
-                CultivationService.expToNext(d.level())), lx, y, 0xFFBBBBBB);
+                CultivationService.barSize(d.level())), lx, y, 0xFFBBBBBB);
         y += 12;
+        if (CultivationService.inLightBottleneck(d)) {
+            for (var line : font.split(Component.translatable("hukhong.profile.light_bottleneck", d.level() + 1), half)) {
+                g.drawString(font, line, lx, y, 0xFFFFB347);
+                y += 10;
+            }
+        }
         if (d.milestoneLocked()) {
             for (var line : font.split(Component.translatable("hukhong.profile.milestone_locked"), half)) {
                 g.drawString(font, line, lx, y, 0xFFFF8855);
@@ -230,7 +236,7 @@ public class ProfileScreen extends Screen {
             g.fill(cx + 2, y + 2, cx + 12, y + 12, 0xFF000000);
             g.fill(cx + 3, y + 3, cx + 11, y + 11, 0xFF000000 | tier.rgb);
             Component name = Component.translatable(def != null ? def.nameKey() : "core.hukhong.unknown");
-            g.drawString(font, "#" + pk.milestone(), cx + 16, y + 3, 0xFF999999);
+            g.drawString(font, "Lv" + com.hukhong.cores.CoreService.milestoneLevel(pk.milestone()), cx + 16, y + 3, 0xFF999999);
             g.drawString(font, name, cx + 40, y + 3, CoreCardRenderer.textColor(tier));
             Component tn = Component.translatable(tier.langKey());
             g.drawString(font, tn, cx + cw - font.width(tn) - 4, y + 3, CoreCardRenderer.textColor(tier));

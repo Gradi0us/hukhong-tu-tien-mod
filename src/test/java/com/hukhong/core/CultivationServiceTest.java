@@ -39,4 +39,22 @@ class CultivationServiceTest {
         assertEquals(CultivationData.DEFAULT, back);
         assertNull(back.roll());
     }
+
+    @Test
+    void lightBottleneckBar3xAndPill() {
+        assertEquals(3 * CultivationService.expToNext(94), CultivationService.barSize(94));
+        assertEquals(CultivationService.expToNext(93), CultivationService.barSize(93));
+        var d = new CultivationData(94, 0, 100, 100, java.util.Set.of(), java.util.Map.of(), false);
+        assertFalse(CultivationService.inLightBottleneck(d));
+        d = CultivationService.applyExp(d, CultivationService.expToNext(94));
+        assertEquals(94, d.level());
+        assertTrue(CultivationService.inLightBottleneck(d));
+        assertEquals(94, CultivationService.applyLightBreakthrough(d, 98).level());
+        var up = CultivationService.applyLightBreakthrough(d, 94);
+        assertEquals(95, up.level());
+        assertTrue(up.milestoneLocked());
+        d = CultivationService.applyExp(d, 2 * CultivationService.expToNext(94));
+        assertEquals(95, d.level()); // không có đan: tích đủ x3 vẫn lên
+        assertTrue(CultivationData.isMilestoneLevel(100));
+    }
 }
