@@ -1,0 +1,10 @@
+{
+  "name": "core.hukhong.ho_thanh_quang_vuc",
+  "system": "thanh_quang",
+  "path": "dao",
+  "min_tier": "bach",
+  "passives": [
+    {"attribute": "minecraft:generic.max_health", "operation": "add_value", "values": [2, 4, 6, 9, 14]},
+    {"attribute": "minecraft:generic.armor_toughness", "operation": "add_value", "values": [0.5, 1, 1.5, 2, 3]}
+  ]
+}

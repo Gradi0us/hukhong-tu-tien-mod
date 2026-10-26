@@ -1,0 +1,9 @@
+{
+  "name": "core.hukhong.huyet_dang",
+  "system": "huyet_ma",
+  "path": "any",
+  "min_tier": "bach",
+  "passives": [
+    {"attribute": "minecraft:generic.max_health", "operation": "add_value", "values": [2, 3, 4, 6, 9]}
+  ]
+}

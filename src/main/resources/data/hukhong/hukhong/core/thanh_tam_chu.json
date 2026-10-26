@@ -1,0 +1,9 @@
+{
+  "name": "core.hukhong.thanh_tam_chu",
+  "system": "thanh_quang",
+  "path": "any",
+  "min_tier": "bach",
+  "passives": [
+    {"attribute": "minecraft:generic.luck", "operation": "add_value", "values": [0.5, 0.8, 1.2, 1.8, 2.7]}
+  ]
+}

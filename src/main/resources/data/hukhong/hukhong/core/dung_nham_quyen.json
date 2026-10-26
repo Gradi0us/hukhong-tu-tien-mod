@@ -1,0 +1,9 @@
+{
+  "name": "core.hukhong.dung_nham_quyen",
+  "system": "liet_diem",
+  "path": "the",
+  "min_tier": "bach",
+  "passives": [
+    {"attribute": "minecraft:generic.attack_damage", "operation": "add_multiplied_base", "values": [0.05, 0.08, 0.12, 0.18, 0.27]}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "core.hukhong.thiet_bi",
+  "system": "cuong_the",
+  "path": "any",
+  "min_tier": "bach",
+  "passives": [
+    {"attribute": "minecraft:generic.armor", "operation": "add_value", "values": [1, 1.5, 2.5, 4, 6]}
+  ]
+}

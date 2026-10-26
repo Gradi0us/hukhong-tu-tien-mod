@@ -27,6 +27,7 @@ public final class GateEvents {
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent e) {
         if (e.getEntity() instanceof Player) return;
+        if (e.getEntity() instanceof com.hukhong.entity.HuMob) return; // quái Hư Hóa tự thưởng trong entity/ (tránh EXP đôi)
         if (e.getSource().getEntity() instanceof ServerPlayer p) {
             long exp = Math.round(e.getEntity().getMaxHealth() * RewardGate.reward(e.getEntity()));
             if (exp > 0) CultivationService.addExp(p, exp);

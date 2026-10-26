@@ -20,6 +20,7 @@ public final class SkillKeys {
             new KeyMapping("key.hukhong.skill_3", InputConstants.KEY_R, CAT),
             new KeyMapping("key.hukhong.skill_ultimate", InputConstants.KEY_T, CAT)
     };
+    public static final KeyMapping PROFILE = new KeyMapping("key.hukhong.profile", InputConstants.KEY_K, CAT);
     public static final KeyMapping TOGGLE =
             new KeyMapping("key.hukhong.toggle_cultivation", InputConstants.KEY_G, CAT);
 
@@ -27,5 +28,6 @@ public final class SkillKeys {
     public static void onRegister(RegisterKeyMappingsEvent e) {
         for (KeyMapping k : SKILL) e.register(k);
         e.register(TOGGLE);
+        e.register(PROFILE);
     }
 }

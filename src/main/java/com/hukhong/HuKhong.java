@@ -15,6 +15,7 @@ public class HuKhong {
     public HuKhong(IEventBus modBus) {
         ModAttachments.ATTACHMENTS.register(modBus);
         com.hukhong.item.ModItems.register(modBus);
+        com.hukhong.entity.ModEntities.register(modBus);
         modBus.addListener(SyncPayload::register);
         NeoForge.EVENT_BUS.register(com.hukhong.item.PillDrops.class);
         NeoForge.EVENT_BUS.register(AgeService.class);

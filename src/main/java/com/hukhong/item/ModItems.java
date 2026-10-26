@@ -31,13 +31,23 @@ public final class ModItems {
     public static final DeferredItem<PhaCanhDanItem> NGUNG_NGUYEN_DAN = ITEMS.register("ngung_nguyen_dan",
             () -> new PhaCanhDanItem(2, new Item.Properties().stacksTo(16)));
 
+    public static final DeferredItem<Item> HON_TINH = ITEMS.register("hon_tinh", () -> new Item(new Item.Properties()));
+    public static final DeferredItem<net.minecraft.world.item.BlockItem> AN_HON_DAI =
+            ITEMS.registerSimpleBlockItem("an_hon_dai", com.hukhong.block.ModBlocks.AN_HON_DAI);
+
     public static void register(IEventBus bus) {
+        // Đăng ký kèm các registry của Bước 6 (không sửa HuKhong.java).
+        com.hukhong.block.ModBlocks.BLOCKS.register(bus);
+        com.hukhong.menu.ModMenus.MENUS.register(bus);
+        com.hukhong.cores.CoreAttachments.ATTACHMENTS.register(bus);
         ITEMS.register(bus);
         COMPONENTS.register(bus);
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
+            if (e.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) e.accept(AN_HON_DAI.get());
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 e.accept(KHAI_MACH_DAN.get());
                 e.accept(NGUNG_NGUYEN_DAN.get());
+                e.accept(HON_TINH.get());
             }
         });
     }

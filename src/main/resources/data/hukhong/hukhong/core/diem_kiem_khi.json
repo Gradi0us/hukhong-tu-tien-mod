@@ -1,0 +1,10 @@
+{
+  "name": "core.hukhong.diem_kiem_khi",
+  "system": "liet_diem",
+  "path": "kiem",
+  "min_tier": "bach",
+  "passives": [
+    {"attribute": "minecraft:generic.attack_damage", "operation": "add_value", "values": [1, 1.6, 2.5, 4, 6]},
+    {"attribute": "minecraft:generic.attack_speed", "operation": "add_multiplied_base", "values": [0.02, 0.03, 0.05, 0.08, 0.12]}
+  ]
+}

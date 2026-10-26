@@ -23,12 +23,16 @@ public final class SkillKeyHandler {
     public static void onTick(ClientTickEvent.Pre e) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
+            while (SkillKeys.PROFILE.consumeClick()) { }
             while (SkillKeys.TOGGLE.consumeClick()) { }
             for (var k : SkillKeys.SKILL) while (k.consumeClick()) { }
             return;
         }
         ClientSkillState.tick();
         boolean noScreen = mc.screen == null;
+        while (SkillKeys.PROFILE.consumeClick()) {
+            if (noScreen) mc.setScreen(new com.hukhong.client.screen.profile.ProfileScreen());
+        }
         while (SkillKeys.TOGGLE.consumeClick()) {
             if (noScreen) PacketDistributor.sendToServer(new ToggleStancePayload());
         }

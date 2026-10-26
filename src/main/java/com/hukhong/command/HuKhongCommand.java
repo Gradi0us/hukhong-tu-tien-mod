@@ -48,6 +48,21 @@ public final class HuKhongCommand {
                     msg(c.getSource(), ok ? "milestone unlocked" : "not locked");
                     return 1;
                 }))
+                .then(Commands.literal("give_altar").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    var st = new net.minecraft.world.item.ItemStack(com.hukhong.item.ModItems.AN_HON_DAI.get());
+                    if (!p.getInventory().add(st)) p.drop(st, false);
+                    var hs = new net.minecraft.world.item.ItemStack(com.hukhong.item.ModItems.HON_TINH.get(), 5);
+                    if (!p.getInventory().add(hs)) p.drop(hs, false);
+                    msg(c.getSource(), "give an_hon_dai + 5 hon_tinh");
+                    return 1;
+                }))
+                .then(Commands.literal("core_unstuck").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    p.setData(com.hukhong.cores.CoreAttachments.CORE_SLOTS, com.hukhong.cores.CoreService.get(p).withStuckCleared());
+                    msg(c.getSource(), "stuck cleared");
+                    return 1;
+                }))
                 .then(Commands.literal("reroll").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     com.hukhong.charcreate.CharCreateService.reroll(p);

@@ -1,0 +1,77 @@
+package com.hukhong.entity;
+
+import com.hukhong.HuKhong;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredItem;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+@EventBusSubscriber(modid = HuKhong.MODID)
+public final class ModEntities {
+    private ModEntities() {}
+
+    public static final DeferredRegister<EntityType<?>> TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, HuKhong.MODID);
+    public static final DeferredRegister.Items EGGS = DeferredRegister.createItems(HuKhong.MODID);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<HuThi>> HU_THI = TYPES.register("hu_thi",
+            () -> EntityType.Builder.of(HuThi::new, MobCategory.MONSTER).sized(0.6f, 1.95f).clientTrackingRange(8).build("hu_thi"));
+    public static final DeferredHolder<EntityType<?>, EntityType<HuCot>> HU_COT = TYPES.register("hu_cot",
+            () -> EntityType.Builder.of(HuCot::new, MobCategory.MONSTER).sized(0.6f, 1.99f).clientTrackingRange(8).build("hu_cot"));
+    public static final DeferredHolder<EntityType<?>, EntityType<HuChu>> HU_CHU = TYPES.register("hu_chu",
+            () -> EntityType.Builder.of(HuChu::new, MobCategory.MONSTER).sized(1.4f, 0.9f).clientTrackingRange(8).build("hu_chu"));
+
+    public static final DeferredItem<SpawnEggItem> HU_THI_EGG = EGGS.register("hu_thi_spawn_egg",
+            () -> new SpawnEggItem(HU_THI.get(), 0x4B2A6B, 0x9B30FF, new Item.Properties()));
+    public static final DeferredItem<SpawnEggItem> HU_COT_EGG = EGGS.register("hu_cot_spawn_egg",
+            () -> new SpawnEggItem(HU_COT.get(), 0x3A2A5B, 0xC080FF, new Item.Properties()));
+    public static final DeferredItem<SpawnEggItem> HU_CHU_EGG = EGGS.register("hu_chu_spawn_egg",
+            () -> new SpawnEggItem(HU_CHU.get(), 0x2A1A4B, 0x8030D0, new Item.Properties()));
+
+    public static void register(IEventBus bus) {
+        TYPES.register(bus);
+        EGGS.register(bus);
+    }
+
+    @SubscribeEvent
+    public static void attrs(EntityAttributeCreationEvent e) {
+        e.put(HU_THI.get(), Zombie.createAttributes().build());
+        e.put(HU_COT.get(), AbstractSkeleton.createAttributes().build());
+        e.put(HU_CHU.get(), Spider.createAttributes().build());
+    }
+
+    @SubscribeEvent
+    public static void placements(RegisterSpawnPlacementsEvent e) {
+        e.register(HU_THI.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        e.register(HU_COT.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        e.register(HU_CHU.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+    }
+
+    @SubscribeEvent
+    public static void tab(BuildCreativeModeTabContentsEvent e) {
+        if (e.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
+            e.accept(HU_THI_EGG.get());
+            e.accept(HU_COT_EGG.get());
+            e.accept(HU_CHU_EGG.get());
+        }
+    }
+}
