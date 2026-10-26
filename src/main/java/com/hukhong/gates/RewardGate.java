@@ -6,7 +6,7 @@ import net.minecraft.world.entity.LivingEntity;
 public final class RewardGate {
     private RewardGate() {}
 
-    public static boolean canReward(LivingEntity victim) { return !SpawnerMarks.is(victim); }
+    public static boolean canReward(LivingEntity victim) { return !SpawnerMarks.is(victim) && !com.hukhong.society.SectTrial.isTrialMob(victim); }
 
     /** 0..1. Gọi đúng 1 lần mỗi lần giết (ghi nhận vào KillRateGate). */
     public static float reward(LivingEntity victim) {

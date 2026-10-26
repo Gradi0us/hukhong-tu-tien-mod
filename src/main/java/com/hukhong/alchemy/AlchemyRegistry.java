@@ -53,7 +53,7 @@ public final class AlchemyRegistry {
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, HuKhong.MODID);
 
     public static final Supplier<AttachmentType<Double>> DAN_DOC = ATTACHMENTS.register("dan_doc",
-            () -> AttachmentType.builder(() -> 0.0).serialize(Codec.DOUBLE).build());
+            () -> AttachmentType.builder(() -> 0.0).serialize(Codec.DOUBLE).copyOnDeath().build());
 
     /** Phẩm chất đan (ordinal của AlchemyMath.Quality); thiếu = Trung. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> PILL_QUALITY =

@@ -185,6 +185,12 @@ public final class FlightService {
     }
 
     @SubscribeEvent
+    public static void onStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent e) {
+        STATE.clear();
+        GRACE.clear();
+    }
+
+    @SubscribeEvent
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
         STATE.remove(e.getEntity().getUUID());
     }

@@ -75,6 +75,12 @@ public final class BiCanhManager {
         return null;
     }
 
+    /** Gỡ người chơi khỏi bossbar khi thoát game (tránh giữ tham chiếu ServerPlayer cũ). */
+    public static void dropBar(ServerPlayer p) {
+        Run r = runOf(p);
+        if (r != null) r.bar.removePlayer(p);
+    }
+
     static int maxRuns(MinecraftServer s) { return s.isSingleplayer() ? 1 : 3; }
 
     // ---------------------------------------------------------------- vào

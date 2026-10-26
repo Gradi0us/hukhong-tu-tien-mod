@@ -44,6 +44,12 @@ public final class SkillKeyHandler {
         if (on) {
             while (mc.options.keyDrop.consumeClick()) { }
             while (mc.options.keyInventory.consumeClick()) { }
+            for (var vk : mc.options.keyMappings) { // T = chat vanilla...: nuốt phím vanilla trùng phím kỹ năng
+                boolean ours = vk == SkillKeys.PROFILE || vk == SkillKeys.TOGGLE || vk == SkillKeys.PAGE;
+                for (var sk : SkillKeys.SKILL) if (vk == sk) ours = true;
+                if (ours) continue;
+                for (var sk : SkillKeys.SKILL) if (vk.same(sk)) { while (vk.consumeClick()) { } break; }
+            }
         }
         for (int i = 0; i < 4; i++) {
             while (SkillKeys.SKILL[i].consumeClick()) {

@@ -30,7 +30,7 @@ public class UtilityPillItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (level.isClientSide || !(player instanceof ServerPlayer sp)) return InteractionResultHolder.success(stack);
-        if (!DanDoc.canUse(sp)) return InteractionResultHolder.fail(stack);
+        if (kind == Kind.HEAL && !DanDoc.canUse(sp)) return InteractionResultHolder.fail(stack);
         var q = AlchemyRegistry.qualityOf(stack);
         double mult = AlchemyMath.effectMult(DanDoc.get(sp));
         if (kind == Kind.HEAL) {

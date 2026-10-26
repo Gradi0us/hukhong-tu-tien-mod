@@ -101,6 +101,11 @@ public final class BiCanhEvents {
     }
 
     @SubscribeEvent
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p) BiCanhManager.dropBar(p);
+    }
+
+    @SubscribeEvent
     public static void onBreak(BlockEvent.BreakEvent e) {
         if (e.getPlayer() instanceof ServerPlayer p && p.level().dimension() == BiCanhRegistry.DIM && !p.isCreative()) e.setCanceled(true);
     }

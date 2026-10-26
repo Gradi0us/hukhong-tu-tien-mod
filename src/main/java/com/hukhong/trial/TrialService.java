@@ -121,6 +121,12 @@ public final class TrialService {
         if (e.getEntity().getTags().contains(CLONE_TAG)) e.setCanceled(true);
     }
 
+    /** Bản sao Tâm Ma lưu trong chunk (server tắt giữa chừng) -> xóa khi nạp lại, tránh quái mồ côi. */
+    @SubscribeEvent
+    public static void onJoin(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent e) {
+        if (e.loadedFromDisk() && e.getEntity().getTags().contains(CLONE_TAG)) e.setCanceled(true);
+    }
+
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent e) {
         if (e.getEntity() instanceof ServerPlayer p) {

@@ -97,6 +97,8 @@ public final class BanMenhService {
         if (!p.getInventory().add(s)) p.drop(s, false);
     }
 
+    public static void forget(UUID id) { SUMMON_CD.remove(id); }
+
     /** Respawn: trả kiếm miễn phí nếu thiếu. */
     public static void restore(ServerPlayer p) {
         BanMenhData d = p.getData(BanMenhAttachments.BAN_MENH.get());

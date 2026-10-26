@@ -65,6 +65,9 @@ public final class CorruptionManager {
     }
 
     @SubscribeEvent
+    public static void onStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent e) { bossCooldown.clear(); }
+
+    @SubscribeEvent
     public static void onTick(ServerTickEvent.Post e) {
         ServerLevel ow = e.getServer().getLevel(Level.OVERWORLD);
         if (ow == null || ow.players().isEmpty()) return;

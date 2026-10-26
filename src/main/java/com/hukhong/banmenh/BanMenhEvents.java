@@ -141,6 +141,14 @@ public final class BanMenhEvents {
     }
 
     @SubscribeEvent
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
+        UUID id = e.getEntity().getUUID();
+        HIT_COUNT.remove(id);
+        FREEZE_CD.remove(id);
+        BanMenhService.forget(id);
+    }
+
+    @SubscribeEvent
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
         if (e.getEntity() instanceof ServerPlayer p && !e.isEndConquered()) BanMenhService.restore(p);
     }

@@ -205,6 +205,13 @@ public final class EndgameService {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         QuestData q = DialogueService.quest(p);
         if (q.has(F_PENDING) && !hasEnding(q)) promptChoice(p);
+        if (hasEnding(q)) { // relog giữa cutscene: bỏ trạng thái bất tử/đóng băng và đưa về Overworld
+            var res = p.getEffect(MobEffects.DAMAGE_RESISTANCE);
+            if (res != null && res.getAmplifier() == 4 && !res.isVisible()) p.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+            var slow = p.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
+            if (slow != null && slow.getAmplifier() == 6 && !slow.isVisible()) p.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+            if (p.serverLevel().dimension() == EndgameRegistry.DIM) leave(p);
+        }
     }
 
     @SubscribeEvent

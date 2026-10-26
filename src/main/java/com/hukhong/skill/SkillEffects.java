@@ -61,7 +61,7 @@ public final class SkillEffects {
         if (bh.getType() != HitResult.Type.MISS) end = bh.getLocation();
         AABB box = p.getBoundingBox().expandTowards(look.scale(range)).inflate(1.0);
         EntityHitResult eh = ProjectileUtil.getEntityHitResult(lv, p, eye, end, box,
-                e -> e instanceof LivingEntity && !(e instanceof Player) && e.isAlive() && !e.isSpectator());
+                e -> e instanceof LivingEntity le && valid(p, le));
         if (eh != null) {
             end = eh.getLocation();
             DamageRules.hurtBySkill(p, (LivingEntity) eh.getEntity(), (float) (Skill.DAO_1_COEF * com.hukhong.stats.StatService.spellPower(p)));
@@ -116,7 +116,7 @@ public final class SkillEffects {
     private static void chanDia(ServerLevel lv, ServerPlayer p, CultivationData d) {
         AABB box = p.getBoundingBox().inflate(4, 1.5, 4);
         List<LivingEntity> hit = lv.getEntitiesOfClass(LivingEntity.class, box,
-                e -> e != p && !(e instanceof Player) && e.isAlive() && e.distanceToSqr(p) <= 16);
+                e -> valid(p, e) && e.distanceToSqr(p) <= 16);
         for (LivingEntity e : hit) {
             DamageRules.hurtBySkill(p, e, (float) (Skill.THE_1_COEF * com.hukhong.stats.StatService.attackPower(p)));
             e.setDeltaMovement(e.getDeltaMovement().add(0, 0.8, 0));
@@ -149,7 +149,9 @@ public final class SkillEffects {
     // ---- Kiếm Tu ----
 
     private static boolean valid(ServerPlayer p, LivingEntity e) {
-        return e != p && !(e instanceof Player) && e.isAlive() && !e.isSpectator();
+        return e != p && !(e instanceof Player) && e.isAlive() && !e.isSpectator()
+                && !(e instanceof net.minecraft.world.entity.npc.Npc)
+                && !(e instanceof net.minecraft.world.entity.TamableAnimal t && t.isOwnedBy(p));
     }
 
     /** Gây sát thương kỹ năng = coef x Công; bỏ khung bất tử để nhiều nhát liên tiếp đều trúng. Trả sát thương đã đặt. */
