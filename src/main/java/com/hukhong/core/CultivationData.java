@@ -68,7 +68,18 @@ public record CultivationData(int level, long exp, int resource, int resourceMax
     }
 
     /** Khóa ở mốc 10/20/.../90 cho tới khi mở khóa mốc (Ấn Hồn Đài / lệnh test). */
-    public boolean milestoneLocked() { return level < MAX_LEVEL && level % 10 == 0 && !milestoneUnlocked; }
+    public boolean milestoneLocked() { return isMilestoneLevel(level) && !milestoneUnlocked; }
+
+    /** Mốc Lõi R29: 10,20,...,90, 95, 99 (cấp 100 = Thần Lõi tự động, không khóa). */
+    public static boolean isMilestoneLevel(int l) { return l < MAX_LEVEL && (l % 10 == 0 || l == 95 || l == 99); }
+
+    public CultivationData withResource(int r) {
+        return new CultivationData(level, exp, r, resourceMax, paths, aptitude, bottleneck, origin, roll, milestoneUnlocked);
+    }
+
+    public CultivationData withResourceMax(int m) {
+        return new CultivationData(level, exp, resource, m, paths, aptitude, bottleneck, origin, roll, milestoneUnlocked);
+    }
 
     /** Bình Cảnh: cấp 9/19/.../89 (ngay trước mốc). */
     public boolean inBottleneck() { return level < 90 && level % 10 == 9; }

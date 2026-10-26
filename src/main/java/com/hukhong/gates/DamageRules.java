@@ -38,24 +38,37 @@ public final class DamageRules {
                 || i instanceof MaceItem || i instanceof ProjectileWeaponItem;
     }
 
-    public static float fistDamage(CultivationData d) {
+    /** Đòn tay Thể Tu = Công x (1 + 0.3 x Bá Khí%). */
+    public static float fistDamage(ServerPlayer p, CultivationData d) {
         float aura = d.resourceMax() <= 0 ? 0 : (float) d.resource() / d.resourceMax();
-        return (2f + 0.15f * d.level()) * (1f + 0.3f * aura);
+        return (float) (com.hukhong.stats.StatService.attackPower(p) * (1f + 0.3f * aura));
     }
 
-    /** Trả sát thương cuối cho đòn thường của người chơi attacker. */
+    /** Trả sát thương cuối cho đòn của người chơi attacker (đã gồm Công, Bạo Kích, Hấp Huyết). */
     public static float resolve(ServerPlayer atk, LivingEntity target, DamageSource src, float amount) {
-        if (skillActive) return amount;
         CultivationData d = atk.getData(ModAttachments.CULTIVATION);
         float out = amount;
-        if (d.paths().contains(Path.THE)) {
-            if (src.getDirectEntity() == atk) {
-                out = isWeapon(atk.getMainHandItem()) ? 0f : Math.max(amount, fistDamage(d));
-            } else if (src.getDirectEntity() != null) {
-                out = 0f; // cung/nỏ/phi tiêu...
+        if (!skillActive) {
+            boolean melee = src.getDirectEntity() == atk;
+            if (d.paths().contains(Path.THE)) {
+                if (melee) {
+                    out = isWeapon(atk.getMainHandItem()) ? 0f : Math.max(amount, fistDamage(atk, d));
+                } else if (src.getDirectEntity() != null) {
+                    out = 0f; // cung/nỏ/phi tiêu...
+                }
+            } else if (melee && out > 0f) {
+                out += (float) com.hukhong.stats.StatService.attackPower(atk); // Công cộng vào đòn cận chiến
             }
+            if (d.paths().contains(Path.DAO) && !(target instanceof Player)) out = 0f;
         }
-        if (d.paths().contains(Path.DAO) && !(target instanceof Player)) out = 0f;
+        if (out > 0f && !d.paths().isEmpty()) {
+            double cc = com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_CHANCE);
+            if (cc > 0 && atk.getRandom().nextDouble() < cc) {
+                out *= (float) com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_DAMAGE);
+            }
+            double ls = com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.LIFESTEAL);
+            if (ls > 0) atk.heal(Math.min((float) (out * ls), atk.getMaxHealth() * 0.04f));
+        }
         return out;
     }
 }

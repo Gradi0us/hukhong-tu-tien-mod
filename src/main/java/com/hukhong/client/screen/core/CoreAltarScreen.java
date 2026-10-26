@@ -117,7 +117,7 @@ public class CoreAltarScreen extends Screen implements MenuAccess<CoreAltarMenu>
         renderTransparentBackground(g);
         float time = openTicks + partial;
         g.drawCenteredString(font, title, width / 2, cardY() - 28, 0xFFFFFFFF);
-        Component sub = Component.translatable("hukhong.altar.subtitle", menu.milestone * 10,
+        Component sub = Component.translatable("hukhong.altar.subtitle", (menu.milestone <= 9 ? menu.milestone * 10 : menu.milestone == 10 ? 95 : 99),
                 Component.translatable(CoreTier.of(menu.tier).langKey()));
         g.drawCenteredString(font, sub, width / 2, cardY() - 15, 0xFFFFD34F);
 

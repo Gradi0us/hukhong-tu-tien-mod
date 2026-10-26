@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.hu_khong_phe_hon",
+  "system": "hu_khong",
+  "path": "ma",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:max_resource",
+      "operation": "add_value",
+      "values": [
+        2,
+        3,
+        4,
+        6,
+        9
+      ]
+    }
+  ]
+}

@@ -73,9 +73,12 @@ public final class CoreRoller {
         Random rnd = new Random(seed);
         int tier = rollTier(milestone, luck, rnd).tier();
 
-        // 3 ô thường: cùng phẩm, thuộc đạo hoặc "any", hợp phẩm tối thiểu, ưu tiên chưa sở hữu.
+        // 3 ô thường: cùng phẩm, thuộc đạo hoặc "any"; CHẶN Lõi trùng (đã sở hữu chỉ vào khi cạn kho).
         List<ResourceLocation> pool = filter(all, pathIds, tier, owned);
-        if (pool.size() < 3) pool = filter(all, pathIds, tier, Set.of());
+        if (pool.size() < 3) for (ResourceLocation id : all.keySet())
+            if (!owned.contains(id) && !pool.contains(id)) pool.add(id);
+        if (pool.size() < 3) for (ResourceLocation id : filter(all, pathIds, tier, Set.of()))
+            if (!pool.contains(id)) pool.add(id);
         if (pool.isEmpty()) pool = new ArrayList<>(all.keySet());
         List<ResourceLocation> picks = pickThree(pool, all, rnd);
 
@@ -97,7 +100,8 @@ public final class CoreRoller {
         int fourthTier = Math.max(0, Math.min(Math.min(4, CEIL[clampM(milestone) - 1] + 1), tier + delta));
 
         // Lõi mù: 60% pool đạo/any, 40% toàn bộ.
-        List<ResourceLocation> fp = rnd.nextInt(100) < 60 ? filter(all, pathIds, fourthTier, Set.of()) : new ArrayList<>();
+        List<ResourceLocation> fp = rnd.nextInt(100) < 60 ? filter(all, pathIds, fourthTier, owned) : new ArrayList<>();
+        if (fp.isEmpty()) for (ResourceLocation id : all.keySet()) if (!owned.contains(id)) fp.add(id);
         if (fp.isEmpty()) fp = new ArrayList<>(all.keySet());
         ResourceLocation fourth = fp.get(rnd.nextInt(fp.size()));
 

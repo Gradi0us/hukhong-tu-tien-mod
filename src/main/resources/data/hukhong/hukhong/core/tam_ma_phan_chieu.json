@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.tam_ma_phan_chieu",
+  "system": "huyet_ma",
+  "path": "ma",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:attack_power",
+      "operation": "add_multiplied_base",
+      "values": [
+        0.02,
+        0.03,
+        0.045,
+        0.065,
+        0.09
+      ]
+    }
+  ]
+}

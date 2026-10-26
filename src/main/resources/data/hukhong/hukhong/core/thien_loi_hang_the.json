@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.thien_loi_hang_the",
+  "system": "phong_loi",
+  "path": "dao",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:crit_chance",
+      "operation": "add_value",
+      "values": [
+        0.01,
+        0.015,
+        0.025,
+        0.035,
+        0.05
+      ]
+    }
+  ]
+}

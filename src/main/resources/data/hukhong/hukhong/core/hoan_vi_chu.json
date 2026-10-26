@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.hoan_vi_chu",
+  "system": "hon_don",
+  "path": "any",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:resource_regen",
+      "operation": "add_value",
+      "values": [
+        0.4,
+        0.6,
+        1,
+        1.5,
+        2.2
+      ]
+    }
+  ]
+}

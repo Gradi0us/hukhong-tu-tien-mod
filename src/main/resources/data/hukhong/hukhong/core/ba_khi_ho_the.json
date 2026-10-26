@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.ba_khi_ho_the",
+  "system": "cuong_the",
+  "path": "the",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:defense",
+      "operation": "add_multiplied_base",
+      "values": [
+        0.04,
+        0.06,
+        0.09,
+        0.13,
+        0.2
+      ]
+    }
+  ]
+}

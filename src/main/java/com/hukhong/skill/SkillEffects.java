@@ -58,7 +58,7 @@ public final class SkillEffects {
                 e -> e instanceof LivingEntity && !(e instanceof Player) && e.isAlive() && !e.isSpectator());
         if (eh != null) {
             end = eh.getLocation();
-            DamageRules.hurtBySkill(p, (LivingEntity) eh.getEntity(), 6f + 0.3f * d.level());
+            DamageRules.hurtBySkill(p, (LivingEntity) eh.getEntity(), (float) (1.10 * com.hukhong.stats.StatService.spellPower(p)));
         }
         beam(lv, eye.add(look.scale(0.8)).subtract(0, 0.2, 0), end);
         lv.playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.2f, 1.4f);
@@ -88,7 +88,8 @@ public final class SkillEffects {
         for (ServerPlayer o : lv.players()) {
             if (!o.isAlive() || o.isSpectator() || o.distanceToSqr(p) > 144) continue;
             boolean self = o == p;
-            o.heal(self ? 8f : 6f);
+            float sp = (float) com.hukhong.stats.StatService.spellPower(p);
+            o.heal(Math.max(4f, sp * (self ? 0.8f : 0.6f)));
             o.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             o.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 600, self ? 0 : 1));
             if (!self) {
@@ -109,7 +110,7 @@ public final class SkillEffects {
         List<LivingEntity> hit = lv.getEntitiesOfClass(LivingEntity.class, box,
                 e -> e != p && !(e instanceof Player) && e.isAlive() && e.distanceToSqr(p) <= 16);
         for (LivingEntity e : hit) {
-            DamageRules.hurtBySkill(p, e, 4f + 0.2f * d.level());
+            DamageRules.hurtBySkill(p, e, (float) (1.0 * com.hukhong.stats.StatService.attackPower(p)));
             e.setDeltaMovement(e.getDeltaMovement().add(0, 0.8, 0));
             e.hurtMarked = true;
         }

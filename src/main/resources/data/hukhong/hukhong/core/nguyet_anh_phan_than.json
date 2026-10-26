@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.nguyet_anh_phan_than",
+  "system": "tinh_than",
+  "path": "kiem",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:attack_power",
+      "operation": "add_value",
+      "values": [
+        0.8,
+        1.2,
+        1.8,
+        2.7,
+        4
+      ]
+    }
+  ]
+}

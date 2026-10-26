@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.dai_dia_chi_luc",
+  "system": "cuong_the",
+  "path": "the",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:attack_power",
+      "operation": "add_multiplied_base",
+      "values": [
+        0.04,
+        0.06,
+        0.09,
+        0.14,
+        0.2
+      ]
+    }
+  ]
+}

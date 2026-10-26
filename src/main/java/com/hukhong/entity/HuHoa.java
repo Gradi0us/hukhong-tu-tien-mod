@@ -38,13 +38,30 @@ public final class HuHoa {
         return Math.max(1, Math.min(30, base + r.nextInt(3) - 1));
     }
 
+    /** He so cap: hp x(1+0.12(L-1)), sat thuong x(1+0.10(L-1)), giap +0.25/cap (toi da 20), toc do +0.5%/cap (toi da +30%). */
+    public static double hpScale(int level) { return 1 + 0.12 * (level - 1); }
+    public static double dmgScale(int level) { return 1 + 0.10 * (level - 1); }
+
+    /** Sat thuong ky nang: 3 x dmgScale x mult. */
+    public static double skillDamage(int level, double mult) { return 3.0 * dmgScale(level) * mult; }
+
+    private static void mod(Mob m, net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> a,
+                            String id, double amount, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation op) {
+        var inst = m.getAttribute(a);
+        if (inst == null) return;
+        var rl = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, id);
+        inst.removeModifier(rl);
+        inst.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(rl, amount, op));
+    }
+
     public static void applyStats(Mob m, int level, double hpMul, double dmgMul) {
-        double s = 1 + 0.08 * (level - 1);
-        var hp = m.getAttribute(Attributes.MAX_HEALTH);
-        hp.setBaseValue(hp.getBaseValue() * hpMul * s);
+        var mul = net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE;
+        var add = net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE;
+        mod(m, Attributes.MAX_HEALTH, "hu_lv_hp", hpMul * hpScale(level) - 1, mul);
+        mod(m, Attributes.ATTACK_DAMAGE, "hu_lv_atk", dmgMul * dmgScale(level) - 1, mul);
+        mod(m, Attributes.ARMOR, "hu_lv_armor", Math.min(20, 0.25 * (level - 1)), add);
+        mod(m, Attributes.MOVEMENT_SPEED, "hu_lv_speed", Math.min(0.30, 0.005 * (level - 1)), mul);
         m.setHealth(m.getMaxHealth());
-        var atk = m.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (atk != null) atk.setBaseValue(atk.getBaseValue() * dmgMul * s);
     }
 
     public static Component name(int level, Component base) {

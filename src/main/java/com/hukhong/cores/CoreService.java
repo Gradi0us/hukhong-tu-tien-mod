@@ -45,7 +45,14 @@ public final class CoreService {
 
     private static void set(ServerPlayer p, CoreSlots s) { p.setData(CoreAttachments.CORE_SLOTS, s); }
 
-    public static int milestoneOf(CultivationData d) { return d.level() / 10; }
+    /** Chỉ số mốc: 10..90 -> 1..9, 95 -> 10, 99 -> 11 (R29). */
+    public static int milestoneOf(CultivationData d) { return milestoneOfLevel(d.level()); }
+
+    public static int milestoneOfLevel(int level) {
+        if (level >= 99) return level == 99 ? 11 : 12;
+        if (level >= 95) return 10;
+        return level / 10;
+    }
 
     /** Điểm Vận = tư chất cao nhất + Hồn Tinh trong túi (không tiêu hao). */
     public static int luckOf(ServerPlayer p, CultivationData d) {
@@ -104,7 +111,7 @@ public final class CoreService {
         int tier = index == 3 ? pend.fourthTier() : pend.tier();
         set(p, s.withPicked(new CoreSlots.Picked(m, core, tier)));
         CultivationService.unlockMilestone(p);
-        applyAll(p);
+        com.hukhong.stats.StatService.refresh(p);
         CoreSyncPayload.send(p);
         PacketDistributor.sendToPlayer(p, new CoreRevealPayload(index, false, core, tier));
         ringEffect(p, CoreTier.of(tier));
@@ -136,10 +143,10 @@ public final class CoreService {
 
     private static final Map<String, SetBonus> SET_BONUS = new HashMap<>();
     static {
-        SET_BONUS.put("liet_diem", new SetBonus(vanilla("generic.attack_damage"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE, 0.10));
+        SET_BONUS.put("liet_diem", new SetBonus(modId("attack_power"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE, 0.10));
         SET_BONUS.put("huyet_ma", new SetBonus(vanilla("generic.max_health"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE, 0.05));
-        SET_BONUS.put("tinh_than", new SetBonus(vanilla("generic.luck"), AttributeModifier.Operation.ADD_VALUE, 1.0));
-        SET_BONUS.put("cuong_the", new SetBonus(vanilla("generic.armor"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE, 0.15));
+        SET_BONUS.put("tinh_than", new SetBonus(modId("spell_power"), AttributeModifier.Operation.ADD_VALUE, 2.0));
+        SET_BONUS.put("cuong_the", new SetBonus(modId("defense"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE, 0.15));
         SET_BONUS.put("phong_loi", new SetBonus(vanilla("generic.movement_speed"), AttributeModifier.Operation.ADD_MULTIPLIED_BASE, 0.10));
         SET_BONUS.put("thanh_quang", new SetBonus(vanilla("generic.max_health"), AttributeModifier.Operation.ADD_VALUE, 4.0));
     }
@@ -171,7 +178,7 @@ public final class CoreService {
         for (ResourceLocation a : attrs) {
             AttributeInstance inst = instance(p, a);
             if (inst == null) continue;
-            for (int m = 1; m <= 10; m++) inst.removeModifier(modId("core/m" + m));
+            for (int m = 1; m <= 12; m++) inst.removeModifier(modId("core/m" + m));
             for (String sys : SET_BONUS.keySet()) inst.removeModifier(modId("coreset/" + sys));
         }
 

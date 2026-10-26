@@ -23,7 +23,7 @@ public final class CoreEvents {
     }
 
     private static void refresh(ServerPlayer p) {
-        CoreService.applyAll(p);
+        com.hukhong.stats.StatService.refresh(p);
         CoreSyncPayload.send(p);
     }
 }

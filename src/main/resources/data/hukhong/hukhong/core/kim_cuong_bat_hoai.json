@@ -4,7 +4,7 @@
   "path": "the",
   "min_tier": "bach",
   "passives": [
-    {"attribute": "minecraft:generic.armor", "operation": "add_value", "values": [2, 3, 5, 8, 12]},
+    {"attribute": "hukhong:defense", "operation": "add_value", "values": [2, 3, 5, 8, 12]},
     {"attribute": "minecraft:generic.knockback_resistance", "operation": "add_value", "values": [0.05, 0.08, 0.12, 0.18, 0.25]}
   ]
 }

@@ -35,7 +35,7 @@ public final class CultivationService {
             if (exp < need) break;
             exp -= need;
             level++;
-            if (level % 10 == 0 || level >= CultivationData.MAX_LEVEL) { exp = 0; break; } // khóa mốc
+            if (CultivationData.isMilestoneLevel(level) || level >= CultivationData.MAX_LEVEL) { exp = 0; break; } // khóa mốc
         }
         return level == d.level() ? d.withExp(exp) : d.withLevel(level).withExp(exp);
     }
@@ -84,6 +84,7 @@ public final class CultivationService {
             if (next.level() % 10 == 0) com.hukhong.breakthrough.BreakthroughEffects.play(p, next);
         }
         SyncPayload.send(p);
+        if (next.level() != old.level()) com.hukhong.stats.StatService.refresh(p);
     }
 
     private static void levelUpEffect(ServerPlayer p, boolean newRealm) {

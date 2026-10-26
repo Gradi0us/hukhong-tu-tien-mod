@@ -32,8 +32,7 @@ public final class Resources {
     }
 
     private static void set(ServerPlayer p, CultivationData d, int v) {
-        p.setData(ModAttachments.CULTIVATION, new CultivationData(d.level(), d.exp(), v, d.resourceMax(),
-                d.paths(), d.aptitude(), d.bottleneck()));
+        p.setData(ModAttachments.CULTIVATION, d.withResource(v));
         SyncPayload.send(p);
     }
 }

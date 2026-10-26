@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.tinh_than_van_lac",
+  "system": "tinh_than",
+  "path": "any",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:spell_power",
+      "operation": "add_value",
+      "values": [
+        0.6,
+        0.9,
+        1.4,
+        2.1,
+        3.2
+      ]
+    }
+  ]
+}

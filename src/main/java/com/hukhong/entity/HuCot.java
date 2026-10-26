@@ -37,7 +37,7 @@ public class HuCot extends Skeleton implements GeoEntity, HuMob {
         SpawnGroupData r = super.finalizeSpawn(l, d, t, g);
         int lv = HuHoa.levelFor(l, blockPosition(), getRandom());
         entityData.set(LEVEL, lv);
-        HuHoa.applyStats(this, lv, 2.0, 1.5);
+        HuHoa.applyStats(this, lv, 1.2, 1.0);
         return r;
     }
 
@@ -54,6 +54,11 @@ public class HuCot extends Skeleton implements GeoEntity, HuMob {
     @Override public Component getDisplayName() { return HuHoa.name(huLevel(), getTypeName()); }
     @Override public boolean shouldShowName() { return true; }
     @Override public boolean isSunBurnTick() { return false; }
+
+    @Override protected void registerGoals() {
+        super.registerGoals();
+        goalSelector.addGoal(1, new HuSkill.Shot(this));
+    }
 
     @Override public void aiStep() { super.aiStep(); HuHoa.particles(this); }
 

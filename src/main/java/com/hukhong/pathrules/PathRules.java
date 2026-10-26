@@ -52,6 +52,11 @@ public final class PathRules {
                 }
             }
         }
+        if (target instanceof ServerPlayer tp0 && e.getAmount() > 0f
+                && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_ARMOR)) {
+            double def = com.hukhong.stats.StatService.value(tp0, com.hukhong.stats.ModAttributes.DEFENSE);
+            if (def > 0) e.setAmount(com.hukhong.stats.StatService.mitigate(e.getAmount(), def));
+        }
         if (target instanceof ServerPlayer tp && has(tp, Path.THE) && e.getAmount() > 0f) {
             tp.getData(SkillAttachments.STATE).lastCombat = tp.level().getGameTime();
             Resources.add(tp, e.getAmount() < tp.getMaxHealth() * 0.03f ? 1 : 3);
@@ -87,11 +92,12 @@ public final class PathRules {
         if (dao && p.getFoodData().getFoodLevel() < 20) p.getFoodData().setFoodLevel(20); // không đói
 
         if (now % 20 == 0) {
-            if (dao) Resources.add(p, med ? 14 : 3);
-            if (d.paths().contains(Path.KIEM)) Resources.add(p, 4);
+            double rg = com.hukhong.stats.StatService.regen(p);
+            if (dao) Resources.add(p, (int) Math.round((med ? 14 : 3) * rg));
+            if (d.paths().contains(Path.KIEM)) Resources.add(p, (int) Math.round((now - st.lastCombat > 60 ? 8 : 4) * rg));
             if (the) {
                 if (med) {
-                    if (d.resource() < 60) Resources.add(p, Math.min(5, 60 - d.resource()));
+                    if (d.resource() < 60) Resources.add(p, Math.min((int) Math.round(5 * rg), 60 - d.resource()));
                 } else if (now - st.lastCombat > 100) {
                     Resources.add(p, -4);
                 }

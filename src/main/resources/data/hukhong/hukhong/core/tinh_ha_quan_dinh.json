@@ -4,7 +4,7 @@
   "path": "dao",
   "min_tier": "bach",
   "passives": [
-    {"attribute": "minecraft:generic.luck", "operation": "add_value", "values": [1, 1.5, 2.5, 4, 6]},
+    {"attribute": "hukhong:spell_power", "operation": "add_value", "values": [1, 1.5, 2.5, 4, 6]},
     {"attribute": "minecraft:generic.max_health", "operation": "add_multiplied_base", "values": [0.02, 0.03, 0.05, 0.08, 0.12]}
   ]
 }

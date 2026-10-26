@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.bien_ga_phu",
+  "system": "hon_don",
+  "path": "any",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:crit_chance",
+      "operation": "add_value",
+      "values": [
+        0.02,
+        0.03,
+        0.04,
+        0.05,
+        0.07
+      ]
+    }
+  ]
+}

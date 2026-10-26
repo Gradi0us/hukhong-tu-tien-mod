@@ -45,6 +45,7 @@ public final class ModEntities {
             () -> new SpawnEggItem(HU_CHU.get(), 0x2A1A4B, 0x8030D0, new Item.Properties()));
 
     public static void register(IEventBus bus) {
+        com.hukhong.effect.ModEffects.register(bus);
         TYPES.register(bus);
         EGGS.register(bus);
     }

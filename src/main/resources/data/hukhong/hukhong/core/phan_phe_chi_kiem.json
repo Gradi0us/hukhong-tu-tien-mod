@@ -1,0 +1,19 @@
+{
+  "name": "core.hukhong.phan_phe_chi_kiem",
+  "system": "hu_khong",
+  "path": "kiem",
+  "min_tier": "bach",
+  "passives": [
+    {
+      "attribute": "hukhong:attack_power",
+      "operation": "add_multiplied_base",
+      "values": [
+        0.03,
+        0.045,
+        0.065,
+        0.09,
+        0.13
+      ]
+    }
+  ]
+}
