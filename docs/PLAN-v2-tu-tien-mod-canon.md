@@ -200,6 +200,8 @@ Tên mod tạm: **Hư Không Tu Tiên Lục** (modid `hukhong`).
 | R27 | "tc" và "Mắc Kẹt": user giao Opus quyết → giữ diễn giải G1 (buff Tấn Công + Tốc Độ) và G2 (kẹt đến khi xong Phá Chấp) | — |
 | R28 | Tài nguyên hình/âm: AI tự làm (texture pixel bằng script, model khối Blockbench JSON, particle JSON, âm thanh tổng hợp); user không cần vẽ. Có thể thay bằng bản người làm sau | S8 |
 
+| R29 | **Thêm mốc chọn Lõi ở cấp 95 và 99** (user chốt): mốc Lõi = 10,20,…,90, **95**, **99**, 100 (Thần Lõi). Cấp 100 có **bộ chỉ số Thần** riêng (thần lực, bất tử tạm, miễn hiệu ứng…) — thiết kế ở Bước 8.5. **TODO phiên sau**: Bước 8.5 hệ chỉ số + làm lại bảng K (tràn khung, đè chữ, tab/cuộn) + chặn Lõi trùng (hoặc trùng = nâng phẩm) + thiếu Lõi #1 + đổi nhãn "May mắn/Độ bền giáp" sang chỉ số tu tiên + sát thương kỹ năng scale theo chỉ số + hồi tài nguyên theo S2 + chỉ số/kỹ năng riêng cho quái | S2, S3, S5, S8, code |
+
 ## Document Lineage
 | Version | Document | Status |
 |---------|----------|--------|
