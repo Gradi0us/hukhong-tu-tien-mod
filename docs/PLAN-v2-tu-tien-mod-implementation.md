@@ -2,7 +2,7 @@
 
 **Created**: 2026-10-26
 **Last Updated**: 2026-10-26 — v2: gộp toàn bộ thiết kế (canon §14 R1–R22, S1–S8) vào quy trình xây dựng, thêm luồng UI/UX + Animation/VFX song song luồng logic
-**Status**: 📝 Chờ user duyệt các bước (§3) trước khi bắt đầu Bước 1
+**Status**: 🔄 Code xong Bước 1–27 (commit 1879a27, 2026-10-27); build + 91 JUnit + 43 GameTest xanh; CHỜ user chạy thật (DoD mục 5) cho Bước 10–27
 **Thay thế**: PLAN-v1-tu-tien-mod-implementation.md (Superseded)
 
 ---
