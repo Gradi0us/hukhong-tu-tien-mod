@@ -60,9 +60,12 @@ public final class StoryService {
         if ((d.lair() & bit) == 0 && d.chainCount(doc.chain()) >= StoryDocs.CLUES_FOR_LAIR) {
             d = d.withLair(bit); // chỉ lưu cờ; boss CHG ở bước sau
             p.displayClientMessage(Component.translatable("hukhong.story.lair." + doc.chain()), false);
+            com.hukhong.chg.ChgService.revealLair(p, doc.chain() == 'a' ? 1 : 2);
         }
+        boolean full = d.chainCount(doc.chain()) >= 6;
         p.setData(StoryRegistry.STORY.get(), d);
         sync(p);
+        if (full) com.hukhong.chg.ChgService.earlyEvent(p, doc.chain() == 'a' ? 1 : 2);
         return true;
     }
 

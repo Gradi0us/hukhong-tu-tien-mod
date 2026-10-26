@@ -1,0 +1,166 @@
+{
+ "npc": "mo_dao",
+ "city": "luu_ly_cang",
+ "name_key": "hukhong.npc.mo_dao",
+ "entry": [
+  {
+   "if": {
+    "chapter_min": 5
+   },
+   "node": "idle"
+  },
+  {
+   "if": {
+    "chapter_min": 4,
+    "min_level": 50,
+    "lair": 3,
+    "not_flags": [
+     "ch4_done"
+    ]
+   },
+   "node": "ch4"
+  },
+  {
+   "if": {
+    "chapter_min": 4,
+    "not_flags": [
+     "ch4_done"
+    ]
+   },
+   "node": "ch4_wait"
+  },
+  {
+   "if": {
+    "not_flags": [
+     "ch1_done"
+    ]
+   },
+   "node": "ch1"
+  },
+  {
+   "node": "idle"
+  }
+ ],
+ "nodes": {
+  "idle": {
+   "text": [
+    "hukhong.dlg.mo_dao.idle.p1"
+   ]
+  },
+  "ch1": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch1.p1",
+    "hukhong.dlg.mo_dao.ch1.p2",
+    "hukhong.dlg.mo_dao.ch1.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.mo_dao.ch1.c1",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "ch1_done"
+      },
+      {
+       "type": "chapter",
+       "value": 2
+      },
+      {
+       "type": "exp",
+       "amount": 150
+      }
+     ],
+     "next": "ch1_end"
+    },
+    {
+     "text": "hukhong.dlg.mo_dao.ch1.c2",
+     "next": "ch1_lore"
+    }
+   ]
+  },
+  "ch1_lore": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch1_lore.p1"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.mo_dao.ch1_lore.c1",
+     "next": "ch1"
+    }
+   ]
+  },
+  "ch1_end": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch1_end.p1"
+   ]
+  },
+  "ch4_wait": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch4_wait.p1"
+   ]
+  },
+  "ch4": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch4.p1",
+    "hukhong.dlg.mo_dao.ch4.p2",
+    "hukhong.dlg.mo_dao.ch4.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.mo_dao.ch4.c1",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "ch4_done"
+      },
+      {
+       "type": "set_flag",
+       "flag": "trust_mo_dao"
+      },
+      {
+       "type": "chapter",
+       "value": 5
+      },
+      {
+       "type": "exp",
+       "amount": 1200
+      }
+     ],
+     "next": "ch4_trust"
+    },
+    {
+     "text": "hukhong.dlg.mo_dao.ch4.c2",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "ch4_done"
+      },
+      {
+       "type": "set_flag",
+       "flag": "doubt_mo_dao"
+      },
+      {
+       "type": "chapter",
+       "value": 5
+      },
+      {
+       "type": "exp",
+       "amount": 1200
+      }
+     ],
+     "next": "ch4_doubt"
+    }
+   ]
+  },
+  "ch4_trust": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch4_trust.p1"
+   ]
+  },
+  "ch4_doubt": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch4_doubt.p1"
+   ]
+  }
+ }
+}

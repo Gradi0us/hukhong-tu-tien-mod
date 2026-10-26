@@ -1,0 +1,75 @@
+{
+ "npc": "hua_co",
+ "city": "co_tien_thanh",
+ "name_key": "hukhong.npc.hua_co",
+ "entry": [
+  {
+   "if": {
+    "flags": [
+     "ch3_done"
+    ]
+   },
+   "node": "idle"
+  },
+  {
+   "if": {
+    "chapter_min": 3,
+    "min_level": 30,
+    "docs_min": 2
+   },
+   "node": "ch3"
+  },
+  {
+   "node": "early"
+  }
+ ],
+ "nodes": {
+  "early": {
+   "text": [
+    "hukhong.dlg.hua_co.early.p1"
+   ]
+  },
+  "ch3": {
+   "text": [
+    "hukhong.dlg.hua_co.ch3.p1",
+    "hukhong.dlg.hua_co.ch3.p2",
+    "hukhong.dlg.hua_co.ch3.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hua_co.ch3.c1",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "ch3_done"
+      },
+      {
+       "type": "chapter",
+       "value": 4
+      },
+      {
+       "type": "exp",
+       "amount": 600
+      },
+      {
+       "type": "give_item",
+       "item": "hukhong:khai_mach_dan",
+       "count": 1
+      }
+     ],
+     "next": "ch3_end"
+    }
+   ]
+  },
+  "ch3_end": {
+   "text": [
+    "hukhong.dlg.hua_co.ch3_end.p1"
+   ]
+  },
+  "idle": {
+   "text": [
+    "hukhong.dlg.hua_co.idle.p1"
+   ]
+  }
+ }
+}

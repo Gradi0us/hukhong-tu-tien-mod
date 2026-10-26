@@ -30,7 +30,7 @@ public final class HuRenderers {
     }
 
     /** Thêm glowmask nếu có <id>_glowmask.png (kiểm tra lười + cache, thiếu file thì bỏ qua). */
-    private static <T extends net.minecraft.world.entity.Entity & software.bernie.geckolib.animatable.GeoAnimatable> GeoEntityRenderer<T> glow(GeoEntityRenderer<T> r) {
+    public static <T extends net.minecraft.world.entity.Entity & software.bernie.geckolib.animatable.GeoAnimatable> GeoEntityRenderer<T> glow(GeoEntityRenderer<T> r) {
         r.addRenderLayer(new software.bernie.geckolib.renderer.layer.AutoGlowingGeoLayer<T>(r) {
             private final java.util.Map<ResourceLocation, Boolean> has = new java.util.HashMap<>();
 

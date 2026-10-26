@@ -121,6 +121,13 @@ public final class HuKhongCommand {
                         .executes(c -> apostle(c.getSource(), -1))
                         .then(Commands.argument("variant", IntegerArgumentType.integer(0, 2))
                                 .executes(c -> apostle(c.getSource(), IntegerArgumentType.getInteger(c, "variant")))))
+                .then(Commands.literal("chg")
+                        .then(Commands.argument("n", IntegerArgumentType.integer(1, 4)).executes(c -> {
+                            var b = com.hukhong.chg.ChgService.test(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "n"));
+                            msg(c.getSource(), b == null ? "spawn failed" : "chg " + b.idx() + " descending");
+                            return b == null ? 0 : 1;
+                        })))
+                .then(com.hukhong.bicanh.BiCanhCommand.node())
                 .then(Commands.literal("age").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     AgeData a = p.getData(ModAttachments.AGE);

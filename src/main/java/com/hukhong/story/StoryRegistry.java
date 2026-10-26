@@ -69,5 +69,6 @@ public final class StoryRegistry {
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) DOC_ITEMS.values().forEach(i -> e.accept(i.get()));
         });
         bus.addListener(StoryNet::register);
+        com.hukhong.story.npc.StoryNpcRegistry.register(bus);
     }
 }

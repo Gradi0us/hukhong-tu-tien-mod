@@ -1,0 +1,86 @@
+{
+ "npc": "hang_chieu",
+ "city": "hac_thach_quan",
+ "name_key": "hukhong.npc.hang_chieu",
+ "entry": [
+  {
+   "if": {
+    "flags": [
+     "ch2_done"
+    ]
+   },
+   "node": "idle"
+  },
+  {
+   "if": {
+    "chapter_min": 2,
+    "min_level": 10
+   },
+   "node": "ch2"
+  },
+  {
+   "node": "early"
+  }
+ ],
+ "nodes": {
+  "early": {
+   "text": [
+    "hukhong.dlg.hang_chieu.early.p1"
+   ]
+  },
+  "ch2": {
+   "text": [
+    "hukhong.dlg.hang_chieu.ch2.p1",
+    "hukhong.dlg.hang_chieu.ch2.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hang_chieu.ch2.c1",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "ch2_done"
+      },
+      {
+       "type": "chapter",
+       "value": 3
+      },
+      {
+       "type": "exp",
+       "amount": 300
+      }
+     ],
+     "next": "ch2_end"
+    },
+    {
+     "text": "hukhong.dlg.hang_chieu.ch2.c2",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "ch2_done"
+      },
+      {
+       "type": "chapter",
+       "value": 3
+      },
+      {
+       "type": "exp",
+       "amount": 300
+      }
+     ],
+     "next": "ch2_end"
+    }
+   ]
+  },
+  "ch2_end": {
+   "text": [
+    "hukhong.dlg.hang_chieu.ch2_end.p1"
+   ]
+  },
+  "idle": {
+   "text": [
+    "hukhong.dlg.hang_chieu.idle.p1"
+   ]
+  }
+ }
+}
