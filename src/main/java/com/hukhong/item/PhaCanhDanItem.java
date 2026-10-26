@@ -52,8 +52,10 @@ public class PhaCanhDanItem extends Item {
             sp.displayClientMessage(Component.translatable("hukhong.pill.not_owner"), true);
             return InteractionResultHolder.fail(stack);
         }
+        if (!com.hukhong.alchemy.DanDoc.canUse(sp)) return InteractionResultHolder.fail(stack);
         if (lightLevel > 0 ? CultivationService.tryLightBreakthrough(sp, lightLevel)
                 : CultivationService.tryBreakthrough(sp, tier)) {
+            com.hukhong.alchemy.DanDoc.consume(sp, 2.0, tier, com.hukhong.alchemy.AlchemyRegistry.qualityOf(stack));
             stack.shrink(1);
             sp.displayClientMessage(Component.translatable("hukhong.pill.success"), true);
             return InteractionResultHolder.consume(stack);

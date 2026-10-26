@@ -47,7 +47,7 @@ public final class SkillHud {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.options.hideGui) return;
         CultivationData d = ClientCache.cultivation();
-        Path sp = Skill.skillPath(d);
+        Path sp = Skill.skillPath(d, ClientSkillState.page());
         if (sp == null) return;
 
         int x0 = g.guiWidth() / 2 + 91 + 34;
@@ -56,6 +56,22 @@ public final class SkillHud {
 
         g.drawString(mc.font, Component.translatable(stance ? "hukhong.hud.stance_on" : "hukhong.hud.stance_off"),
                 x0, y - 11, stance ? 0xFFFFD34F : 0xFF888888, true);
+
+        // Đa đạo: tên trang (màu đạo) phía trên cùng hàng chữ thế; mỗi đạo 1 thanh mảnh dưới ô kỹ năng.
+        java.util.List<Path> owned = com.hukhong.skill.SkillPages.owned(d.paths());
+        if (owned.size() > 1) {
+            String pn = Component.translatable(com.hukhong.skill.SkillPages.pathLangKey(sp)).getString()
+                    + " [" + SkillKeys.PAGE.getTranslatedKeyMessage().getString() + "]";
+            g.drawString(mc.font, pn, x0 + 4 * (SIZE + GAP) - mc.font.width(pn), y - 11, sp.argb, true);
+            double ratio = (double) d.resource() / d.resourceMax();
+            int bw = (4 * (SIZE + GAP) - GAP - (owned.size() - 1) * 2) / owned.size();
+            for (int k = 0; k < owned.size(); k++) {
+                int bx = x0 + k * (bw + 2), by = y + SIZE + 1;
+                g.fill(bx, by, bx + bw, by + 2, 0xAA000000);
+                g.fill(bx, by, bx + (int) Math.round(bw * Math.max(0, Math.min(1, ratio))), by + 2, owned.get(k).argb);
+                if (owned.get(k) == sp) g.fill(bx, by + 2, bx + bw, by + 3, 0xFFFFFFFF);
+            }
+        }
 
         for (int i = 0; i < 4; i++) {
             int x = x0 + i * (SIZE + GAP);

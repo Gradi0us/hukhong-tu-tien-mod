@@ -45,9 +45,6 @@ public enum Skill {
         return null;
     }
 
-    /** Đạo có bộ kỹ năng dùng cho phím (một trang; chuyển trang đa đạo = bước sau): Kiếm, Đạo, Thể, Ma. */
-    public static Path skillPath(CultivationData d) {
-        for (Path p : new Path[]{Path.KIEM, Path.DAO, Path.THE, Path.MA}) if (d.paths().contains(p)) return p;
-        return null;
-    }
+    /** Đạo có bộ kỹ năng dùng cho phím (trang đang dùng theo phím V): Kiếm, Đạo, Thể, Ma. */
+    public static Path skillPath(CultivationData d, int page) { return SkillPages.active(d, page); }
 }

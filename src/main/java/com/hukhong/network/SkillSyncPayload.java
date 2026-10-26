@@ -9,8 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 
-/** Server -> client: thế tu luyện + hồi chiêu còn lại / tổng (tick) cho 4 slot. */
-public record SkillSyncPayload(boolean stance, List<Integer> remaining, List<Integer> total)
+/** Server -> client: thế tu luyện + hồi chiêu còn lại / tổng (tick) cho 4 slot + trang đang dùng. */
+public record SkillSyncPayload(boolean stance, List<Integer> remaining, List<Integer> total, int page)
         implements CustomPacketPayload {
     public static final Type<SkillSyncPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "skill_sync"));
@@ -18,6 +18,7 @@ public record SkillSyncPayload(boolean stance, List<Integer> remaining, List<Int
             ByteBufCodecs.BOOL, SkillSyncPayload::stance,
             ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list()), SkillSyncPayload::remaining,
             ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list()), SkillSyncPayload::total,
+            ByteBufCodecs.VAR_INT, SkillSyncPayload::page,
             SkillSyncPayload::new);
 
     @Override

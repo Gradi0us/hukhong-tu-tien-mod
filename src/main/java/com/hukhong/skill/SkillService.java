@@ -25,7 +25,7 @@ public final class SkillService {
     public static void toggleStance(ServerPlayer p) {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         SkillState st = state(p);
-        if (Skill.skillPath(d) == null) {
+        if (Skill.skillPath(d, st.page) == null) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_skill_path"), true);
             return;
         }
@@ -34,12 +34,28 @@ public final class SkillService {
         sync(p);
     }
 
+    /** Phím V: đổi trang giữa các đạo đang sở hữu; Phân Tâm = hồi chiêu chung 3s. */
+    public static void cyclePage(ServerPlayer p) {
+        CultivationData d = p.getData(ModAttachments.CULTIVATION);
+        int n = SkillPages.owned(d.paths()).size();
+        if (n < 2 || !p.isAlive() || p.isSpectator()) return;
+        SkillState st = state(p);
+        long now = p.level().getGameTime();
+        if (st.lastSwitch + SkillPages.SWITCH_COOLDOWN_TICKS > now) return;
+        st.page = SkillPages.next(st.page, n);
+        st.lastSwitch = now;
+        for (int i = 0; i < 4; i++) st.cooldownEnd[i] = Math.max(st.cooldownEnd[i], now + SkillPages.SWITCH_COOLDOWN_TICKS);
+        p.displayClientMessage(Component.translatable("hukhong.msg.page_switched",
+                Component.translatable(SkillPages.pathLangKey(SkillPages.active(d, st.page)))), true);
+        sync(p);
+    }
+
     public static void cast(ServerPlayer p, int slot) {
         if (slot < 0 || slot > 3 || !p.isAlive() || p.isSpectator()) return;
         SkillState st = state(p);
         if (!st.stance) return; // server chỉ nhận cast khi thế bật
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
-        Skill s = Skill.of(Skill.skillPath(d), slot);
+        Skill s = Skill.of(Skill.skillPath(d, st.page), slot);
         if (s == null) return;
         if (com.hukhong.pathrules.MaRules.isLost(p)) { // Mất Kiểm Soát: khóa phím kỹ năng
             p.displayClientMessage(Component.translatable("hukhong.ma.lost_control"), true);
@@ -62,11 +78,11 @@ public final class SkillService {
         long now = p.level().getGameTime();
         List<Integer> rem = new ArrayList<>(4), tot = new ArrayList<>(4);
         for (int i = 0; i < 4; i++) {
-            Skill s = Skill.of(Skill.skillPath(p.getData(ModAttachments.CULTIVATION)), i);
+            Skill s = Skill.of(Skill.skillPath(p.getData(ModAttachments.CULTIVATION), st.page), i);
             rem.add((int) Math.max(0, st.cooldownEnd[i] - now));
             tot.add(s == null ? 1 : s.cooldownTicks);
         }
-        PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot));
+        PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot, st.page));
     }
 
     @SubscribeEvent

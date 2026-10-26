@@ -25,6 +25,7 @@ public final class SkillKeyHandler {
         if (mc.player == null) {
             while (SkillKeys.PROFILE.consumeClick()) { }
             while (SkillKeys.TOGGLE.consumeClick()) { }
+            while (SkillKeys.PAGE.consumeClick()) { }
             for (var k : SkillKeys.SKILL) while (k.consumeClick()) { }
             return;
         }
@@ -35,6 +36,9 @@ public final class SkillKeyHandler {
         }
         while (SkillKeys.TOGGLE.consumeClick()) {
             if (noScreen) PacketDistributor.sendToServer(new ToggleStancePayload());
+        }
+        while (SkillKeys.PAGE.consumeClick()) {
+            if (noScreen && ClientSkillState.stance()) PacketDistributor.sendToServer(new com.hukhong.network.CyclePagePayload());
         }
         boolean on = ClientSkillState.stance() && noScreen;
         if (on) {
