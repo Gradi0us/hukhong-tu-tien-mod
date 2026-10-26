@@ -37,7 +37,7 @@ public class HuCot extends Skeleton implements GeoEntity, HuMob {
         SpawnGroupData r = super.finalizeSpawn(l, d, t, g);
         int lv = HuHoa.levelFor(l, blockPosition(), getRandom());
         entityData.set(LEVEL, lv);
-        HuHoa.applyStats(this, lv, 1.2, 1.0);
+        HuHoa.applyStats(this, lv, 1.5, 1.0);
         return r;
     }
 
@@ -71,7 +71,8 @@ public class HuCot extends Skeleton implements GeoEntity, HuMob {
                 ? RawAnimation.begin().thenLoop("animation.hu_cot.walk")
                 : RawAnimation.begin().thenLoop("animation.hu_cot.idle"))));
         c.add(new AnimationController<>(this, "attack", 0, s -> PlayState.STOP)
-                .triggerableAnim("attack", RawAnimation.begin().then("animation.hu_cot.attack", Animation.LoopType.PLAY_ONCE)));
+                .triggerableAnim("attack", RawAnimation.begin().then("animation.hu_cot.attack", Animation.LoopType.PLAY_ONCE))
+                .triggerableAnim("skill", HuAnim.skillOrAttack("hu_cot")));
     }
 
     @Override public boolean doHurtTarget(net.minecraft.world.entity.Entity e) {

@@ -43,6 +43,7 @@ public final class SkillHud {
     }
 
     private static void render(GuiGraphics g, DeltaTracker dt) {
+        if (!com.hukhong.client.ClientConfig.showHud()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.options.hideGui) return;
         CultivationData d = ClientCache.cultivation();

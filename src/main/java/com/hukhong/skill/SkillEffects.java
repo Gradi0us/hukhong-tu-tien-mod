@@ -58,10 +58,10 @@ public final class SkillEffects {
                 e -> e instanceof LivingEntity && !(e instanceof Player) && e.isAlive() && !e.isSpectator());
         if (eh != null) {
             end = eh.getLocation();
-            DamageRules.hurtBySkill(p, (LivingEntity) eh.getEntity(), (float) (1.10 * com.hukhong.stats.StatService.spellPower(p)));
+            DamageRules.hurtBySkill(p, (LivingEntity) eh.getEntity(), (float) (Skill.DAO_1_COEF * com.hukhong.stats.StatService.spellPower(p)));
         }
         beam(lv, eye.add(look.scale(0.8)).subtract(0, 0.2, 0), end);
-        lv.playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.2f, 1.4f);
+        com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_THANH_QUANG, 1.2f, 1.0f);
     }
 
     /** Ban Phúc: đồng đội gần nhất trong 20 block nhận Tấn Công+Tốc Độ+Giáp Phép; không có thì bản thân (yếu hơn). */
@@ -79,8 +79,8 @@ public final class SkillEffects {
             target.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 400, 1));
             beam(lv, p.getEyePosition().subtract(0, 0.3, 0), target.getEyePosition());
         }
-        lv.sendParticles(ParticleTypes.HAPPY_VILLAGER, target.getX(), target.getY() + 1, target.getZ(), 15, 0.4, 0.6, 0.4, 0.1);
-        lv.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1f, 1.2f);
+        lv.sendParticles(com.hukhong.vfx.ModParticles.THANH_QUANG.get(), target.getX(), target.getY() + 1, target.getZ(), 15, 0.4, 0.6, 0.4, 0.1);
+        com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_LINH_KHI, 1f, 1.0f);
     }
 
     /** Thánh Giáng (tối thượng): AoE 12 block, người chơi trong vùng được hồi + 4 buff; bản thân nhận phần nhẹ hơn. */
@@ -97,9 +97,9 @@ public final class SkillEffects {
                 o.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600, 0));
             }
         }
-        ring(lv, p.position().add(0, 0.2, 0), 12, 48, ParticleTypes.END_ROD);
-        lv.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, p.getX(), p.getY() + 1, p.getZ(), 40, 0.6, 1.0, 0.6, 0.3);
-        lv.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.5f, 1f);
+        ring(lv, p.position().add(0, 0.2, 0), 12, 48, com.hukhong.vfx.ModParticles.THANH_QUANG.get());
+        lv.sendParticles(com.hukhong.vfx.ModParticles.THANH_QUANG.get(), p.getX(), p.getY() + 1, p.getZ(), 40, 0.6, 1.0, 0.6, 0.3);
+        com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_THANH_QUANG, 1.5f, 0.7f);
     }
 
     // ---- Thể Tu ----
@@ -110,20 +110,20 @@ public final class SkillEffects {
         List<LivingEntity> hit = lv.getEntitiesOfClass(LivingEntity.class, box,
                 e -> e != p && !(e instanceof Player) && e.isAlive() && e.distanceToSqr(p) <= 16);
         for (LivingEntity e : hit) {
-            DamageRules.hurtBySkill(p, e, (float) (1.0 * com.hukhong.stats.StatService.attackPower(p)));
+            DamageRules.hurtBySkill(p, e, (float) (Skill.THE_1_COEF * com.hukhong.stats.StatService.attackPower(p)));
             e.setDeltaMovement(e.getDeltaMovement().add(0, 0.8, 0));
             e.hurtMarked = true;
         }
-        ring(lv, p.position().add(0, 0.2, 0), 4, 28, ParticleTypes.CLOUD);
+        ring(lv, p.position().add(0, 0.2, 0), 4, 28, com.hukhong.vfx.ModParticles.BA_KHI.get());
         lv.sendParticles(ParticleTypes.EXPLOSION, p.getX(), p.getY() + 0.3, p.getZ(), 1, 0, 0, 0, 0);
-        lv.playSound(null, p.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 1.2f, 0.6f);
+        com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_BA_KHI, 1.2f, 1.0f);
     }
 
     /** Thiết Bố Sam: giảm sát thương nhận ~20% trong 6s. */
     private static void thietBoSam(ServerLevel lv, ServerPlayer p) {
         p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120, 0));
-        ring(lv, p.position().add(0, 0.3, 0), 1.0, 16, ParticleTypes.CRIT);
-        lv.playSound(null, p.blockPosition(), SoundEvents.IRON_GOLEM_REPAIR, SoundSource.PLAYERS, 1f, 1f);
+        ring(lv, p.position().add(0, 0.3, 0), 1.0, 16, com.hukhong.vfx.ModParticles.BA_KHI.get());
+        com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_BA_KHI, 1f, 1.5f);
     }
 
     /** Kim Thân Bất Hoại (tối thượng): giảm ~40% sát thương + khiên 8s, miễn làm chậm/yếu. */
@@ -132,9 +132,9 @@ public final class SkillEffects {
         p.removeEffect(MobEffects.WEAKNESS);
         p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 160, 1));
         p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 160, 2));
-        ring(lv, p.position().add(0, 0.2, 0), 1.2, 24, ParticleTypes.FLAME);
-        lv.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, p.getX(), p.getY() + 1, p.getZ(), 30, 0.5, 0.9, 0.5, 0.25);
-        lv.playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.6f, 1.4f);
+        ring(lv, p.position().add(0, 0.2, 0), 1.2, 24, com.hukhong.vfx.ModParticles.BA_KHI.get());
+        lv.sendParticles(com.hukhong.vfx.ModParticles.BA_KHI.get(), p.getX(), p.getY() + 1, p.getZ(), 30, 0.5, 0.9, 0.5, 0.25);
+        com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_BA_KHI, 1.5f, 0.5f);
     }
 
     // ---- VFX helpers ----
@@ -146,8 +146,8 @@ public final class SkillEffects {
         Vec3 step = dir.scale(1.0 / len);
         for (double t = 0; t <= len; t += 0.4) {
             Vec3 q = from.add(step.scale(t));
-            lv.sendParticles(GOLD, q.x, q.y, q.z, 1, 0, 0, 0, 0);
-            if (((int) (t / 0.4)) % 3 == 0) lv.sendParticles(ParticleTypes.END_ROD, q.x, q.y, q.z, 1, 0.02, 0.02, 0.02, 0);
+            lv.sendParticles(com.hukhong.vfx.ModParticles.THANH_QUANG.get(), q.x, q.y, q.z, 1, 0.02, 0.02, 0.02, 0);
+            if (((int) (t / 0.4)) % 3 == 0) lv.sendParticles(com.hukhong.vfx.ModParticles.LINH_KHI.get(), q.x, q.y, q.z, 1, 0.02, 0.02, 0.02, 0);
         }
     }
 

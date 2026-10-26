@@ -11,7 +11,11 @@ import os
 
 from PIL import Image
 
-OUT_DIR = r"D:\mc_mod\src\main\resources\assets\hukhong\textures\gui\skill"
+OUT_DIR = os.path.normpath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    os.pardir, "src", "main", "resources",
+    "assets", "hukhong", "textures", "gui", "skill",
+))
 SIZE = 16
 NEIGH8 = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
 
@@ -69,8 +73,28 @@ class Canvas:
     def filled(self, x, y):
         return 0 <= x < self.w and 0 <= y < self.h and self.px[y][x] is not None
 
+    def bevel(self, amt=0.22):
+        """Shading 3 tong: pixel co o trong suot phia tren/trai duoc lam sang,
+        phia duoi/phai duoc lam toi. Chay truoc khi ve outline."""
+        snap = [row[:] for row in self.px]
+        for y in range(self.h):
+            for x in range(self.w):
+                col = snap[y][x]
+                if col is None or col == OUTLINE:
+                    continue
+                up_open = y == 0 or snap[y - 1][x] is None
+                left_open = x == 0 or snap[y][x - 1] is None
+                down_open = y == self.h - 1 or snap[y + 1][x] is None
+                right_open = x == self.w - 1 or snap[y][x + 1] is None
+                if up_open or left_open:
+                    col = tuple(int(round(c + (255 - c) * amt)) for c in col[:3]) + (255,)
+                elif down_open or right_open:
+                    col = tuple(int(round(c * (1 - amt))) for c in col[:3]) + (255,)
+                self.px[y][x] = col
+
     def add_outline(self, color=OUTLINE):
         """Ve vien 1px cho cac pixel trong suot co pixel opaque ke ben (8-huong)."""
+        self.bevel()
         targets = []
         for y in range(self.h):
             for x in range(self.w):
@@ -335,7 +359,7 @@ def icon_slot_bg():
             elif ring == 1:
                 col = BRONZE_L if (x < 10 and y < 10) else BRONZE
             elif ring == 2:
-                col = BRONZE
+                col = BRONZE if (x + y) % 4 else BRONZE_L  # rivet-dot trim
             elif ring == 3:
                 col = BRONZE_D
             elif ring == 4:
@@ -343,6 +367,13 @@ def icon_slot_bg():
             else:
                 col = SLOT_IN_A if (x + y) % 2 == 0 else SLOT_IN_B
             c.set(x, y, col)
+    # corner rivets (inside the bronze ring, lit top-left)
+    for x, y in ((3, 3), (16, 3), (3, 16), (16, 16)):
+        c.set(x, y, BRONZE_L if x < 10 else BRONZE_D)
+    # inner top-left lip so the slot reads as recessed
+    for i in range(5, 15):
+        c.set(i, 5, SLOT_SHADE)
+        c.set(5, i, SLOT_SHADE)
     return c
 
 

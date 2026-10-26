@@ -14,7 +14,8 @@ public final class ClientShake {
     private static int total, left;
     private static float strength;
 
-    public static void start(int ticks, float s) { total = left = ticks; strength = s; }
+    public static void start(int ticks, float s) {
+        if (ClientConfig.screenEffectsOff()) return; total = left = ticks; strength = s; }
 
     @SubscribeEvent
     public static void onCamera(ViewportEvent.ComputeCameraAngles e) {

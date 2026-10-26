@@ -139,8 +139,8 @@ public final class CoreService {
                 sl.sendParticles(dust, p.getX() + Math.cos(a) * r, y, p.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
             }
         }
-        sl.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1, p.getZ(), 30, 0.4, 0.8, 0.4, 0.05);
-        sl.playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1f, 0.8f);
+        sl.sendParticles(com.hukhong.vfx.ModParticles.LINH_KHI.get(), p.getX(), p.getY() + 1, p.getZ(), 30, 0.4, 0.8, 0.4, 0.05);
+        com.hukhong.vfx.ModSounds.play(sl, p, com.hukhong.vfx.ModSounds.CORE_RING, 1f, 1.0f);
         sl.playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1f, 0.6f + t.ordinal() * 0.15f);
     }
 

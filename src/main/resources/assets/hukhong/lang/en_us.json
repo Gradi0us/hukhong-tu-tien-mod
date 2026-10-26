@@ -228,5 +228,14 @@
   "hukhong.compass.s": "South",
   "hukhong.compass.sw": "Southwest",
   "hukhong.compass.w": "West",
-  "hukhong.compass.nw": "Northwest"
+  "hukhong.compass.nw": "Northwest",
+  "hukhong.configuration.title": "Hu Khong Cultivation - Options",
+  "hukhong.configuration.disableScreenEffects": "Disable full-screen effects (camera shake, flash)",
+  "hukhong.configuration.disableScreenEffects.tooltip": "For motion/light-sensitive players (R26).",
+  "hukhong.configuration.particles": "Particle amount (ALL, LOW, OFF)",
+  "hukhong.configuration.particles.tooltip": "Applies to this mod's particles only.",
+  "hukhong.configuration.colorblind": "Colorblind-friendly palette",
+  "hukhong.configuration.colorblind.tooltip": "Switches exp/resource bars to the Okabe-Ito palette.",
+  "hukhong.configuration.showHud": "Show cultivation HUD",
+  "hukhong.configuration.showHud.tooltip": "Hides level/resource bars and the skill bar."
 }

@@ -1,0 +1,9 @@
+{
+  "skill.thanh_quang": {"sounds": [{"name": "minecraft:block.amethyst_block.chime", "type": "event", "pitch": 1.4}]},
+  "skill.linh_khi":    {"sounds": [{"name": "minecraft:block.beacon.power_select", "type": "event", "pitch": 1.2}]},
+  "skill.ba_khi":      {"sounds": [{"name": "minecraft:block.anvil.land", "type": "event", "pitch": 0.6}]},
+  "skill.hu_khong":    {"sounds": [{"name": "minecraft:entity.enderman.teleport", "type": "event", "pitch": 0.5}]},
+  "breakthrough":      {"sounds": [{"name": "minecraft:block.beacon.activate", "type": "event"}]},
+  "meditate":          {"sounds": [{"name": "minecraft:block.amethyst_block.resonate", "type": "event", "pitch": 0.8}]},
+  "core_ring":         {"sounds": [{"name": "minecraft:entity.player.levelup", "type": "event", "pitch": 0.8}]}
+}

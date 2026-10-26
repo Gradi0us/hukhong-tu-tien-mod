@@ -115,7 +115,7 @@ public final class CultivationService {
 
     private static void levelUpEffect(ServerPlayer p, boolean newRealm) {
         if (!(p.level() instanceof ServerLevel sl)) return;
-        sl.sendParticles(newRealm ? ParticleTypes.TOTEM_OF_UNDYING : ParticleTypes.END_ROD,
+        sl.sendParticles(newRealm ? com.hukhong.vfx.ModParticles.THANH_QUANG.get() : com.hukhong.vfx.ModParticles.LINH_KHI.get(),
                 p.getX(), p.getY() + 1.0, p.getZ(), newRealm ? 40 : 20, 0.5, 0.8, 0.5, 0.1);
         sl.playSound(null, p.blockPosition(),
                 newRealm ? SoundEvents.UI_TOAST_CHALLENGE_COMPLETE : SoundEvents.PLAYER_LEVELUP,

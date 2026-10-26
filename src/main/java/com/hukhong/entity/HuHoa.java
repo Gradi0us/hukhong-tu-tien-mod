@@ -38,8 +38,10 @@ public final class HuHoa {
         return Math.max(1, Math.min(30, base + r.nextInt(3) - 1));
     }
 
-    /** He so cap: hp x(1+0.12(L-1)), sat thuong x(1+0.10(L-1)), giap +0.25/cap (toi da 20), toc do +0.5%/cap (toi da +30%). */
-    public static double hpScale(int level) { return 1 + 0.12 * (level - 1); }
+    /** He so cap: hp x(1+0.38(L-1)), sat thuong x(1+0.10(L-1)), giap +0.25/cap (toi da 20), toc do +0.5%/cap (toi da +30%). */
+    public static double hpScale(int level) { return 1 + HP_PER_LEVEL * (level - 1); }
+    /** Chỉnh ở Bước 9 (R5-balance-p0): 0.12 -> 0.38 để người cùng cấp cần 6-10 đòn kỹ năng. */
+    public static final double HP_PER_LEVEL = 0.38;
     public static double dmgScale(int level) { return 1 + 0.10 * (level - 1); }
 
     /** Sat thuong ky nang: 3 x dmgScale x mult. */
@@ -80,7 +82,7 @@ public final class HuHoa {
 
     public static void particles(Mob m) {
         if (m.level().isClientSide && m.tickCount % 3 == 0)
-            m.level().addParticle(net.minecraft.core.particles.ParticleTypes.PORTAL,
+            m.level().addParticle(com.hukhong.vfx.ModParticles.HU_KHONG.get(),
                     m.getRandomX(0.6), m.getRandomY(), m.getRandomZ(0.6), 0, 0.05, 0);
     }
 

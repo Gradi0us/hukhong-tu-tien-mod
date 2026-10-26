@@ -12,7 +12,9 @@ import random
 
 from PIL import Image
 
-BASE = r"D:\mc_mod\src\main\resources\assets\hukhong\textures"
+BASE = os.path.normpath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    os.pardir, "src", "main", "resources", "assets", "hukhong", "textures"))
 ITEM_DIR = os.path.join(BASE, "item")
 BLOCK_DIR = os.path.join(BASE, "block")
 CORE_DIR = os.path.join(BASE, "gui", "core")
@@ -227,19 +229,97 @@ def make_card(main, shade, hi, body=BODY, decorate=None, body_fill=None):
     return img
 
 
-def deco_sheen(img):
-    # silver diagonal sheen across the frame ring (d = 1..2)
+def _corner_zone(x, y, k=8):
+    return (x < k or x >= W - k) and (y < k or y >= H - k)
+
+
+def _rivets(img, light, dark):
+    for x, y in ((5, 5), (42, 5), (5, 58), (42, 58)):
+        put(img, x, y, hx(light))
+        put(img, x + 1, y + 1, hx(dark))
+
+
+def deco_bach(img):
+    """Bach (white, basic): plain silver border, nothing else."""
+    pass
+
+
+def deco_hoang(img):
+    """Hoang (yellow): dotted gold trim on the middle ring + corner dots."""
+    for y in range(H):
+        for x in range(W):
+            if edge_dist(x, y) == 2 and (x + y) % 4 == 0:
+                put(img, x, y, hx("#FFF6B8"))
+    _rivets(img, "#FFF6B8", "#8C6A10")
+
+
+def deco_tu(img):
+    """Tu (purple): bright L-brackets in each corner of the ring."""
     for y in range(H):
         for x in range(W):
             d = edge_dist(x, y)
+            if d in (1, 2) and _corner_zone(x, y, 9):
+                put(img, x, y, hx("#E2C8FF"))
+    for x, y in ((6, 6), (41, 6), (6, 57), (41, 57)):
+        put(img, x, y, hx("#FFFFFF"))
+
+
+def deco_hac(img):
+    """Hac (black): steel chevron pattern + silver sheen + rivets."""
+    for y in range(H):
+        for x in range(W):
+            d = edge_dist(x, y)
+            if d == 2 and (x + y) % 8 in (0, 1):
+                put(img, x, y, hx("#6E7A88"))
             if d in (1, 2) and (x + y) % 24 in (5, 6):
                 put(img, x, y, hx("#E8EEF6"))
+    _rivets(img, "#B9C3CF", "#0A0A0E")
 
 
-def deco_rivets(img):
-    for x, y in ((5, 5), (42, 5), (5, 58), (42, 58)):
-        put(img, x, y, hx("#FFE68A"))
-        put(img, x + 1, y + 1, hx("#7C5A08"))
+def deco_hong(img):
+    """Hong (red): zig-zag scallop trim + gem studs in each corner."""
+    for y in range(H):
+        for x in range(W):
+            if edge_dist(x, y) == 2 and ((x + y) // 3) % 2 == 0:
+                put(img, x, y, hx("#F0606A"))
+    for x, y in ((6, 6), (41, 6), (6, 57), (41, 57)):
+        for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
+            put(img, x + dx, y + dy, hx("#FFD0D0"))
+        put(img, x, y, hx("#FF4A55"))
+
+
+def deco_kim(img):
+    """Kim (gold, top tier): chevron gold ring, gold sheen streaks,
+    floret corners, jewel studs at top/bottom centre."""
+    tones = ["#F2D230", "#FFF3A0", "#D9A41E", "#FFF8D0"]
+    for y in range(H):
+        for x in range(W):
+            d = edge_dist(x, y)
+            if d == 2:
+                put(img, x, y, hx(tones[((x + y) // 2) % 3]))
+            elif d == 3 and (x + y) % 6 == 0:
+                put(img, x, y, hx("#FFF3A0"))
+            elif d in (1, 2, 3) and (x - y) % 30 in (10, 11):
+                put(img, x, y, hx("#FFFBE0"))  # gold sheen streak
+    # floret (plus + centre) in each corner
+    for cx, cy in ((7, 7), (40, 7), (7, 56), (40, 56)):
+        for dx, dy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
+            put(img, cx + dx, cy + dy, hx("#FFF8D0"))
+        put(img, cx, cy, hx("#FFFFFF"))
+    # jewel studs top / bottom centre
+    for cx, cy in ((24, 2), (24, 61)):
+        put(img, cx, cy, hx("#B3122E"))
+        put(img, cx - 1, cy, hx("#FF8FA0"))
+        put(img, cx + 1, cy, hx("#7A0A1E"))
+
+
+def body_lattice(color):
+    """Faint diagonal lattice on the card body (used by hoang/kim)."""
+    def fn(x, y, c):
+        if (x + y) % 10 == 0 or (x - y) % 10 == 0:
+            return hx(color)
+        return c
+    return fn
 
 
 GLYPH_Q = [
@@ -305,16 +385,20 @@ def main():
 
     # GUI cards
     save(make_card_back(), os.path.join(CORE_DIR, "card_back.png"))
+    # tier -> (main, shade, hi, decorator, body fill). Ornament grows with tier:
+    # bach (plain) -> hoang -> tu -> hac -> hong -> kim (most ornate, gold sheen).
     frames = {
-        "bach": ("#EDEFF3", "#9AA1AD", "#FFFFFF", None),
-        "hoang": ("#F2D230", "#A87F12", "#FFF3A0", None),
-        "tu": ("#8E4FD6", "#4C237F", "#CDA8FF", None),
-        "hac": ("#33333C", "#121217", "#B9C3CF", deco_sheen),
-        "hong": ("#C8323A", "#6E141B", "#FF8080", None),
-        "kim": ("#D9A41E", "#7C5A08", "#FFE68A", deco_rivets),
+        "bach": ("#EDEFF3", "#9AA1AD", "#FFFFFF", deco_bach, None),
+        "hoang": ("#F2D230", "#A87F12", "#FFF3A0", deco_hoang,
+                  body_lattice("#2A220E")),
+        "tu": ("#8E4FD6", "#4C237F", "#CDA8FF", deco_tu, None),
+        "hac": ("#33333C", "#121217", "#B9C3CF", deco_hac, None),
+        "hong": ("#C8323A", "#6E141B", "#FF8080", deco_hong, None),
+        "kim": ("#D9A41E", "#7C5A08", "#FFE68A", deco_kim,
+                body_lattice("#2B2210")),
     }
-    for name, (main_c, shade_c, hi_c, deco) in frames.items():
-        save(make_card(main_c, shade_c, hi_c, decorate=deco),
+    for name, (main_c, shade_c, hi_c, deco, bfill) in frames.items():
+        save(make_card(main_c, shade_c, hi_c, decorate=deco, body_fill=bfill),
              os.path.join(CORE_DIR, f"card_frame_{name}.png"))
 
 

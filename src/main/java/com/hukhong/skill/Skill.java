@@ -12,6 +12,9 @@ public enum Skill {
     THE_2(Path.THE, 1, "the_2", 25, 360),
     THE_ULT(Path.THE, 3, "the_ult", 100, 2000);
 
+    /** Hệ số sát thương kỹ năng 1 (nhân Phép lực / Công lực) - dùng chung với bài test cân bằng. */
+    public static final double DAO_1_COEF = 0.90, THE_1_COEF = 1.00;
+
     public final Path path;
     public final int slot;
     public final String icon;

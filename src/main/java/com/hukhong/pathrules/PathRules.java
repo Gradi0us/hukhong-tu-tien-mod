@@ -108,15 +108,16 @@ public final class PathRules {
             double a = (now * 0.35) % (2 * Math.PI);
             for (int i = 0; i < 3; i++) {
                 double ang = a + i * 2.094;
-                lv.sendParticles(ParticleTypes.ENCHANT, p.getX(), p.getY() + 1.0, p.getZ(), 0,
+                lv.sendParticles(com.hukhong.vfx.ModParticles.LINH_KHI.get(), p.getX(), p.getY() + 1.0, p.getZ(), 0,
                         Math.cos(ang) * 1.6, 0.8 + 0.3 * i, Math.sin(ang) * 1.6, 1.0);
             }
         }
+        if (med && now % 100 == 0) com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.MEDITATE, 0.5f, 1.0f);
         if (the && now % 10 == 0) {
             double ratio = (double) d.resource() / d.resourceMax();
             if (d.resource() >= 25) { // vòng hào quang Bá Khí
                 SkillEffects.ring(lv, p.position().add(0, 0.1, 0), 0.9, 10,
-                        ratio >= 0.75 ? ParticleTypes.FLAME : ParticleTypes.CRIT);
+                        com.hukhong.vfx.ModParticles.BA_KHI.get());
             }
         }
     }

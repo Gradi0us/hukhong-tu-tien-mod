@@ -56,7 +56,7 @@ public final class HuSkill {
         abstract void fire(LivingEntity t);
         void activeTick(LivingEntity t) {}
         int activeTicks() { return 0; }
-        ParticleOptions warn() { return ParticleTypes.WITCH; }
+        ParticleOptions warn() { return com.hukhong.vfx.ModParticles.HU_KHONG.get(); }
 
         @Override public boolean canUse() {
             if (cd > 0) { cd--; return false; }
@@ -85,7 +85,8 @@ public final class HuSkill {
                 mob.getNavigation().stop();
                 if (timer % 2 == 0) burst(mob, warn(), 4, 0.5);
                 if (--timer <= 0) {
-                    if (mob instanceof GeoEntity g) g.triggerAnim("attack", "attack");
+                    if (mob instanceof GeoEntity g) g.triggerAnim("attack", "skill");
+                    if (mob.level() instanceof ServerLevel sl) com.hukhong.vfx.ModSounds.play(sl, mob, com.hukhong.vfx.ModSounds.SKILL_HU_KHONG, 0.8f, 0.9f + mob.getRandom().nextFloat() * 0.3f);
                     fire(t);
                     active = activeTicks();
                     phase = active > 0 ? 2 : 0;
@@ -111,11 +112,11 @@ public final class HuSkill {
             if (mob.distanceToSqr(t) <= 2.5 * 2.5) {
                 int lv = ((HuMob) mob).huLevel();
                 if (t.hurt(mob.damageSources().mobAttack(mob), (float) HuHoa.skillDamage(lv, 1.5))) hu(t, 160);
-                burst(mob, ParticleTypes.SOUL_FIRE_FLAME, 12, 0.5);
+                burst(mob, com.hukhong.vfx.ModParticles.HU_KHONG.get(), 12, 0.5);
                 active = 0;
             }
         }
-        @Override ParticleOptions warn() { return ParticleTypes.SOUL_FIRE_FLAME; }
+        @Override ParticleOptions warn() { return com.hukhong.vfx.ModParticles.HU_KHONG.get(); }
     }
 
     /** Hu Cot: Hu Tien - mui ten tim xuyen, no nho gay Hu Hoa. */
@@ -133,7 +134,7 @@ public final class HuSkill {
             a.shoot(dx, dy, dz, 2.4f, 0.5f);
             mob.level().addFreshEntity(a);
         }
-        @Override ParticleOptions warn() { return ParticleTypes.PORTAL; }
+        @Override ParticleOptions warn() { return com.hukhong.vfx.ModParticles.HU_KHONG.get(); }
     }
 
     /** Hu Chu: Hu Vong - phun to lam cham + keo lai gan. */
@@ -172,7 +173,7 @@ public final class HuSkill {
             }
         }
         if (a.level() instanceof ServerLevel sl)
-            sl.sendParticles(ParticleTypes.DRAGON_BREATH, a.getX(), a.getY(), a.getZ(), 15, 0.4, 0.4, 0.4, 0.02);
+            sl.sendParticles(com.hukhong.vfx.ModParticles.HU_KHONG.get(), a.getX(), a.getY(), a.getZ(), 15, 0.4, 0.4, 0.4, 0.02);
         for (Player p : a.level().getEntitiesOfClass(Player.class, a.getBoundingBox().inflate(2.0))) {
             p.hurt(a.damageSources().magic(), (float) (dmg * 0.3));
             hu(p, 120);

@@ -21,10 +21,10 @@ public final class BreakthroughEffects {
         if (p.level() instanceof ServerLevel sl) {
             for (int i = 0; i < 24; i++) {
                 double y = p.getY() + i * 0.25;
-                sl.sendParticles(ParticleTypes.END_ROD, p.getX(), y, p.getZ(), 3, 0.25, 0.05, 0.25, 0.01);
-                sl.sendParticles(ParticleTypes.ENCHANT, p.getX(), y, p.getZ(), 4, 0.5, 0.05, 0.5, 0.2);
+                sl.sendParticles(com.hukhong.vfx.ModParticles.THANH_QUANG.get(), p.getX(), y, p.getZ(), 3, 0.25, 0.05, 0.25, 0.01);
+                sl.sendParticles(com.hukhong.vfx.ModParticles.LINH_KHI.get(), p.getX(), y, p.getZ(), 4, 0.5, 0.05, 0.5, 0.2);
             }
-            sl.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.2f, 1.0f);
+            com.hukhong.vfx.ModSounds.play(sl, p, com.hukhong.vfx.ModSounds.BREAKTHROUGH, 1.2f, 1.0f);
             sl.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.5f, 1.4f);
         }
         p.connection.send(new ClientboundSetTitlesAnimationPacket(10, 50, 20));

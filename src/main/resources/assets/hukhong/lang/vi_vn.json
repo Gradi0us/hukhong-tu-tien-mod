@@ -228,5 +228,14 @@
   "hukhong.compass.s": "Nam",
   "hukhong.compass.sw": "Tây Nam",
   "hukhong.compass.w": "Tây",
-  "hukhong.compass.nw": "Tây Bắc"
+  "hukhong.compass.nw": "Tây Bắc",
+  "hukhong.configuration.title": "Hư Không Tu Tiên - Tùy chọn",
+  "hukhong.configuration.disableScreenEffects": "Tắt hiệu ứng toàn màn hình (rung camera, flash)",
+  "hukhong.configuration.disableScreenEffects.tooltip": "Dành cho người nhạy cảm chuyển động/ánh sáng (R26).",
+  "hukhong.configuration.particles": "Lượng hiệu ứng hạt (ALL = Tất cả, LOW = Ít, OFF = Tắt)",
+  "hukhong.configuration.particles.tooltip": "Chỉ áp dụng cho particle của mod.",
+  "hukhong.configuration.colorblind": "Bảng màu thân thiện mù màu",
+  "hukhong.configuration.colorblind.tooltip": "Đổi màu thanh kinh nghiệm/tài nguyên sang bảng Okabe-Ito.",
+  "hukhong.configuration.showHud": "Hiện HUD tu tiên",
+  "hukhong.configuration.showHud.tooltip": "Tắt để ẩn thanh cấp/tài nguyên và thanh kỹ năng."
 }

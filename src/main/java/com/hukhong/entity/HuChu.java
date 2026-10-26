@@ -71,7 +71,8 @@ public class HuChu extends Spider implements GeoEntity, HuMob {
                 ? RawAnimation.begin().thenLoop("animation.hu_chu.walk")
                 : RawAnimation.begin().thenLoop("animation.hu_chu.idle"))));
         c.add(new AnimationController<>(this, "attack", 0, s -> PlayState.STOP)
-                .triggerableAnim("attack", RawAnimation.begin().then("animation.hu_chu.attack", Animation.LoopType.PLAY_ONCE)));
+                .triggerableAnim("attack", RawAnimation.begin().then("animation.hu_chu.attack", Animation.LoopType.PLAY_ONCE))
+                .triggerableAnim("skill", HuAnim.skillOrAttack("hu_chu")));
     }
 
     @Override public boolean doHurtTarget(net.minecraft.world.entity.Entity e) {
