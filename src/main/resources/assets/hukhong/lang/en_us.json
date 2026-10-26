@@ -64,5 +64,16 @@
   "hukhong.hud.stance_off": "Stance: off (G)",
   "hukhong.msg.no_resource": "Not enough resource",
   "hukhong.msg.no_skill_path": "No path with skills yet",
-  "hukhong.msg.void": "Nullified"
+  "hukhong.msg.void": "Nullified",
+  "hukhong.breakthrough.title": "Breakthrough: %s",
+  "hukhong.pill.useless": "No effect",
+  "hukhong.pill.not_owner": "This pill is bound to someone else",
+  "hukhong.pill.success": "Bottleneck broken",
+  "hukhong.pill.tier.1": "Grade 1",
+  "hukhong.pill.tier.2": "Grade 2",
+  "hukhong.pill.effect": "Breaks the bottleneck at level %s",
+  "hukhong.pill.bound": "Bound",
+  "hukhong.pill.unbound": "Binds on pickup",
+  "item.hukhong.khai_mach_dan": "Meridian Opening Pill",
+  "item.hukhong.ngung_nguyen_dan": "Essence Condensing Pill"
 }

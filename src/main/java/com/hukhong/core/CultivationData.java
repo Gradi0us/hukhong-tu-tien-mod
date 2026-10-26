@@ -13,10 +13,10 @@ import java.util.Set;
 /** Dữ liệu tu sĩ (bất biến). Realm suy ra từ level. */
 public record CultivationData(int level, long exp, int resource, int resourceMax,
                               Set<Path> paths, Map<Path, Aptitude> aptitude, boolean bottleneck,
-                              String origin, CharRoll roll) {
+                              String origin, CharRoll roll, boolean milestoneUnlocked) {
 
     public static final int MAX_LEVEL = 100;
-    public static final CultivationData DEFAULT = new CultivationData(1, 0, 100, 100, Set.of(), Map.of(), false, "", null);
+    public static final CultivationData DEFAULT = new CultivationData(1, 0, 100, 100, Set.of(), Map.of(), false, "", null, false);
 
     public static final Codec<CultivationData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.optionalFieldOf("level", 1).forGetter(CultivationData::level),
@@ -30,9 +30,10 @@ public record CultivationData(int level, long exp, int resource, int resourceMax
                     .forGetter(CultivationData::aptitude),
             Codec.BOOL.optionalFieldOf("bottleneck", false).forGetter(CultivationData::bottleneck),
             Codec.STRING.optionalFieldOf("origin", "").forGetter(CultivationData::origin),
-            CharRoll.CODEC.optionalFieldOf("roll").xmap(o -> o.orElse(null), java.util.Optional::ofNullable)
-                    .forGetter(CultivationData::roll)
-    ).apply(i, CultivationData::new));
+            CharRoll.CODEC.optionalFieldOf("roll").forGetter(d -> java.util.Optional.ofNullable(d.roll())),
+            Codec.BOOL.optionalFieldOf("milestone_unlocked", false).forGetter(CultivationData::milestoneUnlocked)
+    ).apply(i, (lv, exp, res, resMax, paths, apt, bn, org, roll, mu) ->
+            new CultivationData(lv, exp, res, resMax, paths, apt, bn, org, roll.orElse(null), mu)));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, CultivationData> STREAM_CODEC =
             ByteBufCodecs.fromCodecWithRegistries(CODEC);
@@ -40,7 +41,13 @@ public record CultivationData(int level, long exp, int resource, int resourceMax
     /** Constructor tương thích cũ (chưa có xuất thân / roll). */
     public CultivationData(int level, long exp, int resource, int resourceMax,
                            Set<Path> paths, Map<Path, Aptitude> aptitude, boolean bottleneck) {
-        this(level, exp, resource, resourceMax, paths, aptitude, bottleneck, "", null);
+        this(level, exp, resource, resourceMax, paths, aptitude, bottleneck, "", null, false);
+    }
+
+    public CultivationData(int level, long exp, int resource, int resourceMax,
+                           Set<Path> paths, Map<Path, Aptitude> aptitude, boolean bottleneck,
+                           String origin, CharRoll roll) {
+        this(level, exp, resource, resourceMax, paths, aptitude, bottleneck, origin, roll, false);
     }
 
     public CultivationData {
@@ -60,19 +67,26 @@ public record CultivationData(int level, long exp, int resource, int resourceMax
         return paths.stream().sorted().findFirst().orElse(null);
     }
 
-    /** Khóa ở mốc 10/20/.../90 cho tới khi chọn Lõi (TODO Ấn Hồn Đài). */
-    public boolean milestoneLocked() { return level < MAX_LEVEL && level % 10 == 0; }
+    /** Khóa ở mốc 10/20/.../90 cho tới khi mở khóa mốc (Ấn Hồn Đài / lệnh test). */
+    public boolean milestoneLocked() { return level < MAX_LEVEL && level % 10 == 0 && !milestoneUnlocked; }
+
+    /** Bình Cảnh: cấp 9/19/.../89 (ngay trước mốc). */
+    public boolean inBottleneck() { return level < 90 && level % 10 == 9; }
+
+    public CultivationData withMilestoneUnlocked(boolean u) {
+        return new CultivationData(level, exp, resource, resourceMax, paths, aptitude, bottleneck, origin, roll, u);
+    }
 
     public CultivationData withLevel(int l) {
         int max = CultivationService.resourceMaxFor(l);
-        return new CultivationData(l, 0, Math.min(resource, max), max, paths, aptitude, bottleneck, origin, roll);
+        return new CultivationData(l, 0, Math.min(resource, max), max, paths, aptitude, bottleneck, origin, roll, false);
     }
 
     public CultivationData withExp(long e) {
-        return new CultivationData(level, e, resource, resourceMax, paths, aptitude, bottleneck, origin, roll);
+        return new CultivationData(level, e, resource, resourceMax, paths, aptitude, bottleneck, origin, roll, milestoneUnlocked);
     }
 
     public CultivationData withCharacter(Set<Path> p, Map<Path, Aptitude> apt, String org, CharRoll r) {
-        return new CultivationData(level, exp, resource, resourceMax, p, apt, bottleneck, org, r);
+        return new CultivationData(level, exp, resource, resourceMax, p, apt, bottleneck, org, r, milestoneUnlocked);
     }
 }

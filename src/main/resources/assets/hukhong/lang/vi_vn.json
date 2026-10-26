@@ -64,5 +64,16 @@
   "hukhong.hud.stance_off": "Thế: tắt (G)",
   "hukhong.msg.no_resource": "Không đủ tài nguyên",
   "hukhong.msg.no_skill_path": "Chưa có đạo nào có kỹ năng",
-  "hukhong.msg.void": "Vô Hiệu"
+  "hukhong.msg.void": "Vô Hiệu",
+  "hukhong.breakthrough.title": "Đột Phá: %s",
+  "hukhong.pill.useless": "Vô tác dụng",
+  "hukhong.pill.not_owner": "Đan này đã nhận chủ, không phải của ngươi",
+  "hukhong.pill.success": "Phá Bình Cảnh thành công",
+  "hukhong.pill.tier.1": "Nhất phẩm",
+  "hukhong.pill.tier.2": "Nhị phẩm",
+  "hukhong.pill.effect": "Qua Bình Cảnh cấp %s",
+  "hukhong.pill.bound": "Đã nhận chủ",
+  "hukhong.pill.unbound": "Nhận chủ khi nhặt",
+  "item.hukhong.khai_mach_dan": "Khai Mạch Đan",
+  "item.hukhong.ngung_nguyen_dan": "Ngưng Nguyên Đan"
 }

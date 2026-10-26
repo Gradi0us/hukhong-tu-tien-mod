@@ -15,6 +15,8 @@ public final class CultivationService {
         return Math.round(40.0 * Math.pow(level, 2.15));
     }
 
+    public static final double BOTTLENECK_EXP_MULT = 0.25;
+
     public static int resourceMaxFor(int level) { return 100 + 10 * (level - 1); }
 
     /**
@@ -25,6 +27,7 @@ public final class CultivationService {
      */
     public static CultivationData applyExp(CultivationData d, long amount) {
         if (amount <= 0 || d.milestoneLocked() || d.level() >= CultivationData.MAX_LEVEL) return d;
+        if (d.inBottleneck()) amount = Math.max(1, Math.round(amount * BOTTLENECK_EXP_MULT));
         long exp = d.exp() + amount;
         int level = d.level();
         while (level < CultivationData.MAX_LEVEL) {
@@ -35,6 +38,32 @@ public final class CultivationService {
             if (level % 10 == 0 || level >= CultivationData.MAX_LEVEL) { exp = 0; break; } // khóa mốc
         }
         return level == d.level() ? d.withExp(exp) : d.withLevel(level).withExp(exp);
+    }
+
+    /** Qua Bình Cảnh: lên ngay cấp mốc (thuần). Không đổi nếu không ở Bình Cảnh. */
+    public static CultivationData applyBreakthrough(CultivationData d) {
+        return d.inBottleneck() ? d.withLevel(d.level() + 1) : d;
+    }
+
+    /** Phẩm đan cần cho Bình Cảnh hiện tại (1 = cấp 9, 2 = cấp 19...), 0 nếu không ở Bình Cảnh. */
+    public static int requiredPillTier(CultivationData d) { return d.inBottleneck() ? (d.level() + 1) / 10 : 0; }
+
+    /** Phá Bình Cảnh bằng đan phẩm `tier`. true nếu thành công. */
+    public static boolean tryBreakthrough(ServerPlayer p, int tier) {
+        CultivationData d = get(p);
+        if (!d.inBottleneck() || requiredPillTier(d) != tier) return false;
+        update(p, applyBreakthrough(d));
+        return true;
+    }
+
+    public static boolean isMilestoneLocked(ServerPlayer p) { return get(p).milestoneLocked(); }
+
+    /** Mở khóa mốc hiện tại (EXP chảy lại). true nếu đang khóa. */
+    public static boolean unlockMilestone(ServerPlayer p) {
+        CultivationData d = get(p);
+        if (!d.milestoneLocked()) return false;
+        update(p, d.withMilestoneUnlocked(true));
+        return true;
     }
 
     public static void addExp(ServerPlayer p, long amount) {
@@ -50,7 +79,10 @@ public final class CultivationService {
     private static void update(ServerPlayer p, CultivationData next) {
         CultivationData old = get(p);
         p.setData(ModAttachments.CULTIVATION, next);
-        if (next.level() > old.level()) levelUpEffect(p, next.realmIndex() != old.realmIndex());
+        if (next.level() > old.level()) {
+            levelUpEffect(p, next.realmIndex() != old.realmIndex());
+            if (next.level() % 10 == 0) com.hukhong.breakthrough.BreakthroughEffects.play(p, next);
+        }
         SyncPayload.send(p);
     }
 

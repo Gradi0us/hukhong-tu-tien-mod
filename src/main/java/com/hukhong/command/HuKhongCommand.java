@@ -42,6 +42,12 @@ public final class HuKhongCommand {
                             msg(c.getSource(), "level=" + d.level() + " exp=" + d.exp());
                             return 1;
                         })))
+                .then(Commands.literal("unlock").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    boolean ok = CultivationService.unlockMilestone(p);
+                    msg(c.getSource(), ok ? "milestone unlocked" : "not locked");
+                    return 1;
+                }))
                 .then(Commands.literal("reroll").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     com.hukhong.charcreate.CharCreateService.reroll(p);
