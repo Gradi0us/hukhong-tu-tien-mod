@@ -181,7 +181,7 @@ public final class SkillEffects {
         p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 160, 1));
         p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 160, 2));
         ring(lv, p.position().add(0, 0.2, 0), 1.2, 24, com.hukhong.vfx.ModParticles.BA_KHI.get());
-        lv.sendParticles(com.hukhong.vfx.ModParticles.BA_KHI.get(), p.getX(), p.getY() + 1, p.getZ(), 20, 0.5, 0.9, 0.5, 0.25);
+        lv.sendParticles(com.hukhong.vfx.ModParticles.BA_KHI.get(), p.getX(), p.getY() + 0.3, p.getZ(), 14, 0.9, 0.3, 0.9, 0.15);
         spiral(lv, p.position(), 1.3, 0.5, 2.6, 3, 45, GOLD);
         Fx.play(lv, FxType.LIGHT_PILLAR, p.position(), Vec3.ZERO, 1.2f, 0xFFC040, 44);
         Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, 7f, 0xFFC040, 20);

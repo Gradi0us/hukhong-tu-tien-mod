@@ -28,6 +28,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class PathRules {
     /** Hồi tài nguyên mỗi giây (x resource_regen). Bước 27: BalanceSimTest dùng các hằng này. */
     public static final int DAO_REGEN = 5, DAO_MEDITATE_REGEN = 14, KIEM_REGEN_COMBAT = 9, KIEM_REGEN_IDLE = 8;
+    public static final int THE_IDLE_FLOOR = 30;
     public static final int THE_HIT_SMALL = 1, THE_HIT_BIG = 3, THE_MELEE_GAIN = 2, MA_HIT_GAIN = 1;
 
     private PathRules() {}
@@ -105,7 +106,10 @@ public final class PathRules {
                 if (med) {
                     if (d.resource() < 60) Resources.add(p, Math.min((int) Math.round(5 * rg * mm), 60 - d.resource()));
                 } else if (now - st.lastCombat > 100) {
-                    Resources.add(p, -4);
+                    // Ngoài giao chiến: Bá Khí tự hồi về mức nền 30 (đủ mở đòn bằng Q), vượt nền thì tản dần
+                    int floor = THE_IDLE_FLOOR;
+                    if (d.resource() < floor) Resources.add(p, Math.min((int) Math.max(1, Math.round(3 * rg)), floor - d.resource()));
+                    else if (d.resource() > floor) Resources.add(p, -Math.min(4, d.resource() - floor));
                 }
             }
         }

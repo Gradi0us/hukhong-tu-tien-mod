@@ -36,6 +36,8 @@ public final class ArtifactAura {
         RandomSource r = level.random;
         for (AbstractClientPlayer p : level.players()) {
             if (p.isInvisible() || p.isSpectator() || p.distanceToSqr(cam) > 32 * 32) continue;
+            // Không sinh hạt quanh chính mình ở góc nhìn thứ nhất (hạt sát camera che màn hình)
+            if (p == mc.player && mc.options.getCameraType().isFirstPerson()) continue;
             ArtifactData a = p.getData(ArtifactAttachments.ARTIFACT.get());
             if (a.dao() > 0) {
                 int n = 1 + a.dao() / 3;
