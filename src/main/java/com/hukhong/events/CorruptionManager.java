@@ -74,6 +74,7 @@ public final class CorruptionManager {
         long t = ow.getGameTime();
         CorruptionData d = CorruptionData.get(ow);
 
+        com.hukhong.voidblock.VoidCorruptor.tick(ow, d, t);
         if (t % SPREAD_EVERY == 0) spread(ow, d);
         if (t % 40 == 0) effects(ow, d, t);
         if (t % 100 == 0) checkHearts(ow, d, t);

@@ -121,6 +121,8 @@ public final class CultivationService {
         }
         SyncPayload.send(p);
         if (next.level() != old.level()) com.hukhong.stats.StatService.refresh(p);
+        // Luồng truyện: qua/mở khóa mốc 10 cấp -> sang chương kế (story/flow/StoryFlow)
+        if (next.level() != old.level() || next.milestoneLocked() != old.milestoneLocked()) com.hukhong.story.flow.StoryFlow.onProgress(p);
     }
 
     private static void levelUpEffect(ServerPlayer p, boolean newRealm) {

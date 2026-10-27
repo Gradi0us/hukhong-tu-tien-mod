@@ -85,7 +85,9 @@ public final class BiCanhManager {
 
     // ---------------------------------------------------------------- vào
 
-    public static void enterFromPortal(ServerLevel ow, BlockPos pos, BiCanhTier tier, ServerPlayer starter) {
+    public static void enterFromPortal(ServerLevel ow, BlockPos clicked, BiCanhTier tier, ServerPlayer starter) {
+        BlockPos pos = clicked;
+        for (BiCanhSaved.Portal sp : BiCanhSaved.get(ow).portals) if (sp.pos().closerThan(clicked, 3.5)) { pos = sp.pos(); break; }
         BiCanhSaved saved = BiCanhSaved.get(ow);
         List<ServerPlayer> party = new ArrayList<>();
         party.add(starter);
@@ -94,11 +96,18 @@ public final class BiCanhManager {
         String err = enter(ow.getServer(), starter, tier, party, false);
         if (err != null) starter.sendSystemMessage(Component.translatable(err, tier.minLevel, tier.maxLevel));
         else {
-            ow.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            removePortal(ow, pos);
             saved.remove(pos);
         }
     }
 
+
+    /** Gỡ cổng + sập hang (nếu cổng còn). */
+    public static void removePortal(ServerLevel ow, BlockPos pos) {
+        if (!ow.hasChunkAt(pos)) return;
+        var st = ow.getBlockState(pos);
+        if (st.is(BiCanhRegistry.PORTAL.get())) BiCanhCave.collapse(ow, pos, st.getValue(BiCanhPortalBlock.FACING));
+    }
     /** Trả null nếu thành công, ngược lại là lang key lỗi. Thành viên không đủ điều kiện bị bỏ qua. */
     public static String enter(MinecraftServer server, ServerPlayer starter, BiCanhTier tier, Collection<ServerPlayer> party, boolean ignoreGate) {
         ServerLevel dim = server.getLevel(BiCanhRegistry.DIM);
@@ -288,6 +297,7 @@ public final class BiCanhManager {
         HuHoa.applyStats(m, run.tier.mobLevel, hpMul, dmgMul);
         m.setPersistenceRequired();
         if (boss) {
+            com.hukhong.audio.BossMusic.watch(m, "bicanh_boss");
             m.setCustomName(com.hukhong.entity.BossLevel.tag(Component.translatable("hukhong.bicanh.boss"), run.tier.mobLevel));
             m.setCustomNameVisible(true);
             m.setGlowingTag(true);

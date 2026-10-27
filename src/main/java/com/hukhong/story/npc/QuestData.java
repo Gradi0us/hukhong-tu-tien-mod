@@ -12,7 +12,7 @@ import java.util.List;
 /** Tiến trình tuyến chính: chương hiện tại (0 = chưa bắt đầu, coi như 1) và các cờ truyện. */
 public record QuestData(int chapter, List<String> flags) {
     public static final QuestData DEFAULT = new QuestData(0, List.of());
-    public static final int LAST_CHAPTER = 6;
+    public static final int LAST_CHAPTER = 10;
 
     public static final Codec<QuestData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.optionalFieldOf("chapter", 0).forGetter(QuestData::chapter),
@@ -35,6 +35,34 @@ public record QuestData(int chapter, List<String> flags) {
         return new QuestData(chapter, List.copyOf(l));
     }
 
+    /** Bước hiện tại của luồng truyện (cờ "step:ID"), "" nếu chưa có. */
+    public String step() { return flagValue("step:"); }
+
+    /** Tiến độ bước hiện tại (đếm kill...), cờ "prog:N". */
+    public int prog() {
+        String v = flagValue("prog:");
+        try { return v.isEmpty() ? 0 : Integer.parseInt(v); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private String flagValue(String prefix) {
+        for (String f : flags) if (f.startsWith(prefix)) return f.substring(prefix.length());
+        return "";
+    }
+
+    private QuestData replaceFlag(String prefix, String value) {
+        List<String> l = new ArrayList<>();
+        for (String f : flags) if (!f.startsWith(prefix)) l.add(f);
+        if (value != null) l.add(prefix + value);
+        return new QuestData(chapter, List.copyOf(l));
+    }
+
+    public QuestData withStep(String id) { return replaceFlag("step:", id.isEmpty() ? null : id).replaceFlag("prog:", null); }
+
+    public QuestData withProg(int n) { return replaceFlag("prog:", n <= 0 ? null : Integer.toString(n)); }
+
     /** Chương chỉ tiến, không lùi. */
     public QuestData withChapter(int c) { return new QuestData(Math.max(chapter, Math.min(LAST_CHAPTER, c)), flags); }
+
+    /** Chương thô (0 = màn mở đầu). */
+    public int raw() { return chapter; }
 }

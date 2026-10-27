@@ -43,8 +43,7 @@ public final class BiCanhEvents {
         long now = ow.getGameTime();
         for (BiCanhSaved.Portal p : new ArrayList<>(d.portals)) {
             if (now < p.expire()) continue;
-            if (ow.hasChunkAt(p.pos()) && ow.getBlockState(p.pos()).is(BiCanhRegistry.PORTAL.get()))
-                ow.setBlock(p.pos(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+            BiCanhManager.removePortal(ow, p.pos());
             d.remove(p.pos());
         }
         if (d.nextSpawn < 0) d.setNext(now + intervalTicks(s.isSingleplayer()));
@@ -65,13 +64,21 @@ public final class BiCanhEvents {
             int x = (int) Math.floor(p.getX() + Math.cos(ang) * dist), z = (int) Math.floor(p.getZ() + Math.sin(ang) * dist);
             if (!ow.hasChunk(x >> 4, z >> 4)) continue;
             int y = ow.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-            BlockPos pos = new BlockPos(x, y, z);
-            var below = ow.getBlockState(pos.below());
-            if (below.isAir() || !below.getFluidState().isEmpty() || !ow.getBlockState(pos).canBeReplaced()) continue;
-            ow.setBlock(pos, BiCanhRegistry.PORTAL.get().stateFor(t), 3);
+            BlockPos mouth = new BlockPos(x, y, z);
+            var below = ow.getBlockState(mouth.below());
+            if (below.isAir() || !below.getFluidState().isEmpty() || !ow.getBlockState(mouth).canBeReplaced()) continue;
+            if (com.hukhong.world.SafeZones.isSafe(ow, mouth)) continue;
+            BlockPos pos = null;
+            net.minecraft.core.Direction out = null;
+            for (net.minecraft.core.Direction in : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                pos = BiCanhCave.plan(ow, x, z, y, in);
+                if (pos != null) { out = in.getOpposite(); break; }
+            }
+            if (pos == null) continue;
+            BiCanhCave.build(ow, pos, out, t);
             BiCanhSaved.get(ow).add(new BiCanhSaved.Portal(pos, t.ordinal(), ow.getGameTime() + PORTAL_LIFETIME));
             p.sendSystemMessage(Component.translatable("hukhong.bicanh.portal_appeared", Component.translatable(t.nameKey()),
-                    pos.getX(), pos.getY(), pos.getZ()));
+                    mouth.getX(), mouth.getY(), mouth.getZ()));
             return pos;
         }
         return null;

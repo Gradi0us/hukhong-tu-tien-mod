@@ -25,14 +25,14 @@ public final class BiCanhRegistry {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(HuKhong.MODID);
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(HuKhong.MODID);
 
-    public static final DeferredBlock<BiCanhPortalBlock> PORTAL = BLOCKS.register("bicanh_portal",
+    public static final DeferredBlock<BiCanhPortalBlock> PORTAL = BLOCKS.register("bi_canh_cong",
             () -> new BiCanhPortalBlock(BlockBehaviour.Properties.of().strength(-1f, 3600000f).noLootTable()
-                    .sound(SoundType.AMETHYST).lightLevel(s -> 12)));
+                    .sound(SoundType.AMETHYST).lightLevel(s -> 12).noOcclusion()));
     public static final DeferredBlock<BiCanhExitBlock> EXIT = BLOCKS.register("bicanh_exit",
             () -> new BiCanhExitBlock(BlockBehaviour.Properties.of().strength(-1f, 3600000f).noLootTable()
                     .sound(SoundType.AMETHYST).lightLevel(s -> 10)));
 
-    public static final DeferredItem<BlockItem> PORTAL_ITEM = ITEMS.registerSimpleBlockItem("bicanh_portal", PORTAL);
+    public static final DeferredItem<BlockItem> PORTAL_ITEM = ITEMS.registerSimpleBlockItem("bi_canh_cong", PORTAL);
     public static final DeferredItem<BlockItem> EXIT_ITEM = ITEMS.registerSimpleBlockItem("bicanh_exit", EXIT);
 
     public static void register(IEventBus bus) {

@@ -383,4 +383,41 @@ public final class HuKhongRuntimeGameTests {
             }
         });
     }
+
+    // ------------------------------------------------------------ 8. Tam Ma / Tam Thuc
+
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void trialTamMaMovesToTamThucAndBack(GameTestHelper h) throws Exception {
+        ServerPlayer p = fake(h, 90, Set.of(Path.THE));
+        p.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000000);
+        p.setHealth(p.getMaxHealth());
+        place(h, p, 2, 1, 2);
+        var home = p.level().dimension();
+        var pl = h.getLevel().getServer().getPlayerList();
+        var f = net.minecraft.server.players.PlayerList.class.getDeclaredField("playersByUUID");
+        f.setAccessible(true);
+        @SuppressWarnings("unchecked") Map<UUID, ServerPlayer> map = (Map<UUID, ServerPlayer>) f.get(pl);
+        map.put(p.getUUID(), p);
+        TrialService.test(p, TrialService.Type.TAM_MA);
+        if (!TrialService.active(p)) { map.remove(p.getUUID()); h.fail("session khong bat dau"); return; }
+        boolean dimLoaded = h.getLevel().getServer().getLevel(TrialService.TAM_THUC) != null;
+        boolean[] seen = {false};
+        h.onEachTick(() -> {
+            if (!seen[0]) {
+                if (dimLoaded ? p.level().dimension() == TrialService.TAM_THUC : h.getTick() > 70) { // GameTestServer chi nap overworld: khi do thu che do du phong
+                    seen[0] = true;
+                    var tl = p.serverLevel();
+                    var boss = tl.getEntities(ModEntities.TAM_MA.get(), e -> e.getTags().contains("hukhong_tam_ma"));
+                    if (boss.isEmpty()) { map.remove(p.getUUID()); h.fail("khong co Tam Ma trong Tam Thuc"); return; }
+                    boss.get(0).kill();
+                } else if (h.getTick() > 200) { map.remove(p.getUUID()); h.fail("khong vao Tam Thuc sau 200 tick; active=" + TrialService.active(p) + " dim=" + p.level().dimension().location() + " tl=" + (h.getLevel().getServer().getLevel(TrialService.TAM_THUC) != null)); }
+                return;
+            }
+            if (!TrialService.active(p)) {
+                map.remove(p.getUUID());
+                if (p.level().dimension() != home) h.fail("khong tro ve chieu goc: " + p.level().dimension().location());
+                else h.succeed();
+            }
+        });
+    }
 }

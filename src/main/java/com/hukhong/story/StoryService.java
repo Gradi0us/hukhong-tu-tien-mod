@@ -42,6 +42,7 @@ public final class StoryService {
         p.displayClientMessage(Component.translatable(mode == StoryData.MODE_STORY
                 ? "hukhong.story.mode.set.story" : "hukhong.story.mode.set.free"), false);
         sync(p);
+        if (mode == StoryData.MODE_STORY) com.hukhong.story.flow.StoryFlow.startPrologue(p);
     }
 
     /** Ghi Văn Kiện vào nhật ký. Trả true nếu mới (item bị tiêu hao). */

@@ -1,0 +1,103 @@
+{
+ "npc": "hang_chieu_r",
+ "city": "",
+ "name_key": "hukhong.npc.hang_chieu",
+ "entry": [
+  {
+   "if": {
+    "steps": [
+     "c5_rival"
+    ]
+   },
+   "node": "c5"
+  },
+  {
+   "if": {
+    "steps": [
+     "c8_rival"
+    ]
+   },
+   "node": "c8"
+  },
+  {
+   "node": "idle"
+  }
+ ],
+ "nodes": {
+  "c5": {
+   "text": [
+    "hukhong.dlg.hang_chieu.c5.p1",
+    "hukhong.dlg.hang_chieu.c5.p2",
+    "hukhong.dlg.hang_chieu.c5.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hang_chieu.c5.c1",
+     "actions": [
+      {
+       "type": "duel"
+      }
+     ]
+    },
+    {
+     "text": "hukhong.dlg.hang_chieu.c5.c2",
+     "next": "c5_lore"
+    }
+   ]
+  },
+  "c5_lore": {
+   "text": [
+    "hukhong.dlg.hang_chieu.c5_lore.p1",
+    "hukhong.dlg.hang_chieu.c5_lore.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hang_chieu.c5_lore.c1",
+     "actions": [
+      {
+       "type": "duel"
+      }
+     ]
+    }
+   ]
+  },
+  "c8": {
+   "text": [
+    "hukhong.dlg.hang_chieu.c8.p1",
+    "hukhong.dlg.hang_chieu.c8.p2",
+    "hukhong.dlg.hang_chieu.c8.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hang_chieu.c8.c1",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "rival_saved"
+      },
+      {
+       "type": "duel"
+      }
+     ]
+    },
+    {
+     "text": "hukhong.dlg.hang_chieu.c8.c2",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "rival_lost"
+      },
+      {
+       "type": "duel"
+      }
+     ]
+    }
+   ]
+  },
+  "idle": {
+   "text": [
+    "hukhong.dlg.hang_chieu.r_idle.p1"
+   ]
+  }
+ }
+}

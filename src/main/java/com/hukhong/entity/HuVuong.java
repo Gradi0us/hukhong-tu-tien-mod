@@ -115,6 +115,11 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
 
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
 
+    @Override public void onAddedToLevel() {
+        super.onAddedToLevel();
+        if (!level().isClientSide) { com.hukhong.audio.BossMusic.watch(this, "hu_vuong"); com.hukhong.arena.BossArena.attach(this, 20, com.hukhong.arena.BossArena.Theme.HU_VUONG, true, null); }
+    }
+
     @Override public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("HuPhase", phase());

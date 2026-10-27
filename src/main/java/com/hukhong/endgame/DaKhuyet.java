@@ -77,6 +77,11 @@ public class DaKhuyet extends Monster implements GeoEntity {
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
 
+    @Override public void onAddedToLevel() {
+        super.onAddedToLevel();
+        if (!level().isClientSide) { com.hukhong.audio.BossMusic.watch(this, "da_khuyet"); com.hukhong.arena.BossArena.attach(this, EndgameKit.MAIN_RADIUS - 1, null, false, new net.minecraft.core.BlockPos(0, EndgameKit.CENTER_Y, 0)); }
+    }
+
     /** Xuất hiện: thoại + title cho người chơi quanh đó. */
     public void begin(ServerLevel sl, NguyenThuyTichDiet boss) {
         setHealth(getMaxHealth());

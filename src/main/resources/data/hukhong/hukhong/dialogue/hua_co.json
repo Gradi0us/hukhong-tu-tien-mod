@@ -13,7 +13,7 @@
   },
   {
    "if": {
-    "chapter_min": 3,
+    "chapter_min": 4,
     "min_level": 30,
     "docs_min": 2
    },
@@ -44,8 +44,7 @@
        "flag": "ch3_done"
       },
       {
-       "type": "chapter",
-       "value": 4
+       "type": "step_done", "step": "c4_hua_co"
       },
       {
        "type": "exp",

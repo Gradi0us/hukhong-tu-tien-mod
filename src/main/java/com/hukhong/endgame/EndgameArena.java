@@ -48,6 +48,20 @@ public final class EndgameArena {
             for (int h = 0; h < 3; h++) sl.setBlock(top.above(h), Blocks.OBSIDIAN.defaultBlockState(), 2);
             sl.setBlock(top.above(3), Blocks.END_ROD.defaultBlockState(), 2);
         }
+        // vong rune tren dao chinh (r=14 va r=19) + ngoi sao thap phan o tam
+        for (int i = 0; i < 48; i++) {
+            double a = i * Math.PI / 24;
+            for (int rr : new int[]{14, 19}) {
+                BlockPos rp = new BlockPos((int) Math.round(Math.cos(a) * rr), cy, (int) Math.round(Math.sin(a) * rr));
+                sl.setBlock(rp, (i % 4 == 0 ? Blocks.SEA_LANTERN : Blocks.CRYING_OBSIDIAN).defaultBlockState(), 2);
+            }
+        }
+        for (int i = 0; i < 4; i++) {
+            double a = i * Math.PI / 2;
+            for (int k = 2; k <= 12; k++)
+                sl.setBlock(new BlockPos((int) Math.round(Math.cos(a) * k), cy, (int) Math.round(Math.sin(a) * k)),
+                        (k % 5 == 0 ? Blocks.AMETHYST_BLOCK : Blocks.CRYING_OBSIDIAN).defaultBlockState(), 2);
+        }
         // vòng cột quanh đảo chính
         for (int i = 0; i < 8; i++) {
             double a = i * Math.PI / 4;

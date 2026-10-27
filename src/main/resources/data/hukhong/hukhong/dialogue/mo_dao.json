@@ -5,6 +5,33 @@
  "entry": [
   {
    "if": {
+    "steps": [
+     "pro_meet"
+    ]
+   },
+   "node": "pro_meet"
+  },
+  {
+   "if": {
+    "steps": [
+     "c9_modao"
+    ],
+    "flags": [
+     "doubt_mo_dao"
+    ]
+   },
+   "node": "ch9_sacrifice"
+  },
+  {
+   "if": {
+    "steps": [
+     "c9_modao"
+    ]
+   },
+   "node": "ch9_leave"
+  },
+  {
+   "if": {
     "flags": [
      "ending_seal"
     ],
@@ -27,7 +54,7 @@
   },
   {
    "if": {
-    "chapter_min": 5,
+    "chapter_min": 10,
     "min_level": 99,
     "not_flags": [
      "ch5_done"
@@ -37,7 +64,7 @@
   },
   {
    "if": {
-    "chapter_min": 5,
+    "chapter_min": 10,
     "not_flags": [
      "ch5_done"
     ]
@@ -46,13 +73,13 @@
   },
   {
    "if": {
-    "chapter_min": 5
+    "chapter_min": 10
    },
    "node": "idle"
   },
   {
    "if": {
-    "chapter_min": 4,
+    "chapter_min": 6,
     "min_level": 50,
     "lair": 3,
     "not_flags": [
@@ -63,7 +90,7 @@
   },
   {
    "if": {
-    "chapter_min": 4,
+    "chapter_min": 6,
     "not_flags": [
      "ch4_done"
     ]
@@ -103,8 +130,8 @@
        "flag": "ch1_done"
       },
       {
-       "type": "chapter",
-       "value": 2
+       "type": "step_done",
+       "step": "c1_talk"
       },
       {
        "type": "exp",
@@ -163,8 +190,8 @@
        "flag": "trust_mo_dao"
       },
       {
-       "type": "chapter",
-       "value": 5
+       "type": "step_done",
+       "step": "c6_modao"
       },
       {
        "type": "exp",
@@ -189,8 +216,8 @@
        "flag": "doubt_mo_dao"
       },
       {
-       "type": "chapter",
-       "value": 5
+       "type": "step_done",
+       "step": "c6_modao"
       },
       {
        "type": "exp",
@@ -286,6 +313,98 @@
      "type": "exp",
      "amount": 8000
     }
+   ]
+  },
+  "pro_meet": {
+   "text": [
+    "hukhong.dlg.mo_dao.pro_meet.p1",
+    "hukhong.dlg.mo_dao.pro_meet.p2",
+    "hukhong.dlg.mo_dao.pro_meet.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.mo_dao.pro_meet.c1",
+     "actions": [
+      {
+       "type": "step_done",
+       "step": "pro_meet"
+      },
+      {
+       "type": "exp",
+       "amount": 60
+      }
+     ],
+     "next": "pro_meet_end"
+    }
+   ]
+  },
+  "pro_meet_end": {
+   "text": [
+    "hukhong.dlg.mo_dao.pro_meet_end.p1"
+   ]
+  },
+  "ch9_leave": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch9_leave.p1",
+    "hukhong.dlg.mo_dao.ch9_leave.p2",
+    "hukhong.dlg.mo_dao.ch9_leave.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.mo_dao.ch9_leave.c1",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "mo_dao_left"
+      },
+      {
+       "type": "step_done",
+       "step": "c9_modao"
+      },
+      {
+       "type": "exp",
+       "amount": 3000
+      }
+     ],
+     "next": "ch9_leave_end"
+    }
+   ]
+  },
+  "ch9_leave_end": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch9_leave_end.p1"
+   ]
+  },
+  "ch9_sacrifice": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch9_sacrifice.p1",
+    "hukhong.dlg.mo_dao.ch9_sacrifice.p2",
+    "hukhong.dlg.mo_dao.ch9_sacrifice.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.mo_dao.ch9_sacrifice.c1",
+     "actions": [
+      {
+       "type": "set_flag",
+       "flag": "mo_dao_died"
+      },
+      {
+       "type": "step_done",
+       "step": "c9_modao"
+      },
+      {
+       "type": "exp",
+       "amount": 3000
+      }
+     ],
+     "next": "ch9_sacrifice_end"
+    }
+   ]
+  },
+  "ch9_sacrifice_end": {
+   "text": [
+    "hukhong.dlg.mo_dao.ch9_sacrifice_end.p1"
    ]
   }
  }

@@ -143,6 +143,18 @@ public final class MinimapHud {
                 MapIcons.arrow(g, cx + e[0], cy + e[1], (float) Math.toDegrees(Math.atan2(wdx, -wdz)), MapIcons.RED, MapIcons.INK);
             }
         }
+        // mục tiêu chính: kim cương vàng / mũi tên vàng ở mép
+        var obj = com.hukhong.client.objective.ClientObjective.sameDimTarget();
+        double odx = 0, odz = 0;
+        if (obj != null) {
+            odx = obj.getX() + 0.5 - px; odz = obj.getZ() + 0.5 - pz;
+            if (inside(odx, odz, lim, round)) {
+                MapIcons.objective(g, cx + (int) Math.round(odx), cy + (int) Math.round(odz), tick);
+            } else {
+                int[] e = edge(odx, odz, lim, round);
+                MapIcons.arrow(g, cx + e[0], cy + e[1], (float) Math.toDegrees(Math.atan2(odx, -odz)), MapIcons.GOLD, MapIcons.INK);
+            }
+        }
         // người chơi
         MapIcons.arrow(g, cx, cy, mc.player.getYRot() + 180f, MapIcons.WHITE, MapIcons.INK);
         // mốc bắc + 4 chấm trang trí
@@ -174,6 +186,11 @@ public final class MinimapHud {
             float rel = (float) (Math.toDegrees(Math.atan2(wdx, -wdz)) - (mc.player.getYRot() + 180f));
             MapIcons.arrow(g, right - tw - 8, ty + 3, rel, MapIcons.RED, MapIcons.INK);
             text(g, font, label, right, ty, 0xFFFF9A8A);
+        }
+        if (obj != null && w == null) { // mục tiêu chính là waypoint đang hoạt động khi không có ping B
+            ty += 9;
+            String label = "◆ " + com.hukhong.client.objective.ClientObjective.data().text().getString() + " " + MinimapState.distText((int) Math.sqrt(odx * odx + odz * odz));
+            text(g, font, label, right, ty, MapIcons.GOLD);
         }
         // danh sách tự phát hiện: thành/cảng/tông trong 1000 block, gần nhất trước
         if (MinimapState.markersVisible()) {

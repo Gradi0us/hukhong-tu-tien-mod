@@ -1,4 +1,11 @@
 {
+  "music.hu_vuong": {"sounds": [{"name": "hukhong:music/hu_vuong", "stream": true}]},
+  "music.su_do": {"sounds": [{"name": "hukhong:music/su_do", "stream": true}]},
+  "music.chg": {"sounds": [{"name": "hukhong:music/chg", "stream": true}]},
+  "music.final_boss": {"sounds": [{"name": "hukhong:music/final_boss", "stream": true}]},
+  "music.da_khuyet": {"sounds": [{"name": "hukhong:music/da_khuyet", "stream": true}]},
+  "music.bicanh_boss": {"sounds": [{"name": "hukhong:music/bicanh_boss", "stream": true}]},
+  "music.tam_ma": {"sounds": [{"name": "hukhong:music/tam_ma", "stream": true}]},
   "skill.thanh_quang": {"sounds": [{"name": "minecraft:block.amethyst_block.chime", "type": "event", "pitch": 1.4}]},
   "skill.linh_khi":    {"sounds": [{"name": "minecraft:block.beacon.power_select", "type": "event", "pitch": 1.2}]},
   "skill.ba_khi":      {"sounds": [{"name": "minecraft:block.anvil.land", "type": "event", "pitch": 0.6}]},

@@ -61,6 +61,7 @@ public final class ModItems {
         com.hukhong.society.SocietyRegistry.register(bus);
         com.hukhong.honcot.HonCotRegistry.register(bus);
         com.hukhong.bicanh.BiCanhRegistry.register(bus);
+        com.hukhong.voidblock.VoidBlocks.register(bus);
         com.hukhong.skillbook.SkillBookRegistry.register(bus);
         ITEMS.register(bus);
         COMPONENTS.register(bus);

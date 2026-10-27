@@ -38,6 +38,7 @@ public record SyncPayload(CultivationData cultivation, AgeData age) implements C
                 (payload, ctx) -> ctx.enqueueWork(() -> ClientCache.update(payload.cultivation(), payload.age())));
         SkillNet.register(r);
         r.playToClient(BreakthroughPayload.TYPE, BreakthroughPayload.STREAM_CODEC, BreakthroughPayload::handle);
+        r.playToClient(TamThucPayload.TYPE, TamThucPayload.STREAM_CODEC, TamThucPayload::handle);
     }
 
     @SubscribeEvent

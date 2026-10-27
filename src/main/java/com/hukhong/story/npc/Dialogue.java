@@ -20,13 +20,13 @@ import java.util.Map;
 /** Bảng thoại dữ liệu (data/hukhong/hukhong/dialogue/*.json): điều kiện + hành động + node. */
 public record Dialogue(String npc, String city, String nameKey, List<Entry> entry, Map<String, Node> nodes) {
     public record Cond(int minLevel, int maxLevel, int chapterMin, int chapterMax, List<String> flags,
-                       List<String> notFlags, List<String> docs, int docsMin, int lair) {
-        public static final Cond ANY = new Cond(0, 999, 0, 99, List.of(), List.of(), List.of(), 0, 0);
+                       List<String> notFlags, List<String> docs, int docsMin, int lair, List<String> steps) {
+        public static final Cond ANY = new Cond(0, 999, 0, 99, List.of(), List.of(), List.of(), 0, 0, List.of());
 
         static Cond parse(JsonObject o) {
             if (o == null) return ANY;
             return new Cond(i(o, "min_level", 0), i(o, "max_level", 999), i(o, "chapter_min", 0), i(o, "chapter_max", 99),
-                    strs(o, "flags"), strs(o, "not_flags"), strs(o, "docs"), i(o, "docs_min", 0), i(o, "lair", 0));
+                    strs(o, "flags"), strs(o, "not_flags"), strs(o, "docs"), i(o, "docs_min", 0), i(o, "lair", 0), strs(o, "steps"));
         }
 
         public boolean test(ServerPlayer p) {
@@ -37,6 +37,7 @@ public record Dialogue(String npc, String city, String nameKey, List<Entry> entr
             for (String f : flags) if (!q.has(f)) return false;
             for (String f : notFlags) if (q.has(f)) return false;
             for (String d : docs) if (!s.has(d)) return false;
+            if (!steps.isEmpty() && !steps.contains(q.step())) return false;
             if (s.docs().size() < docsMin) return false;
             return lair == 0 || (s.lair() & lair) != 0;
         }
@@ -51,6 +52,8 @@ public record Dialogue(String npc, String city, String nameKey, List<Entry> entr
                 case "give_skill" -> new Action(t, o.get("skill").getAsString(), 1);
                 case "exp" -> new Action(t, "", o.get("amount").getAsLong());
                 case "chapter" -> new Action(t, "", o.get("value").getAsInt());
+                case "step_done" -> new Action(t, o.get("step").getAsString(), 0);
+                case "duel" -> new Action(t, "", 0);
                 case "message" -> new Action(t, o.get("key").getAsString(), 0);
                 default -> throw new IllegalArgumentException("unknown action " + t);
             };
@@ -59,7 +62,9 @@ public record Dialogue(String npc, String city, String nameKey, List<Entry> entr
         public void run(ServerPlayer p) {
             switch (type) {
                 case "set_flag" -> DialogueService.setQuest(p, DialogueService.quest(p).withFlag(str));
-                case "chapter" -> DialogueService.setQuest(p, DialogueService.quest(p).withChapter((int) num));
+                case "chapter" -> { } // cũ: chương nay theo cảnh giới (StoryFlow), giữ để tương thích dữ liệu
+                case "step_done" -> com.hukhong.story.flow.StoryFlow.complete(p, str);
+                case "duel" -> com.hukhong.story.flow.StoryFlow.startDuel(p);
                 case "exp" -> CultivationService.addExp(p, num);
                 case "message" -> p.displayClientMessage(Component.translatable(str), false);
                 case "give_skill" -> com.hukhong.skillbook.SkillBookRewards.giveStory(p, str);

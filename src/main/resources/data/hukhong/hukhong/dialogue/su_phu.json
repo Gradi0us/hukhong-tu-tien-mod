@@ -1,0 +1,49 @@
+{
+ "npc": "su_phu",
+ "city": "",
+ "name_key": "hukhong.npc.su_phu",
+ "entry": [
+  {
+   "if": {
+    "steps": [
+     "pro_sect_talk"
+    ]
+   },
+   "node": "task"
+  },
+  {
+   "node": "idle"
+  }
+ ],
+ "nodes": {
+  "task": {
+   "text": [
+    "hukhong.dlg.su_phu.task.p1",
+    "hukhong.dlg.su_phu.task.p2",
+    "hukhong.dlg.su_phu.task.p3"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.su_phu.task.c1",
+     "actions": [
+      {
+       "type": "step_done",
+       "step": "pro_sect_talk"
+      }
+     ],
+     "next": "task_end"
+    }
+   ]
+  },
+  "task_end": {
+   "text": [
+    "hukhong.dlg.su_phu.task_end.p1"
+   ]
+  },
+  "idle": {
+   "text": [
+    "hukhong.dlg.su_phu.idle.p1"
+   ]
+  }
+ }
+}

@@ -19,6 +19,7 @@ public class CorruptionData extends SavedData {
 
     private final Set<Long> chunks = new HashSet<>();
     private final List<BlockPos> hearts = new ArrayList<>();
+    private final Set<Long> reverting = new HashSet<>();
     private long nextInvasionAt = -1;
     private boolean seeded;
 
@@ -31,6 +32,7 @@ public class CorruptionData extends SavedData {
         for (long l : tag.getLongArray("chunks")) d.chunks.add(l);
         int[] h = tag.getIntArray("hearts");
         for (int i = 0; i + 2 < h.length; i += 3) d.hearts.add(new BlockPos(h[i], h[i + 1], h[i + 2]));
+        for (long l : tag.getLongArray("reverting")) d.reverting.add(l);
         d.nextInvasionAt = tag.contains("nextInv") ? tag.getLong("nextInv") : -1;
         d.seeded = tag.getBoolean("seeded");
         return d;
@@ -42,6 +44,7 @@ public class CorruptionData extends SavedData {
         int[] h = new int[hearts.size() * 3];
         for (int i = 0; i < hearts.size(); i++) { h[3 * i] = hearts.get(i).getX(); h[3 * i + 1] = hearts.get(i).getY(); h[3 * i + 2] = hearts.get(i).getZ(); }
         tag.putIntArray("hearts", h);
+        tag.putLongArray("reverting", reverting.stream().mapToLong(Long::longValue).toArray());
         tag.putLong("nextInv", nextInvasionAt);
         tag.putBoolean("seeded", seeded);
         return tag;
@@ -52,6 +55,9 @@ public class CorruptionData extends SavedData {
     public int size() { return chunks.size(); }
     public Set<Long> chunks() { return chunks; }
     public List<BlockPos> hearts() { return hearts; }
+    /** Chunk đã tẩy nhưng còn khối Hư Không cần hoàn nguyên. */
+    public Set<Long> reverting() { return reverting; }
+    public void finishRevert(long l) { if (reverting.remove(l)) setDirty(); }
     public boolean seeded() { return seeded; }
     public void markSeeded() { seeded = true; setDirty(); }
     public long nextInvasionAt() { return nextInvasionAt; }
@@ -60,7 +66,7 @@ public class CorruptionData extends SavedData {
     public boolean add(int cx, int cz) {
         if (chunks.size() >= MAX_CHUNKS) return false;
         boolean r = chunks.add(ChunkPos.asLong(cx, cz));
-        if (r) setDirty();
+        if (r) { reverting.remove(ChunkPos.asLong(cx, cz)); setDirty(); }
         return r;
     }
 
@@ -85,7 +91,7 @@ public class CorruptionData extends SavedData {
     public int cleanseRadius(BlockPos p, int r) {
         int cx = p.getX() >> 4, cz = p.getZ() >> 4, c = 0;
         var it = chunks.iterator();
-        while (it.hasNext()) { if (d2(it.next(), cx, cz) <= (long) r * r) { it.remove(); c++; } }
+        while (it.hasNext()) { long l = it.next(); if (d2(l, cx, cz) <= (long) r * r) { it.remove(); reverting.add(l); c++; } }
         if (c > 0) setDirty();
         return c;
     }

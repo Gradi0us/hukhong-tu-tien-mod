@@ -51,6 +51,17 @@ public final class ChgArena {
             for (int y = cy + 1; y <= cy + 6; y++) sl.setBlock(p.set(px, y, pz), pillar, 18);
             sl.setBlock(p.set(px, cy + 7, pz), light, 18);
         }
+        for (int i = 0; i < 24; i++) {  // vong rune quanh san (cach vanh 4 block)
+            double a = i * Math.PI / 12;
+            int rx = cx + (int) Math.round(Math.cos(a) * (r - 4)), rz = cz + (int) Math.round(Math.sin(a) * (r - 4));
+            sl.setBlock(p.set(rx, cy, rz), (i % 3 == 0) ? light : accent, 18);
+        }
+        for (int i = 0; i < 4; i++) {  // 4 tru thap phia trong
+            double a = i * Math.PI / 2 + Math.PI / 4;
+            int px = cx + (int) Math.round(Math.cos(a) * (r / 2.0)), pz = cz + (int) Math.round(Math.sin(a) * (r / 2.0));
+            for (int y = cy + 1; y <= cy + 3; y++) sl.setBlock(p.set(px, y, pz), pillar, 18);
+            sl.setBlock(p.set(px, cy + 4, pz), light, 18);
+        }
         for (int dx = -2; dx <= 2; dx++)  // bệ giữa
             for (int dz = -2; dz <= 2; dz++)
                 if (dx * dx + dz * dz <= 5) sl.setBlock(p.set(cx + dx, cy + 1, cz + dz), pillar, 18);

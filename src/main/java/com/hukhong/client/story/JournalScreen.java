@@ -34,7 +34,8 @@ public class JournalScreen extends Screen {
         g.drawString(font, title, x0 + 8, y0 + 6, GOLD, false);
         if (d.mode() == StoryData.MODE_STORY) {
             Component obj = Component.translatable("hukhong.story.journal.objective",
-                    Component.translatable("hukhong.story.chap." + NpcClient.data().current() + ".obj"));
+                    Component.translatable(NpcClient.data().step().isEmpty() ? "hukhong.flow.ch." + NpcClient.data().current() + ".title"
+                            : "hukhong.flow.obj." + NpcClient.data().step(), 0, 0));
             g.drawString(font, font.plainSubstrByWidth(obj.getString(), pw - 132), x0 + 124, y0 + 6, 0xFF55FFFF, false);
         }
         Component mode = Component.translatable(d.mode() == StoryData.MODE_STORY ? "hukhong.story.mode.story"

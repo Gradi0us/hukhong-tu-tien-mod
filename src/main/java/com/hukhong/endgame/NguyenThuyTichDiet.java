@@ -128,6 +128,11 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
 
+    @Override public void onAddedToLevel() {
+        super.onAddedToLevel();
+        if (!level().isClientSide) { com.hukhong.audio.BossMusic.watch(this, "final_boss"); com.hukhong.arena.BossArena.attach(this, EndgameKit.MAIN_RADIUS - 1, null, false, (level().dimension().location().getPath().equals("hu_khong_ban_nguyen") ? new net.minecraft.core.BlockPos(0, EndgameKit.CENTER_Y, 0) : blockPosition())); }
+    }
+
     @Override public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("NtdPhase", phase());

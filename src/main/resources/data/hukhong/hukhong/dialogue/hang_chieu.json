@@ -42,8 +42,7 @@
        "flag": "ch2_done"
       },
       {
-       "type": "chapter",
-       "value": 3
+       "type": "step_done", "step": "c2_rival"
       },
       {
        "type": "exp",
@@ -64,8 +63,7 @@
        "flag": "ch2_done"
       },
       {
-       "type": "chapter",
-       "value": 3
+       "type": "step_done", "step": "c2_rival"
       },
       {
        "type": "exp",

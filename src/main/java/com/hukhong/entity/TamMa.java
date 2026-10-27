@@ -51,6 +51,19 @@ public class TamMa extends Monster {
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
+    /** Ban sao bong ngan ngui: &gt;0 = tick con lai truoc khi tan bien (-1 = khong phai ban sao). Chi dung phia server. */
+    public int ghostLife = -1;
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide && ghostLife > 0 && --ghostLife == 0) {
+            ((net.minecraft.server.level.ServerLevel) level()).sendParticles(com.hukhong.vfx.ModParticles.MA_KHI.get(),
+                    getX(), getY() + 1, getZ(), 14, 0.3, 0.7, 0.3, 0.03);
+            discard();
+        }
+    }
+
     public void setOwnerId(UUID id) { entityData.set(OWNER, Optional.ofNullable(id)); }
 
     public Optional<UUID> getOwnerId() { return entityData.get(OWNER); }

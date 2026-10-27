@@ -60,6 +60,20 @@ final class MapIcons {
         g.pose().popPose();
     }
 
+    /** Mục tiêu chính: kim cương vàng nhấp nháy. */
+    static void objective(GuiGraphics g, int cx, int cy, long tick) {
+        int r = 4 + (int) ((tick / 8) % 2);
+        for (int i = -r; i <= r; i++) {
+            int w = r - Math.abs(i);
+            g.fill(cx - w - 1, cy + i, cx + w + 2, cy + i + 1, INK);
+        }
+        for (int i = -r + 1; i <= r - 1; i++) {
+            int w = r - 1 - Math.abs(i);
+            g.fill(cx - w, cy + i, cx + w + 1, cy + i + 1, GOLD);
+        }
+        g.fill(cx, cy, cx + 1, cy + 1, WHITE);
+    }
+
     /** Điểm đích: vòng đỏ nhấp nháy + chấm trắng. */
     static void waypoint(GuiGraphics g, int cx, int cy, long tick) {
         int r = 3 + (int) ((tick / 6) % 3);

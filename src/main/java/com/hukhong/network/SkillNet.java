@@ -11,6 +11,7 @@ public final class SkillNet {
 
     public static void register(PayloadRegistrar r) {
         com.hukhong.flight.FlightNet.register(r);
+        com.hukhong.audio.AudioNet.register(r);
         com.hukhong.banmenh.BanMenhNet.register(r);
         com.hukhong.artifact.ArtifactNet.register(r);
         r.playToClient(SkillSyncPayload.TYPE, SkillSyncPayload.STREAM_CODEC,
@@ -18,6 +19,8 @@ public final class SkillNet {
         r.playToClient(FxPayload.TYPE, FxPayload.STREAM_CODEC, FxPayload::handle);
         r.playToClient(MaSyncPayload.TYPE, MaSyncPayload.STREAM_CODEC, MaSyncPayload::handle);
         r.playToClient(MapMarkersPayload.TYPE, MapMarkersPayload.STREAM_CODEC, MapMarkersPayload::handle);
+        r.playToClient(com.hukhong.story.objective.ObjectiveSyncPayload.TYPE, com.hukhong.story.objective.ObjectiveSyncPayload.STREAM_CODEC, com.hukhong.story.objective.ObjectiveSyncPayload::handle);
+        r.playToClient(com.hukhong.story.objective.ObjectiveCompletePayload.TYPE, com.hukhong.story.objective.ObjectiveCompletePayload.STREAM_CODEC, com.hukhong.story.objective.ObjectiveCompletePayload::handle);
         r.playToServer(SetMaLoPayload.TYPE, SetMaLoPayload.STREAM_CODEC, SetMaLoPayload::handle);
         r.playToServer(CastSkillPayload.TYPE, CastSkillPayload.STREAM_CODEC, (pl, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> SkillService.cast(sp, pl.slot()));

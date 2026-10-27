@@ -109,6 +109,11 @@ public class SuDo extends Monster implements GeoEntity {
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
 
+    @Override public void onAddedToLevel() {
+        super.onAddedToLevel();
+        if (!level().isClientSide) { com.hukhong.audio.BossMusic.watch(this, "su_do"); com.hukhong.arena.BossArena.attach(this, 16, com.hukhong.arena.BossArena.Theme.SU_DO, false, null); }
+    }
+
     @Override public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("SuDoLevel", suLevel());

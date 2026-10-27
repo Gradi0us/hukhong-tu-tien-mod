@@ -33,6 +33,13 @@ public class TamMaRenderer extends HumanoidMobRenderer<TamMa, PlayerModel<TamMa>
         addLayer(new EyesLayer(this));
     }
 
+    /** Tam Ma "bien mat vao bong toi": invisible = khong ve ca cac lop (giap, mat, vien sang). */
+    @Override
+    public void render(TamMa e, float yaw, float pt, PoseStack ps, MultiBufferSource b, int light) {
+        if (e.isInvisible()) return;
+        super.render(e, yaw, pt, ps, b, light);
+    }
+
     @Override
     public ResourceLocation getTextureLocation(TamMa e) {
         return e.getOwnerId().map(id -> {

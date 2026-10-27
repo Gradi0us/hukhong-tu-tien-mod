@@ -105,9 +105,12 @@ public final class SkillBookGameTests {
         if (lv != SkillBookMath.levelCap(30)) h.fail("cap cap theo cap tu luyen: " + lv + " != " + SkillBookMath.levelCap(30));
         // CH ví: không có tông môn -> từ chối, không mất Hồn Tinh
         int ht = SkillBookService.honTinh(p);
+        CultivationData orig = p.getData(ModAttachments.CULTIVATION);
         p.setData(ModAttachments.CULTIVATION, new CultivationData(100, 0, 4000, 4000, Set.of(Path.KIEM), Map.<Path, Aptitude>of(), false));
         SkillBookService.upgrade(p, "kiem_1", SkillBookMath.Mode.CONTRIBUTION.ordinal());
         if (SkillBookService.data(p).level("kiem_1") != lv || SkillBookService.honTinh(p) != ht) h.fail("CH khong tong mon van tru phi");
+        p.setData(ModAttachments.CULTIVATION, orig); // trả về cấp 30 để so sánh công bằng
+        com.hukhong.stats.StatService.refresh(p);
         // sát thương kỹ năng nền tăng theo cấp
         float up = castDamage(h, p, 0);
         double ratio = up / base;
