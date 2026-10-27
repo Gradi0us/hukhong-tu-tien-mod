@@ -119,13 +119,16 @@ public final class HuHoa {
 
     /** w * E(L)/EXP_DIV, E(L)=40*L^2.15; x0.1 neu quai thap hon nguoi choi >= 10 cap. */
     public static long exp(double w, int level, int playerLevel) {
-        double e = 40 * Math.pow(level, 2.15) / EXP_DIV;
+        double e = 40 * Math.pow(level, 2.15) / EXP_DIV * levelExpMult(level);
         double f = level <= playerLevel - 10 ? 0.1 : 1.0;
         double raw = w * e * f;
         // ROOT CAUSE "giet quai khong co EXP": quai cap 1-2 cho 0.07-0.33 EXP (EXP_DIV 540) -> Math.round = 0.
         // Quai ngang/cao hon nguoi choi (f == 1) luon cho >= 1 EXP.
         return f >= 1.0 && w > 0 ? Math.max(1, Math.round(raw)) : Math.round(raw);
     }
+
+    /** Hệ số EXP theo cấp quái: cấp 1 x1.5, cấp 20 x2.5, cấp 60 x4.5, cấp 100 x6.5 (quái cấp cao đáng giết hơn). */
+    public static double levelExpMult(int level) { return 1.5 + level / 20.0; }
 
     /** Trần max_health vanilla (RangedAttribute). HP thiết kế vượt trần được quy đổi thành giảm sát thương nhận. */
     public static final double VANILLA_HP_CAP = 1024.0;

@@ -167,7 +167,7 @@ HP thiết kế vượt trần 1024 vanilla được quy đổi qua `HuHoa.ehpSc
 ## 6. Thời gian lên cấp 100 (chỉ cày quái, không vật phẩm đột phá, spawner = 0)
 
 - EXP_DIV = 540; tìm quái 30s/con; TTK trung bình 4 đạo.
-- **Tổng: 505 giờ** (mục tiêu 500h, dung sai +-15%).
+- **Tổng: 145 giờ** (mục tiêu 120–300h sau khi tăng EXP theo cấp quái).
 
 ## 7. Nhận xét
 

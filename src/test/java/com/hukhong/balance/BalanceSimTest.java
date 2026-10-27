@@ -269,7 +269,7 @@ class BalanceSimTest {
     static double hoursTo100() {
         double avgW = (HU_THI.w() + HU_COT.w() + HU_CHU.w()) / 3.0, sec = 0;
         for (int lv = 1; lv < 100; lv++) {
-            double perKill = avgW * 40 * Math.pow(lv, 2.15) / HuHoa.EXP_DIV;
+            double perKill = avgW * 40 * Math.pow(lv, 2.15) / HuHoa.EXP_DIV * HuHoa.levelExpMult(lv);
             double kills = CultivationService.barSize(lv) / perKill;
             double t = 0;
             for (Path p : PATHS) {
@@ -380,8 +380,8 @@ class BalanceSimTest {
         // --- 6. EXP
         double hours = hoursTo100();
         md.append(String.format("%n## 6. Thời gian lên cấp 100 (chỉ cày quái, không vật phẩm đột phá, spawner = 0)%n%n"));
-        md.append(String.format("- EXP_DIV = %.0f; tìm quái %.0fs/con; TTK trung bình 4 đạo.%n- **Tổng: %.0f giờ** (mục tiêu 500h, dung sai +-15%%).%n", HuHoa.EXP_DIV, SEEK_SECONDS, hours));
-        if (hours < 425 || hours > 575) fails.add("hours to 100 = " + hours);
+        md.append(String.format("- EXP_DIV = %.0f; tìm quái %.0fs/con; TTK trung bình 4 đạo.%n- **Tổng: %.0f giờ** (mục tiêu 120–300h sau khi tăng EXP theo cấp quái).%n", HuHoa.EXP_DIV, SEEK_SECONDS, hours));
+        if (hours < 120 || hours > 300) fails.add("hours to 100 = " + hours);
 
         md.append("\n## 7. Nhận xét\n\n- Hồi nhanh bằng đan: Chỉ Huyết 15% HP + Hồi Xuân 30% HP, hồi chiêu riêng 10s mỗi loại (chưa tính vào bảng).\n");
         md.append("- Đạo: đòn thường (không phải kỹ năng) x0 với quái, x1 với người chơi (R12); kỹ năng không bị chặn. Đạo mạnh ở buff đồng đội (Ban Phúc/Thánh Giáng), không mô phỏng ở đây.\n");
