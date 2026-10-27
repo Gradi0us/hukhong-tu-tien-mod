@@ -156,13 +156,18 @@ public final class SectEvents {
             if (SectMath.feeDue(secs)) { // 1 lần mỗi 3600 giây ngồi cộng dồn (không tính lại mỗi lần ngồi)
                 int fee = SectMath.altarFeePerHour(def.tier());
                 int left = SectMath.chargeFee(sd.wallet(), fee);
-                if (left < 0) {
+                boolean paidTt = false;
+                if (left < 0 && com.hukhong.currency.Wallet.pay(p, com.hukhong.currency.TuTinh.altarFee(fee))) { // tra bang Tu Tinh thay Cong Hien
+                    left = sd.wallet();
+                    paidTt = true;
+                    p.sendSystemMessage(Component.translatable("hukhong.lkd.fee_paid_tt", com.hukhong.currency.TuTinhText.of(com.hukhong.currency.TuTinh.altarFee(fee))));
+                } else if (left < 0) {
                     stopMeditating(p.getUUID());
                     if (p.tickCount % 100 == 0) p.displayClientMessage(Component.translatable("hukhong.lkd.no_fee", fee, sd.wallet()), true);
                     return;
                 }
                 p.setData(SocietyRegistry.SECT, sd.withWallet(left));
-                p.sendSystemMessage(Component.translatable("hukhong.lkd.fee_paid", fee, left));
+                if (!paidTt) p.sendSystemMessage(Component.translatable("hukhong.lkd.fee_paid", fee, left));
             }
             p.getPersistentData().putInt(SIT_KEY, secs + 1);
             mult = SectMath.rankMult(SectService.rankOf(p, sd));

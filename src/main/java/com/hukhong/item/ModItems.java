@@ -63,6 +63,7 @@ public final class ModItems {
         com.hukhong.bicanh.BiCanhRegistry.register(bus);
         com.hukhong.voidblock.VoidBlocks.register(bus);
         com.hukhong.skillbook.SkillBookRegistry.register(bus);
+        com.hukhong.guild.GuildRegistry.register(bus);
         ITEMS.register(bus);
         COMPONENTS.register(bus);
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {

@@ -51,6 +51,8 @@ public final class MapMarkerSync {
             BlockPos p = built ? c : SectEvents.site(ow, d);
             out.add(new MapMarkersPayload.Marker(MapMarkersPayload.SECT, d.id(), p.getX(), p.getZ(), built));
         }
+        for (var h : com.hukhong.guild.GuildHalls.get(ow).all().entrySet()) // Hiep Hoi Mao Hiem Gia
+            out.add(new MapMarkersPayload.Marker(MapMarkersPayload.GUILD, h.getKey(), h.getValue().getX(), h.getValue().getZ(), true));
         return out;
     }
 

@@ -25,6 +25,18 @@ final class MapIcons {
     }
 
     /** Tông: thoi ngọc bích (đã dựng) / thoi rỗng (xấp xỉ). */
+    /** Hiệp Hội Mạo Hiểm Giả: khiên tím viền vàng. */
+    static void guild(GuiGraphics g, int cx, int cy, boolean hot) {
+        g.fill(cx - 3, cy - 4, cx + 4, cy + 1, INK);
+        g.fill(cx - 2, cy + 1, cx + 3, cy + 3, INK);
+        g.fill(cx - 1, cy + 3, cx + 2, cy + 4, INK);
+        int c = hot ? WHITE : 0xFFB070F0;
+        g.fill(cx - 2, cy - 3, cx + 3, cy + 1, c);
+        g.fill(cx - 1, cy + 1, cx + 2, cy + 3, c);
+        g.fill(cx, cy - 3, cx + 1, cy + 2, GOLD);
+        g.fill(cx - 2, cy - 1, cx + 3, cy, GOLD);
+    }
+
     /** Cảng: hình thoi xanh dương có neo nhỏ. */
     static void port(GuiGraphics g, int cx, int cy, boolean built, boolean hot) {
         int c = built ? 0xFF6AB8FF : 0xFF3A6A94;

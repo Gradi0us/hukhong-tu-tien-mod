@@ -91,6 +91,7 @@ public final class HuKhongRuntimeGameTests {
         e.moveTo(v.x, v.y, v.z, 0f, 0f);
         if (e instanceof Mob m) {
             m.finalizeSpawn(h.getLevel(), h.getLevel().getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.COMMAND, null);
+            GameTestSupport.deterministic(m);
             m.setNoAi(true);
             m.setPersistenceRequired();
         }

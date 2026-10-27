@@ -44,7 +44,7 @@ public final class MinimapState {
 
     /** Màu theo loại: thành vàng, cảng xanh dương, tông ngọc. */
     public static int color(MapMarkersPayload.Marker m) {
-        return isPort(m) ? 0xFF6AB8FF : m.kind() == MapMarkersPayload.CITY ? 0xFFE8C060 : 0xFF6FE0D0;
+        return m.kind() == MapMarkersPayload.GUILD ? 0xFFC070FF : isPort(m) ? 0xFF6AB8FF : m.kind() == MapMarkersPayload.CITY ? 0xFFE8C060 : 0xFF6FE0D0;
     }
 
     public static String distText(int d) { return d >= 1000 ? String.format("%.1fkm", d / 1000.0) : d + "m"; }

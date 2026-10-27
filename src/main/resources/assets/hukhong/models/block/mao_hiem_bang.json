@@ -1,0 +1,1 @@
+{"parent": "minecraft:block/cube_bottom_top", "textures": {"top": "hukhong:block/mao_hiem_bang_top", "side": "hukhong:block/mao_hiem_bang_side", "bottom": "hukhong:block/mao_hiem_bang_top"}}

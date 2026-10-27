@@ -145,6 +145,7 @@ public final class SectService {
                 : new ItemStack(AlchemyRegistry.HOI_XUAN_DAN.get(), finalStep ? 3 : 1);
         if (!sp.getInventory().add(reward)) sp.drop(reward, false);
         com.hukhong.skillbook.SkillBookRewards.give(sp, com.hukhong.skillbook.SkillBookRewards.questReward(sp, def.tier().ordinal(), finalStep));
+        com.hukhong.currency.Wallet.give(sp, com.hukhong.currency.TuTinh.sectQuest(def.tier().ordinal(), finalStep)); // Tu Tinh
         sp.sendSystemMessage(Component.translatable(ch > 0 ? "hukhong.sect.quest_done" : "hukhong.sect.quest_done_capped", ch));
         if (finalStep) sp.sendSystemMessage(Component.translatable("hukhong.sect.chain_done", Component.translatable(def.nameKey())));
         afterRankChange(sp, n, before);

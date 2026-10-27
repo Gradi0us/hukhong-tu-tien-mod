@@ -16,6 +16,7 @@ public class HuKhong {
         ModAttachments.ATTACHMENTS.register(modBus);
         com.hukhong.onboarding.OnboardingAttachments.ATTACHMENTS.register(modBus);
         com.hukhong.story.objective.ObjectiveAttachments.ATTACHMENTS.register(modBus);
+        com.hukhong.story.freequest.FreeQuestAttachments.ATTACHMENTS.register(modBus);
         com.hukhong.item.ModItems.register(modBus);
         com.hukhong.entity.ModEntities.register(modBus);
         com.hukhong.vfx.ModParticles.register(modBus);

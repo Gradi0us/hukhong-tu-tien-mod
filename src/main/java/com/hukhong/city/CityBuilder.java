@@ -118,7 +118,10 @@ public final class CityBuilder {
         WorldBuildData.get(l).put(new WorldBuildData.Settlement(d.id(), kindOf(d), c.getX() - HALF, c.getZ() - HALF, c.getX() + HALF, c.getZ() + HALF,
                 c.getY() + 1, c.getX(), c.getZ()));
         if (d.category().equals("city_ruined")) RuinGuard.spawnBoss(l, d, c.above());
-        else CityMarket.populate(l, d, c.above(), java.util.List.of());
+        else {
+            CityMarket.populate(l, d, c.above(), java.util.List.of());
+            com.hukhong.guild.GuildBuilder.ensure(l, d); // Hiep Hoi Mao Hiem Gia
+        }
         return c;
     }
 
@@ -159,6 +162,7 @@ public final class CityBuilder {
         if (d.category().equals("city_ruined")) { RuinGuard.spawnBoss(l, d, altar); return; }
         for (BlockPos np : npc) spawnVillager(l, np.getX(), np.getY(), np.getZ());
         CityMarket.populate(p, d);
+        com.hukhong.guild.GuildBuilder.placeImported(p, d); // marker hukhong:guild; khong co thi GuildEvents dung lazy
     }
 
     private static void spawnVillager(ServerLevel l, int x, int y, int z) {

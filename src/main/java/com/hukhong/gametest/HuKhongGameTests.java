@@ -35,6 +35,7 @@ public final class HuKhongGameTests {
     public static void daoDanhZombieBangKhong(GameTestHelper h) {
         ServerPlayer p = player(h, Set.of(Path.DAO));
         Zombie z = h.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 1);
+        GameTestSupport.deterministic(z);
         float before = z.getHealth();
         p.attack(z);
         h.runAfterDelay(2, () -> {

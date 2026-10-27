@@ -1,9 +1,5 @@
 package com.hukhong.city;
 
-import com.hukhong.alchemy.AlchemyRegistry;
-import com.hukhong.item.ModItems;
-import com.hukhong.skillbook.SkillBookRewards;
-import com.hukhong.skillbook.SkillGrade;
 import com.hukhong.structures.StructurePlacer;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
@@ -11,23 +7,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.WanderingTrader;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.trading.ItemCost;
-import net.minecraft.world.item.trading.MerchantOffer;
-import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.phys.AABB;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Cho trong thanh: moi thanh co cac thuong nhan dung yen (thuong nhan lang thang bat tu, tag {@link #TAG} de CityProtection bao ve)
  * dat o marker hukhong:trader (hoac vong quanh quang truong/ban tho). Thay cho khu cho rieng (TradeDistrict) cu.
- * Loai: 0 thao duoc, 1 dan duoc, 2 vu khi, 3 giap, 4 Hon Tinh/hiem, 5 tap hoa, 6 bi tich ky nang (thanh cap Dia tro len).
+ * Hang hoa + gia bang Tu Tinh: xem ShopCatalog. Loai: 0 thao duoc, 1 dan duoc, 2 vu khi, 3 giap, 4 Hon Tinh/hiem, 5 tap hoa, 6 bi tich ky nang (thanh cap Dia tro len).
  */
 public final class CityMarket {
     private CityMarket() {}
@@ -83,60 +72,7 @@ public final class CityMarket {
         t.setDespawnDelay(0);
         t.setCustomName(Component.translatable("hukhong.trade." + KEYS[kind]));
         t.setCustomNameVisible(true);
-        MerchantOffers offers = t.getOffers();
-        offers.clear();
-        int mul = d.tier().ordinal() + 1;
-        switch (kind) {
-            case 0 -> {
-                add(offers, 1, AlchemyRegistry.LINH_THAO.get(), 3);
-                add(offers, 2, AlchemyRegistry.THANH_DIEP.get(), 2);
-                add(offers, 3, AlchemyRegistry.HUYET_THAM.get(), 1);
-                add(offers, 3, AlchemyRegistry.HOA_LIEN.get(), 1);
-            }
-            case 1 -> {
-                add(offers, 3, AlchemyRegistry.CHI_HUYET_DAN.get(), 1);
-                add(offers, 4, AlchemyRegistry.HOI_XUAN_DAN.get(), 1);
-                add(offers, 3, AlchemyRegistry.GIAI_DOC_DAN.get(), 1);
-                add(offers, 8 * mul, AlchemyRegistry.THO_NGUYEN_DAN.get(), 1);
-            }
-            case 2 -> {
-                add(offers, 6, Items.IRON_SWORD, 1);
-                add(offers, 8, Items.BOW, 1);
-                add(offers, 2, Items.ARROW, 16);
-                add(offers, 14 * mul, Items.DIAMOND_SWORD, 1);
-            }
-            case 3 -> {
-                add(offers, 8, Items.IRON_CHESTPLATE, 1);
-                add(offers, 5, Items.IRON_HELMET, 1);
-                add(offers, 4, Items.SHIELD, 1);
-                add(offers, 18 * mul, Items.DIAMOND_CHESTPLATE, 1);
-            }
-            case 4 -> {
-                add(offers, 12, ModItems.HON_TINH.get(), 1);
-                add(offers, 30, ModItems.HON_TINH.get(), 3);
-                add(offers, 20, Items.ENDER_PEARL, 1);
-            }
-            case 5 -> {
-                add(offers, 1, Items.BREAD, 6);
-                add(offers, 1, Items.TORCH, 16);
-                add(offers, 3, Items.COOKED_BEEF, 8);
-                add(offers, 5, Items.BUCKET, 1);
-                add(offers, 2, Items.LEAD, 1);
-            }
-            default -> {
-                Random r = new Random(l.getSeed() ^ d.id().hashCode());
-                for (int i = 0; i < 3; i++) {
-                    SkillGrade g = d.tier() == Tier.THIEN ? (i == 0 ? SkillGrade.DIA : SkillGrade.HUYEN) : (i == 2 ? SkillGrade.HUYEN : SkillGrade.PHAM);
-                    ItemStack book = SkillBookRewards.stack(r, g, null);
-                    int price = g == SkillGrade.DIA ? 48 : g == SkillGrade.HUYEN ? 24 : 12;
-                    offers.add(new MerchantOffer(new ItemCost(Items.EMERALD, price), book, 9999, 0, 0f));
-                }
-            }
-        }
+        t.getOffers().clear(); // gia/hang ban: com.hukhong.currency.ShopCatalog (Tu Tinh); vanilla trade bi chan o ShopService
         l.addFreshEntity(t);
-    }
-
-    private static void add(MerchantOffers offers, int emeralds, Item item, int count) {
-        offers.add(new MerchantOffer(new ItemCost(Items.EMERALD, Math.min(64, emeralds)), new ItemStack(item, count), 9999, 0, 0f));
     }
 }

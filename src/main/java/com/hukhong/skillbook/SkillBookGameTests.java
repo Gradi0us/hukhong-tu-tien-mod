@@ -47,6 +47,7 @@ public final class SkillBookGameTests {
         Zombie zb = h.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, (int) z);
         zb.getAttribute(Attributes.MAX_HEALTH).setBaseValue(4000);
         zb.setHealth(4000f);
+        com.hukhong.gametest.GameTestSupport.deterministic(zb);
         return zb;
     }
 
@@ -80,6 +81,7 @@ public final class SkillBookGameTests {
     private static float castDamage(GameTestHelper h, ServerPlayer p, int slot) {
         Zombie z = dummy(h, 3);
         SkillService.state(p).cooldownEnd[slot] = 0;
+        com.hukhong.gametest.GameTestSupport.noCrit(p);
         float before = z.getHealth();
         SkillService.cast(p, slot);
         float d = before - z.getHealth();

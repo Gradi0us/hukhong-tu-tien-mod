@@ -327,9 +327,12 @@ public final class BiCanhManager {
             dim.setBlock(cp, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.WEST), 3);
             if (dim.getBlockEntity(cp) instanceof ChestBlockEntity ce) {
                 List<ItemStack> loot = BiCanhLoot.stacks(run.tier, rnd);
+                loot = new java.util.ArrayList<>(loot);
+                loot.addAll(com.hukhong.currency.Wallet.stacks(com.hukhong.currency.TuTinh.bicanhChest(run.tier.ordinal(), rnd)));
                 for (int k = 0; k < loot.size() && k < ce.getContainerSize(); k++) ce.setItem(k, loot.get(k));
             }
         }
+        for (ServerPlayer p : online) com.hukhong.guild.GuildService.onBiCanhClear(p, run.tier.ordinal());
         for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable("hukhong.bicanh.victory", VICTORY_GRACE_TICKS / 20));
     }
 }
