@@ -9,3 +9,10 @@ out/
 run/
 build/
 .gradle/
+
+# import/ world data (keep folder skeleton)
+import/**
+!import/
+!import/*/
+!import/**/.gitkeep
+tools/.venv/

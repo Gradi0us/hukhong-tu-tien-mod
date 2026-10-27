@@ -87,6 +87,19 @@ public class ProfileScreen extends Screen {
             g.drawString(font, lo, bx, y0 + 6, (mx >= bx && mx < bx + font.width(lo) && my >= y0 + 4 && my < y0 + 16) ? 0xFFFFFFFF : 0xFFFF5555);
         }
 
+        int ax = x0 + 8; // nút tiến hóa pháp khí (Đạo/Thể/Ma) bằng Hồn Tinh
+        for (Path ap : artifactPaths()) {
+            Component lab = artifactLabel(ap);
+            int aw = font.width(lab);
+            boolean ah = mx >= ax && mx < ax + aw && my >= y0 + 4 && my < y0 + 16;
+            g.drawString(font, lab, ax, y0 + 6, ah ? 0xFFFFFFFF : ap.argb);
+            if (ah) artifactTooltip(ap);
+            ax += aw + 8;
+        }
+
+        Component cp = t("hukhong.skillbook.button", "[Công Pháp]");
+        g.drawString(font, cp, x0 + 8, y0 + 6, (mx >= x0 + 8 && mx < x0 + 8 + font.width(cp) && my >= y0 + 4 && my < y0 + 16) ? 0xFFFFFFFF : 0xFF7FD4FF);
+
         int tw = pw / TABS - 6;
         for (int i = 0; i < TABS; i++) {
             int tx = x0 + 8 + i * (tw + 6), ty = y0 + 20;
@@ -247,7 +260,7 @@ public class ProfileScreen extends Screen {
             boolean hov = mx >= cx && mx < cx + cw && my >= Math.max(y, cy) && my < Math.min(y + ROW, cy + ch);
             if (hov) g.fill(cx, y, cx + cw, y + ROW, 0x33FFFFFF);
             g.fill(cx + 2, y + 2, cx + 12, y + 12, 0xFF000000);
-            g.fill(cx + 3, y + 3, cx + 11, y + 11, 0xFF000000 | tier.rgb);
+            g.fill(cx + 3, y + 3, cx + 11, y + 11, CoreCardRenderer.textColor(tier));
             Component name = Component.translatable(def != null ? def.nameKey() : "core.hukhong.unknown");
             g.drawString(font, "Lv" + com.hukhong.cores.CoreService.milestoneLevel(pk.milestone()), cx + 16, y + 3, 0xFF999999);
             g.drawString(font, name, cx + 40, y + 3, CoreCardRenderer.textColor(tier));
@@ -336,6 +349,20 @@ public class ProfileScreen extends Screen {
                 return true;
             }
         }
+        int ax = x0 + 8;
+        for (Path ap : artifactPaths()) {
+            int aw = font.width(artifactLabel(ap));
+            if (mx >= ax && mx < ax + aw && my >= y0 + 4 && my < y0 + 16) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.hukhong.artifact.ArtifactUpgradePayload(ap.ordinal()));
+                return true;
+            }
+            ax += aw + 8;
+        }
+        int cpw = font.width(t("hukhong.skillbook.button", "[Công Pháp]"));
+        if (mx >= x0 + 8 && mx < x0 + 8 + cpw && my >= y0 + 4 && my < y0 + 16) {
+            Minecraft.getInstance().setScreen(new com.hukhong.skillbook.client.CongPhapScreen());
+            return true;
+        }
         int tw = pw / TABS - 6;
         for (int i = 0; i < TABS; i++) {
             int tx = x0 + 8 + i * (tw + 6), ty = y0 + 20;
@@ -359,6 +386,41 @@ public class ProfileScreen extends Screen {
     public boolean mouseScrolled(double mx, double my, double sx, double sy) {
         scroll = Math.max(0, Math.min(scroll - sy * ROW, Math.max(0, contentH - ch)));
         return true;
+    }
+
+    // ------------------------------------------------------------------ pháp khí các đạo (Hồn Tinh)
+    private static List<Path> artifactPaths() {
+        List<Path> l = new ArrayList<>();
+        for (Path p : ClientCache.cultivation().paths().stream().sorted().toList())
+            if (com.hukhong.artifact.ArtifactMath.hasArtifact(p)) l.add(p);
+        return l;
+    }
+
+    private static int artifactStage(Path p) {
+        var pl = Minecraft.getInstance().player;
+        return pl == null ? 0 : pl.getData(com.hukhong.artifact.ArtifactAttachments.ARTIFACT.get()).get(p);
+    }
+
+    private static Component artifactLabel(Path p) {
+        return Component.literal("[").append(Component.translatableWithFallback("hukhong.artifact." + p.id, artifactVi(p)))
+                .append(" " + artifactStage(p) + "/" + com.hukhong.artifact.ArtifactMath.MAX_STAGE + "]");
+    }
+
+    private static String artifactVi(Path p) {
+        return switch (p) { case DAO -> "Pháp Bảo"; case THE -> "Bá Thể"; case MA -> "Ma Hồn"; default -> "?"; };
+    }
+
+    private void artifactTooltip(Path p) {
+        int st = artifactStage(p);
+        tooltip.add(Component.translatableWithFallback("hukhong.artifact." + p.id, artifactVi(p)).copy().withColor(p.argb & 0xFFFFFF));
+        tooltip.add(Component.translatable("hukhong.banmenh.stage." + st));
+        if (st >= com.hukhong.artifact.ArtifactMath.MAX_STAGE) {
+            tooltip.add(t("hukhong.artifact.evolve.max", "Pháp khí đã đạt Thần phẩm."));
+        } else {
+            tooltip.add(t("hukhong.artifact.tip.cost", "Tiến hóa: %s Hồn Tinh, cần cấp %s.",
+                    com.hukhong.artifact.ArtifactMath.tinhCost(st + 1), com.hukhong.banmenh.BanMenhMath.STAGE_LEVELS[st + 1]).copy().withStyle(net.minecraft.ChatFormatting.GRAY));
+            tooltip.add(t("hukhong.artifact.tip.click", "Bấm để tiến hóa (hoặc Shift + chuột phải bằng Hồn Tinh).").copy().withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+        }
     }
 
     private static String pathLang(Path p) {

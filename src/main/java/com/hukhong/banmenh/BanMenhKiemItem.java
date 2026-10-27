@@ -58,6 +58,27 @@ public class BanMenhKiemItem extends SwordItem {
         if (d.stage() != st) p.setData(BanMenhAttachments.BAN_MENH.get(), d.withStage(st));
     }
 
+    /** Phím Q: chặn ngay từ đầu (không đổi túi đồ); đường vứt khác (kéo ra ngoài GUI) do BanMenhEvents.onToss xử lý. */
+    @Override
+    public boolean onDroppedByPlayer(ItemStack item, net.minecraft.world.entity.player.Player player) {
+        if (!player.isAlive()) return true; // đang chết: để cơ chế chết xử lý (không rơi, hồi sinh trả lại)
+        if (!player.level().isClientSide)
+            player.displayClientMessage(Component.translatableWithFallback("hukhong.banmenh.msg.no_drop",
+                    "Bản Mệnh Kiếm gắn liền với chủ nhân, không thể vứt bỏ hay cất vào vật chứa."), true);
+        return false;
+    }
+
+    /** Không cất vào vật chứa (rương, ô ngoài túi) hay túi/hộp: chặn việc thả kiếm trên con trỏ vào ô đó. */
+    @Override
+    public boolean overrideStackedOnOther(ItemStack stack, net.minecraft.world.inventory.Slot slot,
+                                          net.minecraft.world.inventory.ClickAction action, net.minecraft.world.entity.player.Player player) {
+        if (player.isCreative()) return false;
+        if (slot.container != player.getInventory()) return true;
+        ItemStack in = slot.getItem();
+        return in.has(net.minecraft.core.component.DataComponents.BUNDLE_CONTENTS)
+                || in.has(net.minecraft.core.component.DataComponents.CONTAINER);
+    }
+
     /** Tôi Kiếm: cầm kiếm, Hồn Tinh ở tay phụ, chuột phải. */
     @Override
     public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand) {

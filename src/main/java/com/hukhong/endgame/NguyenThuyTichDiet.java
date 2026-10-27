@@ -2,6 +2,7 @@ package com.hukhong.endgame;
 
 import com.hukhong.HuKhong;
 import com.hukhong.endgame.EndgameKit.Skill;
+import com.hukhong.entity.BossLevel;
 import com.hukhong.entity.HuSkill;
 import com.hukhong.entity.ModEntities;
 import com.hukhong.events.BossScaling;
@@ -76,7 +77,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
             BossEvent.BossBarColor.WHITE, BossEvent.BossBarColor.RED};
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final ServerBossEvent bar = new ServerBossEvent(Component.translatable("entity.hukhong.nguyen_thuy_tich_diet"),
+    private final ServerBossEvent bar = new ServerBossEvent(BossLevel.tag(Component.translatable("entity.hukhong.nguyen_thuy_tich_diet"), EndgameKit.BOSS_LEVEL),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_20);
     private int skillCd = 100, windup, pending = -1, last = -1, invulTicks, intro, appliedPlayers = 1;
     private boolean daKhuyetSpawned;
@@ -111,6 +112,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
     }
 
     public int phase() { return entityData.get(PHASE); }
+    @Override public Component getDisplayName() { return BossLevel.tag(super.getDisplayName(), EndgameKit.BOSS_LEVEL); }
 
     @Override public boolean isPushable() { return false; }
     @Override public boolean removeWhenFarAway(double d) { return false; }
@@ -141,7 +143,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
     }
 
     private Component barName() {
-        return Component.translatable("hukhong.endgame.boss.bar", Component.translatable("entity.hukhong.nguyen_thuy_tich_diet"), phase());
+        return Component.translatable("hukhong.endgame.boss.bar", BossLevel.tag(Component.translatable("entity.hukhong.nguyen_thuy_tich_diet"), EndgameKit.BOSS_LEVEL), phase());
     }
 
     /** Gọi ngay sau khi spawn: scale theo người chơi, đầy máu, mở màn (miễn thương, title). */
@@ -165,12 +167,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
         super.customServerAiStep();
         ServerLevel sl = (ServerLevel) level();
         bar.setProgress(getHealth() / getMaxHealth());
-        if (intro > 0) {
-            intro--;
-            getNavigation().stop();
-            sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 3, getZ(), 12, 2.5, 3, 2.5, 0.04);
-            return;
-        }
+        if (intro > 0) { stepIntro(sl); return; }
         if (tickCount % 100 == 1) rescale(sl);
 
         int ph = EndgameKit.phase(getHealth() / getMaxHealth());
@@ -185,18 +182,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
                     getX(), getY() + 3, getZ(), 8, 1.6, 2.5, 1.6, 0.02);
 
         LivingEntity t = getTarget();
-        if (pending >= 0) {
-            getNavigation().stop();
-            if (t != null && EndgameKit.SKILLS[pending].shape() != EndgameKit.Shape.BEAM) getLookControl().setLookAt(t, 30, 30);
-            Skill k = EndgameKit.SKILLS[pending];
-            if (windup % 2 == 0) telegraph(sl, k);
-            if (--windup <= 0) {
-                fire(sl, k);
-                pending = -1;
-                skillCd = EndgameKit.cooldown(phase());
-            }
-            return;
-        }
+        if (pending >= 0) { stepWindup(sl); return; }
         if (skillCd > 0) { skillCd--; return; }
         if (t == null || !t.isAlive() || distanceToSqr(t) > 40 * 40) return;
         int n = EndgameKit.skillsAvailable(phase());
@@ -213,6 +199,38 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
         pendingDir = d.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : d.normalize();
         triggerAnim("skill", k.anim());
         playSound(SoundEvents.WARDEN_ATTACK_IMPACT, 2f, 0.5f);
+    }
+
+    /**
+     * isImmobile() (intro/windup &gt; 0) khiến LivingEntity.aiStep BỎ QUA serverAiStep -&gt; customServerAiStep không chạy,
+     * nên bộ đếm intro/windup phải giảm ở tick() (luôn chạy). Trước đây đếm trong customServerAiStep =&gt; intro kẹt 80,
+     * hurt() chặn mãi: người chơi không thể gây sát thương (và windup kẹt: boss đứng im sau chiêu đầu).
+     */
+    @Override public void tick() {
+        super.tick();
+        if (level() instanceof ServerLevel sl && isAlive()) {
+            if (intro > 0) { bar.setProgress(getHealth() / getMaxHealth()); stepIntro(sl); }
+            else if (windup > 0 && pending >= 0) stepWindup(sl);
+        }
+    }
+
+    private void stepIntro(ServerLevel sl) {
+        intro--;
+        getNavigation().stop();
+        sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 3, getZ(), 12, 2.5, 3, 2.5, 0.04);
+    }
+
+    private void stepWindup(ServerLevel sl) {
+        LivingEntity t = getTarget();
+        getNavigation().stop();
+        if (t != null && EndgameKit.SKILLS[pending].shape() != EndgameKit.Shape.BEAM) getLookControl().setLookAt(t, 30, 30);
+        Skill k = EndgameKit.SKILLS[pending];
+        if (windup % 2 == 0) telegraph(sl, k);
+        if (--windup <= 0) {
+            fire(sl, k);
+            pending = -1;
+            skillCd = EndgameKit.cooldown(phase());
+        }
     }
 
     private int minionCount(ServerLevel sl) {

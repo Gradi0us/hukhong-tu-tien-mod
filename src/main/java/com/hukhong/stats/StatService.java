@@ -159,6 +159,7 @@ public final class StatService {
         CoreService.applyAll(p); // gỡ + áp lại bị động Lõi (transient)
         com.hukhong.honcot.HonCotService.apply(p); // Hồn Cốt
         com.hukhong.banmenh.BanMenhService.applyPassives(p); // Ngọc Tâm / Trọng Nhạc
+        com.hukhong.artifact.ArtifactService.applyPassives(p); // Pháp Bảo / Bá Thể / Ma Hồn
         boolean than = isThan(d);
         var mid = ModAttributes.id("than");
         for (String name : ModAttributes.names()) {
@@ -210,7 +211,8 @@ public final class StatService {
     private static int signature(ServerPlayer p) {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         var bm = p.getData(com.hukhong.banmenh.BanMenhAttachments.BAN_MENH.get());
-        return Objects.hash(d.level(), d.paths(), d.aptitude(), CoreService.get(p).picked(), bm.type(), bm.stage());
+        return Objects.hash(d.level(), d.paths(), d.aptitude(), CoreService.get(p).picked(), bm.type(), bm.stage(),
+                p.getData(com.hukhong.artifact.ArtifactAttachments.ARTIFACT.get()));
     }
 
     @SubscribeEvent

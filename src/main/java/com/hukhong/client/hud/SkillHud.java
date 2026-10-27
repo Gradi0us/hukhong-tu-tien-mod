@@ -75,15 +75,16 @@ public final class SkillHud {
 
         for (int i = 0; i < 4; i++) {
             int x = x0 + i * (SIZE + GAP);
-            Skill s = Skill.of(sp, i);
+            com.hukhong.skillbook.SkillBook.Resolved rs = com.hukhong.skillbook.SkillBook.resolve(com.hukhong.skillbook.ClientSkillBook.get(), sp, i, d.level());
+            Skill s = rs != null ? rs.base() : null;
             g.fill(x, y, x + SIZE, y + SIZE, stance ? 0xCC000000 : 0x88000000);
-            com.hukhong.skill.BanMenhSkill bm = i == 2 ? com.hukhong.skill.BanMenhSkill.of(sp, d.level()) : null;
+            com.hukhong.skill.BanMenhSkill bm = i == 2 && rs == null ? com.hukhong.skill.BanMenhSkill.of(sp, d.level()) : null;
             boolean bones = i == 2 && bm == null && com.hukhong.honcot.ClientBones.get().count() > 0;
-            boolean has = s != null || bm != null || bones;
-            int baseCost = s != null ? s.cost : bm != null ? bm.cost : 50;
-            ResourceLocation icon = tex(s != null ? s.icon : bm != null ? bm.icon : bones ? "bm_bone" : "locked");
+            boolean has = rs != null || bm != null || bones;
+            int baseCost = rs != null ? rs.cost() : bm != null ? bm.cost : 50;
+            ResourceLocation icon = tex(rs != null ? rs.icon() : bm != null ? bm.icon : bones ? "bm_bone" : "locked");
             if (exists(icon)) g.blit(icon, x + 2, y + 2, 0, 0, 16, 16, 16, 16);
-            else g.fill(x + 2, y + 2, x + 18, y + 18, s == null ? 0xFF444444 : (sp.argb & 0x00FFFFFF) | 0xFF000000);
+            else g.fill(x + 2, y + 2, x + 18, y + 18, rs == null ? 0xFF444444 : (sp.argb & 0x00FFFFFF) | 0xFF000000);
             if (has) {
                 int rem = ClientSkillState.remaining(i);
                 if (rem > 0) {

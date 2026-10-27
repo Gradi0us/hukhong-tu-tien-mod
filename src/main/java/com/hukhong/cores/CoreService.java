@@ -90,7 +90,7 @@ public final class CoreService {
         Set<String> pathIds = d.paths().stream().map(x -> x.id).collect(Collectors.toSet());
         Set<ResourceLocation> owned = new HashSet<>();
         s.picked().forEach(x -> owned.add(x.core()));
-        CoreSlots.Pending pend = CoreRoller.roll(m, p.getRandom().nextLong(), luckOf(p, d), bestAptitude(d), pathIds, owned, all);
+        CoreSlots.Pending pend = CoreRoller.roll(m, p.getRandom().nextLong(), luckOf(p, d), bestAptitude(d), pathIds, owned, all, s.bestTier());
         if (pend.ids().isEmpty()) return null; // cấp 100 nhưng chưa có đạo -> không có Thần Lõi để hiện
         set(p, s.withPending(pend));
         return pend;
@@ -116,7 +116,7 @@ public final class CoreService {
             return true;
         }
         ResourceLocation core = index == 3 ? pend.fourth() : pend.ids().get(Math.min(index, pend.ids().size() - 1));
-        int tier = index == 3 ? pend.fourthTier() : pend.tier();
+        int tier = than ? CoreTier.KIM.ordinal() : index == 3 ? pend.fourthTier() : pend.tier();
         set(p, s.withPicked(new CoreSlots.Picked(m, core, tier)));
         CultivationService.unlockMilestone(p);
         com.hukhong.stats.StatService.refresh(p);
@@ -136,12 +136,18 @@ public final class CoreService {
             double r = 0.8 + ring * 0.6, y = p.getY() + 0.1 + ring * 0.9;
             for (int i = 0; i < 40; i++) {
                 double a = i * Math.PI * 2 / 40;
-                sl.sendParticles(dust, p.getX() + Math.cos(a) * r, y, p.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
+                DustParticleOptions d = dust;
+                if (t.rainbow()) { // phẩm cầu vồng: mỗi hạt một sắc (Thất Thải 7 sắc, Cửu Thải 9 sắc)
+                    int bands = t == CoreTier.CUU_THAI ? 9 : 7;
+                    int rgb = net.minecraft.util.Mth.hsvToRgb((i % bands) / (float) bands, 0.85f, 1f);
+                    d = new DustParticleOptions(new Vector3f(((rgb >> 16) & 255) / 255f, ((rgb >> 8) & 255) / 255f, (rgb & 255) / 255f), 1.4f);
+                }
+                sl.sendParticles(d, p.getX() + Math.cos(a) * r, y, p.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
             }
         }
         sl.sendParticles(com.hukhong.vfx.ModParticles.LINH_KHI.get(), p.getX(), p.getY() + 1, p.getZ(), 30, 0.4, 0.8, 0.4, 0.05);
         com.hukhong.vfx.ModSounds.play(sl, p, com.hukhong.vfx.ModSounds.CORE_RING, 1f, 1.0f);
-        sl.playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1f, 0.6f + t.ordinal() * 0.15f);
+        sl.playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1f, 0.6f + Math.min(t.ordinal(), 6) * 0.15f);
     }
 
     // ---------------------------------------------------------------- attribute

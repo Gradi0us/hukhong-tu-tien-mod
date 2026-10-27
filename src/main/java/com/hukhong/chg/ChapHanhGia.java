@@ -125,6 +125,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
     }
 
     public int idx() { return idx; }
+    @Override public Component getDisplayName() { return com.hukhong.entity.BossLevel.tag(super.getDisplayName(), def.level()); }
     public int phase() { return entityData.get(PHASE); }
     public boolean descending() { return entityData.get(DESCEND) > 0; }
 
@@ -159,7 +160,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
     }
 
     private Component barName() {
-        return Component.translatable("hukhong.chg.bar", Component.translatable("entity.hukhong.chg_" + idx), phase());
+        return Component.translatable("hukhong.chg.bar", com.hukhong.entity.BossLevel.tag(Component.translatable("entity.hukhong.chg_" + idx), def.level()), phase());
     }
 
     // ------------------------------------------------------------ giáng lâm
@@ -176,6 +177,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
     @Override public void tick() {
         super.tick();
         if (level() instanceof ServerLevel sl && descending()) descentTick(sl);
+        else if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
         else if (level().isClientSide && descending()) {
             for (int i = 0; i < 3; i++)
                 level().addParticle(ParticleTypes.END_ROD, getX() + random.nextGaussian() * 0.6, getY() + random.nextDouble() * 12,
@@ -249,18 +251,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
                     getX(), getY() + getBbHeight() * 0.5, getZ(), 6, 1.2, 1.2, 1.2, 0.02);
 
         LivingEntity t = getTarget();
-        if (pending >= 0) {
-            getNavigation().stop();
-            if (t != null) getLookControl().setLookAt(t, 30, 30);
-            Skill k = def.skills()[pending];
-            if (windup % 2 == 0) telegraph(sl, k);
-            if (--windup <= 0) {
-                fire(sl, k);
-                pending = -1;
-                skillCd = ChgKit.cooldown(def, phase());
-            }
-            return;
-        }
+        if (pending >= 0) { stepWindup(sl); return; }
         if (skillCd > 0) { skillCd--; return; }
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
         int n = ChgKit.skillsAvailable(def, phase());
@@ -275,6 +266,20 @@ public class ChapHanhGia extends Monster implements GeoEntity {
         pendingAt = t.position();
         triggerAnim("skill", k.anim());
         playSound(SoundEvents.WARDEN_ATTACK_IMPACT, 1.5f, 0.6f);
+    }
+
+    /** isImmobile() (windup > 0) làm LivingEntity.aiStep bỏ qua customServerAiStep => windup phải giảm ở tick(), không thì kẹt vĩnh viễn. */
+    private void stepWindup(ServerLevel sl) {
+        LivingEntity t = getTarget();
+        getNavigation().stop();
+        if (t != null) getLookControl().setLookAt(t, 30, 30);
+        Skill k = def.skills()[pending];
+        if (windup % 2 == 0) telegraph(sl, k);
+        if (--windup <= 0) {
+            fire(sl, k);
+            pending = -1;
+            skillCd = ChgKit.cooldown(def, phase());
+        }
     }
 
     private int minionCount(ServerLevel sl) {
@@ -467,6 +472,8 @@ public class ChapHanhGia extends Monster implements GeoEntity {
         super.dropCustomDeathLoot(sl, src, recentlyHit);
         drop(sl, new ItemStack(ChgRegistry.CORES.get(idx - 1).get(), 1 + (random.nextFloat() < 0.3f ? 1 : 0)));
         drop(sl, new ItemStack(com.hukhong.item.ModItems.HON_TINH.get(), 12 + 4 * idx + random.nextInt(6)));
+        drop(sl, com.hukhong.skillbook.SkillBookRewards.stack(new java.util.Random(random.nextLong()),
+                com.hukhong.skillbook.SkillBookRewards.chgGrade(idx, random.nextDouble()), com.hukhong.skillbook.SkillBookRewards.killerPaths(src)));
     }
 
     private void drop(ServerLevel sl, ItemStack st) { sl.addFreshEntity(new ItemEntity(sl, getX(), getY() + 0.5, getZ(), st)); }

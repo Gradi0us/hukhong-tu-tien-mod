@@ -20,6 +20,9 @@ public record SectDef(String id, Tier tier, int ax, int az, int minLevel, Aptitu
             new SectDef("van_tuong_thanh_tong", Tier.THIEN, -6000, 7200, 30, Aptitude.A, 40, Set.of(), true, false, true, false),
             new SectDef("huyet_anh_ma_mon", Tier.NHAN, -3200, -3000, 10, Aptitude.C, 55, Set.of(Path.MA), false, false, true, true));
 
+    /** The loai cau truc: data/hukhong/structure/sect/ hoac config/hukhong/structures/sect/. */
+    public String category() { return "sect"; }
+
     public String nameKey() { return "hukhong.sect.n." + id; }
 
     public static SectDef byId(String id) {

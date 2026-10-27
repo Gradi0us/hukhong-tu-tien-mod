@@ -4,6 +4,6 @@
   "path": "any",
   "min_tier": "bach",
   "passives": [
-    {"attribute": "hukhong:defense", "operation": "add_value", "values": [1, 1.5, 2.5, 4, 6]}
+    {"attribute": "hukhong:defense", "operation": "add_value", "values": [1, 1.5, 2.5, 4, 6, 9, 13.5]}
   ]
 }

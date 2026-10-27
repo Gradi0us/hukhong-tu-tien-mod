@@ -8,6 +8,8 @@ import com.hukhong.gates.Resources;
 import com.hukhong.honcot.HonCotMath;
 import com.hukhong.honcot.HonCotService;
 import com.hukhong.stats.StatService;
+import com.hukhong.vfx.Fx;
+import com.hukhong.vfx.FxType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -95,6 +97,10 @@ final class BanMenhSkillEffects {
         }
         Vec3 to = from.add(dir.scale(range));
         SkillEffects.beam(lv, p.getEyePosition().subtract(0, 0.3, 0), to.add(0, 1, 0));
+        Fx.play(lv, FxType.BEAM, from.add(0, 1.1, 0), dir, (float) range, 0xD8F6FF, 10);
+        Fx.play(lv, FxType.SWORD_CRESCENT, from.add(0, 1.2, 0).add(dir.scale(0.8)), dir, (float) (range / 6), Fx.CYAN, 13);
+        Fx.play(lv, FxType.SWORD_CRESCENT, from.add(0, 1.2, 0).add(dir.scale(2.5)), dir, (float) (range / 8), 0xFFFFFF, 11);
+        Fx.play(lv, FxType.SHOCKWAVE, to, Vec3.ZERO, 3f, Fx.CYAN, 14);
         SkillEffects.helixBeam(lv, p.position().add(0, 1, 0), to.add(0, 1, 0), 0.5, Math.max(2, range / 2), 36, ParticleTypes.END_ROD);
         SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP, 1f, 0.8f);
         SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.TRIDENT_RIPTIDE_3.value(), 0.6f, 1.6f);
@@ -118,6 +124,9 @@ final class BanMenhSkillEffects {
         SkillEffects.beam(lv, from, end);
         SkillEffects.helixBeam(lv, from, end, 0.4, Math.max(2, from.distanceTo(end) / 2), 32, ParticleTypes.ENCHANT);
         SkillEffects.ring(lv, end, 1.0, 14, ParticleTypes.END_ROD);
+        Fx.play(lv, FxType.BEAM, from, end.subtract(from), (float) from.distanceTo(end), Fx.GOLD);
+        Fx.play(lv, FxType.LIGHT_PILLAR, end.subtract(0, 0.9, 0), Vec3.ZERO, 0.6f, Fx.GOLD, 26);
+        Fx.play(lv, FxType.TALISMAN_CIRCLE, end.subtract(0, 0.9, 0), Vec3.ZERO, 2.2f, Fx.GOLD, 36);
         SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_THUNDER, 0.4f, 1.8f);
         SkillEffects.layer(lv, p.position(), net.minecraft.sounds.SoundEvents.BEACON_POWER_SELECT, 0.9f, 1.5f);
     }
@@ -131,6 +140,10 @@ final class BanMenhSkillEffects {
             t.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, Math.min(80, stun), 6));
             t.setDeltaMovement(t.getDeltaMovement().add(0, 0.4, 0));
         }
+        Fx.play(lv, FxType.GROUND_CRACK, p.position(), Vec3.ZERO, (float) r, Fx.ORANGE, 60);
+        Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, (float) r, Fx.ORANGE, 20);
+        Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, (float) (r * 0.6), 0xFFFFFF, 16);
+        Fx.play(lv, FxType.SCREEN_TINT, p.position(), Vec3.ZERO, 0.2f, 0xFFA040, 10);
         SkillEffects.ring(lv, p.position().add(0, 0.2, 0), r, 48, ParticleTypes.CAMPFIRE_COSY_SMOKE);
         SkillEffects.ringLater(lv, p.position().add(0, 0.2, 0), r * 0.6, 28, 3, ParticleTypes.LAVA);
         for (int i = 0; i < 10; i++) { // khe nứt
@@ -156,6 +169,8 @@ final class BanMenhSkillEffects {
                     healed += dmg * 0.5f;
                 }
                 if (healed > 0) p.heal(Math.min(healed, p.getMaxHealth() * 0.05f));
+                Fx.play(lv, FxType.BLOOD_VORTEX, c, Vec3.ZERO, (float) r, Fx.RED, 24);
+                Fx.play(lv, FxType.SHOCKWAVE, c, Vec3.ZERO, (float) r, Fx.RED, 14);
                 SkillEffects.ring(lv, c.add(0, 0.2, 0), r, 36, ParticleTypes.CRIMSON_SPORE);
                 SkillEffects.spiral(lv, c, r, 0.5, 2.5, 2, 24, ParticleTypes.DAMAGE_INDICATOR);
                 SkillEffects.layer(lv, c, net.minecraft.sounds.SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_INSIDE, 0.6f, 0.6f);
@@ -169,6 +184,9 @@ final class BanMenhSkillEffects {
         float dmg = (float) (coef * Math.max(StatService.attackPower(p), StatService.spellPower(p)));
         double r = 5 + n;
         for (LivingEntity t : around(lv, p, p.position(), r)) DamageRules.hurtBySkill(p, t, dmg);
+        Fx.play(lv, FxType.TALISMAN_CIRCLE, p.position(), Vec3.ZERO, (float) r, 0x60E0FF, 56);
+        Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, (float) r, 0x60E0FF, 20);
+        Fx.play(lv, FxType.DEMON_SILHOUETTE, p.position(), Vec3.ZERO, 1.6f, 0x40C0E0, 44);
         SkillEffects.ring(lv, p.position().add(0, 0.2, 0), r, 48, ParticleTypes.SOUL_FIRE_FLAME);
         SkillEffects.ringLater(lv, p.position().add(0, 0.2, 0), r * 0.5, 24, 4, ParticleTypes.SOUL);
         SkillEffects.spiral(lv, p.position(), r * 0.4, 0.3, 4, 3, 40, ParticleTypes.SOUL_FIRE_FLAME);

@@ -29,6 +29,7 @@ public final class DamageRules {
     public static void hurtBySkill(ServerPlayer caster, LivingEntity target, float amount) {
         skillActive = true;
         try {
+            amount = com.hukhong.skillbook.SkillBookRuntime.scale(caster, amount); // hệ số Cường Hóa kỹ năng nền
             target.hurt(caster.damageSources().indirectMagic(caster, caster), amount);
         } finally {
             skillActive = false;

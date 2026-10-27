@@ -13,6 +13,7 @@ import com.hukhong.honcot.HonCotMath;
 import com.hukhong.pathrules.PathRules;
 import com.hukhong.skill.BanMenhSkill;
 import com.hukhong.skill.Skill;
+import com.hukhong.skillbook.SkillBookMath;
 import com.hukhong.stats.StatService;
 import org.junit.jupiter.api.Test;
 
@@ -81,32 +82,34 @@ class BalanceSimTest {
     /** Danh sách cast gây sát thương lên 1 mục tiêu (đã nhân Bạo Kích). huMob: Phán Quyết x2. */
     static List<Cast> casts(Player pl, boolean huMob) {
         List<Cast> c = new ArrayList<>();
-        double A = pl.power(), cm = pl.critMul();
+        // Cường Hóa kỹ năng: người chơi điển hình đã nâng kỹ năng nền lên SkillBookMath.typicalLevel(cấp tu): +8% sát thương/cấp, -3% hồi chiêu/cấp
+        int sl = SkillBookMath.typicalLevel(pl.lv());
+        double A0 = pl.power(), A = A0 * SkillBookMath.dmgMult(sl), cm = pl.critMul();
         switch (pl.path()) {
             case KIEM -> {
-                c.add(cast("Q", Skill.KIEM_1, Skill.KIEM_1_COEF * A * cm));
-                c.add(cast("E", Skill.KIEM_2, 3 * Skill.KIEM_2_COEF * A * cm));
-                c.add(cast("T", Skill.KIEM_ULT, 8 * Skill.KIEM_ULT_COEF * A * cm));
+                c.add(cast("Q", Skill.KIEM_1, Skill.KIEM_1_COEF * A * cm, sl));
+                c.add(cast("E", Skill.KIEM_2, 3 * Skill.KIEM_2_COEF * A * cm, sl));
+                c.add(cast("T", Skill.KIEM_ULT, 8 * Skill.KIEM_ULT_COEF * A * cm, sl));
             }
             case MA -> {
-                c.add(cast("Q", Skill.MA_1, Skill.MA_1_COEF * A * cm));
-                c.add(cast("E", Skill.MA_2, 0));       // Ma Khí Hộ Thể (lá chắn)
-                c.add(cast("T", Skill.MA_ULT, 0));     // +40% Công 12s: quy đổi ở fight()
+                c.add(cast("Q", Skill.MA_1, Skill.MA_1_COEF * A * cm, sl));
+                c.add(cast("E", Skill.MA_2, 0, sl));       // Ma Khí Hộ Thể (lá chắn)
+                c.add(cast("T", Skill.MA_ULT, 0, sl));     // +40% Công 12s: quy đổi ở fight()
             }
             case DAO -> {
-                c.add(cast("Q", Skill.DAO_1, Skill.DAO_1_COEF * A * cm));
-                c.add(cast("E", Skill.DAO_2, 0));
-                c.add(cast("T", Skill.DAO_ULT, 0));
+                c.add(cast("Q", Skill.DAO_1, Skill.DAO_1_COEF * A * cm, sl));
+                c.add(cast("E", Skill.DAO_2, 0, sl));
+                c.add(cast("T", Skill.DAO_ULT, 0, sl));
             }
             case THE -> {
-                c.add(cast("Q", Skill.THE_1, Skill.THE_1_COEF * A * cm));
-                c.add(cast("E", Skill.THE_2, 0));
-                c.add(cast("T", Skill.THE_ULT, 0));
+                c.add(cast("Q", Skill.THE_1, Skill.THE_1_COEF * A * cm, sl));
+                c.add(cast("E", Skill.THE_2, 0, sl));
+                c.add(cast("T", Skill.THE_ULT, 0, sl));
             }
         }
         BanMenhSkill r = BanMenhSkill.of(pl.path(), pl.lv());
         if (r != null) {
-            double k = r.coef(pl.lv()) * A * cm;
+            double k = r.coef(pl.lv()) * A0 * cm; // Bản Mệnh không có Cường Hóa
             switch (r) {
                 case NHAT_KIEM, DIA_LIET -> {}
                 case PHAN_XET -> k *= huMob ? 2.0 : 1.0;
@@ -117,7 +120,9 @@ class BalanceSimTest {
         return c;
     }
 
-    static Cast cast(String n, Skill s, double dmg) { return new Cast(n, dmg, s.cooldownTicks / 20.0, s.cost); }
+    static Cast cast(String n, Skill s, double dmg, int skillLevel) {
+        return new Cast(n, dmg, SkillBookMath.cooldown(s.cooldownTicks, skillLevel) / 20.0, s.cost);
+    }
 
     static double meleeHit(Player pl) {
         return switch (pl.path()) {
@@ -157,7 +162,7 @@ class BalanceSimTest {
         double total = 0;
         for (Cast c : cs) total += (1 + Math.floor(T * SKILL_UPTIME / c.cd())) * (c.cost() > 0 ? f : 1) * c.dmg();
         double skillDps = total / T;
-        if (pl.path() == Path.MA) skillDps *= 1 + 0.4 * Math.min(1, 12.0 / (Skill.MA_ULT.cooldownTicks / 20.0)); // Ma Thần +40% Công 12s/CD
+        if (pl.path() == Path.MA) skillDps *= 1 + 0.4 * Math.min(1, 12.0 / (SkillBookMath.cooldown(Skill.MA_ULT.cooldownTicks, SkillBookMath.typicalLevel(pl.lv())) / 20.0)); // Ma Thần +40% Công 12s/CD
         double mh = meleeHit(pl);
         // ehp: sát thương thực bị chia ehp trước giáp (HuHoa.ehpScale), rồi quy lại HP thiết kế
         double melee = mh * armorFactor(armor, mh / ehp) * meleeRate(pl.path()) * MELEE_UPTIME;
@@ -283,7 +288,7 @@ class BalanceSimTest {
         md.append("**Last Updated**: 2026-10-27 - sinh tự động bởi `BalanceSimTest` (chạy `./gradlew test` để làm mới)\n\n");
         md.append("Giả định: tư chất B, 1 đạo, solo, Lõi/Hồn Cốt điển hình theo cấp (CORE_EFF=").append(CORE_EFF)
                 .append("), kỹ năng bỏ qua giáp quái, cận chiến chịu giáp vanilla, uptime kỹ năng ").append(SKILL_UPTIME)
-                .append(" / cận chiến ").append(MELEE_UPTIME).append(". Quái Hư Hóa cùng cấp (cấp quái = cấp người).\n")
+                .append(" / cận chiến ").append(MELEE_UPTIME).append(". Quái Hư Hóa cùng cấp (cấp quái = cấp người). Kỹ năng nền ở cấp Cường Hóa điển hình (SkillBookMath.typicalLevel; +8% sát thương, -3% hồi chiêu mỗi cấp).\n")
                 .append("HP thiết kế vượt trần 1024 vanilla được quy đổi qua `HuHoa.ehpScale`.\n\n");
 
         List<String> fails = new ArrayList<>();
@@ -356,7 +361,8 @@ class BalanceSimTest {
             double spread = Math.max(Math.abs(r[0][0] / mean - 1), Math.max(Math.abs(r[2][0] / mean - 1), Math.abs(r[3][0] / mean - 1)));
             md.append(String.format("| %d | %.0f (%.2f) | %.0f (%.2f) | %.0f | %.0f | %.2f | %.0f%% |%n", lv, r[0][0], r[0][1], r[1][0], r[1][1], r[2][0], r[3][0], r[1][0] / mean, spread * 100));
             if (lv >= 10 && spread > 0.15) fails.add("DPS spread " + lv + " = " + spread);
-            if (lv >= 10 && (r[1][0] / mean < 0.6 || r[1][0] / mean > 1.0)) fails.add("DPS Dao/mean " + lv + " = " + r[1][0] / mean);
+            // Đạo: 100% sát thương là kỹ năng nên hưởng Cường Hóa nhiều nhất (cận chiến Kiếm/Thể/Ma không nhân) -> cho phép tới +5% so với trung bình
+            if (lv >= 10 && (r[1][0] / mean < 0.6 || r[1][0] / mean > 1.05)) fails.add("DPS Dao/mean " + lv + " = " + r[1][0] / mean);
         }
 
         // --- 5. Bí Cảnh

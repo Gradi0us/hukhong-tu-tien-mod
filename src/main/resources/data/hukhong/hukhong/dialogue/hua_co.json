@@ -55,6 +55,10 @@
        "type": "give_item",
        "item": "hukhong:khai_mach_dan",
        "count": 1
+      },
+      {
+       "type": "give_skill",
+       "skill": "random:HUYEN"
       }
      ],
      "next": "ch3_end"

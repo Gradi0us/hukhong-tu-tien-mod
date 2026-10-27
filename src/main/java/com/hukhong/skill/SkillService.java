@@ -3,7 +3,14 @@ package com.hukhong.skill;
 import com.hukhong.HuKhong;
 import com.hukhong.core.CultivationData;
 import com.hukhong.core.ModAttachments;
+import com.hukhong.core.Path;
 import com.hukhong.gates.Resources;
+import com.hukhong.skillbook.BookSkillEffects;
+import com.hukhong.skillbook.SkillBook;
+import com.hukhong.skillbook.SkillBookData;
+import com.hukhong.skillbook.SkillBookMath;
+import com.hukhong.skillbook.SkillBookRuntime;
+import com.hukhong.skillbook.SkillBookService;
 import com.hukhong.network.SkillSyncPayload;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,25 +62,36 @@ public final class SkillService {
         SkillState st = state(p);
         if (!st.stance) return; // server chỉ nhận cast khi thế bật
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
-        if (slot == 2) { // phím R: Bản Mệnh / Vạn Cốt Cộng Minh
+        Path page = Skill.skillPath(d, st.page);
+        SkillBookData bd = SkillBookService.data(p);
+        SkillBook.Resolved r = SkillBook.resolve(bd, page, slot, d.level());
+        // phím R: Bản Mệnh / Vạn Cốt Cộng Minh, trừ khi có kỹ năng gán thủ công và chưa mở Bản Mệnh
+        if (slot == 2 && r == null) {
+            SkillBookRuntime.clear(p);
             BanMenhSkillEffects.castR(p, st);
             sync(p);
             return;
         }
-        Skill s = Skill.of(Skill.skillPath(d, st.page), slot);
-        if (s == null) return;
+        if (r == null) return;
         if (com.hukhong.pathrules.MaRules.isLost(p)) { // Mất Kiểm Soát: khóa phím kỹ năng
             p.displayClientMessage(Component.translatable("hukhong.ma.lost_control"), true);
             return;
         }
+        int lvl = bd.level(r.id());
+        if (r.book() != null && d.level() < r.book().minLevel()) return;
         long now = p.level().getGameTime();
         if (st.cooldownEnd[slot] > now) return;
-        if (!Resources.tryConsume(p, s.cost, com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
+        if (!Resources.tryConsume(p, r.cost(), com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
             return;
         }
-        SkillEffects.run(s, p);
-        st.cooldownEnd[slot] = now + s.cooldownTicks;
+        if (r.base() != null) {
+            SkillBookRuntime.begin(p, SkillBookMath.dmgMult(lvl), SkillBookRuntime.windowTicks(r.base()));
+            SkillEffects.run(r.base(), p);
+        } else {
+            BookSkillEffects.run(r.book(), p, lvl);
+        }
+        st.cooldownEnd[slot] = now + SkillBookMath.cooldown(r.baseCooldown(), lvl);
         st.lastCombat = now;
         sync(p);
     }
@@ -81,11 +99,15 @@ public final class SkillService {
     public static void sync(ServerPlayer p) {
         SkillState st = state(p);
         long now = p.level().getGameTime();
+        Path page = Skill.skillPath(p.getData(ModAttachments.CULTIVATION), st.page);
+        SkillBookData bd = SkillBookService.data(p);
+        int plv = p.getData(ModAttachments.CULTIVATION).level();
         List<Integer> rem = new ArrayList<>(4), tot = new ArrayList<>(4);
         for (int i = 0; i < 4; i++) {
-            Skill s = Skill.of(Skill.skillPath(p.getData(ModAttachments.CULTIVATION), st.page), i);
+            SkillBook.Resolved r = SkillBook.resolve(bd, page, i, plv);
             rem.add((int) Math.max(0, st.cooldownEnd[i] - now));
-            tot.add(i == 2 ? Math.max(1, st.rTotal) : s == null ? 1 : s.cooldownTicks);
+            tot.add(i == 2 && r == null ? Math.max(1, st.rTotal) : r == null ? 1
+                    : SkillBookMath.cooldown(r.baseCooldown(), bd.level(r.id())));
         }
         PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot, st.page));
     }

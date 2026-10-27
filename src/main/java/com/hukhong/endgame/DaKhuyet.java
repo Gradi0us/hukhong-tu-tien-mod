@@ -42,7 +42,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public class DaKhuyet extends Monster implements GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final ServerBossEvent bar = new ServerBossEvent(Component.translatable("entity.hukhong.da_khuyet"),
+    private final ServerBossEvent bar = new ServerBossEvent(com.hukhong.entity.BossLevel.tag(Component.translatable("entity.hukhong.da_khuyet"), EndgameKit.BOSS_LEVEL),
             BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.PROGRESS);
     private int skillCd = 80, windup, pending = -1;
 
@@ -69,6 +69,7 @@ public class DaKhuyet extends Monster implements GeoEntity {
     }
 
     @Override public boolean isPushable() { return false; }
+    @Override public Component getDisplayName() { return com.hukhong.entity.BossLevel.tag(super.getDisplayName(), EndgameKit.BOSS_LEVEL); }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
     @Override public boolean isImmobile() { return super.isImmobile() || windup > 0; }
@@ -87,20 +88,27 @@ public class DaKhuyet extends Monster implements GeoEntity {
         sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 40, 1, 1.5, 1, 0.05);
     }
 
+    /** isImmobile() (windup > 0) làm LivingEntity.aiStep bỏ qua customServerAiStep => windup phải giảm ở tick(). */
+    @Override public void tick() {
+        super.tick();
+        if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
+    }
+
+    private void stepWindup(ServerLevel sl) {
+        getNavigation().stop();
+        if (windup % 4 == 0) sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 6, 3, 1.5, 3, 0.02);
+        if (--windup <= 0) {
+            fire(sl, pending);
+            pending = -1;
+            skillCd = 110;
+        }
+    }
+
     @Override protected void customServerAiStep() {
         super.customServerAiStep();
         ServerLevel sl = (ServerLevel) level();
         bar.setProgress(getHealth() / getMaxHealth());
-        if (pending >= 0) {
-            getNavigation().stop();
-            if (windup % 4 == 0) sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 6, 3, 1.5, 3, 0.02);
-            if (--windup <= 0) {
-                fire(sl, pending);
-                pending = -1;
-                skillCd = 110;
-            }
-            return;
-        }
+        if (pending >= 0) { stepWindup(sl); return; }
         if (skillCd > 0) { skillCd--; return; }
         LivingEntity t = getTarget();
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;

@@ -83,7 +83,7 @@ public class SuDo extends Monster implements GeoEntity {
         getAttribute(Attributes.MAX_HEALTH).setBaseValue(40 + lv * 6.0);
         getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue((4 + lv * 0.25) * (variant == 0 ? 1.3 : 0.9));
         getAttribute(Attributes.ARMOR).setBaseValue(2 + lv * 0.2);
-        setCustomName(Component.translatable(getType().getDescriptionId()).append(" Lv." + lv));
+        setCustomName(com.hukhong.entity.BossLevel.tag(Component.translatable(getType().getDescriptionId()), lv));
         setCustomNameVisible(true);
         bar.setName(getCustomName());
     }
@@ -180,6 +180,10 @@ public class SuDo extends Monster implements GeoEntity {
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recentlyHit) {
         super.dropCustomDeathLoot(sl, src, recentlyHit);
         if (!recentlyHit) return;
+        if (random.nextDouble() < com.hukhong.skillbook.SkillBookRewards.suDoChance(suLevel()))
+            sl.addFreshEntity(new ItemEntity(sl, getX(), getY() + 0.5, getZ(), com.hukhong.skillbook.SkillBookRewards.stack(
+                    new java.util.Random(random.nextLong()), com.hukhong.skillbook.SkillBookRewards.suDoGrade(suLevel(), random.nextDouble()),
+                    com.hukhong.skillbook.SkillBookRewards.killerPaths(src))));
         StoryDocs.Doc d = StoryDocs.roll(random, suLevel());
         if (d != null) {
             sl.addFreshEntity(new ItemEntity(sl, getX(), getY() + 0.5, getZ(), new ItemStack(StoryRegistry.DOC_ITEMS.get(d.id()).get())));

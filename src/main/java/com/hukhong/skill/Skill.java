@@ -45,6 +45,13 @@ public enum Skill {
         return null;
     }
 
+    /** Tra kỹ năng nền theo id icon (kiem_1, ma_ult...) hoặc null. */
+    public static Skill byId(String id) {
+        if (id == null) return null;
+        for (Skill s : values()) if (s.icon.equals(id)) return s;
+        return null;
+    }
+
     /** Đạo có bộ kỹ năng dùng cho phím (trang đang dùng theo phím V): Kiếm, Đạo, Thể, Ma. */
     public static Path skillPath(CultivationData d, int page) { return SkillPages.active(d, page); }
 }

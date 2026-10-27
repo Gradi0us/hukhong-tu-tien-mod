@@ -28,6 +28,8 @@ public final class EndgameKit {
     /** Chỉ số gốc boss cuối (Bước 27: BalanceSimTest khóa TTK theo các hằng này). */
     public static final double BOSS_HP = 510000, BOSS_DMG = 60, BOSS_ARMOR = 10;
     public static final int PHASES = 4;
+    /** Cấp hiển thị của boss cuối + Dạ Khuyết (tên / thanh máu). */
+    public static final int BOSS_LEVEL = 100;
     public static final double[] PHASE_DMG = {1.0, 1.15, 1.3, 1.5};
     public static final double[] PHASE_SPEED = {1.0, 1.05, 1.1, 1.2};
     public static final double[] PHASE_CD = {1.0, 0.85, 0.7, 0.55};

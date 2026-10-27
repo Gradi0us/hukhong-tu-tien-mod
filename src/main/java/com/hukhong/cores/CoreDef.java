@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Định nghĩa Lõi (datapack: data/hukhong/hukhong/core/*.json).
- * path: "any" hoặc id đạo (kiem/dao/the/ma). values: giá trị theo phẩm Bạch/Hoàng/Tử/Hắc/Hồng (Kim dùng giá trị cuối).
+ * path: "any" hoặc id đạo (kiem/dao/the/ma). values: giá trị theo phẩm Bạch/Hoàng/Tử/Hắc/Hồng/Thất Thải/Cửu Thải (Kim dùng giá trị cuối).
  * Lưu ý: mỗi Lõi chỉ nên có tối đa 1 bị động trên cùng một attribute.
  */
 public record CoreDef(String nameKey, String system, String path, CoreTier minTier, List<Passive> passives) {
@@ -29,7 +29,10 @@ public record CoreDef(String nameKey, String system, String path, CoreTier minTi
 
         public double valueAt(CoreTier t) {
             if (values.isEmpty()) return 0;
-            return values.get(Math.min(t.ordinal(), values.size() - 1));
+            int i = t.ordinal();
+            if (i < values.size()) return values.get(i);
+            if (t.rainbow() && values.size() >= 5) return values.get(4) * t.statMul; // JSON cũ chỉ có 5 ô: Hồng x hệ số phẩm
+            return values.get(values.size() - 1);
         }
     }
 

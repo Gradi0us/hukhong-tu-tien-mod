@@ -22,5 +22,9 @@ public final class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> KIEM_KHI = PARTICLES.register("kiem_khi", () -> new SimpleParticleType(false));
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MA_KHI = PARTICLES.register("ma_khi", () -> new SimpleParticleType(false));
 
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FX_GLOW = PARTICLES.register("fx_glow", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FX_STAR = PARTICLES.register("fx_star", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FX_SHARD = PARTICLES.register("fx_shard", () -> new SimpleParticleType(false));
+
     public static void register(IEventBus bus) { PARTICLES.register(bus); ModSounds.SOUNDS.register(bus); }
 }

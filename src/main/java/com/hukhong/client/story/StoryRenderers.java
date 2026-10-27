@@ -19,7 +19,7 @@ public final class StoryRenderers {
     public static void register(EntityRenderersEvent.RegisterRenderers e) {
         for (int i = 0; i < 3; i++) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, SuDo.IDS[i]);
-            e.registerEntityRenderer(StoryRegistry.variant(i), c -> new GeoEntityRenderer<SuDo>(c, new DefaultedEntityGeoModel<>(id)));
+            e.registerEntityRenderer(StoryRegistry.variant(i), c -> com.hukhong.client.renderer.HuRenderers.glow(new GeoEntityRenderer<SuDo>(c, new DefaultedEntityGeoModel<>(id))));
         }
     }
 }

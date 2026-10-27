@@ -144,6 +144,7 @@ public final class SectService {
         ItemStack reward = SectMath.Q_KILL.equals(kind) ? new ItemStack(AlchemyRegistry.CHI_HUYET_DAN.get(), finalStep ? 4 : 2)
                 : new ItemStack(AlchemyRegistry.HOI_XUAN_DAN.get(), finalStep ? 3 : 1);
         if (!sp.getInventory().add(reward)) sp.drop(reward, false);
+        com.hukhong.skillbook.SkillBookRewards.give(sp, com.hukhong.skillbook.SkillBookRewards.questReward(sp, def.tier().ordinal(), finalStep));
         sp.sendSystemMessage(Component.translatable(ch > 0 ? "hukhong.sect.quest_done" : "hukhong.sect.quest_done_capped", ch));
         if (finalStep) sp.sendSystemMessage(Component.translatable("hukhong.sect.chain_done", Component.translatable(def.nameKey())));
         afterRankChange(sp, n, before);

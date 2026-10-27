@@ -109,6 +109,10 @@
       {
        "type": "exp",
        "amount": 150
+      },
+      {
+       "type": "give_skill",
+       "skill": "random:PHAM"
       }
      ],
      "next": "ch1_end"
@@ -165,6 +169,10 @@
       {
        "type": "exp",
        "amount": 1200
+      },
+      {
+       "type": "give_skill",
+       "skill": "random:DIA"
       }
      ],
      "next": "ch4_trust"
@@ -187,6 +195,10 @@
       {
        "type": "exp",
        "amount": 1200
+      },
+      {
+       "type": "give_skill",
+       "skill": "random:DIA"
       }
      ],
      "next": "ch4_doubt"
@@ -229,6 +241,10 @@
       {
        "type": "exp",
        "amount": 5000
+      },
+      {
+       "type": "give_skill",
+       "skill": "random:THIEN"
       }
      ],
      "next": "ch5_end"

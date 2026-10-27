@@ -18,6 +18,8 @@ public final class BiCanhLoot {
         if (e.kind() == BiCanhRewards.Kind.HON_COT)
             return HonCotRegistry.stack(HonCotMath.pickBone(r.nextDouble()), e.sub(),
                     HonCotMath.rollQuality(r.nextDouble(), r.nextDouble()));
+        if (e.kind() == BiCanhRewards.Kind.SKILL_SCROLL)
+            return com.hukhong.skillbook.SkillBookRewards.stack(r, com.hukhong.skillbook.SkillGrade.of(e.sub()), null);
         return new ItemStack(item(e), e.count());
     }
 

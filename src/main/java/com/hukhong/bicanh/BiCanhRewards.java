@@ -8,9 +8,9 @@ import java.util.Random;
 public final class BiCanhRewards {
     private BiCanhRewards() {}
 
-    public enum Kind { HON_TINH, LINH_THAO, HUYET_THAM, HOA_LIEN, THANH_DIEP, HOI_XUAN_DAN, PHA_CANH_DAN, HON_COT }
+    public enum Kind { HON_TINH, LINH_THAO, HUYET_THAM, HOA_LIEN, THANH_DIEP, HOI_XUAN_DAN, PHA_CANH_DAN, HON_COT, SKILL_SCROLL }
 
-    /** sub: PHA_CANH_DAN = chỉ số đan (0..5); HON_COT = bậc Hồn Cốt (HonCotMath.TIER_*). */
+    /** sub: PHA_CANH_DAN = chỉ số đan (0..5); HON_COT = bậc Hồn Cốt (HonCotMath.TIER_*); SKILL_SCROLL = phẩm bí tịch (SkillGrade ordinal). */
     public record Entry(Kind kind, int count, int sub) {}
 
     public static final Kind[] HERBS = {Kind.LINH_THAO, Kind.HUYET_THAM, Kind.HOA_LIEN, Kind.THANH_DIEP};
@@ -45,6 +45,8 @@ public final class BiCanhRewards {
         out.add(new Entry(Kind.HOI_XUAN_DAN, between(r, 1, 2), 0));
         if (r.nextDouble() < pillChance(t)) out.add(new Entry(Kind.PHA_CANH_DAN, 1, Math.min(PILL_KINDS - 1, i + r.nextInt(2))));
         if (r.nextDouble() < boneChance(t)) out.add(new Entry(Kind.HON_COT, 1, boneTier(t, r)));
+        if (r.nextDouble() < com.hukhong.skillbook.SkillBookRewards.biCanhChance(i))
+            out.add(new Entry(Kind.SKILL_SCROLL, 1, com.hukhong.skillbook.SkillBookRewards.biCanhGrade(i, r.nextDouble()).ordinal()));
         return out;
     }
 }

@@ -7,13 +7,7 @@
     {
       "attribute": "hukhong:resource_regen",
       "operation": "add_multiplied_base",
-      "values": [
-        0.03,
-        0.05,
-        0.08,
-        0.12,
-        0.18
-      ]
+      "values": [0.03, 0.05, 0.08, 0.12, 0.18, 0.27, 0.405]
     }
   ]
 }

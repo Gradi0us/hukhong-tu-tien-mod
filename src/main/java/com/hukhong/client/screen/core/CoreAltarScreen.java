@@ -133,7 +133,7 @@ public class CoreAltarScreen extends Screen implements MenuAccess<CoreAltarMenu>
             CoreTier t = i == 3 ? (resIndex == 3 ? resTier : CoreTier.BACH) : CoreTier.of(menu.tier);
             if (selected == i) {
                 float pulse = 0.5f + 0.5f * Mth.sin(time * 0.3f);
-                int c = (i == 3 && !done) ? 0xB0B0B0 : t.rgb;
+                int c = (i == 3 && !done) ? 0xB0B0B0 : CoreCardRenderer.glowRgb(t);
                 g.fill(x - 3, y - 3 + lift, x + CW + 3, y + CH + 3 + lift, ((int) (90 + 120 * pulse) << 24) | c);
             }
             boolean back = i == 3;

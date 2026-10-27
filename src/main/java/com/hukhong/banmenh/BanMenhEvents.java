@@ -173,4 +173,75 @@ public final class BanMenhEvents {
         e.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
         if (pl instanceof ServerPlayer sp && !pl.level().isClientSide) BanMenhService.tryEvolve(sp, s, false);
     }
+
+    // ------------------------------------------------------------------ không vứt / không cất vào vật chứa
+
+    private static boolean isSword(ItemStack s) { return s.is(ModItems.BAN_MENH_KIEM.get()); }
+
+    /** Phím Q / kéo ra ngoài GUI: hủy việc vứt, trả kiếm vào túi (ưu tiên đúng ô đang chọn). */
+    @SubscribeEvent
+    public static void onToss(net.neoforged.neoforge.event.entity.item.ItemTossEvent e) {
+        ItemStack s = e.getEntity().getItem();
+        if (!isSword(s) || !(e.getPlayer() instanceof ServerPlayer p) || !p.isAlive()) return;
+        ItemStack copy = s.copy();
+        var inv = p.getInventory();
+        e.setCanceled(true);
+        if (inv.getItem(inv.selected).isEmpty()) inv.setItem(inv.selected, copy);
+        else if (!inv.add(copy)) {
+            if (p.containerMenu.getCarried().isEmpty()) p.containerMenu.setCarried(copy);
+            else e.setCanceled(false); // hết chỗ hoàn toàn: để rơi, /banmenh summon dọn bản rơi
+        }
+        p.displayClientMessage(Component.translatableWithFallback("hukhong.banmenh.msg.no_drop",
+                "Bản Mệnh Kiếm gắn liền với chủ nhân, không thể vứt bỏ."), true);
+    }
+
+    /** Khung vật phẩm / giá giáp / Allay không nhận Bản Mệnh Kiếm. */
+    @SubscribeEvent
+    public static void onEntityInteract(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract e) {
+        if (!isSword(e.getItemStack())) return;
+        var t = e.getTarget();
+        if (t instanceof net.minecraft.world.entity.decoration.ItemFrame || t instanceof net.minecraft.world.entity.animal.allay.Allay) {
+            e.setCanceled(true);
+            e.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityInteractSpecific(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteractSpecific e) {
+        if (isSword(e.getItemStack()) && e.getTarget() instanceof net.minecraft.world.entity.decoration.ArmorStand) {
+            e.setCanceled(true);
+            e.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+        }
+    }
+
+    /** Bình trang trí nhận mọi vật phẩm: chặn. */
+    @SubscribeEvent
+    public static void onPotInteract(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock e) {
+        if (!isSword(e.getItemStack())) return;
+        if (e.getLevel().getBlockState(e.getPos()).getBlock() instanceof net.minecraft.world.level.block.DecoratedPotBlock) {
+            e.setCanceled(true);
+            e.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+        }
+    }
+
+    /**
+     * Lưới an toàn cho mọi đường vào vật chứa (Shift-click, phím số, kéo thả): mỗi 2 tick quét ô không thuộc túi
+     * người chơi, kiếm lạc vào đó bị trả về túi.
+     */
+    @SubscribeEvent
+    public static void onContainerScan(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || p.tickCount % 2 != 0 || p.isCreative()) return;
+        var menu = p.containerMenu;
+        for (var slot : menu.slots) {
+            if (slot.container == p.getInventory() || !isSword(slot.getItem())) continue;
+            ItemStack s = slot.getItem().copy();
+            if (p.getInventory().add(s)) {
+                slot.set(ItemStack.EMPTY);
+                slot.setChanged();
+            } else if (menu.getCarried().isEmpty()) {
+                slot.set(ItemStack.EMPTY);
+                menu.setCarried(s);
+            }
+        }
+    }
 }

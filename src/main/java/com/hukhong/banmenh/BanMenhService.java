@@ -130,7 +130,7 @@ public final class BanMenhService {
         return n;
     }
 
-    private static void takeTinh(ServerPlayer p, int n, boolean offhandOnly) {
+    public static void takeTinh(ServerPlayer p, int n, boolean offhandOnly) {
         var inv = p.getInventory();
         for (ItemStack s : inv.offhand) {
             if (n <= 0) return;

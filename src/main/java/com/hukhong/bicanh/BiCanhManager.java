@@ -288,7 +288,7 @@ public final class BiCanhManager {
         HuHoa.applyStats(m, run.tier.mobLevel, hpMul, dmgMul);
         m.setPersistenceRequired();
         if (boss) {
-            m.setCustomName(Component.translatable("hukhong.bicanh.boss"));
+            m.setCustomName(com.hukhong.entity.BossLevel.tag(Component.translatable("hukhong.bicanh.boss"), run.tier.mobLevel));
             m.setCustomNameVisible(true);
             m.setGlowingTag(true);
         }

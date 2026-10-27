@@ -11,9 +11,13 @@ public final class SkillNet {
 
     public static void register(PayloadRegistrar r) {
         com.hukhong.flight.FlightNet.register(r);
+        com.hukhong.banmenh.BanMenhNet.register(r);
+        com.hukhong.artifact.ArtifactNet.register(r);
         r.playToClient(SkillSyncPayload.TYPE, SkillSyncPayload.STREAM_CODEC,
                 (pl, ctx) -> ctx.enqueueWork(() -> ClientSkillState.update(pl)));
+        r.playToClient(FxPayload.TYPE, FxPayload.STREAM_CODEC, FxPayload::handle);
         r.playToClient(MaSyncPayload.TYPE, MaSyncPayload.STREAM_CODEC, MaSyncPayload::handle);
+        r.playToClient(MapMarkersPayload.TYPE, MapMarkersPayload.STREAM_CODEC, MapMarkersPayload::handle);
         r.playToServer(SetMaLoPayload.TYPE, SetMaLoPayload.STREAM_CODEC, SetMaLoPayload::handle);
         r.playToServer(CastSkillPayload.TYPE, CastSkillPayload.STREAM_CODEC, (pl, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> SkillService.cast(sp, pl.slot()));

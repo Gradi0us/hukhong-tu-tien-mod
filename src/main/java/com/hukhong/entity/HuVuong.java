@@ -68,7 +68,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
     private static final ResourceLocation SPD_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "boss_enrage_speed");
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final ServerBossEvent bar = new ServerBossEvent(Component.translatable("entity.hukhong.hu_vuong"),
+    private final ServerBossEvent bar = new ServerBossEvent(BossLevel.tag(Component.translatable("entity.hukhong.hu_vuong"), 30),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10);
     private int skillCd = 80, windup, pending, appliedPlayers = 1;
 
@@ -293,6 +293,9 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recentlyHit) {
         super.dropCustomDeathLoot(sl, src, recentlyHit);
         drop(sl, new ItemStack(ModItems.HON_TINH.get(), 8 + random.nextInt(5)));
+        if (random.nextDouble() < com.hukhong.skillbook.SkillBookRewards.HU_VUONG_CHANCE)
+            drop(sl, com.hukhong.skillbook.SkillBookRewards.stack(new java.util.Random(random.nextLong()),
+                    com.hukhong.skillbook.SkillBookRewards.huVuongGrade(random.nextDouble()), com.hukhong.skillbook.SkillBookRewards.killerPaths(src)));
         var herb = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID,
                 random.nextFloat() < 0.6f ? "huyet_tham" : "linh_thao"));
         if (herb != net.minecraft.world.item.Items.AIR) drop(sl, new ItemStack(herb, 1 + random.nextInt(2)));
@@ -302,6 +305,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
 
     // ------------------------------------------------------------ HuMob
     @Override public int huLevel() { return 30; }
+    @Override public Component getDisplayName() { return BossLevel.tag(super.getDisplayName(), huLevel()); }
     @Override public double huWeight() { return 40.0; }
     @Override public float honTinhChance() { return 0f; }
 

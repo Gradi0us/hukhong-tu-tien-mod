@@ -66,7 +66,7 @@ public final class CityService {
                 if (d.index() == 0 || reg.isBuilt(d.id())) continue;
                 BlockPos s = site(ow, d);
                 if (Math.abs(p.getX() - s.getX()) > GEN_RADIUS || Math.abs(p.getZ() - s.getZ()) > GEN_RADIUS) continue;
-                BlockPos c = CityBuilder.build(ow, CityBuilder.adjustSite(ow, s), d.nameKey(), d.tier());
+                BlockPos c = CityBuilder.build(ow, CityBuilder.adjustSite(ow, s), d);
                 reg.markBuilt(d.id(), c);
                 com.mojang.logging.LogUtils.getLogger().info("City {} built at {}", d.id(), c);
                 return; // tối đa 1 thành mỗi lần kiểm để tránh giật

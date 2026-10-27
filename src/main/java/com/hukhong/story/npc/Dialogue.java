@@ -48,6 +48,7 @@ public record Dialogue(String npc, String city, String nameKey, List<Entry> entr
             return switch (t) {
                 case "set_flag" -> new Action(t, o.get("flag").getAsString(), 0);
                 case "give_item" -> new Action(t, o.get("item").getAsString(), i(o, "count", 1));
+                case "give_skill" -> new Action(t, o.get("skill").getAsString(), 1);
                 case "exp" -> new Action(t, "", o.get("amount").getAsLong());
                 case "chapter" -> new Action(t, "", o.get("value").getAsInt());
                 case "message" -> new Action(t, o.get("key").getAsString(), 0);
@@ -61,6 +62,7 @@ public record Dialogue(String npc, String city, String nameKey, List<Entry> entr
                 case "chapter" -> DialogueService.setQuest(p, DialogueService.quest(p).withChapter((int) num));
                 case "exp" -> CultivationService.addExp(p, num);
                 case "message" -> p.displayClientMessage(Component.translatable(str), false);
+                case "give_skill" -> com.hukhong.skillbook.SkillBookRewards.giveStory(p, str);
                 case "give_item" -> {
                     var item = BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(str));
                     if (item.isEmpty()) return;

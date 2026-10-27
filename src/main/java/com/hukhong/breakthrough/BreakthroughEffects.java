@@ -30,6 +30,7 @@ public final class BreakthroughEffects {
                 sl.sendParticles(com.hukhong.vfx.ModParticles.THANH_QUANG.get(), p.getX(), y, p.getZ(), 3, 0.25, 0.05, 0.25, 0.01);
                 sl.sendParticles(com.hukhong.vfx.ModParticles.LINH_KHI.get(), p.getX(), y, p.getZ(), 4, 0.5, 0.05, 0.5, 0.2);
             }
+            com.hukhong.vfx.Fx.play(sl, com.hukhong.vfx.FxType.BREAKTHROUGH, base, net.minecraft.world.phys.Vec3.ZERO, 1f, 0xFFE9A0);
             com.hukhong.vfx.ModSounds.play(sl, p, com.hukhong.vfx.ModSounds.BREAKTHROUGH, 1.2f, 1.0f);
             sl.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.5f, 1.4f);
             sl.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.0f, 1.2f);

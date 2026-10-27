@@ -7,13 +7,7 @@
     {
       "attribute": "hukhong:attack_power",
       "operation": "add_multiplied_base",
-      "values": [
-        0.02,
-        0.03,
-        0.045,
-        0.065,
-        0.09
-      ]
+      "values": [0.02, 0.03, 0.045, 0.065, 0.09, 0.135, 0.2025]
     }
   ]
 }

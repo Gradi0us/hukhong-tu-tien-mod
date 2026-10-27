@@ -4,6 +4,6 @@
   "path": "any",
   "min_tier": "bach",
   "passives": [
-    {"attribute": "minecraft:generic.max_health", "operation": "add_value", "values": [2, 3, 4, 6, 9]}
+    {"attribute": "minecraft:generic.max_health", "operation": "add_value", "values": [2, 3, 4, 6, 9, 13.5, 20.25]}
   ]
 }

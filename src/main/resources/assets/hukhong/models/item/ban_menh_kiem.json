@@ -6,51 +6,395 @@
  "overrides": [
   {
    "predicate": {
-    "custom_model_data": 1
+    "custom_model_data": 1,
+    "hukhong:stage": 0
    },
    "model": "hukhong:item/ban_menh/thanh_phong"
   },
   {
    "predicate": {
-    "custom_model_data": 2
+    "custom_model_data": 2,
+    "hukhong:stage": 0
    },
    "model": "hukhong:item/ban_menh/liet_diem"
   },
   {
    "predicate": {
-    "custom_model_data": 3
+    "custom_model_data": 3,
+    "hukhong:stage": 0
    },
    "model": "hukhong:item/ban_menh/han_bang"
   },
   {
    "predicate": {
-    "custom_model_data": 4
+    "custom_model_data": 4,
+    "hukhong:stage": 0
    },
    "model": "hukhong:item/ban_menh/loi_dinh"
   },
   {
    "predicate": {
-    "custom_model_data": 5
+    "custom_model_data": 5,
+    "hukhong:stage": 0
    },
    "model": "hukhong:item/ban_menh/huyet_anh"
   },
   {
    "predicate": {
-    "custom_model_data": 6
+    "custom_model_data": 6,
+    "hukhong:stage": 0
    },
    "model": "hukhong:item/ban_menh/trong_nhac"
   },
   {
    "predicate": {
-    "custom_model_data": 7
+    "custom_model_data": 7,
+    "hukhong:stage": 0
    },
    "model": "hukhong:item/ban_menh/ngoc_tam"
   },
   {
    "predicate": {
-    "custom_model_data": 8
+    "custom_model_data": 8,
+    "hukhong:stage": 0
    },
    "model": "hukhong:item/ban_menh/tinh_than"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 1,
+    "hukhong:stage": 1
+   },
+   "model": "hukhong:item/ban_menh/thanh_phong_s1"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 2,
+    "hukhong:stage": 1
+   },
+   "model": "hukhong:item/ban_menh/liet_diem_s1"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 3,
+    "hukhong:stage": 1
+   },
+   "model": "hukhong:item/ban_menh/han_bang_s1"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 4,
+    "hukhong:stage": 1
+   },
+   "model": "hukhong:item/ban_menh/loi_dinh_s1"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 5,
+    "hukhong:stage": 1
+   },
+   "model": "hukhong:item/ban_menh/huyet_anh_s1"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 6,
+    "hukhong:stage": 1
+   },
+   "model": "hukhong:item/ban_menh/trong_nhac_s1"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 7,
+    "hukhong:stage": 1
+   },
+   "model": "hukhong:item/ban_menh/ngoc_tam_s1"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 8,
+    "hukhong:stage": 1
+   },
+   "model": "hukhong:item/ban_menh/tinh_than_s1"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 1,
+    "hukhong:stage": 2
+   },
+   "model": "hukhong:item/ban_menh/thanh_phong_s2"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 2,
+    "hukhong:stage": 2
+   },
+   "model": "hukhong:item/ban_menh/liet_diem_s2"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 3,
+    "hukhong:stage": 2
+   },
+   "model": "hukhong:item/ban_menh/han_bang_s2"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 4,
+    "hukhong:stage": 2
+   },
+   "model": "hukhong:item/ban_menh/loi_dinh_s2"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 5,
+    "hukhong:stage": 2
+   },
+   "model": "hukhong:item/ban_menh/huyet_anh_s2"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 6,
+    "hukhong:stage": 2
+   },
+   "model": "hukhong:item/ban_menh/trong_nhac_s2"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 7,
+    "hukhong:stage": 2
+   },
+   "model": "hukhong:item/ban_menh/ngoc_tam_s2"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 8,
+    "hukhong:stage": 2
+   },
+   "model": "hukhong:item/ban_menh/tinh_than_s2"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 1,
+    "hukhong:stage": 3
+   },
+   "model": "hukhong:item/ban_menh/thanh_phong_s3"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 2,
+    "hukhong:stage": 3
+   },
+   "model": "hukhong:item/ban_menh/liet_diem_s3"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 3,
+    "hukhong:stage": 3
+   },
+   "model": "hukhong:item/ban_menh/han_bang_s3"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 4,
+    "hukhong:stage": 3
+   },
+   "model": "hukhong:item/ban_menh/loi_dinh_s3"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 5,
+    "hukhong:stage": 3
+   },
+   "model": "hukhong:item/ban_menh/huyet_anh_s3"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 6,
+    "hukhong:stage": 3
+   },
+   "model": "hukhong:item/ban_menh/trong_nhac_s3"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 7,
+    "hukhong:stage": 3
+   },
+   "model": "hukhong:item/ban_menh/ngoc_tam_s3"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 8,
+    "hukhong:stage": 3
+   },
+   "model": "hukhong:item/ban_menh/tinh_than_s3"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 1,
+    "hukhong:stage": 4
+   },
+   "model": "hukhong:item/ban_menh/thanh_phong_s4"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 2,
+    "hukhong:stage": 4
+   },
+   "model": "hukhong:item/ban_menh/liet_diem_s4"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 3,
+    "hukhong:stage": 4
+   },
+   "model": "hukhong:item/ban_menh/han_bang_s4"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 4,
+    "hukhong:stage": 4
+   },
+   "model": "hukhong:item/ban_menh/loi_dinh_s4"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 5,
+    "hukhong:stage": 4
+   },
+   "model": "hukhong:item/ban_menh/huyet_anh_s4"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 6,
+    "hukhong:stage": 4
+   },
+   "model": "hukhong:item/ban_menh/trong_nhac_s4"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 7,
+    "hukhong:stage": 4
+   },
+   "model": "hukhong:item/ban_menh/ngoc_tam_s4"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 8,
+    "hukhong:stage": 4
+   },
+   "model": "hukhong:item/ban_menh/tinh_than_s4"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 1,
+    "hukhong:stage": 5
+   },
+   "model": "hukhong:item/ban_menh/thanh_phong_s5"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 2,
+    "hukhong:stage": 5
+   },
+   "model": "hukhong:item/ban_menh/liet_diem_s5"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 3,
+    "hukhong:stage": 5
+   },
+   "model": "hukhong:item/ban_menh/han_bang_s5"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 4,
+    "hukhong:stage": 5
+   },
+   "model": "hukhong:item/ban_menh/loi_dinh_s5"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 5,
+    "hukhong:stage": 5
+   },
+   "model": "hukhong:item/ban_menh/huyet_anh_s5"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 6,
+    "hukhong:stage": 5
+   },
+   "model": "hukhong:item/ban_menh/trong_nhac_s5"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 7,
+    "hukhong:stage": 5
+   },
+   "model": "hukhong:item/ban_menh/ngoc_tam_s5"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 8,
+    "hukhong:stage": 5
+   },
+   "model": "hukhong:item/ban_menh/tinh_than_s5"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 1,
+    "hukhong:stage": 6
+   },
+   "model": "hukhong:item/ban_menh/thanh_phong_s6"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 2,
+    "hukhong:stage": 6
+   },
+   "model": "hukhong:item/ban_menh/liet_diem_s6"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 3,
+    "hukhong:stage": 6
+   },
+   "model": "hukhong:item/ban_menh/han_bang_s6"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 4,
+    "hukhong:stage": 6
+   },
+   "model": "hukhong:item/ban_menh/loi_dinh_s6"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 5,
+    "hukhong:stage": 6
+   },
+   "model": "hukhong:item/ban_menh/huyet_anh_s6"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 6,
+    "hukhong:stage": 6
+   },
+   "model": "hukhong:item/ban_menh/trong_nhac_s6"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 7,
+    "hukhong:stage": 6
+   },
+   "model": "hukhong:item/ban_menh/ngoc_tam_s6"
+  },
+  {
+   "predicate": {
+    "custom_model_data": 8,
+    "hukhong:stage": 6
+   },
+   "model": "hukhong:item/ban_menh/tinh_than_s6"
   }
  ]
 }

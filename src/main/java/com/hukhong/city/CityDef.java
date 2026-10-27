@@ -16,6 +16,16 @@ public record CityDef(int index, String id, Tier tier, int ax, int az) {
             new CityDef(8, "bac_han_thanh", Tier.DIA, 1000, -6600),
             new CityDef(9, "thien_khai_hoang_do", Tier.THIEN, 6600, -5000));
 
+    /** The loai cau truc (data/hukhong/structure/<cat>/ hoac config/hukhong/structures/<cat>/); cung chon builder thu tuc du phong. */
+    public String category() {
+        return switch (id) {
+            case "luu_ly_cang", "dan_ha_thanh" -> "port";
+            case "hac_thach_quan", "thanh_van_thanh", "bac_han_thanh" -> "city_mountain";
+            case "huyet_nguyet_phuong", "thien_khai_hoang_do" -> "city_ruined";
+            default -> "city_large";
+        };
+    }
+
     public String nameKey() { return "hukhong.city.n." + id; }
 
     public static CityDef byId(String id) {

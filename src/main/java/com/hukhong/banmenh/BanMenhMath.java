@@ -15,6 +15,16 @@ public final class BanMenhMath {
     public static final double NGOC_TAM_REGEN = 0.25, NGOC_TAM_MAX_RESOURCE = 0.15, NGOC_TAM_SKILL_COST = 0.90;
     public static final double TRONG_NHAC_SPEED = -0.06;
 
+    /** Số kiếm bay quanh người theo giai đoạn (0..6): Phàm/Linh 1, Huyền 1, Địa 2, Thiên 3, Tiên 5, Thần 9. */
+    private static final int[] ORBIT_COUNT = {1, 1, 1, 2, 3, 5, 9};
+    /** Phi kiếm: tick bay tới mục tiêu trước khi server áp sát thương, và tick bay về. */
+    public static final int STRIKE_DELAY_TICKS = 6, STRIKE_RETURN_TICKS = 6;
+
+    public static int orbitCount(int stage) { return ORBIT_COUNT[Math.max(0, Math.min(MAX_STAGE, stage))]; }
+
+    /** Tầm phi kiếm (block): 8 ở Phàm -> 12 ở Thần. */
+    public static double strikeRange(int stage) { return 8.0 + Math.max(0, Math.min(MAX_STAGE, stage)) * (4.0 / MAX_STAGE); }
+
     public static int stageForLevel(int level) {
         int s = 0;
         for (int i = 0; i < STAGE_LEVELS.length; i++) if (level >= STAGE_LEVELS[i]) s = i;

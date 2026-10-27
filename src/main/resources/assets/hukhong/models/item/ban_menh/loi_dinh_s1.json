@@ -1,0 +1,53 @@
+{
+ "parent": "minecraft:item/generated",
+ "textures": {
+  "layer0": "hukhong:item/ban_menh/loi_dinh_s1"
+ },
+ "display": {
+  "thirdperson_righthand": {
+   "scale": [
+    0.0001,
+    0.0001,
+    0.0001
+   ]
+  },
+  "thirdperson_lefthand": {
+   "scale": [
+    0.0001,
+    0.0001,
+    0.0001
+   ]
+  },
+  "firstperson_righthand": {
+   "scale": [
+    0.0001,
+    0.0001,
+    0.0001
+   ]
+  },
+  "firstperson_lefthand": {
+   "scale": [
+    0.0001,
+    0.0001,
+    0.0001
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  }
+ }
+}

@@ -189,7 +189,6 @@ public final class TrialService {
         for (Iterator<Strike> it = s.strikes.iterator(); it.hasNext(); ) {
             Strike k = it.next();
             if (--k.left > 0) {
-                if (k.left % 4 == 0) ring(lv, k.pos, 2.5, 24);
                 continue;
             }
             it.remove();
@@ -206,7 +205,10 @@ public final class TrialService {
             Vec3 pos = i == 0 ? p.position()
                     : p.position().add((p.getRandom().nextDouble() - 0.5) * 12, 0, (p.getRandom().nextDouble() - 0.5) * 12);
             s.strikes.add(new Strike(pos, tele, dmg));
+            com.hukhong.vfx.Fx.play(lv, com.hukhong.vfx.FxType.TELEGRAPH, pos, Vec3.ZERO, 2.5f, 0xA050FF, tele + 2);
         }
+        if (s.wave == 0 || s.wave % 2 == 0)
+            com.hukhong.vfx.Fx.play(lv, com.hukhong.vfx.FxType.STORM_CLOUD, p.position(), Vec3.ZERO, 16f, 0x1C1C2C, tele + 60);
         s.gap = 20;
         p.displayClientMessage(Component.translatable("hukhong.trial.wave", s.wave + 1, TrialMath.waves(s.level)), true);
         lv.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 0.4f, 1.6f);
@@ -222,8 +224,8 @@ public final class TrialService {
     private static void strike(ServerLevel lv, ServerPlayer p, Strike k) {
         LightningBolt b = EntityType.LIGHTNING_BOLT.create(lv);
         if (b != null) { b.moveTo(k.pos); b.setVisualOnly(true); lv.addFreshEntity(b); }
-        for (int i = 0; i < 20; i++) // tia sang doc
-            lv.sendParticles(ParticleTypes.END_ROD, k.pos.x, k.pos.y + i * 0.8, k.pos.z, 3, 0.15, 0.1, 0.15, 0.02);
+        com.hukhong.vfx.Fx.play(lv, com.hukhong.vfx.FxType.LIGHTNING_BOLT, k.pos, Vec3.ZERO, 1.2f, 0xB8D8FF);
+        com.hukhong.vfx.Fx.play(lv, com.hukhong.vfx.FxType.GROUND_CRACK, k.pos, Vec3.ZERO, 3.2f, 0xB8D8FF, 30);
         lv.sendParticles(com.hukhong.vfx.ModParticles.THANH_QUANG.get(), k.pos.x, k.pos.y + 0.5, k.pos.z, 20, 0.8, 0.4, 0.8, 0.1);
         PacketDistributor.sendToPlayer(p, new BreakthroughPayload(8, 0.35f)); // rung/flash: ClientShake ton trong screenEffectsOff (R26)
         double dx = p.getX() - k.pos.x, dz = p.getZ() - k.pos.z;
