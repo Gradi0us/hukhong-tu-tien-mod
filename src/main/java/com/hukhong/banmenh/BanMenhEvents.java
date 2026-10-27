@@ -120,7 +120,7 @@ public final class BanMenhEvents {
         return l.size() > max ? l.subList(0, max) : l;
     }
 
-    private static void extra(ServerPlayer p, LivingEntity o, float dmg) {
+    static void extra(ServerPlayer p, LivingEntity o, float dmg) {
         reentry = true;
         try { o.hurt(p.damageSources().playerAttack(p), dmg); } finally { reentry = false; }
     }

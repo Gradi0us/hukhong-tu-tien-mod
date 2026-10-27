@@ -126,6 +126,22 @@ public final class HuKhongRuntimeGameTests {
     @GameTest(template = "empty") public static void entityHuThi(GameTestHelper h) { spawnKill(h, ModEntities.HU_THI); }
     @GameTest(template = "empty") public static void entityHuCot(GameTestHelper h) { spawnKill(h, ModEntities.HU_COT); }
     @GameTest(template = "empty") public static void entityHuChu(GameTestHelper h) { spawnKill(h, ModEntities.HU_CHU); }
+    /** Bug "giet quai Hu Hoa khong co EXP": nguoi choi cap 1 giet HuThi -> EXP phai tang. */
+    @GameTest(template = "empty")
+    public static void killHuThiGivesExp(GameTestHelper h) {
+        ServerPlayer p = fake(h, 1, Set.of(Path.THE));
+        place(h, p, 1, 1, 1);
+        com.hukhong.entity.HuThi m = spawn(h, ModEntities.HU_THI.get(), 2, 1, 2);
+        long before = com.hukhong.core.CultivationService.get(p).exp();
+        m.hurt(h.getLevel().damageSources().playerAttack(p), 1_000_000f);
+        h.runAfterDelay(5, () -> {
+            long after = com.hukhong.core.CultivationService.get(p).exp();
+            if (m.isAlive()) h.fail("HuThi chua chet");
+            if (after <= before) h.fail("EXP khong tang: " + before + " -> " + after + " mobLv=" + m.huLevel());
+            h.succeed();
+        });
+    }
+
     @GameTest(template = "empty") public static void entityHuVuong(GameTestHelper h) { spawnKill(h, ModEntities.HU_VUONG); }
     @GameTest(template = "empty") public static void entityTamMa(GameTestHelper h) { spawnKill(h, ModEntities.TAM_MA); }
     @GameTest(template = "empty") public static void entitySuDoKiem(GameTestHelper h) { spawnKill(h, StoryRegistry.SU_DO_KIEM); }

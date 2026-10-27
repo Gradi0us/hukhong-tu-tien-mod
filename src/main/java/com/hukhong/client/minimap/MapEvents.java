@@ -43,6 +43,14 @@ public final class MapEvents {
         MapCache.tick(mc);
         keys(mc);
         MinimapHud.refresh(mc);
+        if (mc.level.getGameTime() % 40 == 0 && MinimapState.markersVisible()) {
+            double px = mc.player.getX(), pz = mc.player.getZ();
+            for (var m : MinimapState.markers()) {
+                if (MinimapState.dist2(m, px, pz) <= (double) MinimapState.DISCOVER * MinimapState.DISCOVER && MinimapState.discover(m))
+                    mc.gui.setOverlayMessage(Component.translatable("hukhong.map.discovered", Component.translatable(m.nameKey()),
+                            MinimapState.distText((int) Math.sqrt(MinimapState.dist2(m, px, pz)))), false);
+            }
+        }
         arrival(mc);
     }
 

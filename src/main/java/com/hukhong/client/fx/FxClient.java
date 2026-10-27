@@ -26,7 +26,7 @@ import java.util.Random;
 public final class FxClient {
     private FxClient() {}
 
-    private static final int MAX_ACTIVE = 72;
+    private static final int MAX_ACTIVE = 160;
     static final List<Inst> ACTIVE = new ArrayList<>();
 
     /** Một hiệu ứng đang chạy. */
@@ -35,6 +35,9 @@ public final class FxClient {
         List<Vec3[]> segs; List<Float> segW;          // sét / nứt đất
         float[] sx, sz, sd; boolean[] landed;           // mưa kiếm
         float tilt;
+        int owner = -1;          // >=0: bám theo thực thể (Kiếm Vực đi cùng chủ)
+        int stop = -1;           // tick bắt đầu tắt dần (Kiếm Vực khi tắt kỹ năng)
+        float roll;              // SWORD_QI: góc nghiêng của dải kiếm khí (độ)
         Inst(FxType t, Vec3 p, Vec3 d, float s, int rgb, int life) {
             type = t; pos = p; dir = d; scale = s <= 0 ? 1f : s; this.rgb = rgb; this.life = life;
         }
@@ -46,7 +49,7 @@ public final class FxClient {
 
     static int defColor(FxType t) {
         return switch (t) {
-            case SWORD_CRESCENT -> 0x9FE8FF; case SWORD_RAIN -> 0xBFEFFF; case SWORD_DOMAIN -> 0x7FD8FF;
+            case SWORD_CRESCENT, SWORD_QI -> 0x9FE8FF; case SWORD_RAIN -> 0xBFEFFF; case SWORD_DOMAIN -> 0x7FD8FF;
             case TALISMAN_CIRCLE -> 0xFFD866; case LIGHT_PILLAR -> 0xFFE9A0; case GROUND_CRACK -> 0xFF8A30;
             case SHOCKWAVE -> 0xFFC070; case BLOOD_VORTEX -> 0xC01028; case DEMON_SILHOUETTE -> 0x8A0A1E;
             case LIGHTNING_BOLT -> 0xB8D8FF; case TELEGRAPH -> 0xA050FF; case STORM_CLOUD -> 0x1C1C2C;
@@ -56,7 +59,7 @@ public final class FxClient {
 
     static int defLife(FxType t) {
         return switch (t) {
-            case SWORD_CRESCENT -> 11; case SWORD_RAIN -> 46; case SWORD_DOMAIN -> 80; case TALISMAN_CIRCLE -> 50;
+            case SWORD_CRESCENT -> 11; case SWORD_QI -> 11; case SWORD_RAIN -> 46; case SWORD_DOMAIN -> 80; case TALISMAN_CIRCLE -> 50;
             case LIGHT_PILLAR -> 32; case GROUND_CRACK -> 50; case SHOCKWAVE -> 18; case BLOOD_VORTEX -> 40;
             case DEMON_SILHOUETTE -> 40; case LIGHTNING_BOLT -> 14; case TELEGRAPH -> 30; case STORM_CLOUD -> 80;
             case SCREEN_TINT -> 14; case BEAM -> 9; default -> 30;
@@ -74,11 +77,52 @@ public final class FxClient {
             com.hukhong.client.render.orbit.OrbitState.addSkill(pos, dir, p.life(), p.color() >>> 24, p.scale());
             return;
         }
+        if (t == FxType.SWORD_STAB) { stab(pos, dir, p); return; }
+        if (t == FxType.SWORD_SLASH) {
+            com.hukhong.client.render.orbit.OrbitState.addSlash((int) p.dx(), p.dy(), p.dz(), p.color() >>> 24, p.life() > 0 ? p.life() : 5, p.scale());
+            return;
+        }
+        if (t == FxType.SWORD_DOMAIN && p.dx() > 0.5f) { domain(p); return; }
         int rgb = p.color() == 0 ? defColor(t) : p.color() & 0xFFFFFF;
         float sc = p.scale() <= 0 ? 1f : p.scale();
         if (t == FxType.BREAKTHROUGH) { breakthrough(pos, sc, rgb); return; }
         if (t == FxType.UPGRADE_BURST) { upgrade(pos, sc, rgb); return; }
-        add(t, pos, dir, sc, rgb, p.life() > 0 ? p.life() : defLife(t), 0);
+        Inst in = add(t, pos, dir, sc, rgb, p.life() > 0 ? p.life() : defLife(t), 0);
+        if (t == FxType.SWORD_QI) in.roll = (p.color() >>> 24) / 1.4167f - 90f;
+    }
+
+    /** Kiếm Vực: một thể duy nhất theo chủ (dx = id chủ); gói làm tươi giữ nó sáng, scale <= 0 = tắt dần. */
+    private static void domain(FxPayload p) {
+        int owner = (int) p.dx();
+        int rgb = p.color() == 0 ? defColor(FxType.SWORD_DOMAIN) : p.color() & 0xFFFFFF;
+        for (Inst i : ACTIVE) {
+            if (i.type != FxType.SWORD_DOMAIN || i.owner != owner) continue;
+            if (p.scale() <= 0) { if (i.stop < 0) i.stop = i.age; return; }
+            i.stop = -1; i.scale = p.scale(); i.rgb = rgb;
+            i.age = Math.min(i.age, 6);
+            i.life = i.age + Math.max(8, p.life());
+            return;
+        }
+        if (p.scale() <= 0) return;
+        Inst i = add(FxType.SWORD_DOMAIN, new Vec3(p.x(), p.y(), p.z()), Vec3.ZERO, p.scale(), rgb, Math.max(8, p.life()) + 4, 0);
+        i.owner = owner;
+    }
+
+    /** Kiếm cắm đất: kiếm rơi mũi chúc xuống, nằm lại vài nhịp rồi mờ; chạm đất có bụi + vết nứt nhỏ rồi tan. */
+    private static void stab(Vec3 from, Vec3 dir, FxPayload p) {
+        int delay = p.color() >>> 24, flight = Math.max(2, p.life());
+        com.hukhong.client.render.orbit.OrbitState.addSkill(from, dir, flight, delay, p.scale(), STAB_HOLD);
+        if (q() >= 0.7f) add(FxType.GROUND_CRACK, from.add(dir).add(0, 0.02, 0), Vec3.ZERO, 0.8f, 0xA8BCC8, 40, delay + flight);
+    }
+
+    static final int STAB_HOLD = 30;
+
+    /** Vệt kiếm khí lưỡi liềm nhỏ từ a tới b (đòn đánh thường tầm xa). */
+    public static void qi(Vec3 a, Vec3 b, float radius, int rgb, int delay, int life) {
+        Vec3 d = b.subtract(a);
+        if (d.lengthSqr() < 0.25) return;
+        Inst i = add(FxType.SWORD_QI, a.add(d.normalize().scale(0.8)), d.subtract(d.normalize().scale(0.8)), radius, rgb, Math.max(3, life), delay);
+        i.roll = 20f;
     }
 
     static Inst add(FxType t, Vec3 pos, Vec3 dir, float sc, int rgb, int life, int delay) {
@@ -142,10 +186,17 @@ public final class FxClient {
         for (int i = ACTIVE.size() - 1; i >= 0; i--) {
             Inst f = ACTIVE.get(i);
             if (f.delay > 0) { f.delay--; continue; }
+            if (f.owner >= 0) follow(mc, f, 1f);
             if (!f.started) { f.started = true; FxEffects.start(f); }
             FxEffects.tick(f);
-            if (++f.age >= f.life) ACTIVE.remove(i);
+            if (++f.age >= f.life || (f.stop >= 0 && f.age >= f.stop + 8)) ACTIVE.remove(i);
         }
+    }
+
+    /** Bám thực thể chủ (nội suy theo partial tick) - toạ độ thế giới. */
+    private static void follow(Minecraft mc, Inst f, float pt) {
+        var en = mc.level.getEntity(f.owner);
+        if (en != null) f.pos = en.getPosition(pt);
     }
 
     // ---------------------------------------------------------------- vẽ
@@ -157,9 +208,10 @@ public final class FxClient {
         float pt = e.getPartialTick().getGameTimeDeltaPartialTick(false);
         MultiBufferSource.BufferSource bs = mc.renderBuffers().bufferSource();
         VertexConsumer vc = bs.getBuffer(RenderType.lightning());
-        FxDraw g = new FxDraw(vc, e.getModelViewMatrix(), e.getCamera().getPosition());
+        FxDraw g = new FxDraw(vc, e.getPoseStack().last().pose(), e.getCamera().getPosition());
         for (Inst f : ACTIVE) {
             if (f.delay > 0 || !f.started) continue;
+            if (f.owner >= 0) follow(mc, f, pt);
             if (f.pos.distanceToSqr(g.cam) > 200 * 200) continue;
             FxEffects.render(f, g, pt);
         }

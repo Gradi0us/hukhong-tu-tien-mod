@@ -25,6 +25,15 @@ final class MapIcons {
     }
 
     /** Tông: thoi ngọc bích (đã dựng) / thoi rỗng (xấp xỉ). */
+    /** Cảng: hình thoi xanh dương có neo nhỏ. */
+    static void port(GuiGraphics g, int cx, int cy, boolean built, boolean hot) {
+        int c = built ? 0xFF6AB8FF : 0xFF3A6A94;
+        for (int i = -4; i <= 4; i++) { int w = 4 - Math.abs(i); g.fill(cx - w - 1, cy + i - 1, cx + w + 2, cy + i + 2, INK); }
+        for (int i = -3; i <= 3; i++) { int w = 3 - Math.abs(i); g.fill(cx - w, cy + i, cx + w + 1, cy + i + 1, hot ? WHITE : c); }
+        g.fill(cx, cy - 2, cx + 1, cy + 3, INK);
+        g.fill(cx - 1, cy + 1, cx + 2, cy + 2, INK);
+    }
+
     static void sect(GuiGraphics g, int cx, int cy, boolean built, boolean hot) {
         int fill = built ? (hot ? WHITE : JADE) : 0xFF2E5C66;
         for (int dy = -3; dy <= 3; dy++) {

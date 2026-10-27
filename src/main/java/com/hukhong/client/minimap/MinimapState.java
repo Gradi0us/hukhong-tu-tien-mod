@@ -24,13 +24,33 @@ public final class MinimapState {
         }
     }
 
+    /** Tầm tự phát hiện (block): thành/cảng/tông trong tầm này được liệt kê + chỉ hướng. */
+    public static final int DISCOVER = 1000;
+
     private static List<MapMarkersPayload.Marker> markers = List.of();
+    private static final java.util.Set<String> DISCOVERED = new java.util.HashSet<>();
     private static int sizeMode = 1;
     private static Waypoint waypoint;
     private static long pingStart = Long.MIN_VALUE;
 
     public static void setMarkers(List<MapMarkersPayload.Marker> m) { markers = List.copyOf(m); }
     public static List<MapMarkersPayload.Marker> markers() { return markers; }
+
+    public static boolean isPort(MapMarkersPayload.Marker m) {
+        if (m.kind() != MapMarkersPayload.CITY) return false;
+        var d = com.hukhong.city.CityDef.byId(m.id());
+        return d != null && d.category().equals("port");
+    }
+
+    /** Màu theo loại: thành vàng, cảng xanh dương, tông ngọc. */
+    public static int color(MapMarkersPayload.Marker m) {
+        return isPort(m) ? 0xFF6AB8FF : m.kind() == MapMarkersPayload.CITY ? 0xFFE8C060 : 0xFF6FE0D0;
+    }
+
+    public static String distText(int d) { return d >= 1000 ? String.format("%.1fkm", d / 1000.0) : d + "m"; }
+
+    /** Đánh dấu đã phát hiện; true nếu mới. */
+    public static boolean discover(MapMarkersPayload.Marker m) { return DISCOVERED.add(m.kind() + m.id()); }
 
     public static int sizeMode() { return sizeMode; }
     public static void cycleSize() { sizeMode = (sizeMode + 1) % (HIDDEN + 1); }
@@ -69,6 +89,7 @@ public final class MinimapState {
 
     public static void clearAll() {
         markers = List.of();
+        DISCOVERED.clear();
         waypoint = null;
         pingStart = Long.MIN_VALUE;
         MapCache.clear();

@@ -83,6 +83,22 @@ public final class StructureLibrary {
      * (caller roi ve builder thu tuc). Moi lan loi doc file -&gt; thu file ke tiep.
      */
     public static LoadedStructure pick(MinecraftServer server, String category, String key, long seed) {
+        LoadedStructure pre = PRELOADED.remove(category + "/" + key);
+        if (pre != null) return pre;
+        return pickUncached(server, category, key, seed);
+    }
+
+    /** Cau truc doc san (tren luong nen, boi Prebuild) de lan pick() ke tiep khong doc file tren luong server. */
+    private static final java.util.Map<String, LoadedStructure> PRELOADED = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Doc (co the goi tu luong nen) va cat de pick() tra ngay; tra chinh cau truc do (null neu khong co file). */
+    public static LoadedStructure preload(MinecraftServer server, String category, String key, long seed) {
+        LoadedStructure st = pickUncached(server, category, key, seed);
+        if (st != null) PRELOADED.put(category + "/" + key, st);
+        return st;
+    }
+
+    private static LoadedStructure pickUncached(MinecraftServer server, String category, String key, long seed) {
         for (List<Entry> list : List.of(userFiles(category), modFiles(server, category))) {
             if (list.isEmpty()) continue;
             int start = Math.floorMod((int) ((seed * 0x9E3779B97F4A7C15L + key.hashCode() * 31L) >>> 20), list.size());

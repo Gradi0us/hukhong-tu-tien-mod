@@ -81,6 +81,8 @@ public final class SkillHud {
             com.hukhong.skill.BanMenhSkill bm = i == 2 && rs == null ? com.hukhong.skill.BanMenhSkill.of(sp, d.level()) : null;
             boolean bones = i == 2 && bm == null && com.hukhong.honcot.ClientBones.get().count() > 0;
             boolean has = rs != null || bm != null || bones;
+            boolean dome = rs != null && rs.base() == Skill.KIEM_ULT; // Kiếm Vực: kênh bật/tắt
+            boolean domeOn = dome && ClientSkillState.domain();
             int baseCost = rs != null ? rs.cost() : bm != null ? bm.cost : 50;
             ResourceLocation icon = tex(rs != null ? rs.icon() : bm != null ? bm.icon : bones ? "bm_bone" : "locked");
             if (exists(icon)) g.blit(icon, x + 2, y + 2, 0, 0, 16, 16, 16, 16);
@@ -92,9 +94,17 @@ public final class SkillHud {
                     g.fill(x + 2, y + 2, x + 18, y + 2 + h, 0xBB000000);
                     String sec = String.valueOf((rem + 19) / 20);
                     g.drawString(mc.font, sec, x + (SIZE - mc.font.width(sec)) / 2, y + 6, 0xFFFFFFFF, true);
-                } else if (d.resource() < Resources.costFor(d, baseCost)) {
+                } else if (dome ? d.resource() < Math.max(1, Math.round(d.resourceMax() * com.hukhong.skill.SkillEffects.DOMAIN_DRAIN_PCT))
+                        : d.resource() < Resources.costFor(d, baseCost)) {
                     g.fill(x + 2, y + 2, x + 18, y + 18, 0x66FF0000);
                 }
+            }
+            if (domeOn) { // đang bật: viền xanh nhạt + chữ ON
+                int bc = 0xFF7FD8FF;
+                g.fill(x, y, x + SIZE, y + 1, bc); g.fill(x, y + SIZE - 1, x + SIZE, y + SIZE, bc);
+                g.fill(x, y, x + 1, y + SIZE, bc); g.fill(x + SIZE - 1, y, x + SIZE, y + SIZE, bc);
+                g.fill(x + 2, y + 2, x + 18, y + 18, 0x337FD8FF);
+                g.drawString(mc.font, "ON", x + (SIZE - mc.font.width("ON")) / 2, y + 2, 0xFFBFEFFF, true);
             }
             if (!stance) g.fill(x, y, x + SIZE, y + SIZE, 0x66000000);
             String key = SkillKeys.SKILL[i].getTranslatedKeyMessage().getString();

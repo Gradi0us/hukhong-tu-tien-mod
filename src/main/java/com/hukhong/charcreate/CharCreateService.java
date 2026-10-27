@@ -67,8 +67,15 @@ public final class CharCreateService {
         }
         Map<Path, Aptitude> apt = new EnumMap<>(Path.class);
         for (Path x : set) apt.put(x, roll.aptitude().get(x));
-        p.setData(ModAttachments.CULTIVATION, d.withCharacter(set, apt, roll.origin().id, roll));
+        CultivationData nd = d.withCharacter(set, apt, roll.origin().id, roll);
+        // Tiên Thiên: cấp khởi đầu 1..10 theo tư chất tốt nhất (đặt trực tiếp, không qua EXP -> không kích Bình Cảnh/khóa mốc nhầm).
+        int tt = TienThien.roll(apt.values(), new java.util.Random(roll.seed() ^ 0x5454L));
+        if (tt > nd.level()) nd = nd.withLevel(tt).withCharacter(set, apt, roll.origin().id, roll);
+        p.setData(ModAttachments.CULTIVATION, nd);
         SyncPayload.send(p);
+        com.hukhong.stats.StatService.refresh(p);
+        try { com.hukhong.world.OriginSpawn.apply(p, roll.origin(), set, roll.seed()); }
+        catch (RuntimeException ex) { com.mojang.logging.LogUtils.getLogger().warn("OriginSpawn failed", ex); }
         if (set.contains(Path.KIEM)) com.hukhong.banmenh.BanMenhService.grant(p); // Kiếm Tu nhận Bản Mệnh Kiếm
         com.hukhong.story.StoryService.promptIfNeeded(p); // Bước 19: chọn Truyện/Tự do
     }

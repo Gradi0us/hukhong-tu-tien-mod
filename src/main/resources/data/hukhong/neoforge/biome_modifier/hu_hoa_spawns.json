@@ -2,8 +2,8 @@
   "type": "neoforge:add_spawns",
   "biomes": "#minecraft:is_overworld",
   "spawners": [
-    {"type": "hukhong:hu_thi", "weight": 20, "minCount": 1, "maxCount": 3},
-    {"type": "hukhong:hu_cot", "weight": 15, "minCount": 1, "maxCount": 2},
-    {"type": "hukhong:hu_chu", "weight": 12, "minCount": 1, "maxCount": 1}
+    {"type": "hukhong:hu_thi", "weight": 100, "minCount": 2, "maxCount": 4},
+    {"type": "hukhong:hu_cot", "weight": 60, "minCount": 1, "maxCount": 3},
+    {"type": "hukhong:hu_chu", "weight": 50, "minCount": 1, "maxCount": 2}
   ]
 }

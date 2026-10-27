@@ -64,6 +64,7 @@ public final class OrbitRenderer {
 
     /** Vị trí kiếm tại time; null nếu chưa xuất hiện. */
     static Vec3 pos(ClientLevel level, OrbitState.Flight f, double time, float partial) {
+        if (f.slash) return slashPos(level, f, time, partial);
         double t = time - f.start;
         Vec3 a;
         if (f.owner >= 0) {
@@ -93,6 +94,47 @@ public final class OrbitRenderer {
             return b.add(a.subtract(b).scale(u)).add(bulge.scale(0.5 * Math.sin(Math.PI * u)));
         }
         return b; // kiếm kỹ năng cắm lại ở đích
+    }
+
+    /** Tâm xoay của cung chém: ngang ngực chủ. */
+    static Vec3 pivot(Player o, float partial) { return o.getEyePosition(partial).subtract(0, 0.55, 0); }
+
+    /** Vị trí kiếm khi chém: vai -> điểm đầu cung (WIND) -> quét cung trước mặt -> về vai. */
+    static Vec3 slashPos(ClientLevel level, OrbitState.Flight f, double time, float partial) {
+        if (!(level.getEntity(f.owner) instanceof Player o)) return null;
+        double t = time - f.start;
+        Vec3 sh = shoulder(o, partial, time);
+        if (t <= 0) return sh;
+        Vec3 piv = pivot(o, partial);
+        Vec3 look = o.getViewVector(partial);
+        Vec3 flat = new Vec3(look.x, 0, look.z);
+        if (f.target >= 0 && level.getEntity(f.target) instanceof Entity te) {
+            Vec3 d = te.getPosition(partial).subtract(o.getPosition(partial));
+            if (d.x * d.x + d.z * d.z > 0.04) flat = new Vec3(d.x, 0, d.z);
+        }
+        flat = flat.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : flat.normalize();
+        Vec3 fwd = new Vec3(flat.x, Mth.clamp(look.y, -0.5, 0.5) * 0.5, flat.z).normalize();
+        Vec3 right = new Vec3(-flat.z, 0, flat.x);
+        double sign = f.roll < 0 ? -1 : 1, tilt = Math.toRadians(Math.abs(f.roll));
+        Vec3 w = right.scale(Math.cos(tilt) * sign).add(0, Math.sin(tilt), 0); // phía bắt đầu: cao; phía kết thúc: thấp
+        double A = 1.15, R = f.radius;
+        Vec3 pa = pointOnArc(piv, fwd, w, R, A), pb = pointOnArc(piv, fwd, w, R, -A);
+        double wind = OrbitState.Flight.WIND;
+        if (t < wind) return sh.add(pa.subtract(sh).scale(OrbitMath.easeInOut(t / wind)));
+        if (t < wind + f.flight) {
+            double e = OrbitMath.easeInOut((t - wind) / f.flight);
+            return pointOnArc(piv, fwd, w, R, A - 2 * A * e);
+        }
+        if (t < wind + f.flight + f.ret) {
+            double u = OrbitMath.easeInOut((t - wind - f.flight) / f.ret);
+            return pb.add(sh.subtract(pb).scale(u));
+        }
+        return sh;
+    }
+
+    /** Điểm trên cung góc a (a>0 phía đầu cung). */
+    private static Vec3 pointOnArc(Vec3 piv, Vec3 fwd, Vec3 w, double R, double a) {
+        return piv.add(fwd.scale(Math.cos(a) * R)).add(w.scale(Math.sin(a) * R));
     }
 
     private static Quaternionf orient(Vec3 dir, Vec3 toCam) {
@@ -133,7 +175,7 @@ public final class OrbitRenderer {
     private static void draw(Minecraft mc, ClientLevel level, PoseStack ps, MultiBufferSource.BufferSource buf, ItemStack st,
                              Vec3 pos, Vec3 dir, Vec3 cam, float scale, float alpha, float roll, int seed, boolean local) {
         Vec3 toCam = cam.subtract(pos);
-        if (local && toCam.lengthSqr() < 0.36) return; // quá sát mắt: bỏ để khỏi che tầm nhìn
+        if (local && toCam.lengthSqr() < (scale > 1.6f ? 9.0 : 0.36)) return; // quá sát mắt: bỏ để khỏi che tầm nhìn
         int light = LevelRenderer.getLightColor(level, BlockPos.containing(pos)); // không còn FULL_BRIGHT
         MultiBufferSource src = alpha >= 0.98f ? buf : new Fade(buf, alpha);
         ps.pushPose();
@@ -182,21 +224,27 @@ public final class OrbitRenderer {
                 if (!(level.getEntity(f.owner) instanceof Player o) || !visible(o)) continue;
                 owner = o;
                 st = heldSword(o);
-                if (st.isEmpty()) continue;
+                if (st.isEmpty()) {
+                    if (!f.slash) continue;
+                    st = new ItemStack(net.minecraft.world.item.Items.IRON_SWORD); // kỹ năng chém khi chưa cầm Bản Mệnh Kiếm
+                }
                 st = st.copyWithCount(1);
             } else st = f.stack;
             Vec3 pos = pos(level, f, time, partial);
             if (pos == null || pos.distanceToSqr(cam) > VIEW_RANGE * VIEW_RANGE) continue;
             double t = time - f.start;
+            if (f.slash && t <= 0) continue;
             Vec3 ahead = pos(level, f, time + 0.6, partial);
             Vec3 behind = pos(level, f, time - 0.6, partial);
             Vec3 v = ahead == null || behind == null ? Vec3.ZERO : ahead.subtract(behind);
             if (v.lengthSqr() < 1e-5) v = f.to.subtract(owner != null ? shoulder(owner, partial, time) : f.from);
-            int stage = owner == null ? 3 : BanMenhKiemItem.stageOf(st);
+            Vec3 piv = f.slash && owner != null ? pivot(owner, partial) : null;
+            if (piv != null) v = pos.subtract(piv); // kiếm chém: thân kiếm hướng ra ngoài từ người chủ
+            int stage = owner == null ? 3 : (st.is(ModItems.BAN_MENH_KIEM.get()) ? BanMenhKiemItem.stageOf(st) : 0);
             float scale = (0.4f + 0.05f * stage) * f.size;
-            float alpha = f.owner >= 0 ? 1f : Mth.clamp((float) (f.flight + 5 - t) / 3f, 0f, 1f);
+            float alpha = f.owner >= 0 ? (f.giant ? 0.8f : 1f) : Mth.clamp((float) (f.flight + f.hold - t) / (f.hold > 10 ? 8f : 3f), 0f, 1f);
             float roll = (float) (Math.sin(time * 0.35 + f.start) * 10);
-            boolean moving = t > 0 && (t < f.flight || (f.owner >= 0 && t < f.flight + f.ret));
+            boolean moving = t > 0 && (f.slash ? t < OrbitState.Flight.WIND + f.flight + f.ret : (t < f.flight || (f.owner >= 0 && t < f.flight + f.ret)));
             if (moving) for (int k = ghosts; k >= 1; k--) {
                 double tg = time - k * 0.85;
                 Vec3 gp = pos(level, f, tg, partial);
@@ -205,6 +253,7 @@ public final class OrbitRenderer {
                 Vec3 gb = pos(level, f, tg - 0.6, partial);
                 Vec3 gd = gv == null || gb == null ? v : gv.subtract(gb);
                 if (gd.lengthSqr() < 1e-5) gd = v;
+                if (piv != null) gd = gp.subtract(piv);
                 draw(mc, level, ps, buf, st, gp, gd, cam, scale, 0.2f * (ghosts - k + 1) / ghosts, roll, f.owner + k, false);
             }
             draw(mc, level, ps, buf, st, pos, v, cam, scale, alpha, roll, f.owner, owner != null && owner == mc.player);

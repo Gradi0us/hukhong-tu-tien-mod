@@ -63,6 +63,8 @@
   "hukhong.hud.stance_on": "Cultivation Stance",
   "hukhong.hud.stance_off": "Stance: off (G)",
   "hukhong.msg.no_resource": "Not enough resource",
+  "hukhong.msg.domain_on": "Sword Domain: ON (press again to stop)",
+  "hukhong.msg.domain_off": "Sword Domain: OFF",
   "hukhong.msg.no_skill_path": "No path with skills yet",
   "hukhong.msg.void": "Nullified",
   "hukhong.breakthrough.title": "Breakthrough: %s",
@@ -910,5 +912,13 @@
   "hukhong.artifact.tip.click": "Click to evolve (or Shift + right-click with Soul Essence).",
   "hukhong.trade.herb": "Herb Merchant",
   "hukhong.trade.pill": "Pill Merchant",
-  "hukhong.trade.soul": "Soul Essence Merchant"
+  "hukhong.trade.soul": "Soul Essence Merchant",
+  "hukhong.trade.weapon": "Weaponsmith",
+  "hukhong.trade.armor": "Armorsmith",
+  "hukhong.trade.general": "General Goods",
+  "hukhong.trade.scroll": "Skill-Scroll Seller",
+  "hukhong.map.discovered": "Discovered %s (%s)",
+  "hukhong.prebuild.start": "Building the world: %s cities/ports/sects. It may lag a little at first.",
+  "hukhong.prebuild.done": "Finished building %s settlements.",
+  "hukhong.prebuild.bar": "Building %s (%s/%s)"
 }

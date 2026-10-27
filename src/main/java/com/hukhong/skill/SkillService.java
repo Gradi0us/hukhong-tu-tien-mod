@@ -37,6 +37,7 @@ public final class SkillService {
             return;
         }
         st.stance = !st.stance;
+        if (!st.stance) SkillEffects.kiemVucStop(p, st, true);
         p.displayClientMessage(Component.translatable(st.stance ? "hukhong.stance.on" : "hukhong.stance.off"), true);
         sync(p);
     }
@@ -50,6 +51,7 @@ public final class SkillService {
         long now = p.level().getGameTime();
         if (st.lastSwitch + SkillPages.SWITCH_COOLDOWN_TICKS > now) return;
         st.page = SkillPages.next(st.page, n);
+        SkillEffects.kiemVucStop(p, st, true);
         st.lastSwitch = now;
         for (int i = 0; i < 4; i++) st.cooldownEnd[i] = Math.max(st.cooldownEnd[i], now + SkillPages.SWITCH_COOLDOWN_TICKS);
         p.displayClientMessage(Component.translatable("hukhong.msg.page_switched",
@@ -81,6 +83,15 @@ public final class SkillService {
         if (r.book() != null && d.level() < r.book().minLevel()) return;
         long now = p.level().getGameTime();
         if (st.cooldownEnd[slot] > now) return;
+        if (r.base() == Skill.KIEM_ULT) { // Kiếm Vực: kênh bật/tắt, không hồi chiêu (chỉ khoá 1s chống bấm liên tục)
+            SkillBookRuntime.clear(p);
+            boolean ok;
+            if (st.domainOn) { SkillEffects.kiemVucStop(p, st, false); ok = true; }
+            else { ok = SkillEffects.kiemVucStart(p, st, slot); if (ok) SkillEffects.kiemVucTick(p, st); } // nhịp đầu ngay lập tức
+            if (ok) { st.cooldownEnd[slot] = now + SkillEffects.DOMAIN_LOCK_TICKS; st.lastCombat = now; }
+            sync(p);
+            return;
+        }
         if (!Resources.tryConsume(p, r.cost(), com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
             return;
@@ -107,9 +118,23 @@ public final class SkillService {
             SkillBook.Resolved r = SkillBook.resolve(bd, page, i, plv);
             rem.add((int) Math.max(0, st.cooldownEnd[i] - now));
             tot.add(i == 2 && r == null ? Math.max(1, st.rTotal) : r == null ? 1
+                    : r.base() == Skill.KIEM_ULT ? SkillEffects.DOMAIN_LOCK_TICKS
                     : SkillBookMath.cooldown(r.baseCooldown(), bd.level(r.id())));
         }
-        PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot, st.page));
+        PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot, st.page, st.domainOn));
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) {
+        if (e.getEntity() instanceof ServerPlayer p) {
+            SkillState st = state(p);
+            if (st.domainOn) SkillEffects.kiemVucTick(p, st);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p) state(p).domainOn = false;
     }
 
     @SubscribeEvent

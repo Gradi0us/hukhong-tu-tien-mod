@@ -197,7 +197,8 @@ final class FxEffects {
     private static void buildCracks(Inst f) {
         f.segs = new ArrayList<>(); f.segW = new ArrayList<>();
         float q = FxClient.q();
-        int arms = (int) (7 + 5 * q);
+        boolean small = f.scale < 1.2f;
+        int arms = Math.max(3, (int) Math.min(7 + 5 * q, 3 + 3 * f.scale * q));
         for (int a = 0; a < arms; a++) {
             double ang = Math.PI * 2 * a / arms + (f.rnd.nextDouble() - 0.5) * 0.5;
             Vec3 cur = f.pos;
@@ -215,11 +216,12 @@ final class FxEffects {
                 cur = nx;
             }
         }
-        for (int i = 0; i < 14 * q; i++) {
+        for (int i = 0; i < (small ? 4 : 14) * q; i++) {
             double a = f.rnd.nextDouble() * Math.PI * 2, r = f.scale * f.rnd.nextDouble();
-            FxClient.puff(FxParticle.GLOW, f.pos.x + Math.cos(a) * r, f.pos.y + 0.1, f.pos.z + Math.sin(a) * r, 0, 0.05 + f.rnd.nextDouble() * 0.12, 0, f.rgb, 0.4f, 24, 0f, true);
+            FxClient.puffA(FxParticle.GLOW, f.pos.x + Math.cos(a) * r, f.pos.y + 0.1, f.pos.z + Math.sin(a) * r, 0, 0.05 + f.rnd.nextDouble() * 0.12, 0,
+                    f.rgb, small ? 0.5f : 0.4f, small ? 30 : 24, 0f, true, small ? 0.3f : 1f);
         }
-        FxClient.add(FxType.SHOCKWAVE, f.pos, Vec3.ZERO, f.scale * 0.9f, f.rgb, 14, 0);
+        if (!small) FxClient.add(FxType.SHOCKWAVE, f.pos, Vec3.ZERO, f.scale * 0.9f, f.rgb, 14, 0);
     }
 
     // ================================================================ render
@@ -233,6 +235,7 @@ final class FxEffects {
         int c = f.rgb;
         switch (f.type) {
             case SWORD_CRESCENT -> crescent(f, g, k, q);
+            case SWORD_QI -> qi(f, g, k, q);
             case LIGHTNING_BOLT -> {
                 if (f.segs == null) return;
                 float a = f.age < 2 ? 1f : (f.age < 4 ? 0.35f : (f.age == 4 ? 1f : (float) Math.pow(1 - k, 1.5)));
@@ -242,7 +245,7 @@ final class FxEffects {
             }
             case GROUND_CRACK -> {
                 if (f.segs == null) return;
-                float reveal = clamp01(k * 3.5f), a = clamp01((1 - k) * 2f);
+                float reveal = clamp01(k * 3.5f), a = clamp01((1 - k) * 2f) * (f.scale < 1.2f ? 0.6f : 1f);
                 int shown = (int) (f.segs.size() * reveal);
                 for (int i = 0; i < shown && i < f.segs.size(); i++)
                     g.flatGlow(f.segs.get(i)[0].add(0, 0.07, 0), f.segs.get(i)[1].add(0, 0.07, 0), 0.07 * f.segW.get(i) * Math.max(1, f.scale * 0.4), c, a);
@@ -255,7 +258,7 @@ final class FxEffects {
                 g.flatRing(gp, r, r + wd * 0.7, (int) (20 + 28 * q), 0, col(white(c, 0.7f), a), col(c, 0f), 0);
                 g.cylinder(f.pos, r, 0, 0.9 * f.scale * (1 - k) + 0.2, (int) (18 + 24 * q), col(c, a * 0.5f), col(c, 0f));
             }
-            case SWORD_DOMAIN -> domain(f, g, t, fade, gp, q);
+            case SWORD_DOMAIN -> domain(f, g, t, fade * (f.stop < 0 ? 1f : clamp01(1f - (t - f.stop) / 8f)), gp, q);
             case TALISMAN_CIRCLE -> talisman(f, g, t, fade, gp, q);
             case TELEGRAPH -> telegraph(f, g, t, k, gp, q);
             case LIGHT_PILLAR -> {
@@ -290,6 +293,56 @@ final class FxEffects {
                 g.disc(e, 1.0 + 0.8 * k, 12, col(0xFFFFFF, 0.0f), col(c, 0f));
             }
             default -> {}
+        }
+    }
+
+    /**
+     * Dải kiếm khí lưỡi liềm: mặt cong nằm trong mặt phẳng (hướng bay, trục chém nghiêng theo roll), lồi ra phía trước,
+     * hai sừng cong về sau; dọc theo cung có "vây" mờ dần lên/xuống để nhìn thấy từ mọi góc. Gradient: mép ngoài sáng
+     * (trắng pha màu) -> mép trong trong suốt. Tối đa ~0.4 alpha, cộng sáng nhẹ - dịu mắt.
+     */
+    private static void qi(Inst f, FxDraw g, float k, float q) {
+        Vec3 d = f.dir.lengthSqr() < 1e-6 ? new Vec3(0, 0, 1) : f.dir;
+        double travel = d.length();
+        d = d.scale(1 / travel);
+        Vec3 flat = new Vec3(d.x, 0, d.z);
+        flat = flat.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : flat.normalize();
+        Vec3 right = new Vec3(-flat.z, 0, flat.x);
+        double sign = f.roll < 0 ? -1 : 1, tilt = Math.toRadians(Math.min(90, Math.abs(f.roll)));
+        Vec3 w = right.scale(Math.cos(tilt) * sign).add(0, Math.sin(tilt), 0);
+        w = w.subtract(d.scale(w.dot(d)));
+        w = w.lengthSqr() < 1e-6 ? right : w.normalize();
+        Vec3 nrm = w.cross(d);
+        if (nrm.y < 0) nrm = nrm.scale(-1);
+        nrm = nrm.lengthSqr() < 1e-6 ? new Vec3(0, 1, 0) : nrm.normalize();
+
+        float inA = clamp01(k * 8f), outA = (float) Math.pow(1 - k, 1.1);
+        float peak = 0.42f * inA * outA;
+        double R = f.scale * (0.55 + 0.45 * ease(Math.min(1f, k * 2.2f)));
+        int n = (int) (12 + 10 * q);
+        double A = 1.2;
+        int rim = white(f.rgb, 0.65f), body = f.rgb;
+        for (int tr = 0; tr < 3; tr++) { // bản chính + 2 bóng đuôi
+            float kk = k - tr * 0.07f;
+            if (kk < 0) break;
+            float ta = peak * (tr == 0 ? 1f : tr == 1 ? 0.45f : 0.2f);
+            Vec3 cen = f.pos.add(d.scale(travel * ease(Math.min(1f, kk))));
+            double Rt = R * (1 - 0.1 * tr);
+            Vec3 po = null, pn = null, pi = null, pdn = null;
+            double hgt = Rt * 0.22;
+            for (int i = 0; i <= n; i++) {
+                double a = -A + 2 * A * i / n;
+                double tp = Math.pow(Math.cos(a * Math.PI / (2 * A)), 0.8);
+                Vec3 o = cen.add(d.scale(Math.cos(a) * Rt * 0.9 - Rt * 0.55)).add(w.scale(Math.sin(a) * Rt * 1.5));
+                Vec3 in = o.subtract(d.scale(0.5 * Rt * tp));
+                Vec3 up = o.add(nrm.scale(hgt * tp)), dn = o.subtract(nrm.scale(hgt * tp));
+                if (po != null) {
+                    g.quad2(po, o, in, pi, col(rim, ta * 0.95f), col(rim, ta * 0.95f), col(body, 0f), col(body, 0f));
+                    g.quad2(po, o, up, pn, col(rim, ta * 0.6f), col(rim, ta * 0.6f), col(body, 0f), col(body, 0f));
+                    g.quad2(po, o, dn, pdn, col(rim, ta * 0.6f), col(rim, ta * 0.6f), col(body, 0f), col(body, 0f));
+                }
+                po = o; pi = in; pn = up; pdn = dn;
+            }
         }
     }
 

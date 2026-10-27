@@ -22,11 +22,17 @@ public final class StructureBuilds {
      */
     public static BlockPos tryBuild(ServerLevel l, String category, String key, BlockPos site, String anchorMarker,
                                     Consumer<StructurePlacer.Placed> gameplay) {
+        return tryBuild(l, category, key, site, anchorMarker, null, gameplay);
+    }
+
+    /** Nhu tren; originY != null = ep mat nen (vd cang: muc bien - 1 de lop nuoc cua cau truc khop mat bien). */
+    public static BlockPos tryBuild(ServerLevel l, String category, String key, BlockPos site, String anchorMarker,
+                                    Integer originY, Consumer<StructurePlacer.Placed> gameplay) {
         StructureLibrary.ensureUserDirs();
         LoadedStructure st = StructureLibrary.pick(l.getServer(), category, key, l.getSeed());
         if (st == null) return null;
         int cx = site.getX(), cz = site.getZ();
-        int y0 = StructurePlacer.surfaceY(l, cx, cz);
+        int y0 = originY != null ? originY : StructurePlacer.surfaceY(l, cx, cz);
         BlockPos origin = new BlockPos(cx - st.sx / 2, y0, cz - st.sz / 2);
         BlockPos anchor = anchorOf(st, anchorMarker, cx, cz, y0);
         StructurePlacer.enqueue(l, st, origin, gameplay);

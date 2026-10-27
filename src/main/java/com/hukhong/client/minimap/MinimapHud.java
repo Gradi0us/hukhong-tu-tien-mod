@@ -110,13 +110,24 @@ public final class MinimapHud {
                 double dx = m.x() - px, dz = m.z() - pz;
                 if (inside(dx, dz, lim, round)) {
                     int ix = cx + (int) Math.round(dx), iy = cy + (int) Math.round(dz);
-                    if (m.kind() == MapMarkersPayload.CITY) MapIcons.city(g, ix, iy, m.built(), wp);
+                    if (MinimapState.isPort(m)) MapIcons.port(g, ix, iy, m.built(), wp);
+                    else if (m.kind() == MapMarkersPayload.CITY) MapIcons.city(g, ix, iy, m.built(), wp);
                     else MapIcons.sect(g, ix, iy, m.built(), wp);
-                } else { // ngoài tầm: chấm mờ ở mép theo hướng
+                } else if (dx * dx + dz * dz <= (double) MinimapState.DISCOVER * MinimapState.DISCOVER) { // ngoài tầm: mũi tên ở mép + khoảng cách
                     int[] e = edge(dx, dz, lim, round);
-                    int col = m.kind() == MapMarkersPayload.CITY ? 0xFFE8C060 : 0xFF6FE0D0;
-                    g.fill(cx + e[0] - 1, cy + e[1] - 1, cx + e[0] + 2, cy + e[1] + 2, MapIcons.INK);
-                    g.fill(cx + e[0], cy + e[1], cx + e[0] + 1, cy + e[1] + 1, col);
+                    int col = MinimapState.color(m);
+                    float ang = (float) Math.toDegrees(Math.atan2(dx, -dz));
+                    MapIcons.arrow(g, cx + e[0], cy + e[1], ang, col, MapIcons.INK);
+                    String dtxt = MinimapState.distText((int) Math.sqrt(dx * dx + dz * dz));
+                    float sc = 0.5f;
+                    int tw = (int) (font.width(dtxt) * sc);
+                    int tx = cx + e[0] - tw / 2 - (int) Math.round(Math.signum(e[0]) * (tw / 2 + 5) * Math.abs(e[0]) / Math.max(1, lim));
+                    int ty2 = cy + e[1] - 2 - (int) Math.round(Math.signum(e[1]) * 7 * Math.abs(e[1]) / (double) Math.max(1, lim));
+                    g.pose().pushPose();
+                    g.pose().translate(tx, ty2, 0);
+                    g.pose().scale(sc, sc, 1f);
+                    g.drawString(font, dtxt, 0, 0, col, true);
+                    g.pose().popPose();
                 }
             }
         }
@@ -163,6 +174,17 @@ public final class MinimapHud {
             float rel = (float) (Math.toDegrees(Math.atan2(wdx, -wdz)) - (mc.player.getYRot() + 180f));
             MapIcons.arrow(g, right - tw - 8, ty + 3, rel, MapIcons.RED, MapIcons.INK);
             text(g, font, label, right, ty, 0xFFFF9A8A);
+        }
+        // danh sách tự phát hiện: thành/cảng/tông trong 1000 block, gần nhất trước
+        if (MinimapState.markersVisible()) {
+            int shown = 0;
+            for (MapMarkersPayload.Marker m : MinimapState.sortedByDistance(px, pz)) {
+                double dd = Math.sqrt(MinimapState.dist2(m, px, pz));
+                if (dd > MinimapState.DISCOVER) break;
+                if (shown++ >= 5) break;
+                ty += 9;
+                text(g, font, Component.translatable(m.nameKey()).getString() + " " + MinimapState.distText((int) dd), right, ty, MinimapState.color(m));
+            }
         }
     }
 

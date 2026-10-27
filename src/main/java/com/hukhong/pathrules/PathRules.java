@@ -27,7 +27,11 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 @EventBusSubscriber(modid = HuKhong.MODID)
 public final class PathRules {
     /** Hồi tài nguyên mỗi giây (x resource_regen). Bước 27: BalanceSimTest dùng các hằng này. */
-    public static final int DAO_REGEN = 5, DAO_MEDITATE_REGEN = 14, KIEM_REGEN_COMBAT = 9, KIEM_REGEN_IDLE = 8;
+    public static final int DAO_REGEN = 5, DAO_MEDITATE_REGEN = 14;
+    /** Kiếm: hồi thụ động chỉ còn 1/4 (cũ 9 / 8 mỗi giây); bù bằng đòn đánh thường: mỗi đòn trúng +4% tối đa, tối đa 1 lần / 2s. */
+    public static final double KIEM_REGEN_COMBAT = 9 / 4.0, KIEM_REGEN_IDLE = 8 / 4.0;
+    public static final double KIEM_HIT_MANA_PCT = 0.04;
+    public static final int KIEM_HIT_MANA_ICD_TICKS = 40;
     public static final int THE_PASSIVE_REGEN = 2;
     public static final int THE_HIT_SMALL = 1, THE_HIT_BIG = 3, THE_MELEE_GAIN = 2, MA_HIT_GAIN = 1;
 
@@ -53,6 +57,11 @@ public final class PathRules {
                     atk.displayClientMessage(Component.translatable("hukhong.msg.void"), true);
                 }
                 if (after > 0f && has(atk, Path.MA)) MaRules.onHit(atk);
+                if (after > 0f && !DamageRules.isSkill() && src.getDirectEntity() == atk && has(atk, Path.KIEM)
+                        && atk.level().getGameTime() - st.lastHitMana >= KIEM_HIT_MANA_ICD_TICKS) {
+                    st.lastHitMana = atk.level().getGameTime();
+                    Resources.add(atk, Math.max(1, (int) Math.round(d.resourceMax() * KIEM_HIT_MANA_PCT)));
+                }
                 if (after > 0f && !DamageRules.isSkill() && src.getDirectEntity() == atk && has(atk, Path.THE)) {
                     Resources.add(atk, THE_MELEE_GAIN);
                 }
@@ -101,7 +110,12 @@ public final class PathRules {
             double rg = com.hukhong.stats.StatService.regen(p);
             double mm = med ? com.hukhong.age.AgeMath.meditationMult(com.hukhong.age.AgeService.stageOf(p)) : 1.0; // Ngũ Suy V: thiền x0,5
             if (dao) Resources.add(p, (int) Math.round((med ? DAO_MEDITATE_REGEN * mm : DAO_REGEN) * rg));
-            if (d.paths().contains(Path.KIEM)) Resources.add(p, (int) Math.round((now - st.lastCombat > 60 ? KIEM_REGEN_IDLE : KIEM_REGEN_COMBAT) * rg));
+            if (d.paths().contains(Path.KIEM)) {
+                double v = (now - st.lastCombat > 60 ? KIEM_REGEN_IDLE : KIEM_REGEN_COMBAT) * rg + st.regenFrac; // giữ phần lẻ để không mất hồi
+                int whole = (int) Math.floor(v);
+                st.regenFrac = v - whole;
+                if (whole > 0) Resources.add(p, whole);
+            }
             if (the) {
                 if (med) {
                     if (d.resource() < 60) Resources.add(p, Math.min((int) Math.round(5 * rg * mm), 60 - d.resource()));

@@ -32,14 +32,29 @@ public final class HuHoa {
     /** Vòng 3 (Bước 27): R2..R3 -> cấp 30-100 để người chơi cấp cao còn quái cùng cấp (trước đây trần 30). */
     public static final int MAX_MOB_LEVEL = 100;
 
+    /**
+     * Cap quai = vong khoang cach (1..100) + thuong theo tuoi the gioi, nhieu +-1.
+     * Tuoi the gioi: +1 cap moi {@link #DAYS_PER_LEVEL} ngay game ke tu luc tao the gioi (gameTime/24000), toi da +{@link #AGE_BONUS_CAP}.
+     */
     public static int levelFor(ServerLevelAccessor lvl, BlockPos pos, net.minecraft.util.RandomSource r) {
         BlockPos sp = lvl.getLevel().getSharedSpawnPos();
         double dx = pos.getX() - sp.getX(), dz = pos.getZ() - sp.getZ();
-        double d = Math.sqrt(dx * dx + dz * dz);
+        return levelFor(Math.sqrt(dx * dx + dz * dz), ageBonus(lvl.getLevel().getGameTime() / 24000L), r.nextInt(3) - 1);
+    }
+
+    public static final int DAYS_PER_LEVEL = 3, AGE_BONUS_CAP = 30;
+
+    /** Thuong cap theo so ngay game the gioi da song: floor(days / DAYS_PER_LEVEL), kep [0, AGE_BONUS_CAP]. */
+    public static int ageBonus(long days) {
+        return (int) Math.max(0, Math.min(AGE_BONUS_CAP, days / DAYS_PER_LEVEL));
+    }
+
+    /** Thuan: d = khoang cach toi spawn, jitter in -1..1. */
+    public static int levelFor(double d, int ageBonus, int jitter) {
         int base = d < R1 ? 1 + (int) (14 * d / R1)
                 : d < R2 ? 15 + (int) (15 * (d - R1) / (R2 - R1))
                 : 30 + (int) Math.min(MAX_MOB_LEVEL - 30, (MAX_MOB_LEVEL - 30) * (d - R2) / (R3 - R2));
-        return Math.max(1, Math.min(MAX_MOB_LEVEL, base + r.nextInt(3) - 1));
+        return Math.max(1, Math.min(MAX_MOB_LEVEL, base + jitter + ageBonus));
     }
 
     /** He so cap: hp x(1+0.38(L-1)), sat thuong x(1+0.10(L-1)), giap +0.25/cap (toi da 20), toc do +0.5%/cap (toi da +30%). */
@@ -106,7 +121,10 @@ public final class HuHoa {
     public static long exp(double w, int level, int playerLevel) {
         double e = 40 * Math.pow(level, 2.15) / EXP_DIV;
         double f = level <= playerLevel - 10 ? 0.1 : 1.0;
-        return Math.round(w * e * f);
+        double raw = w * e * f;
+        // ROOT CAUSE "giet quai khong co EXP": quai cap 1-2 cho 0.07-0.33 EXP (EXP_DIV 540) -> Math.round = 0.
+        // Quai ngang/cao hon nguoi choi (f == 1) luon cho >= 1 EXP.
+        return f >= 1.0 && w > 0 ? Math.max(1, Math.round(raw)) : Math.round(raw);
     }
 
     /** Trần max_health vanilla (RangedAttribute). HP thiết kế vượt trần được quy đổi thành giảm sát thương nhận. */

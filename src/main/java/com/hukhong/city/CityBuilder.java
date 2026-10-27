@@ -110,16 +110,25 @@ public final class CityBuilder {
 
     /** Dung thanh: file cau truc (neu co) roi toi thu tuc. Tra tam (y = mat nen cua Ấn Hồn Đài). */
     public static BlockPos build(ServerLevel l, BlockPos site, CityDef d) {
-        BlockPos imported = StructureBuilds.tryBuild(l, d.category(), d.id(), site, "altar", p -> placeCore(p, d.nameKey()));
-        if (imported != null) {
-            TradeDistrict.tryBuild(l, d, site);
-            return imported;
-        }
-        return buildProcedural(l, site, d.nameKey(), d.tier(), d.category());
+        boolean port = d.category().equals("port");
+        BlockPos imported = StructureBuilds.tryBuild(l, d.category(), d.id(), site, "altar",
+                port ? Integer.valueOf(l.getSeaLevel() - 1) : null, p -> placeCore(p, d));
+        if (imported != null) return imported;
+        BlockPos c = buildProcedural(l, site, d.nameKey(), d.tier(), d.category());
+        WorldBuildData.get(l).put(new WorldBuildData.Settlement(d.id(), kindOf(d), c.getX() - HALF, c.getZ() - HALF, c.getX() + HALF, c.getZ() + HALF,
+                c.getY() + 1, c.getX(), c.getZ()));
+        if (d.category().equals("city_ruined")) RuinGuard.spawnBoss(l, d, c.above());
+        else CityMarket.populate(l, d, c.above(), java.util.List.of());
+        return c;
+    }
+
+    static String kindOf(CityDef d) {
+        return switch (d.category()) { case "port" -> "port"; case "city_ruined" -> "ruin"; default -> "city"; };
     }
 
     /** Gameplay cho cau truc import: Ấn Hồn Đài, Bảng Thành, NPC (marker hukhong:altar / board / npc, khong co thi o tam). */
-    private static void placeCore(StructurePlacer.Placed p, String nameKey) {
+    private static void placeCore(StructurePlacer.Placed p, CityDef d) {
+        String nameKey = d.nameKey();
         ServerLevel l = p.level();
         BlockPos fallback = p.origin().offset(p.st().sx / 2, 1, p.st().sz / 2);
         boolean marked = p.st().marker("altar") != null;
@@ -144,7 +153,12 @@ public final class CityBuilder {
             int[][] vp = {{3, 3}, {-3, 3}, {3, -3}};
             for (int[] o : vp) npc.add(altar.offset(o[0], 0, o[1]));
         }
+        BlockPos o = p.origin();
+        WorldBuildData.get(l).put(new WorldBuildData.Settlement(d.id(), kindOf(d), o.getX(), o.getZ(), o.getX() + p.st().sx - 1, o.getZ() + p.st().sz - 1,
+                altar.getY(), altar.getX(), altar.getZ()));
+        if (d.category().equals("city_ruined")) { RuinGuard.spawnBoss(l, d, altar); return; }
         for (BlockPos np : npc) spawnVillager(l, np.getX(), np.getY(), np.getZ());
+        CityMarket.populate(p, d);
     }
 
     private static void spawnVillager(ServerLevel l, int x, int y, int z) {

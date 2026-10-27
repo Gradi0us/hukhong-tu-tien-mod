@@ -58,7 +58,7 @@ public final class SectEvents {
         MinecraftServer server = e.getServer();
         int t = server.getTickCount();
         if (t % 20 == 7) SectTrial.tick(server);
-        if (t % 40 != 19 || t < 100) return;
+        if (t % 40 != 19 || t < 100 || com.hukhong.city.Prebuild.owns()) return;
         ServerLevel ow = server.getLevel(Level.OVERWORLD);
         if (ow == null) return;
         SectSavedData reg = SectSavedData.get(ow);

@@ -34,6 +34,37 @@ public final class Fx {
                         size, CYAN | (Math.min(255, Math.max(0, delay)) << 24), Math.max(2, flight)));
     }
 
+
+    /** Kiếm rơi cắm đất (Kiếm Vực): from -> to, mũi chúc xuống, nằm lại ~1.5s rồi mờ; bụi + vết nứt nhỏ khi chạm. */
+    public static void swordStab(ServerLevel lv, Vec3 from, Vec3 to, int flight, int delay, float size) {
+        Vec3 d = to.subtract(from);
+        PacketDistributor.sendToPlayersNear(lv, null, to.x, to.y, to.z, 96,
+                new FxPayload(FxType.SWORD_STAB.ordinal(), from.x, from.y, from.z, (float) d.x, (float) d.y, (float) d.z,
+                        size, 0xBFEFFF | (Math.min(255, Math.max(0, delay)) << 24), Math.max(2, flight)));
+    }
+
+    /** Kiếm của chủ vung cung chém trước mặt: roll độ (dấu = chiều quét; 90 = bổ dọc), bán kính cung, cỡ kiếm (>=2.5 = khổng lồ). */
+    public static void slash(ServerLevel lv, ServerPlayer owner, double rollDeg, double radius, int delay, int sweepTicks, float size) {
+        PacketDistributor.sendToPlayersNear(lv, null, owner.getX(), owner.getY(), owner.getZ(), 96,
+                new FxPayload(FxType.SWORD_SLASH.ordinal(), owner.getX(), owner.getY(), owner.getZ(), owner.getId(), (float) rollDeg, (float) radius,
+                        size, Math.min(255, Math.max(0, delay)) << 24, Math.max(3, sweepTicks)));
+    }
+
+    /** Dải kiếm khí lưỡi liềm bay từ pos theo dir (độ dài dir = quãng đường), bán kính radius, nghiêng rollDeg (-90..90). */
+    public static void qi(ServerLevel lv, Vec3 pos, Vec3 dir, float radius, int color, double rollDeg, int lifeTicks) {
+        int rb = (int) Math.round((Math.max(-90, Math.min(90, rollDeg)) + 90) * 1.4167);
+        PacketDistributor.sendToPlayersNear(lv, null, pos.x, pos.y, pos.z, 96,
+                new FxPayload(FxType.SWORD_QI.ordinal(), pos.x, pos.y, pos.z, (float) dir.x, (float) dir.y, (float) dir.z,
+                        radius, color == 0 ? 0x9FE8FF | (rb << 24) : (color & 0xFFFFFF) | (rb << 24), lifeTicks));
+    }
+
+    /** Kiếm Vực bám theo chủ (client tự theo thực thể): gói làm tươi giữ vùng sáng; radius <= 0 = tắt dần. */
+    public static void domain(ServerLevel lv, ServerPlayer owner, float radius, int lifeTicks) {
+        PacketDistributor.sendToPlayersNear(lv, null, owner.getX(), owner.getY(), owner.getZ(), 96,
+                new FxPayload(FxType.SWORD_DOMAIN.ordinal(), owner.getX(), owner.getY(), owner.getZ(), owner.getId(), 0f, 0f,
+                        radius, CYAN, lifeTicks));
+    }
+
     /** Khoảnh khắc cường hóa / tiến hóa: cột sáng + vòng nở + hạt bay lên quanh người chơi. */
     public static void upgradeBurst(ServerPlayer p, int color) {
         play(p.serverLevel(), FxType.UPGRADE_BURST, p.position(), new Vec3(0, 1, 0), 1f, color);

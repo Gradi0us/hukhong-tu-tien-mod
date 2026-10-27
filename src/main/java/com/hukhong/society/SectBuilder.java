@@ -61,6 +61,9 @@ public final class SectBuilder {
         set(l, a.getX(), a.getY(), a.getZ(), SocietyRegistry.LINH_KHI_DAI.get());
         BlockPos b = p.marker("sect_board", a.offset(3, 0, 2));
         set(l, b.getX(), b.getY(), b.getZ(), SocietyRegistry.TONG_MON_BANG.get());
+        BlockPos o = p.origin();
+        com.hukhong.city.WorldBuildData.get(l).put(new com.hukhong.city.WorldBuildData.Settlement(def.id(), "sect", o.getX(), o.getZ(),
+                o.getX() + p.st().sx - 1, o.getZ() + p.st().sz - 1, a.getY(), a.getX(), a.getZ()));
     }
 
     private static Block roofStair(String id) {
@@ -160,6 +163,8 @@ public final class SectBuilder {
             s.setChanged();
         }
         decorate(l, def.id(), cx, y0, cz);
+        com.hukhong.city.WorldBuildData.get(l).put(new com.hukhong.city.WorldBuildData.Settlement(def.id(), "sect", cx - HALF, cz - HALF,
+                cx + HALF, cz + HALF, y0 + 1, cx, cz));
         return new BlockPos(cx, y0, cz);
     }
 

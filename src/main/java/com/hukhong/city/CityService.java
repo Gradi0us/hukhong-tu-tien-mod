@@ -45,6 +45,8 @@ public final class CityService {
         BlockPos c = builtCenter(ow, d);
         if (c != null) return c;
         BlockPos sp = ow.getSharedSpawnPos();
+        int[] ps = WorldBuildData.get(ow).portSite(d.id());
+        if (ps != null) return new BlockPos(ps[0], 64, ps[1]);
         if (d.index() == 0) return CityBuilder.chooseSite(ow);
         int[] xz = Placement.site(sp.getX(), sp.getZ(), d.ax(), d.az(), ow.getSeed(), d.id());
         return new BlockPos(xz[0], 64, xz[1]);
@@ -58,7 +60,7 @@ public final class CityService {
         int t = server.getTickCount();
         if (t % 40 != 7) return;
         ServerLevel ow = server.getLevel(Level.OVERWORLD);
-        if (ow == null || t < 100) return;
+        if (ow == null || t < 100 || Prebuild.owns()) return;
         CityRegistryData reg = CityRegistryData.get(ow);
         for (ServerPlayer p : ow.players()) {
             touchResidency(ow, p);

@@ -41,7 +41,7 @@ public final class CityEvents {
         if (t % 20 == 0) {
             CitySavedData d = CitySavedData.get(ow);
             if (!d.isBuilt()) {
-                if (t >= 40) ensureBuilt(server, false);
+                if (t >= 40 && !Prebuild.owns()) ensureBuilt(server, false);
                 return;
             }
             for (ServerPlayer p : ow.players()) {

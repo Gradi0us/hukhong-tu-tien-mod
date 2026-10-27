@@ -63,6 +63,8 @@
   "hukhong.hud.stance_on": "Thế Tu Luyện",
   "hukhong.hud.stance_off": "Thế: tắt (G)",
   "hukhong.msg.no_resource": "Không đủ tài nguyên",
+  "hukhong.msg.domain_on": "Kiếm Vực: BẬT (nhấn lại để tắt)",
+  "hukhong.msg.domain_off": "Kiếm Vực: TẮT",
   "hukhong.msg.no_skill_path": "Chưa có đạo nào có kỹ năng",
   "hukhong.msg.void": "Vô Hiệu",
   "hukhong.breakthrough.title": "Đột Phá: %s",
@@ -910,5 +912,13 @@
   "hukhong.artifact.tip.click": "Bấm để tiến hóa (hoặc Shift + chuột phải bằng Hồn Tinh).",
   "hukhong.trade.herb": "Thương Nhân Linh Thảo",
   "hukhong.trade.pill": "Thương Nhân Đan Dược",
-  "hukhong.trade.soul": "Thương Nhân Hồn Tinh"
+  "hukhong.trade.soul": "Thương Nhân Hồn Tinh",
+  "hukhong.trade.weapon": "Thợ Rèn Binh Khí",
+  "hukhong.trade.armor": "Thợ Rèn Giáp",
+  "hukhong.trade.general": "Tạp Hóa",
+  "hukhong.trade.scroll": "Thương Nhân Bí Tịch",
+  "hukhong.map.discovered": "Phát hiện %s (%s)",
+  "hukhong.prebuild.start": "Đang dựng thế giới: %s thành/cảng/tông. Có thể hơi chậm lúc đầu.",
+  "hukhong.prebuild.done": "Đã dựng xong %s khu dân cư.",
+  "hukhong.prebuild.bar": "Đang dựng %s (%s/%s)"
 }

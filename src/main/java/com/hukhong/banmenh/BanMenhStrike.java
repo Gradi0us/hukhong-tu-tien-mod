@@ -58,7 +58,7 @@ public final class BanMenhStrike {
         if (ready != null && now < ready) return;
         int stage = BanMenhKiemItem.stageOf(s);
         // thời gian bay = khoảng cách (vai -> mục tiêu) / tốc độ; server áp sát thương đúng lúc kiếm tới
-        int flight = BanMenhMath.flightTicks(p.position().add(0, 1.5, 0).distanceTo(mid));
+        int flight = Math.max(5, BanMenhMath.flightTicks(p.position().add(0, 1.5, 0).distanceTo(mid))); // >= 5: khớp nhịp kiếm quét ngang trước mặt
         int count = BanMenhMath.strikeSwords(stage);
         READY.put(p.getUUID(), now + flight + BanMenhMath.STRIKE_RETURN_TICKS);
         PENDING.add(new Pending(p.getUUID(), t.getUUID(), now + flight));
@@ -97,8 +97,34 @@ public final class BanMenhStrike {
             if (!(p.serverLevel().getEntity(pd.target()) instanceof LivingEntity t) || !t.isAlive()) continue;
             if (!inRange(p.getEyePosition(), t, BanMenhMath.strikeRange(BanMenhKiemItem.stageOf(s)) + 2.0)) continue;
             p.attack(t);
+            sweep(p, t, s);
         }
     }
+
+    /** Kiếm quét cung trước mặt: sinh vật quanh chủ trong hình quạt ~3,8 block (hướng về mục tiêu chính) cũng trúng, 50% đòn gốc. */
+    private static void sweep(ServerPlayer p, LivingEntity main, ItemStack s) {
+        final double reach = SWEEP_REACH;
+        Vec3 dir = main.position().subtract(p.position());
+        dir = new Vec3(dir.x, 0, dir.z);
+        if (dir.lengthSqr() < 1e-3) { Vec3 lk = p.getLookAngle(); dir = new Vec3(lk.x, 0, lk.z); }
+        if (dir.lengthSqr() < 1e-6) return;
+        final Vec3 fwd = dir.normalize();
+        final Vec3 origin = p.position();
+        var list = p.level().getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(reach, 1.5, reach), e -> {
+            if (e == p || e == main || !e.isAlive() || e.isSpectator() || e instanceof net.minecraft.world.entity.player.Player
+                    || e instanceof net.minecraft.world.entity.npc.Npc
+                    || (e instanceof net.minecraft.world.entity.TamableAnimal ta && ta.isOwnedBy(p))) return false;
+            Vec3 c = e.position().subtract(origin);
+            double dist = Math.sqrt(c.x * c.x + c.z * c.z);
+            if (dist > reach + e.getBbWidth() / 2) return false;
+            return dist < 0.8 || (c.x * fwd.x + c.z * fwd.z) / dist >= SWEEP_COS_HALF;
+        });
+        if (list.isEmpty()) return;
+        float dmg = (float) (com.hukhong.stats.StatService.attackPower(p) * BanMenhService.QUALITY[BanMenhKiemItem.stageOf(s)] * 0.5);
+        for (LivingEntity e : list) BanMenhEvents.extra(p, e, dmg);
+    }
+
+    public static final double SWEEP_REACH = 3.8, SWEEP_COS_HALF = 0.3;
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {

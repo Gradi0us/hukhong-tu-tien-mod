@@ -27,13 +27,21 @@ public final class OrbitState {
         final double side;     // chiều cong của cung bay (+-1)
         final float size;
         final ItemStack stack; // skill: kiếm hiển thị (owner: lấy từ tay chủ lúc vẽ)
+        int hold = 5;          // skill: số tick còn lại (cắm đất) sau khi tới đích
+        boolean slash;         // chủ vung cung chém trước mặt (thay vì phóng tới mục tiêu)
+        double roll, radius;   // cung chém: góc nghiêng (độ, dấu = chiều quét) và bán kính
+        boolean giant;         // kiếm khổng lồ (Liên Hoàn Trảm)
+        static final int WIND = 3;
 
         Flight(int owner, int target, Vec3 from, Vec3 to, long start, int flight, int ret, double side, float size, ItemStack stack) {
             this.owner = owner; this.target = target; this.from = from; this.to = to; this.start = start;
             this.flight = flight; this.ret = ret; this.side = side; this.size = size; this.stack = stack;
         }
 
-        boolean done(double time) { return time - start >= flight + (owner >= 0 ? ret : 5); }
+        boolean done(double time) {
+            if (slash) return time - start >= WIND + flight + ret;
+            return time - start >= flight + (owner >= 0 ? ret : hold);
+        }
     }
 
     private static final Random RND = new Random();
@@ -47,19 +55,42 @@ public final class OrbitState {
         FLIGHTS.add(f);
     }
 
-    /** Đòn đánh thường: count kiếm phóng nối tiếp (cách 2 tick) từ sau vai chủ tới mục tiêu. */
+    /**
+     * Đòn đánh thường: kiếm sau vai bay ra, chém một cung TRƯỚC MẶT chủ (hướng về mục tiêu) rồi quay về vai.
+     * count kiếm nối tiếp (cách 3 tick), chiều quét đổi qua lại. Mục tiêu xa hơn cung: thêm một vệt kiếm khí bay tới đó.
+     */
     public static void onFx(int ownerId, int targetId, int flight, int count) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;
         Entity t = level.getEntity(targetId);
-        Vec3 to = t == null ? Vec3.ZERO : t.position().add(0, t.getBbHeight() * 0.55, 0);
-        for (int i = 0; i < count; i++)
-            add(new Flight(ownerId, targetId, null, to, level.getGameTime() + 2L * i, flight,
-                    BanMenhMath.STRIKE_RETURN_TICKS, i % 2 == 0 ? 1 : -1, 1f, ItemStack.EMPTY));
+        Entity o = level.getEntity(ownerId);
+        double dist = t != null && o != null ? o.position().distanceTo(t.position()) : 0;
+        double radius = Math.max(2.4, Math.min(3.4, dist));
+        for (int i = 0; i < count; i++) {
+            Flight f = new Flight(ownerId, targetId, null, Vec3.ZERO, level.getGameTime() + 3L * i, SWEEP_TICKS,
+                    BanMenhMath.STRIKE_RETURN_TICKS - 3, 1, 1f, ItemStack.EMPTY);
+            f.slash = true; f.radius = radius; f.roll = (i % 2 == 0 ? 1 : -1) * 28;
+            add(f);
+        }
+        if (t != null && o != null && dist > 4.2)
+            com.hukhong.client.fx.FxClient.qi(o.getEyePosition().subtract(0, 0.5, 0), t.position().add(0, t.getBbHeight() * 0.5, 0), 0.8f, 0x9FE8FF, 3, flight);
+    }
+
+    public static final int SWEEP_TICKS = 5;
+
+    /** Kiếm chủ vung cung chém (kỹ năng): roll độ (dấu = chiều quét), bán kính, cỡ kiếm; giant = kiếm khổng lồ. */
+    public static void addSlash(int ownerId, double roll, double radius, int delay, int sweep, float size) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
+        Flight f = new Flight(ownerId, -1, null, Vec3.ZERO, level.getGameTime() + delay, Math.max(3, sweep), 6, 1, size <= 0 ? 1f : size, ItemStack.EMPTY);
+        f.slash = true; f.roll = roll; f.radius = radius; f.giant = size >= 2.5f;
+        add(f);
     }
 
     /** Phi kiếm kỹ năng: from -> from+dir trong flight tick sau delay tick. Chất lượng thấp bỏ bớt các kiếm trễ. */
-    public static void addSkill(Vec3 from, Vec3 dir, int flight, int delay, float size) {
+    public static void addSkill(Vec3 from, Vec3 dir, int flight, int delay, float size) { addSkill(from, dir, flight, delay, size, 5); }
+
+    public static void addSkill(Vec3 from, Vec3 dir, int flight, int delay, float size, int hold) {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null) return;
@@ -73,13 +104,15 @@ public final class OrbitState {
             if (!s.isEmpty()) { st = s.copyWithCount(1); break; }
         }
         if (st.isEmpty()) st = new ItemStack(Items.IRON_SWORD);
-        add(new Flight(-1, -1, from, to, level.getGameTime() + delay, flight, 0, RND.nextBoolean() ? 1 : -1,
-                size <= 0 ? 1f : size, st));
+        Flight fl = new Flight(-1, -1, from, to, level.getGameTime() + delay, flight, 0, RND.nextBoolean() ? 1 : -1,
+                size <= 0 ? 1f : size, st);
+        fl.hold = Math.max(1, hold);
+        add(fl);
     }
 
     /** Chủ có kiếm đang bay (kể cả chờ phóng / quay về) -> không vẽ kiếm treo sau vai. */
     public static boolean busy(int ownerId, double time) {
-        for (Flight f : FLIGHTS) if (f.owner == ownerId && !f.done(time)) return true;
+        for (Flight f : FLIGHTS) if (f.owner == ownerId && !f.done(time) && (!f.slash || time >= f.start)) return true;
         return false;
     }
 

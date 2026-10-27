@@ -65,14 +65,20 @@ public final class ModEntities {
         e.put(TAM_MA.get(), TamMa.attrs().build());
     }
 
+    /** Quai Hu Hoa sinh ca ngay lan dem (khong doi toi), tren mat dat, khong o Peaceful. */
+    public static boolean huSpawnRules(EntityType<? extends Monster> t, net.minecraft.world.level.ServerLevelAccessor l,
+                                       net.minecraft.world.entity.MobSpawnType st, net.minecraft.core.BlockPos p, net.minecraft.util.RandomSource r) {
+        return l.getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL && Monster.checkMobSpawnRules(t, l, st, p, r);
+    }
+
     @SubscribeEvent
     public static void placements(RegisterSpawnPlacementsEvent e) {
         e.register(HU_THI.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+                ModEntities::huSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         e.register(HU_COT.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+                ModEntities::huSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
         e.register(HU_CHU.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Monster::checkMonsterSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
+                ModEntities::huSpawnRules, RegisterSpawnPlacementsEvent.Operation.REPLACE);
     }
 
     @SubscribeEvent

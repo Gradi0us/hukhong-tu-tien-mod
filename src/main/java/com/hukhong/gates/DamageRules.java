@@ -21,6 +21,9 @@ public final class DamageRules {
     /** Đòn tay Thể Tu = Công x (1 + FIST_AURA_COEF x Bá Khí%). */
     public static final double FIST_AURA_COEF = 1.80;
 
+    /** Tay không (hoặc cầm vật không phải vũ khí) của mọi đạo trừ Thể Tu: sát thương cố định, không cộng Công, không bạo kích. */
+    public static final float UNARMED_FIXED_DAMAGE = 2f;
+
     private static boolean skillActive = false;
 
     public static boolean isSkill() { return skillActive; }
@@ -52,6 +55,7 @@ public final class DamageRules {
     public static float resolve(ServerPlayer atk, LivingEntity target, DamageSource src, float amount) {
         CultivationData d = atk.getData(ModAttachments.CULTIVATION);
         float out = amount;
+        boolean fixed = false;
         if (!skillActive) {
             boolean melee = src.getDirectEntity() == atk;
             if (d.paths().contains(Path.THE)) {
@@ -61,11 +65,16 @@ public final class DamageRules {
                     out = 0f; // cung/nỏ/phi tiêu...
                 }
             } else if (melee && out > 0f) {
-                out += (float) com.hukhong.stats.StatService.attackPower(atk); // Công cộng vào đòn cận chiến
+                if (isWeapon(atk.getMainHandItem())) {
+                    out += (float) com.hukhong.stats.StatService.attackPower(atk); // Công cộng vào đòn cận chiến có vũ khí (gồm Bản Mệnh Kiếm)
+                } else {
+                    out = UNARMED_FIXED_DAMAGE; // Kiếm/Đạo/Ma tay không: cố định 2
+                    fixed = true;
+                }
             }
             if (d.paths().contains(Path.DAO) && !(target instanceof Player)) out = 0f;
         }
-        if (out > 0f && !d.paths().isEmpty()) {
+        if (out > 0f && !fixed && !d.paths().isEmpty()) {
             double cc = com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_CHANCE);
             if (cc > 0 && atk.getRandom().nextDouble() < cc) {
                 out *= (float) com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_DAMAGE);

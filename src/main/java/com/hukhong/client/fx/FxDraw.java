@@ -29,6 +29,12 @@ final class FxDraw {
 
     void quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, int ca, int cb, int cc, int cd) { v(a, ca); v(b, cb); v(c, cc); v(d, cd); }
 
+    /** Quad hai mặt (phòng khi bật cull): phát cả hai chiều quấn. */
+    void quad2(Vec3 a, Vec3 b, Vec3 c, Vec3 d, int ca, int cb, int cc, int cd) {
+        v(a, ca); v(b, cb); v(c, cc); v(d, cd);
+        v(d, cd); v(c, cc); v(b, cb); v(a, ca);
+    }
+
     void tri(Vec3 a, Vec3 b, Vec3 c, int col) { v(a, col); v(b, col); v(c, col); v(c, col); }
 
     /** Dải hướng camera từ a->b, nửa rộng wa/wb. */
