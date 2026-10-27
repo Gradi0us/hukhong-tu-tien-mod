@@ -12,8 +12,8 @@ public final class PassiveMath {
     // Đạo
     public static final double DAO_MAX = 0.30, BOSS_CAP = 1.0 / 3.0;
     public static final int DAO_EVERY = 5;
-    /** Đạo: kỹ năng gây sát thương x1.25. */
-    public static final double DAO_SKILL_MULT = 1.25;
+    /** Đạo: kỹ năng gây sát thương x1.12 (giảm từ 1.25 theo phản hồi). */
+    public static final double DAO_SKILL_MULT = 1.12;
     // Thể
     public static final double THE_ARMOR_MAX = 1.5, THE_HP_MAX = 3.0;
     public static final int THE_PER_TIER = 3, THE_STACK_CAP = 15, THE_HOLD_TICKS = 300;

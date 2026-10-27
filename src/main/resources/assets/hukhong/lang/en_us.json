@@ -1259,5 +1259,21 @@
   "hukhong.phap.passive.thuy": "Water Mark: dealing damage or self-healing adds stacks; 3 tiers (5/10/15) grant up to 30% damage immunity; aura pulses every 0.75s; at 15 stacks it deals up to 60% of your max HP to nearby enemies",
   "hukhong.phap.passive.tho": "Earth Turrets: turrets deal up to 40% of your damage, have up to 80% of your max HP, 1-4 turrets (4 at SSS), taunt all enemies except the final boss",
   "hukhong.phap.passive.kim": "Metal Body: up to +35% damage and defense; no movement buffs, speed buffs are 75% less effective, slower cooldowns",
-  "entity.hukhong.phap_turret": "Earth Turret"
+  "entity.hukhong.phap_turret": "Earth Turret",
+  "hukhong.amb.zone.city": "City",
+  "hukhong.amb.zone.port": "Port",
+  "hukhong.amb.zone.sect": "Sect Grounds",
+  "hukhong.amb.zone.guild": "Adventurers' Guild",
+  "hukhong.configuration.ambientVfx": "World atmosphere",
+  "hukhong.configuration.ambientPost": "Post-processing color grade",
+  "hukhong.configuration.ambientIntensity": "Atmosphere intensity",
+  "hukhong.configuration.ambientVolume": "Ambience volume",
+  "hukhong.configuration.zoneTitles": "Zone title cards",
+  "hukhong.siege.alarm": "The alarm bells ring! The whole city braces for battle.",
+  "hukhong.siege.rift": "Void rifts tear open beyond the walls...",
+  "hukhong.siege.victory": "The rifts collapse - the city stands!",
+  "hukhong.siege.sect": "The elders raise a talisman barrier and the disciples form a sword array!",
+  "hukhong.siege.err_raid": "Cannot start a raid (one is already active, or not in the Overworld).",
+  "hukhong.siege.err_city": "Unknown city \"%s\".",
+  "hukhong.siege.err_nocity": "That city is not built / has no recorded bounds yet."
 }

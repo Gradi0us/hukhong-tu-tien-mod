@@ -113,6 +113,8 @@ public final class InvasionManager {
         if (!d.isBuilt()) return "hukhong.city.not_built";
         if (d.state() == CitySavedData.State.RUIN) return "hukhong.invade.err_ruin";
         cur = new Invasion(ow, d);
+        com.hukhong.siege.SiegeDirector.begin(ow, d.center());
+        cur.waveDelay = com.hukhong.siege.SiegeDirector.ALARM_TICKS + com.hukhong.siege.SiegeDirector.RIFT_OPEN_TICKS;
         title(ow, Component.translatable("hukhong.invade.title"), Component.translatable("hukhong.invade.subtitle"));
         return null;
     }
@@ -122,6 +124,7 @@ public final class InvasionManager {
     @SubscribeEvent
     public static void onStopping(ServerStoppingEvent e) {
         if (cur != null) { cur.bar.removeAllPlayers(); cur = null; }
+        com.hukhong.siege.SiegeDirector.shutdown();
         warnLeft = 0; warnLevel = null; WARN_BAR.removeAllPlayers();
     }
 
@@ -163,6 +166,7 @@ public final class InvasionManager {
             inv.wave++;
             inv.toSpawn = inv.sizes[inv.wave - 1];
             inv.waveDelay = 100;
+            com.hukhong.siege.SiegeDirector.waveStart(inv.wave);
             broadcast(inv, Component.translatable("hukhong.invade.wave", inv.wave, WAVE_SIZE.length));
         }
     }
@@ -176,9 +180,19 @@ public final class InvasionManager {
                 inv.toSpawn = 0;
                 return;
             }
-            double ang = inv.level.random.nextDouble() * Math.PI * 2;
-            double r = 26 + inv.level.random.nextDouble() * 8;
-            int x = inv.center.getX() + (int) (Math.cos(ang) * r), z = inv.center.getZ() + (int) (Math.sin(ang) * r);
+            int x, z;
+            boolean viaRift = com.hukhong.siege.SiegeDirector.active();
+            if (viaRift) { // quai tro ra tu khe nut Hu Khong ngoai tuong; chua co khe san sang thi cho
+                net.minecraft.world.phys.Vec3 rp = com.hukhong.siege.SiegeDirector.riftSpawnPoint();
+                if (rp == null) return;
+                x = (int) Math.floor(rp.x);
+                z = (int) Math.floor(rp.z);
+            } else {
+                double ang = inv.level.random.nextDouble() * Math.PI * 2;
+                double r = 26 + inv.level.random.nextDouble() * 8;
+                x = inv.center.getX() + (int) (Math.cos(ang) * r);
+                z = inv.center.getZ() + (int) (Math.sin(ang) * r);
+            }
             if (!inv.level.hasChunk(x >> 4, z >> 4)) continue;
             int y = inv.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos bp = new BlockPos(x, y, z);
@@ -201,6 +215,7 @@ public final class InvasionManager {
             }
             inv.level.addFreshEntityWithPassengers(m);
             inv.mobs.add(m);
+            if (viaRift) com.hukhong.siege.SiegeDirector.emerge(inv.level, new net.minecraft.world.phys.Vec3(x + 0.5, y, z + 0.5));
             inv.toSpawn--;
             spawned++;
         }
@@ -215,6 +230,7 @@ public final class InvasionManager {
             ItemStack st = new ItemStack(ModItems.HON_TINH.get(), 5);
             if (!p.getInventory().add(st)) p.drop(st, false);
         }
+        com.hukhong.siege.SiegeDirector.victory();
         title(inv.level, Component.translatable("hukhong.invade.win"), Component.translatable("hukhong.invade.win_sub"));
         end(null);
     }
@@ -233,6 +249,7 @@ public final class InvasionManager {
         if (inv == null) return;
         inv.bar.removeAllPlayers();
         inv.bar.setVisible(false);
+        if (!com.hukhong.siege.SiegeDirector.inVictory()) com.hukhong.siege.SiegeDirector.abort();
         for (Mob m : inv.mobs) if (!m.isRemoved()) m.discard();
         if (msg != null) inv.level.getServer().getPlayerList().broadcastSystemMessage(msg, false);
     }

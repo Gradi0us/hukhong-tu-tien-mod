@@ -1259,5 +1259,21 @@
   "hukhong.phap.passive.thuy": "Thủy Ấn: gây sát thương hoặc tự hồi máu cộng tầng; 3 bậc (5/10/15 tầng) miễn thương tối đa 30%; xung hào quang mỗi 0,75s; đủ 15 tầng gây tối đa 60% máu tối đa của bản thân lên kẻ địch gần",
   "hukhong.phap.passive.tho": "Thổ Tháp: tháp bắn gây tối đa 40% sát thương của ngươi, máu tối đa 80% máu của ngươi, tối đa 1-4 tháp (4 ở SSS), khiêu khích mọi kẻ địch trừ boss cuối",
   "hukhong.phap.passive.kim": "Kim Cương: +35% sát thương và phòng thủ tối đa; không có buff tốc độ, buff tốc độ hiệu quả giảm 75%, hồi chiêu chậm hơn",
-  "entity.hukhong.phap_turret": "Tháp Thổ"
+  "entity.hukhong.phap_turret": "Tháp Thổ",
+  "hukhong.amb.zone.city": "Thành",
+  "hukhong.amb.zone.port": "Cảng",
+  "hukhong.amb.zone.sect": "Tông Môn",
+  "hukhong.amb.zone.guild": "Hiệp Hội Mạo Hiểm Gia",
+  "hukhong.configuration.ambientVfx": "Khí quyển thế giới",
+  "hukhong.configuration.ambientPost": "Shader hậu kỳ (chỉnh màu)",
+  "hukhong.configuration.ambientIntensity": "Cường độ khí quyển",
+  "hukhong.configuration.ambientVolume": "Âm lượng khí quyển",
+  "hukhong.configuration.zoneTitles": "Thẻ tên khu vực",
+  "hukhong.siege.alarm": "Chuông báo động vang lên! Cả thành siết chặt phòng thủ.",
+  "hukhong.siege.rift": "Khe nứt Hư Không mở ra ngoài tường thành...",
+  "hukhong.siege.victory": "Khe nứt đã khép - thành trì được giữ vững!",
+  "hukhong.siege.sect": "Trưởng lão dựng kết giới, đệ tử bày kiếm trận hộ sơn!",
+  "hukhong.siege.err_raid": "Không thể bắt đầu đột kích (đã có đột kích hoặc không ở Overworld).",
+  "hukhong.siege.err_city": "Không có thành \"%s\".",
+  "hukhong.siege.err_nocity": "Thành này chưa được xây / chưa có ranh giới."
 }

@@ -39,6 +39,21 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue COMPACT_NOTICES = B
             .comment("Thông báo (title/subtitle/actionbar) hiển thị dạng banner gọn, tự xuống dòng")
             .translation("hukhong.configuration.compactNotices").define("compactNotices", true);
+    public static final ModConfigSpec.BooleanValue AMBIENT_VFX = B
+            .comment("Khí quyển thế giới (bầu trời/sương Hư Hóa, hạt, ánh sáng, tia sáng): bật/tắt")
+            .translation("hukhong.configuration.ambientVfx").define("ambientVfx", true);
+    public static final ModConfigSpec.BooleanValue AMBIENT_POST = B
+            .comment("Shader hậu kỳ chỉnh màu nhẹ (giảm bão hòa, ám tím, vignette) khi vào vùng Hư Hóa/xâm lăng")
+            .translation("hukhong.configuration.ambientPost").define("ambientPost", true);
+    public static final ModConfigSpec.DoubleValue AMBIENT_INTENSITY = B
+            .comment("Cường độ khí quyển 0..1.5 (1 = mặc định)")
+            .translation("hukhong.configuration.ambientIntensity").defineInRange("ambientIntensity", 1.0, 0.0, 1.5);
+    public static final ModConfigSpec.DoubleValue AMBIENT_VOLUME = B
+            .comment("Âm lượng âm thanh khí quyển 0..1")
+            .translation("hukhong.configuration.ambientVolume").defineInRange("ambientVolume", 1.0, 0.0, 1.0);
+    public static final ModConfigSpec.BooleanValue ZONE_TITLES = B
+            .comment("Hiện thẻ tên khu vực (Thành/Cảng/Tông Môn) khi bước vào")
+            .translation("hukhong.configuration.zoneTitles").define("zoneTitles", true);
     public static final ModConfigSpec SPEC = B.build();
 
     public static boolean screenEffectsOff() { return SPEC.isLoaded() && DISABLE_SCREEN_EFFECTS.get(); }
@@ -50,4 +65,10 @@ public final class ClientConfig {
     public static MinimapShape minimapShape() { return SPEC.isLoaded() ? MINIMAP_SHAPE.get() : MinimapShape.ROUND; }
     public static boolean compactHealth() { return !SPEC.isLoaded() || COMPACT_HEALTH.get(); }
     public static boolean compactNotices() { return !SPEC.isLoaded() || COMPACT_NOTICES.get(); }
+
+    public static boolean ambientVfx() { return !SPEC.isLoaded() || AMBIENT_VFX.get(); }
+    public static boolean ambientPost() { return !SPEC.isLoaded() || AMBIENT_POST.get(); }
+    public static float ambientIntensity() { return SPEC.isLoaded() ? AMBIENT_INTENSITY.get().floatValue() : 1f; }
+    public static float ambientVolume() { return SPEC.isLoaded() ? AMBIENT_VOLUME.get().floatValue() : 1f; }
+    public static boolean zoneTitles() { return !SPEC.isLoaded() || ZONE_TITLES.get(); }
 }

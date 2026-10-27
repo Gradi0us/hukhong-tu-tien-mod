@@ -1,16 +1,188 @@
 {
-  "music.hu_vuong": {"sounds": [{"name": "hukhong:music/hu_vuong", "stream": true}]},
-  "music.su_do": {"sounds": [{"name": "hukhong:music/su_do", "stream": true}]},
-  "music.chg": {"sounds": [{"name": "hukhong:music/chg", "stream": true}]},
-  "music.final_boss": {"sounds": [{"name": "hukhong:music/final_boss", "stream": true}]},
-  "music.da_khuyet": {"sounds": [{"name": "hukhong:music/da_khuyet", "stream": true}]},
-  "music.bicanh_boss": {"sounds": [{"name": "hukhong:music/bicanh_boss", "stream": true}]},
-  "music.tam_ma": {"sounds": [{"name": "hukhong:music/tam_ma", "stream": true}]},
-  "skill.thanh_quang": {"sounds": [{"name": "minecraft:block.amethyst_block.chime", "type": "event", "pitch": 1.4}]},
-  "skill.linh_khi":    {"sounds": [{"name": "minecraft:block.beacon.power_select", "type": "event", "pitch": 1.2}]},
-  "skill.ba_khi":      {"sounds": [{"name": "minecraft:block.anvil.land", "type": "event", "pitch": 0.6}]},
-  "skill.hu_khong":    {"sounds": [{"name": "minecraft:entity.enderman.teleport", "type": "event", "pitch": 0.5}]},
-  "breakthrough":      {"sounds": [{"name": "minecraft:block.beacon.activate", "type": "event"}]},
-  "meditate":          {"sounds": [{"name": "minecraft:block.amethyst_block.resonate", "type": "event", "pitch": 0.8}]},
-  "core_ring":         {"sounds": [{"name": "minecraft:entity.player.levelup", "type": "event", "pitch": 0.8}]}
+  "music.hu_vuong": {
+    "sounds": [
+      {
+        "name": "hukhong:music/hu_vuong",
+        "stream": true
+      }
+    ]
+  },
+  "music.su_do": {
+    "sounds": [
+      {
+        "name": "hukhong:music/su_do",
+        "stream": true
+      }
+    ]
+  },
+  "music.chg": {
+    "sounds": [
+      {
+        "name": "hukhong:music/chg",
+        "stream": true
+      }
+    ]
+  },
+  "music.final_boss": {
+    "sounds": [
+      {
+        "name": "hukhong:music/final_boss",
+        "stream": true
+      }
+    ]
+  },
+  "music.da_khuyet": {
+    "sounds": [
+      {
+        "name": "hukhong:music/da_khuyet",
+        "stream": true
+      }
+    ]
+  },
+  "music.bicanh_boss": {
+    "sounds": [
+      {
+        "name": "hukhong:music/bicanh_boss",
+        "stream": true
+      }
+    ]
+  },
+  "music.tam_ma": {
+    "sounds": [
+      {
+        "name": "hukhong:music/tam_ma",
+        "stream": true
+      }
+    ]
+  },
+  "skill.thanh_quang": {
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "pitch": 1.4
+      }
+    ]
+  },
+  "skill.linh_khi": {
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event",
+        "pitch": 1.2
+      }
+    ]
+  },
+  "skill.ba_khi": {
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "skill.hu_khong": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.enderman.teleport",
+        "type": "event",
+        "pitch": 0.5
+      }
+    ]
+  },
+  "breakthrough": {
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.activate",
+        "type": "event"
+      }
+    ]
+  },
+  "meditate": {
+    "sounds": [
+      {
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "pitch": 0.8
+      }
+    ]
+  },
+  "core_ring": {
+    "sounds": [
+      {
+        "name": "minecraft:entity.player.levelup",
+        "type": "event",
+        "pitch": 0.8
+      }
+    ]
+  },
+  "amb.void_drone": {
+    "sounds": [
+      {
+        "name": "hukhong:amb/void_drone",
+        "stream": true
+      }
+    ]
+  },
+  "amb.war_drum": {
+    "sounds": [
+      {
+        "name": "hukhong:amb/war_drum",
+        "stream": true
+      }
+    ]
+  },
+  "amb.town_day": {
+    "sounds": [
+      {
+        "name": "hukhong:amb/town_day",
+        "stream": true
+      }
+    ]
+  },
+  "amb.port_water": {
+    "sounds": [
+      {
+        "name": "hukhong:amb/port_water",
+        "stream": true
+      }
+    ]
+  },
+  "amb.dust_hum": {
+    "sounds": [
+      {
+        "name": "hukhong:amb/dust_hum",
+        "stream": true
+      }
+    ]
+  },
+  "amb.wild_night": {
+    "sounds": [
+      {
+        "name": "hukhong:amb/wild_night",
+        "stream": true
+      }
+    ]
+  },
+  "amb.void_whisper": {
+    "sounds": [
+      {
+        "name": "hukhong:amb/void_whisper_1"
+      },
+      {
+        "name": "hukhong:amb/void_whisper_2"
+      },
+      {
+        "name": "hukhong:amb/void_whisper_3"
+      }
+    ]
+  },
+  "amb.thunder_far": {
+    "sounds": [
+      {
+        "name": "hukhong:amb/thunder_far"
+      }
+    ]
+  }
 }

@@ -82,6 +82,8 @@ public final class VoidRaid {
         int timer = WARN_TICKS, age, toSpawn, waveTotal, tries;
         int players = 1;
         Mob boss;
+        final List<com.hukhong.siege.Rift> rifts = new ArrayList<>();
+        int riftDelay;                // tick con lai cho den khi khe nut san sang cho quai tro ra
 
         Raid(ServerPlayer p, boolean corrupted) {
             this.player = p.getUUID();
@@ -94,7 +96,15 @@ public final class VoidRaid {
 
     public static boolean active(UUID player) { return RAIDS.containsKey(player); }
     public static int activeCount() { return RAIDS.size(); }
-    public static void clear() { for (Raid r : RAIDS.values()) r.bar.removeAllPlayers(); RAIDS.clear(); }
+    public static void clear() {
+        for (Raid r : RAIDS.values()) { r.bar.removeAllPlayers(); closeRifts(r); com.hukhong.siege.SiegeDirector.sectDefenseEnd(r.player); }
+        RAIDS.clear();
+    }
+
+    private static void closeRifts(Raid r) {
+        for (com.hukhong.siege.Rift f : r.rifts) f.close();
+        r.rifts.clear();
+    }
 
     // ------------------------------------------------------------------ bat dau
     /** Bat dau dot kich cho {@code p} (bo qua xac suat / dem). @return false neu da co dot kich hoac khong o Overworld. */
@@ -104,6 +114,9 @@ public final class VoidRaid {
         Raid r = new Raid(p, CorruptionData.get(ow).isCorrupted(p.blockPosition()));
         r.players = playersNear(ow, p);
         r.bar.addPlayer(p);
+        com.hukhong.siege.SiegeDirector.raidSting(p);
+        var sect = com.hukhong.siege.SiegeDirector.sectNear(ow, p.position(), 48);
+        if (sect != null) com.hukhong.siege.SiegeDirector.sectDefense(ow, sect, p.getUUID());
         RAIDS.put(p.getUUID(), r);
         p.connection.send(new ClientboundSetTitlesAnimationPacket(10, 70, 20));
         p.connection.send(new ClientboundSetTitleTextPacket(Component.translatable("hukhong.raid.title")));
@@ -128,7 +141,12 @@ public final class VoidRaid {
         if (RAIDS.isEmpty() || t % 5 != 0) return;
         for (Iterator<Raid> it = RAIDS.values().iterator(); it.hasNext(); ) {
             Raid r = it.next();
-            if (step(r)) { r.bar.removeAllPlayers(); it.remove(); }
+            if (step(r)) {
+                r.bar.removeAllPlayers();
+                closeRifts(r);
+                com.hukhong.siege.SiegeDirector.sectDefenseEnd(r.player);
+                it.remove();
+            }
         }
     }
 
@@ -157,7 +175,9 @@ public final class VoidRaid {
             return false;
         }
         r.mobs.removeIf(m -> m.isRemoved() || !m.isAlive());
-        if (r.toSpawn > 0) spawnSome(r, p);
+        if (r.riftDelay > 0) r.riftDelay -= 5;
+        if (r.toSpawn > 0 && r.riftDelay <= 0) spawnSome(r, p);
+        if (r.toSpawn <= 0 && !r.rifts.isEmpty()) closeRifts(r);   // da ra het quai: khe nut khep lai
         int alive = r.mobs.size();
         int dead = r.waveTotal - r.toSpawn - alive;
         r.bar.setProgress(r.waveTotal <= 0 ? 0f : Math.max(0f, Math.min(1f, (dead + 0f) / r.waveTotal)));
@@ -173,6 +193,8 @@ public final class VoidRaid {
 
     private static void nextWave(Raid r, ServerPlayer p) {
         r.stage++;
+        closeRifts(r);
+        openRaidRifts(r, p);
         r.timer = WAVE_TIMEOUT;
         r.tries = 0;
         r.waveTotal = r.toSpawn = BossScaling.waveSize(BASE_SIZE[r.stage - 1], r.players) + (r.stage >= WAVES ? 1 : 0);
@@ -180,6 +202,23 @@ public final class VoidRaid {
         r.bar.setColor(r.stage >= WAVES ? BossEvent.BossBarColor.PURPLE : BossEvent.BossBarColor.RED);
         r.bar.setProgress(0f);
         p.sendSystemMessage(Component.translatable(r.stage >= WAVES ? "hukhong.raid.final" : "hukhong.raid.wave", r.stage, WAVES));
+    }
+
+    /** Mo 2 (dot cuoi: 3) khe nut Hu Khong quanh nguoi choi; quai chi tro ra sau khi khe san sang. */
+    private static void openRaidRifts(Raid r, ServerPlayer p) {
+        ServerLevel sl = r.level;
+        int n = r.stage >= WAVES ? 3 : 2;
+        double base = sl.random.nextDouble() * Math.PI * 2;
+        for (int i = 0; i < n; i++) {
+            double a = base + i * Math.PI * 2 / n + (sl.random.nextDouble() - 0.5) * 0.5, d = 15 + sl.random.nextDouble() * 6;
+            int x = (int) (p.getX() + Math.cos(a) * d), z = (int) (p.getZ() + Math.sin(a) * d);
+            if (!sl.hasChunk(x >> 4, z >> 4)) continue;
+            int y = sl.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            BlockPos bp = new BlockPos(x, y, z);
+            if (!sl.getFluidState(bp.below()).isEmpty() || Math.abs(y - p.getY()) > 12) continue;
+            r.rifts.add(com.hukhong.siege.SiegeDirector.openRift(sl, bp, p.position().subtract(x, 0, z), 1.5 + 0.15 * r.stage));
+        }
+        r.riftDelay = r.rifts.isEmpty() ? 0 : com.hukhong.siege.Rift.READY_TICKS + 20;
     }
 
     private static EntityType<? extends Mob> pick(int stage, net.minecraft.util.RandomSource rnd) {
@@ -198,6 +237,11 @@ public final class VoidRaid {
             r.tries++;
             double a = sl.random.nextDouble() * Math.PI * 2, d = 14 + sl.random.nextDouble() * 8;
             int x = (int) (p.getX() + Math.cos(a) * d), z = (int) (p.getZ() + Math.sin(a) * d);
+            if (!r.rifts.isEmpty()) { // quai tro ra tu chan khe nut
+                net.minecraft.world.phys.Vec3 sp = r.rifts.get(sl.random.nextInt(r.rifts.size())).spawnPoint();
+                x = (int) Math.floor(sp.x);
+                z = (int) Math.floor(sp.z);
+            }
             if (!sl.hasChunk(x >> 4, z >> 4)) continue;
             int y = sl.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos bp = new BlockPos(x, y, z);
@@ -213,6 +257,10 @@ public final class VoidRaid {
             sl.addFreshEntity(m);
             if (boss) r.boss = m;
             r.mobs.add(m);
+            if (!r.rifts.isEmpty()) {
+                if (boss) com.hukhong.siege.SiegeDirector.bossEntrance(sl, m.position());
+                else com.hukhong.siege.SiegeDirector.emerge(sl, m.position());
+            }
             r.toSpawn--;
             spawned++;
         }

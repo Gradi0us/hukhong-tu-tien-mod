@@ -100,6 +100,17 @@ public final class HuKhongCommand {
                             if (err != null) { c.getSource().sendFailure(Component.translatable(err)); return 0; }
                             return 1;
                         }))
+                .then(Commands.literal("siege")
+                        .then(Commands.argument("city", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .suggests((cx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                                        java.util.stream.Stream.concat(java.util.stream.Stream.of("nearest"),
+                                                com.hukhong.city.CityDef.ALL.stream().map(com.hukhong.city.CityDef::id)), b))
+                                .executes(c -> siege(c.getSource(), com.mojang.brigadier.arguments.StringArgumentType.getString(c, "city")))))
+                .then(Commands.literal("raid").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    if (!com.hukhong.events.VoidRaid.start(p)) { c.getSource().sendFailure(Component.translatable("hukhong.siege.err_raid")); return 0; }
+                    return 1;
+                }))
                 .then(Commands.literal("boss").executes(c -> {
                     var pl = c.getSource().getPlayerOrException();
                     com.hukhong.events.CorruptionManager.spawnBoss(pl.serverLevel(), pl.blockPosition().offset(6, 0, 0));
@@ -188,6 +199,48 @@ public final class HuKhongCommand {
         var pos = new net.minecraft.core.BlockPos(IntegerArgumentType.getInteger(c, "x"), 64, IntegerArgumentType.getInteger(c, "z"));
         var center = com.hukhong.city.CityBuilder.build(src.getLevel(), pos, d);
         msg(src, "city " + d.id() + " (" + d.category() + ") queued, center " + center);
+        return 1;
+    }
+
+    /**
+     * /hukhong siege <city_id|nearest>: kich hoat man thanh bi vay ngay lap tuc. Thanh goc (CitySavedData) chay tap kich that
+     * qua InvasionManager; thanh/cang khac chay man vay thanh tu sinh quai (Director) de xem hieu ung tai cho.
+     */
+    private static int siege(CommandSourceStack src, String id) {
+        var ow = src.getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
+        var main = com.hukhong.city.CitySavedData.get(ow);
+        net.minecraft.world.phys.Vec3 at = src.getPosition();
+        com.hukhong.city.WorldBuildData.Settlement target = null;
+        if (id.equals("nearest")) {
+            double best = Double.MAX_VALUE;
+            for (var s : com.hukhong.city.WorldBuildData.get(ow).settlements().values()) {
+                if (!s.kind().equals("city") && !s.kind().equals("port")) continue;
+                double d = (s.cx() - at.x) * (s.cx() - at.x) + (s.cz() - at.z) * (s.cz() - at.z);
+                if (d < best) { best = d; target = s; }
+            }
+            boolean mainNearer = main.isBuilt() && (target == null || main.center().distSqr(net.minecraft.core.BlockPos.containing(at)) <= best);
+            if (mainNearer) return startMain(src, ow);
+        } else {
+            var def = com.hukhong.city.CityDef.byId(id);
+            if (def == null) { src.sendFailure(Component.translatable("hukhong.siege.err_city", id)); return 0; }
+            target = com.hukhong.city.WorldBuildData.get(ow).settlements().get(id);
+            if (def.index() == 0 && main.isBuilt()) return startMain(src, ow);
+        }
+        if (target == null) { src.sendFailure(Component.translatable("hukhong.siege.err_nocity")); return 0; }
+        if (com.hukhong.events.InvasionManager.active() || com.hukhong.siege.SiegeDirector.running()) {
+            src.sendFailure(Component.translatable("hukhong.invade.err_active"));
+            return 0;
+        }
+        int half = Math.max(12, (target.maxX() - target.minX()) / 2);
+        com.hukhong.siege.SiegeDirector.begin(ow, new net.minecraft.core.BlockPos(target.cx(), target.y(), target.cz()), half, true, true);
+        msg(src, "siege (director) " + target.id() + " at " + target.cx() + "," + target.cz());
+        return 1;
+    }
+
+    private static int startMain(CommandSourceStack src, net.minecraft.server.level.ServerLevel ow) {
+        String err = com.hukhong.events.InvasionManager.start(ow);
+        if (err != null) { src.sendFailure(Component.translatable(err)); return 0; }
+        msg(src, "siege (invasion) main city");
         return 1;
     }
 

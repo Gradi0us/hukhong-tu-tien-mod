@@ -77,6 +77,12 @@ public final class BiCanhManager {
 
     public static boolean inRun(ServerPlayer p) { return runOf(p) != null; }
 
+    /** Cấp Bí Cảnh người chơi đang ở (ordinal của BiCanhTier), -1 nếu không trong run (dùng cho ambient client). */
+    public static int tierOrdinalOf(ServerPlayer p) {
+        Run r = runOf(p);
+        return r == null ? -1 : r.tier.ordinal();
+    }
+
     static Run runOf(ServerPlayer p) {
         for (Run r : RUNS.values()) if (r.players.contains(p.getUUID())) return r;
         return null;
