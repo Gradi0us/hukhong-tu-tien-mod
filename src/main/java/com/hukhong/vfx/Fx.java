@@ -23,6 +23,17 @@ public final class Fx {
                 new FxPayload(type.ordinal(), pos.x, pos.y, pos.z, (float) d.x, (float) d.y, (float) d.z, scale, color, lifeTicks));
     }
 
+    /**
+     * Phi kiếm thật (model Bản Mệnh Kiếm) bay from -> to trong flight tick, sau delay tick. Client dựng cung bay + bóng mờ.
+     * Mã hoá: pos=from, dir=to-from, scale=cỡ kiếm, color=rgb | delay<<24, life=flight.
+     */
+    public static void swordFly(ServerLevel lv, Vec3 from, Vec3 to, int flight, int delay, float size) {
+        Vec3 d = to.subtract(from);
+        PacketDistributor.sendToPlayersNear(lv, null, from.x, from.y, from.z, 96,
+                new FxPayload(FxType.SWORD_FLY.ordinal(), from.x, from.y, from.z, (float) d.x, (float) d.y, (float) d.z,
+                        size, CYAN | (Math.min(255, Math.max(0, delay)) << 24), Math.max(2, flight)));
+    }
+
     /** Khoảnh khắc cường hóa / tiến hóa: cột sáng + vòng nở + hạt bay lên quanh người chơi. */
     public static void upgradeBurst(ServerPlayer p, int color) {
         play(p.serverLevel(), FxType.UPGRADE_BURST, p.position(), new Vec3(0, 1, 0), 1f, color);

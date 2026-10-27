@@ -4,7 +4,7 @@ package com.hukhong.vfx;
 public enum FxType {
     SWORD_CRESCENT, SWORD_RAIN, SWORD_DOMAIN, TALISMAN_CIRCLE, LIGHT_PILLAR, GROUND_CRACK, SHOCKWAVE,
     BLOOD_VORTEX, DEMON_SILHOUETTE, LIGHTNING_BOLT, TELEGRAPH, STORM_CLOUD, SCREEN_TINT, BEAM,
-    BREAKTHROUGH, UPGRADE_BURST;
+    BREAKTHROUGH, UPGRADE_BURST, SWORD_FLY;
 
     private static final FxType[] V = values();
     public static FxType of(int i) { return V[Math.floorMod(i, V.length)]; }

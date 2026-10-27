@@ -16,3 +16,7 @@ import/**
 !import/*/
 !import/**/.gitkeep
 tools/.venv/
+
+# chunker CLI jar (third-party, downloaded for map conversion)
+tools/third_party/chunker/
+tools/__pycache__/

@@ -111,6 +111,19 @@ public final class HuKhongCommand {
                     msg(c.getSource(), "corrupted +" + n + " chunks");
                     return 1;
                 })))
+                .then(Commands.literal("structure")
+                        .then(Commands.literal("place")
+                                .then(Commands.argument("category", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                        .then(Commands.argument("name", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                                .executes(c -> placeStructure(c, false))
+                                                .then(Commands.argument("x", IntegerArgumentType.integer())
+                                                        .then(Commands.argument("z", IntegerArgumentType.integer())
+                                                                .executes(c -> placeStructure(c, true)))))))
+                        .then(Commands.literal("city")
+                                .then(Commands.argument("id", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                        .then(Commands.argument("x", IntegerArgumentType.integer())
+                                                .then(Commands.argument("z", IntegerArgumentType.integer())
+                                                        .executes(c -> buildCityAt(c)))))))
                 .then(Commands.literal("city_restore").executes(c -> {
                     com.hukhong.events.InvasionManager.cancel();
                     var pos = com.hukhong.city.CityEvents.ensureBuilt(c.getSource().getServer(), true);
@@ -148,6 +161,36 @@ public final class HuKhongCommand {
     }
 
     /** Đổi lộ Ma (tạm: lệnh; Ma Môn sẽ gọi cùng hàm). Sang Tu Luyện thường xóa Huyết Tế. */
+    /** /hukhong structure place <category> <name> [x z]: dat file cau truc (config/hukhong/structures) de thu; category trade thi them thuong nhan. */
+    private static int placeStructure(com.mojang.brigadier.context.CommandContext<CommandSourceStack> c, boolean xz)
+            throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        CommandSourceStack src = c.getSource();
+        String cat = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "category");
+        String name = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "name");
+        var st = com.hukhong.structures.StructureLibrary.pickNamed(cat, name);
+        if (st == null) { src.sendFailure(Component.literal("structure not found/invalid: " + cat + "/" + name)); return 0; }
+        var level = src.getLevel();
+        int x = xz ? IntegerArgumentType.getInteger(c, "x") : src.getPlayerOrException().getBlockX();
+        int z = xz ? IntegerArgumentType.getInteger(c, "z") : src.getPlayerOrException().getBlockZ();
+        int y0 = com.hukhong.structures.StructurePlacer.surfaceY(level, x, z);
+        var origin = new net.minecraft.core.BlockPos(x - st.sx / 2, y0, z - st.sz / 2);
+        boolean trade = cat.equals("trade");
+        com.hukhong.structures.StructurePlacer.enqueue(level, st, origin, trade ? com.hukhong.city.TradeDistrict::populate : null);
+        msg(src, "queued " + cat + "/" + name + " " + st.sx + "x" + st.sy + "x" + st.sz + " at " + origin);
+        return 1;
+    }
+
+    /** /hukhong structure city <id> <x> <z>: dung thanh <id> (CityBuilder.build, gom ca khu cho neu co) tai (x,z) de thu. */
+    private static int buildCityAt(com.mojang.brigadier.context.CommandContext<CommandSourceStack> c) {
+        CommandSourceStack src = c.getSource();
+        var d = com.hukhong.city.CityDef.byId(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "id"));
+        if (d == null) { src.sendFailure(Component.literal("unknown city id")); return 0; }
+        var pos = new net.minecraft.core.BlockPos(IntegerArgumentType.getInteger(c, "x"), 64, IntegerArgumentType.getInteger(c, "z"));
+        var center = com.hukhong.city.CityBuilder.build(src.getLevel(), pos, d);
+        msg(src, "city " + d.id() + " (" + d.category() + ") queued, center " + center);
+        return 1;
+    }
+
     private static int setLo(CommandSourceStack src, boolean absorb) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         var m = com.hukhong.pathrules.MaRules.data(p); // lệnh giữ nguyên hành vi cũ (không đòi đạo Ma, để test)

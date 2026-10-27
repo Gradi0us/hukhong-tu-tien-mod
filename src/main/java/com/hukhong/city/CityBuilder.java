@@ -111,7 +111,10 @@ public final class CityBuilder {
     /** Dung thanh: file cau truc (neu co) roi toi thu tuc. Tra tam (y = mat nen cua Ấn Hồn Đài). */
     public static BlockPos build(ServerLevel l, BlockPos site, CityDef d) {
         BlockPos imported = StructureBuilds.tryBuild(l, d.category(), d.id(), site, "altar", p -> placeCore(p, d.nameKey()));
-        if (imported != null) return imported;
+        if (imported != null) {
+            TradeDistrict.tryBuild(l, d, site);
+            return imported;
+        }
         return buildProcedural(l, site, d.nameKey(), d.tier(), d.category());
     }
 

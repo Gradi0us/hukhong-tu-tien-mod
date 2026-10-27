@@ -70,6 +70,10 @@ public final class FxClient {
         if (mc.level == null) return;
         FxType t = FxType.of(p.fx());
         Vec3 pos = new Vec3(p.x(), p.y(), p.z()), dir = new Vec3(p.dx(), p.dy(), p.dz());
+        if (t == FxType.SWORD_FLY) {
+            com.hukhong.client.render.orbit.OrbitState.addSkill(pos, dir, p.life(), p.color() >>> 24, p.scale());
+            return;
+        }
         int rgb = p.color() == 0 ? defColor(t) : p.color() & 0xFFFFFF;
         float sc = p.scale() <= 0 ? 1f : p.scale();
         if (t == FxType.BREAKTHROUGH) { breakthrough(pos, sc, rgb); return; }

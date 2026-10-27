@@ -255,76 +255,95 @@ public final class SkillEffects {
         return com.hukhong.honcot.HonCotService.has(p, com.hukhong.honcot.Bone.KIEM_Y) ? com.hukhong.honcot.HonCotMath.KIEM_Y_RANGE_MULT : 1.0;
     }
 
+    /** Vị trí kiếm treo sau vai phải (khớp với client OrbitRenderer.shoulder). */
+    private static Vec3 shoulderOf(ServerPlayer p) {
+        double yaw = Math.toRadians(p.yBodyRot);
+        Vec3 fwd = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw)), right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
+        return p.position().add(right.scale(0.6)).subtract(fwd.scale(0.45)).add(0, 1.55, 0);
+    }
+
+    private static int flyTicks(double dist) { return Math.max(2, Math.min(8, (int) Math.ceil(dist / 2.6))); }
+
+    /** Trảm Khí: MỘT thanh phi kiếm thật bắn xuyên hàng mục tiêu theo đường thẳng. */
     private static void tramKhi(ServerLevel lv, ServerPlayer p) {
         final double range = 8 * qiRange(p);
         for (LivingEntity e : lineTargets(lv, p, range, 1.2)) slash(p, e, Skill.KIEM_1_COEF);
         Vec3 eye = p.getEyePosition().subtract(0, 0.3, 0), look = p.getLookAngle();
-        for (double t = 1.0; t <= range; t += 0.5) {
+        for (double t = 1.5; t <= range; t += 1.5) {
             Vec3 q = eye.add(look.scale(t));
             lv.sendParticles(com.hukhong.vfx.ModParticles.KIEM_KHI.get(), q.x, q.y, q.z, 1, 0.05, 0.05, 0.05, 0);
         }
-        Fx.play(lv, FxType.SWORD_CRESCENT, eye.add(look.scale(0.8)), look, (float) (range / 8 * 1.5), Fx.CYAN);
-        Fx.play(lv, FxType.BEAM, eye.add(look.scale(1.5)), look, (float) range, 0xD8F6FF, 7);
-        arc(lv, p, 2.4, 0.9, 10, com.hukhong.vfx.ModParticles.KIEM_KHI.get(), 0.4);
-        arc(lv, p, 3.2, 0.7, 8, ParticleTypes.CRIT, 0.3);
-        helixBeam(lv, eye.add(look.scale(1.5)), eye.add(look.scale(range)), 0.3, 4, 24, ParticleTypes.END_ROD);
+        Vec3 from = shoulderOf(p), to = eye.add(look.scale(range));
+        Fx.swordFly(lv, from, to, flyTicks(from.distanceTo(to)), 0, 1.5f);
+        arc(lv, p, 2.4, 0.9, 3, com.hukhong.vfx.ModParticles.KIEM_KHI.get(), 0.4);
         lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.6f);
         layer(lv, p.position(), SoundEvents.TRIDENT_THROW.value(), 0.6f, 1.8f);
         layer(lv, p.position(), SoundEvents.AMETHYST_BLOCK_CHIME, 0.6f, 1.5f);
     }
 
-    /** Liên Hoàn Trảm: 3 nhát quạt 6 block, mỗi nhát 70% Công, cách nhau 6 tick. */
+    /** Liên Hoàn Trảm: 3 nhát quạt 6 block, mỗi nhát 70% Công, cách nhau 6 tick; mỗi nhát một phi kiếm từ góc khác nhau. */
     private static void lienHoanTram(ServerLevel lv, ServerPlayer p) {
         final double reach = 6 * qiRange(p);
         for (int i = 0; i < 3; i++) {
             final int k = i;
             Runnable r = () -> {
                 if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
-                for (LivingEntity e : coneTargets(l2, p, reach, 0.45)) slash(p, e, Skill.KIEM_2_COEF);
-                Fx.play(l2, FxType.SWORD_CRESCENT, p.getEyePosition().subtract(0, 0.5, 0).add(p.getLookAngle().scale(0.5)), p.getLookAngle(), 1.1f + 0.25f * k, k == 1 ? 0xFFFFFF : Fx.CYAN);
-                arc(l2, p, 2.0 + k * 0.6, 1.0, 12, com.hukhong.vfx.ModParticles.KIEM_KHI.get(), (k - 1) * 0.5);
-                arc(l2, p, 2.6 + k * 0.6, 1.0, 6, ParticleTypes.CRIT, (k - 1) * 0.5);
+                List<LivingEntity> hit = coneTargets(l2, p, reach, 0.45);
+                for (LivingEntity e : hit) slash(p, e, Skill.KIEM_2_COEF);
+                Vec3 look = p.getLookAngle(), eye = p.getEyePosition();
+                Vec3 flat = new Vec3(look.x, 0, look.z);
+                flat = flat.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : flat.normalize();
+                Vec3 right = new Vec3(-flat.z, 0, flat.x);
+                Vec3 to = hit.isEmpty() ? eye.add(look.scale(reach * 0.7))
+                        : hit.get(0).position().add(0, hit.get(0).getBbHeight() * 0.55, 0);
+                // mỗi nhát một góc: trái-thấp, trên cao, phải-thấp
+                Vec3 from = eye.add(right.scale((k - 1) * 1.6)).add(0, k == 1 ? 1.8 : 0.3, 0).subtract(flat.scale(0.8));
+                Fx.swordFly(l2, from, to, flyTicks(from.distanceTo(to)), 0, 1.2f);
+                arc(l2, p, 2.0 + k * 0.6, 1.0, 4, com.hukhong.vfx.ModParticles.KIEM_KHI.get(), (k - 1) * 0.5);
                 l2.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.3f + 0.15f * k);
                 layer(l2, p.position(), SoundEvents.IRON_GOLEM_ATTACK, 0.35f, 1.6f + 0.2f * k);
-                arc(l2, p, 3.4 + k * 0.5, 0.8, 6, ParticleTypes.END_ROD, (1 - k) * 0.4);
             };
             if (i == 0) r.run(); else SkillScheduler.later(6 * i, r);
         }
     }
 
-    /** Kiếm Vực (tối thượng): vòng kiếm khí bán kính 5 quanh người 4s, mỗi 0,5s 55% Công. */
+    /** Kiếm Vực (tối thượng): vòng kiếm khí bán kính 5 quanh người 4s, mỗi 0,5s 55% Công; kiếm thật rơi từ trời xuống. */
     private static void kiemVuc(ServerLevel lv, ServerPlayer p) {
         lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2f, 0.7f);
         layer(lv, p.position(), SoundEvents.TRIDENT_THUNDER.value(), 0.6f, 1.5f);
         layer(lv, p.position(), SoundEvents.BEACON_ACTIVATE, 0.7f, 1.8f);
-        spiral(lv, p.position(), 1.5, 0.3, 4, 3, 40, com.hukhong.vfx.ModParticles.KIEM_KHI.get());
+        spiral(lv, p.position(), 1.5, 0.3, 4, 3, 14, com.hukhong.vfx.ModParticles.KIEM_KHI.get());
         Fx.play(lv, FxType.SWORD_DOMAIN, p.position(), Vec3.ZERO, (float) (5 * qiRange(p)), Fx.CYAN, 84);
-        Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, (float) (6 * qiRange(p)), Fx.CYAN, 18);
-        Fx.play(lv, FxType.SCREEN_TINT, p.position(), Vec3.ZERO, 0.15f, 0xBFEFFF, 10);
         kiemVucPulse(p, 0);
     }
 
     private static void kiemVucPulse(ServerPlayer p, int n) {
         if (n >= 8 || p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel lv)) return;
         double r = 5 * qiRange(p);
-        for (LivingEntity e : lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(r, 2, r),
-                e -> valid(p, e) && e.distanceToSqr(p) <= r * r)) slash(p, e, Skill.KIEM_ULT_COEF);
+        List<LivingEntity> in = lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(r, 2, r),
+                e -> valid(p, e) && e.distanceToSqr(p) <= r * r);
+        for (LivingEntity e : in) slash(p, e, Skill.KIEM_ULT_COEF);
         double rot = n * 0.5;
-        for (int i = 0; i < 24; i++) {
-            double a = rot + 2 * Math.PI * i / 24;
+        for (int i = 0; i < 8; i++) {
+            double a = rot + 2 * Math.PI * i / 8;
             double yy = p.getY() + 0.9 + 0.5 * Math.sin(a * 2 + n);
             lv.sendParticles(com.hukhong.vfx.ModParticles.KIEM_KHI.get(), p.getX() + Math.cos(a) * r, yy,
                     p.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
         }
-        for (int i = 0; i < 4; i++) {
-            double a = rot + Math.PI / 2 * i;
-            lv.sendParticles(ParticleTypes.SWEEP_ATTACK, p.getX() + Math.cos(a) * r * 0.8, p.getY() + 1,
-                    p.getZ() + Math.sin(a) * r * 0.8, 1, 0, 0, 0, 0);
+        // mưa kiếm thật: rơi từ trời lên kẻ địch trong vùng (thiếu địch thì rơi ngẫu nhiên)
+        int swords = 4;
+        for (int i = 0; i < swords; i++) {
+            Vec3 land;
+            if (!in.isEmpty()) {
+                LivingEntity e = in.get((i + n) % in.size());
+                land = e.position().add(0, e.getBbHeight() * 0.3, 0);
+            } else {
+                double a = lv.random.nextDouble() * Math.PI * 2, rr = Math.sqrt(lv.random.nextDouble()) * r;
+                land = new Vec3(p.getX() + Math.cos(a) * rr, p.getY() + 0.3, p.getZ() + Math.sin(a) * rr);
+            }
+            Fx.swordFly(lv, land.add(lv.random.nextDouble() - 0.5, 9, lv.random.nextDouble() - 0.5), land, 6, i * 2, 1.3f);
         }
-        if (n % 2 == 0) {
-            Fx.play(lv, FxType.SWORD_RAIN, p.position(), Vec3.ZERO, (float) r, 0xBFEFFF, 36);
-            lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 0.9f);
-        }
+        if (n % 2 == 0) lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 0.9f);
         SkillScheduler.later(10, () -> kiemVucPulse(p, n + 1));
     }
 

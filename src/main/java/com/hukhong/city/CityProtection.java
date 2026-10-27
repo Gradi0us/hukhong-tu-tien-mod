@@ -52,7 +52,7 @@ public final class CityProtection {
     /** Có nên chặn đòn của {@code attacker} (người chơi) lên {@code victim}? */
     public static boolean shields(Entity victim, Entity attacker) {
         if (!(attacker instanceof Player) || victim.level().isClientSide || !isProtectedKind(victim)) return false;
-        if (victim instanceof StoryNpc) return true;
+        if (victim instanceof StoryNpc || victim.getTags().contains(TradeDistrict.TAG)) return true;
         return victim.level() instanceof ServerLevel sl && inProtectedZone(sl, victim.getX(), victim.getZ());
     }
 

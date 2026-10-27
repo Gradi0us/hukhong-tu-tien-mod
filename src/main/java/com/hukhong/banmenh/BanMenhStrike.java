@@ -35,7 +35,6 @@ public final class BanMenhStrike {
 
     private static final List<Pending> PENDING = new ArrayList<>();
     private static final Map<UUID, Long> READY = new HashMap<>();
-    private static int slotCounter = 0;
 
     /** Kiếm hợp lệ (đúng chủ, đã roll loại) ở tay chính, hoặc rỗng. */
     private static ItemStack heldSword(ServerPlayer p) {
@@ -57,10 +56,14 @@ public final class BanMenhStrike {
         long now = p.level().getGameTime();
         Long ready = READY.get(p.getUUID());
         if (ready != null && now < ready) return;
-        READY.put(p.getUUID(), now + BanMenhMath.STRIKE_DELAY_TICKS + BanMenhMath.STRIKE_RETURN_TICKS);
-        PENDING.add(new Pending(p.getUUID(), t.getUUID(), now + BanMenhMath.STRIKE_DELAY_TICKS));
+        int stage = BanMenhKiemItem.stageOf(s);
+        // thời gian bay = khoảng cách (vai -> mục tiêu) / tốc độ; server áp sát thương đúng lúc kiếm tới
+        int flight = BanMenhMath.flightTicks(p.position().add(0, 1.5, 0).distanceTo(mid));
+        int count = BanMenhMath.strikeSwords(stage);
+        READY.put(p.getUUID(), now + flight + BanMenhMath.STRIKE_RETURN_TICKS);
+        PENDING.add(new Pending(p.getUUID(), t.getUUID(), now + flight));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(p,
-                new BanMenhStrikeFxPayload(p.getId(), t.getId(), slotCounter++ & 0xFFFF));
+                new BanMenhStrikeFxPayload(p.getId(), t.getId(), flight, count));
     }
 
     /** Khoảng cách từ mắt tới điểm gần nhất của hộp va chạm (dung sai 1.5 block cho độ trễ mạng). */

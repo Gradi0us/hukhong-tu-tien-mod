@@ -35,7 +35,7 @@ final class FxEffects {
             case SWORD_CRESCENT -> {
                 f.tilt = (float) (f.rnd.nextDouble() * 1.8 - 0.9);
                 Vec3[] ax = axes(f.dir);
-                for (int i = 0; i < 16 * q; i++) {
+                for (int i = 0; i < 5 * q; i++) { // Kiếm: giảm ~70% hạt
                     double a = (f.rnd.nextDouble() * 2 - 1) * 1.2;
                     Vec3 p = f.pos.add(ax[0].scale(Math.cos(a) * 1.6 * f.scale)).add(ax[1].scale(Math.sin(a) * 2.4 * f.scale));
                     Vec3 v = ax[0].scale(0.25 + f.rnd.nextDouble() * 0.3).add(ax[1].scale(Math.sin(a) * 0.1));
@@ -54,7 +54,7 @@ final class FxEffects {
             }
             case GROUND_CRACK -> buildCracks(f);
             case SWORD_RAIN -> {
-                int n = Math.max(5, (int) ((6 + 2.5 * f.scale) * q));
+                int n = Math.max(2, (int) ((6 + 2.5 * f.scale) * q * 0.35));
                 f.sx = new float[n]; f.sz = new float[n]; f.sd = new float[n]; f.landed = new boolean[n];
                 for (int i = 0; i < n; i++) {
                     double a = f.rnd.nextDouble() * Math.PI * 2, r = Math.sqrt(f.rnd.nextDouble()) * f.scale;
@@ -62,7 +62,7 @@ final class FxEffects {
                     f.sd[i] = f.rnd.nextFloat() * Math.max(6, f.life - 20);
                 }
             }
-            case SWORD_DOMAIN -> FxClient.add(FxType.SHOCKWAVE, f.pos, Vec3.ZERO, f.scale, f.rgb, 14, 0);
+            case SWORD_DOMAIN -> {}
             case TALISMAN_CIRCLE -> FxClient.add(FxType.SHOCKWAVE, f.pos, Vec3.ZERO, f.scale * 0.9f, f.rgb, 12, 0);
             case SHOCKWAVE -> {
                 for (int i = 0; i < 20 * q; i++) {
@@ -113,16 +113,16 @@ final class FxEffects {
                     if (!f.landed[i] && f.age >= f.sd[i] + 5) {
                         f.landed[i] = true;
                         double x = f.pos.x + f.sx[i], z = f.pos.z + f.sz[i];
-                        for (int j = 0; j < 4 * q + 1; j++) {
+                        for (int j = 0; j < 1.2 * q + 0.3; j++) {
                             double a = f.rnd.nextDouble() * Math.PI * 2;
                             FxClient.puff(FxParticle.SHARD, x, f.pos.y + 0.2, z, Math.cos(a) * 0.12, 0.12 + f.rnd.nextDouble() * 0.12, Math.sin(a) * 0.12, f.rgb, 0.3f, 12, 0.02f, true);
                         }
-                        FxClient.puff(FxParticle.GLOW, x, f.pos.y + 0.2, z, 0, 0, 0, 0xFFFFFF, 1.4f, 6, 0f, false);
+                        
                     }
                 }
             }
             case SWORD_DOMAIN -> {
-                if (f.age % 2 == 0) {
+                if (f.age % 7 == 0) {
                     double a = f.rnd.nextDouble() * Math.PI * 2, r = f.scale * (0.85 + 0.15 * f.rnd.nextDouble());
                     FxClient.puff(FxParticle.SHARD, f.pos.x + Math.cos(a) * r, f.pos.y + 0.2, f.pos.z + Math.sin(a) * r, 0, 0.1 + f.rnd.nextDouble() * 0.1, 0, f.rgb, 0.4f, 16, 0f, true);
                 }
@@ -297,7 +297,7 @@ final class FxEffects {
         Vec3[] ax = axes(f.dir);
         double ct = Math.cos(f.tilt), st = Math.sin(f.tilt);
         Vec3 rt = ax[1].scale(ct).add(ax[2].scale(st));
-        float a = (float) Math.pow(1 - k, 1.2);
+        float a = (float) Math.pow(1 - k, 1.2) * 0.4f; // dịu hơn
         int n = (int) (10 + 12 * q);
         for (int layer = 0; layer < 2; layer++) {
             double lag = layer == 0 ? 0 : 0.35;
@@ -329,7 +329,7 @@ final class FxEffects {
 
     private static void domain(Inst f, FxDraw g, float t, float fade, Vec3 gp, float q) {
         double R = f.scale;
-        float a = fade;
+        float a = fade * 0.35f;
         int seg = (int) (28 + 40 * q);
         double rot = t * 0.05;
         int c = f.rgb, w = white(c, 0.7f);
@@ -406,7 +406,7 @@ final class FxEffects {
             double fall = Math.min(1, lt / 5.0);
             double ty = f.pos.y + 18 * (1 - fall) * (1 - fall);
             Vec3 tip = new Vec3(f.pos.x + f.sx[i], ty, f.pos.z + f.sz[i]);
-            float a = lt < 5 ? 1f : tail;
+            float a = (lt < 5 ? 1f : tail) * 0.5f;
             Vec3 top = tip.add(0, 3.0, 0);
             if (lt < 5) g.ribbon(top, top.add(0, 6 * (1 - fall) + 1, 0), 0.04, 0.0, col(c, 0.5f), col(c, 0f)); // vệt rơi
             blade(g, tip, top, 0.2, c, w, a);

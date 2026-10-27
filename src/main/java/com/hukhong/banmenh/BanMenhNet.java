@@ -13,6 +13,6 @@ public final class BanMenhNet {
         });
         r.playToClient(BanMenhStrikeFxPayload.TYPE, BanMenhStrikeFxPayload.STREAM_CODEC,
                 (pl, ctx) -> ctx.enqueueWork(() ->
-                        com.hukhong.client.render.orbit.OrbitState.onFx(pl.ownerId(), pl.targetId(), pl.slot())));
+                        com.hukhong.client.render.orbit.OrbitState.onFx(pl.ownerId(), pl.targetId(), pl.flight(), pl.count())));
     }
 }

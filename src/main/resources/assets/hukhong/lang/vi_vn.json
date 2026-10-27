@@ -907,5 +907,8 @@
   "hukhong.artifact.evolve.need": "Cần %s Hồn Tinh (hiện có %s).",
   "hukhong.artifact.evolve.done": "%s tiến hóa: %s",
   "hukhong.artifact.tip.cost": "Tiến hóa: %s Hồn Tinh, cần cấp %s.",
-  "hukhong.artifact.tip.click": "Bấm để tiến hóa (hoặc Shift + chuột phải bằng Hồn Tinh)."
+  "hukhong.artifact.tip.click": "Bấm để tiến hóa (hoặc Shift + chuột phải bằng Hồn Tinh).",
+  "hukhong.trade.herb": "Thương Nhân Linh Thảo",
+  "hukhong.trade.pill": "Thương Nhân Đan Dược",
+  "hukhong.trade.soul": "Thương Nhân Hồn Tinh"
 }

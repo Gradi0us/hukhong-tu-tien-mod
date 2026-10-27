@@ -2,41 +2,38 @@ package com.hukhong.client.render.orbit;
 
 import com.hukhong.HuKhong;
 import com.hukhong.banmenh.BanMenhKiemItem;
-import com.hukhong.banmenh.BanMenhMath;
-import com.hukhong.banmenh.BanMenhType;
 import com.hukhong.client.ClientConfig;
 import com.hukhong.item.ModItems;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * Kiếm tu: khi Bản Mệnh Kiếm nằm trong tay (ô hotbar đang chọn) thì KHÔNG vẽ kiếm trong tay (model ẩn ở các display
- * tay) mà vẽ các thanh kiếm bay quanh người + vệt hạt theo màu loại kiếm. Vẽ theo không gian thế giới ở
- * AFTER_ENTITIES nên thấy được cả góc nhìn thứ nhất lẫn người chơi khác.
+ * Kiếm tu: khi Bản Mệnh Kiếm được chọn thì tay không cầm gì; một thanh kiếm treo nhẹ sau vai (không hạt).
+ * Khi tấn công kiếm phóng từ sau vai theo cung ease-in-out, mũi theo hướng bay, đâm mục tiêu rồi quay về.
+ * Phi kiếm kỹ năng (FxPayload SWORD_FLY) dùng cùng bộ vẽ. Vệt = 2-3 bóng kiếm mờ, không hạt, không chớp màn hình.
  */
 @EventBusSubscriber(modid = HuKhong.MODID, value = Dist.CLIENT)
 public final class OrbitRenderer {
@@ -56,23 +53,48 @@ public final class OrbitRenderer {
         return p.isAlive() && !p.isInvisible() && !p.isSpectator();
     }
 
-    /** Vị trí thế giới của kiếm idx tại time = gameTime + partial (đã gồm đoạn phi kiếm nếu có). */
-    static Vec3 swordPos(ClientLevel level, Player pl, int idx, int count, double time, float partial,
-                         OrbitState.Strike st) {
-        double[] o = new double[3];
-        OrbitMath.orbit(idx, count, time, o);
-        Vec3 pos = pl.getPosition(partial).add(o[0], o[1], o[2]);
-        if (st != null && st.slot() % count == idx) {
-            double k = OrbitMath.strikeBlend(time - st.start(), BanMenhMath.STRIKE_DELAY_TICKS, BanMenhMath.STRIKE_RETURN_TICKS);
-            if (k >= 0) {
-                Entity t = level.getEntity(st.targetId());
-                if (t != null) pos = pos.lerp(t.getPosition(partial).add(0, t.getBbHeight() * 0.55, 0), k);
-            }
-        }
-        return pos;
+    /** Vị trí kiếm treo sau vai phải (có dao động nhẹ). */
+    static Vec3 shoulder(Player pl, float partial, double time) {
+        double yaw = Math.toRadians(Mth.rotLerp(partial, pl.yBodyRotO, pl.yBodyRot));
+        Vec3 fwd = new Vec3(-Math.sin(yaw), 0, Math.cos(yaw));
+        Vec3 right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
+        double h = (pl.isCrouching() ? 1.3 : 1.55) + OrbitMath.bob(time, pl.getId());
+        return pl.getPosition(partial).add(right.scale(0.6)).subtract(fwd.scale(0.45)).add(0, h, 0);
     }
 
-    /** Quaternion: mũi kiếm (+Y sau khi xoay 45 độ) hướng theo dir, mặt phẳng kiếm quay về phía camera. */
+    /** Vị trí kiếm tại time; null nếu chưa xuất hiện. */
+    static Vec3 pos(ClientLevel level, OrbitState.Flight f, double time, float partial) {
+        double t = time - f.start;
+        Vec3 a;
+        if (f.owner >= 0) {
+            if (!(level.getEntity(f.owner) instanceof Player o)) return null;
+            a = shoulder(o, partial, time);
+            if (f.target >= 0) {
+                Entity te = level.getEntity(f.target);
+                if (te != null) f.to = te.getPosition(partial).add(0, te.getBbHeight() * 0.55, 0);
+            }
+            if (t <= 0) return a;
+        } else {
+            if (t < 0) return null;
+            a = f.from;
+        }
+        Vec3 b = f.to;
+        Vec3 d = b.subtract(a);
+        double len = d.length();
+        Vec3 perp = d.cross(new Vec3(0, 1, 0));
+        perp = perp.lengthSqr() < 1e-6 ? Vec3.ZERO : perp.normalize();
+        Vec3 bulge = perp.scale(0.16 * f.side).add(0, 0.1, 0).scale(len);
+        if (t < f.flight) {
+            double e = OrbitMath.easeInOut(t / f.flight);
+            return a.add(d.scale(e)).add(bulge.scale(Math.sin(Math.PI * e)));
+        }
+        if (f.owner >= 0 && t < f.flight + f.ret) {
+            double u = OrbitMath.easeInOut((t - f.flight) / f.ret);
+            return b.add(a.subtract(b).scale(u)).add(bulge.scale(0.5 * Math.sin(Math.PI * u)));
+        }
+        return b; // kiếm kỹ năng cắm lại ở đích
+    }
+
     private static Quaternionf orient(Vec3 dir, Vec3 toCam) {
         Vector3f u = dir.lengthSqr() < 1.0E-8 ? new Vector3f(0, 1, 0) : new Vector3f((float) dir.x, (float) dir.y, (float) dir.z).normalize();
         Vector3f c = new Vector3f((float) toCam.x, (float) toCam.y, (float) toCam.z);
@@ -86,106 +108,109 @@ public final class OrbitRenderer {
         return new Quaternionf().setFromNormalized(new Matrix3f(x, u, n));
     }
 
+    /** Bọc buffer để vẽ model item bán trong suốt (bóng vệt / mờ dần). */
+    private static final class Fade implements MultiBufferSource {
+        private final MultiBufferSource.BufferSource src;
+        private final float alpha;
+        Fade(MultiBufferSource.BufferSource src, float alpha) { this.src = src; this.alpha = alpha; }
+        @Override public VertexConsumer getBuffer(RenderType rt) {
+            return new Alpha(src.getBuffer(RenderType.entityTranslucentCull(InventoryMenu.BLOCK_ATLAS)), alpha);
+        }
+    }
+
+    private static final class Alpha implements VertexConsumer {
+        private final VertexConsumer d;
+        private final float a;
+        Alpha(VertexConsumer d, float a) { this.d = d; this.a = a; }
+        @Override public VertexConsumer addVertex(float x, float y, float z) { d.addVertex(x, y, z); return this; }
+        @Override public VertexConsumer setColor(int r, int g, int b, int al) { d.setColor(r, g, b, (int) (al * a)); return this; }
+        @Override public VertexConsumer setUv(float u, float v) { d.setUv(u, v); return this; }
+        @Override public VertexConsumer setUv1(int u, int v) { d.setUv1(u, v); return this; }
+        @Override public VertexConsumer setUv2(int u, int v) { d.setUv2(u, v); return this; }
+        @Override public VertexConsumer setNormal(float x, float y, float z) { d.setNormal(x, y, z); return this; }
+    }
+
+    private static void draw(Minecraft mc, ClientLevel level, PoseStack ps, MultiBufferSource.BufferSource buf, ItemStack st,
+                             Vec3 pos, Vec3 dir, Vec3 cam, float scale, float alpha, float roll, int seed, boolean local) {
+        Vec3 toCam = cam.subtract(pos);
+        if (local && toCam.lengthSqr() < 0.36) return; // quá sát mắt: bỏ để khỏi che tầm nhìn
+        int light = LevelRenderer.getLightColor(level, BlockPos.containing(pos)); // không còn FULL_BRIGHT
+        MultiBufferSource src = alpha >= 0.98f ? buf : new Fade(buf, alpha);
+        ps.pushPose();
+        ps.translate(pos.x - cam.x, pos.y - cam.y, pos.z - cam.z);
+        ps.mulPose(orient(dir, toCam));
+        ps.mulPose(Axis.YP.rotationDegrees(roll));
+        ps.mulPose(Axis.ZP.rotationDegrees(45f)); // mũi kiếm trên texture nằm chéo phải-trên
+        ps.scale(scale, scale, scale);
+        mc.getItemRenderer().renderStatic(st, ItemDisplayContext.FIXED, light, OverlayTexture.NO_OVERLAY, ps, src, level, seed);
+        ps.popPose();
+    }
+
     @SubscribeEvent
     public static void onRender(RenderLevelStageEvent e) {
         if (e.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        if (level == null || level.players().isEmpty()) return;
+        if (level == null) return;
         float partial = e.getPartialTick().getGameTimeDeltaPartialTick(true);
         double time = level.getGameTime() + partial;
         Vec3 cam = e.getCamera().getPosition();
         PoseStack ps = e.getPoseStack();
         MultiBufferSource.BufferSource buf = mc.renderBuffers().bufferSource();
+        OrbitState.prune(level.getGameTime() + 1.0E-3);
         boolean any = false;
+        int ghosts = switch (ClientConfig.fxQuality()) { case LOW -> 0; case MED -> 2; default -> 3; };
+
+        // kiếm treo sau vai
         for (AbstractClientPlayer pl : level.players()) {
             if (pl.distanceToSqr(cam) > VIEW_RANGE * VIEW_RANGE || !visible(pl)) continue;
             ItemStack sword = heldSword(pl);
-            if (sword.isEmpty()) continue;
+            if (sword.isEmpty() || OrbitState.busy(pl.getId(), time)) continue;
             int stage = BanMenhKiemItem.stageOf(sword);
-            int count = BanMenhMath.orbitCount(stage);
-            ItemStack one = sword.copyWithCount(1);
-            int light = stage >= 4 ? LightTexture.FULL_BRIGHT
-                    : LevelRenderer.getLightColor(level, BlockPos.containing(pl.getX(), pl.getEyeY(), pl.getZ()));
-            float scale = 0.45f + 0.07f * stage;
-            OrbitState.Strike st = OrbitState.get(pl.getId(), time);
-            for (int i = 0; i < count; i++) {
-                Vec3 pos = swordPos(level, pl, i, count, time, partial, st);
-                Vec3 dir = swordPos(level, pl, i, count, time + 0.5, partial, st)
-                        .subtract(swordPos(level, pl, i, count, time - 0.5, partial, st));
-                Vec3 toCam = cam.subtract(pos);
-                if (pl == mc.player && toCam.lengthSqr() < 0.36) continue; // quá sát mắt: bỏ để khỏi che tầm nhìn
-                ps.pushPose();
-                ps.translate(pos.x - cam.x, pos.y - cam.y, pos.z - cam.z);
-                ps.mulPose(orient(dir, toCam));
-                ps.mulPose(Axis.ZP.rotationDegrees(45f)); // mũi kiếm trên texture nằm chéo phải-trên
-                ps.scale(scale, scale, scale);
-                mc.getItemRenderer().renderStatic(one, ItemDisplayContext.FIXED, light, OverlayTexture.NO_OVERLAY,
-                        ps, buf, level, pl.getId() + i);
-                ps.popPose();
-                any = true;
+            Vec3 pos = shoulder(pl, partial, time);
+            double yaw = Math.toRadians(Mth.rotLerp(partial, pl.yBodyRotO, pl.yBodyRot));
+            Vec3 dir = new Vec3(Math.sin(yaw) * 0.3, 1, -Math.cos(yaw) * 0.3); // mũi hướng lên, hơi ngả ra sau
+            draw(mc, level, ps, buf, sword.copyWithCount(1), pos, dir, cam, 0.4f + 0.05f * stage, 1f, 0f, pl.getId(), pl == mc.player);
+            any = true;
+        }
+
+        // phi kiếm đang bay
+        for (OrbitState.Flight f : OrbitState.all()) {
+            ItemStack st;
+            Player owner = null;
+            if (f.owner >= 0) {
+                if (!(level.getEntity(f.owner) instanceof Player o) || !visible(o)) continue;
+                owner = o;
+                st = heldSword(o);
+                if (st.isEmpty()) continue;
+                st = st.copyWithCount(1);
+            } else st = f.stack;
+            Vec3 pos = pos(level, f, time, partial);
+            if (pos == null || pos.distanceToSqr(cam) > VIEW_RANGE * VIEW_RANGE) continue;
+            double t = time - f.start;
+            Vec3 ahead = pos(level, f, time + 0.6, partial);
+            Vec3 behind = pos(level, f, time - 0.6, partial);
+            Vec3 v = ahead == null || behind == null ? Vec3.ZERO : ahead.subtract(behind);
+            if (v.lengthSqr() < 1e-5) v = f.to.subtract(owner != null ? shoulder(owner, partial, time) : f.from);
+            int stage = owner == null ? 3 : BanMenhKiemItem.stageOf(st);
+            float scale = (0.4f + 0.05f * stage) * f.size;
+            float alpha = f.owner >= 0 ? 1f : Mth.clamp((float) (f.flight + 5 - t) / 3f, 0f, 1f);
+            float roll = (float) (Math.sin(time * 0.35 + f.start) * 10);
+            boolean moving = t > 0 && (t < f.flight || (f.owner >= 0 && t < f.flight + f.ret));
+            if (moving) for (int k = ghosts; k >= 1; k--) {
+                double tg = time - k * 0.85;
+                Vec3 gp = pos(level, f, tg, partial);
+                if (gp == null) continue;
+                Vec3 gv = pos(level, f, tg + 0.6, partial);
+                Vec3 gb = pos(level, f, tg - 0.6, partial);
+                Vec3 gd = gv == null || gb == null ? v : gv.subtract(gb);
+                if (gd.lengthSqr() < 1e-5) gd = v;
+                draw(mc, level, ps, buf, st, gp, gd, cam, scale, 0.2f * (ghosts - k + 1) / ghosts, roll, f.owner + k, false);
             }
+            draw(mc, level, ps, buf, st, pos, v, cam, scale, alpha, roll, f.owner, owner != null && owner == mc.player);
+            any = true;
         }
         if (any) buf.endBatch();
-    }
-
-    // ------------------------------------------------------------------ vệt hạt
-
-    private static Vector3f color(BanMenhType t) {
-        return switch (t) {
-            case THANH_PHONG -> new Vector3f(0.35f, 1.0f, 0.75f);
-            case LIET_DIEM -> new Vector3f(1.0f, 0.45f, 0.08f);
-            case HAN_BANG -> new Vector3f(0.6f, 0.9f, 1.0f);
-            case LOI_DINH -> new Vector3f(1.0f, 0.93f, 0.3f);
-            case HUYET_ANH -> new Vector3f(0.85f, 0.04f, 0.1f);
-            case TRONG_NHAC -> new Vector3f(0.75f, 0.62f, 0.4f);
-            case NGOC_TAM -> new Vector3f(0.25f, 0.95f, 0.85f);
-            case TINH_THAN -> new Vector3f(0.7f, 0.5f, 1.0f);
-        };
-    }
-
-    private static ParticleOptions accent(BanMenhType t) {
-        return switch (t) {
-            case THANH_PHONG -> ParticleTypes.CLOUD;
-            case LIET_DIEM -> ParticleTypes.FLAME;
-            case HAN_BANG -> ParticleTypes.SNOWFLAKE;
-            case LOI_DINH -> ParticleTypes.ELECTRIC_SPARK;
-            case HUYET_ANH -> ParticleTypes.DAMAGE_INDICATOR;
-            case TRONG_NHAC -> ParticleTypes.ASH;
-            case NGOC_TAM -> ParticleTypes.END_ROD;
-            case TINH_THAN -> ParticleTypes.GLOW;
-        };
-    }
-
-    @SubscribeEvent
-    public static void onTick(ClientTickEvent.Post e) {
-        Minecraft mc = Minecraft.getInstance();
-        ClientLevel level = mc.level;
-        if (level == null || mc.isPaused() || ClientConfig.particles() == ClientConfig.ParticleLevel.OFF) return;
-        boolean low = ClientConfig.particles() == ClientConfig.ParticleLevel.LOW;
-        double time = level.getGameTime();
-        Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
-        for (AbstractClientPlayer pl : level.players()) {
-            if (pl.distanceToSqr(cam) > 40 * 40 || !visible(pl)) continue;
-            ItemStack sword = heldSword(pl);
-            if (sword.isEmpty()) continue;
-            BanMenhType type = BanMenhKiemItem.typeOf(sword);
-            int stage = BanMenhKiemItem.stageOf(sword);
-            int count = BanMenhMath.orbitCount(stage);
-            OrbitState.Strike st = OrbitState.get(pl.getId(), time);
-            DustParticleOptions dust = new DustParticleOptions(color(type), 0.7f + 0.08f * stage);
-            for (int i = 0; i < count; i++) {
-                if (low && level.random.nextInt(3) != 0) continue;
-                Vec3 p = swordPos(level, pl, i, count, time, 0f, st);
-                Vec3 prev = swordPos(level, pl, i, count, time - 1, 0f, st);
-                // hai hạt dọc đường đi trong tick vừa rồi -> vệt liền
-                level.addParticle(dust, p.x, p.y, p.z, 0, 0, 0);
-                level.addParticle(dust, (p.x + prev.x) / 2, (p.y + prev.y) / 2, (p.z + prev.z) / 2, 0, 0, 0);
-                if (level.random.nextInt(stage >= 4 ? 3 : 6) == 0)
-                    level.addParticle(accent(type), p.x, p.y, p.z, (level.random.nextDouble() - 0.5) * 0.02,
-                            (level.random.nextDouble() - 0.5) * 0.02, (level.random.nextDouble() - 0.5) * 0.02);
-            }
-        }
     }
 
     @SubscribeEvent

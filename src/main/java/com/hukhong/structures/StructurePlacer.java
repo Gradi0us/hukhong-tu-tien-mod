@@ -57,6 +57,7 @@ public final class StructurePlacer {
         BlockPos origin;
         int[] cols; // packed (lx | lz << 16), sap theo o chunk
         int next = 0;
+        int errors = 0;
         Consumer<Placed> done;
     }
 
@@ -104,7 +105,11 @@ public final class StructurePlacer {
         try {
             while (j.next < j.cols.length && System.nanoTime() < end) {
                 int c = j.cols[j.next++];
-                column(j, c & 0xFFFF, c >>> 16);
+                try {
+                    column(j, c & 0xFFFF, c >>> 16);
+                } catch (RuntimeException ex) {
+                    if (j.errors++ < 3) LOG.error("Column ({},{}) of {} failed, continuing: {}", c & 0xFFFF, c >>> 16, j.st.name, ex.toString(), ex);
+                }
             }
             if (j.next >= j.cols.length) {
                 QUEUE.poll();
@@ -153,7 +158,12 @@ public final class StructurePlacer {
             if (s == null) continue;
             int y = oy + ly;
             if (y >= l.getMaxBuildHeight() || y < l.getMinBuildHeight()) continue;
-            l.setBlock(mp.set(wx, y, wz), s, FLAGS);
+            try {
+                l.setBlock(mp.set(wx, y, wz), s, FLAGS);
+            } catch (RuntimeException ex) {
+                // vd CarvedPumpkinBlock.onPlace (do tim golem) NPE khi o canh chunk chua nap: khoi da duoc dat, bo qua de khong mat phan tren cua cot
+                j.errors++;
+            }
         }
     }
 
@@ -172,7 +182,7 @@ public final class StructurePlacer {
                 LOG.warn("Block entity at {} skipped: {}", p, ex.toString());
             }
         }
-        LOG.info("Structure {} placed at {}", j.st.name, j.origin);
+        LOG.info("Structure {} placed at {} (column errors: {})", j.st.name, j.origin, j.errors);
         if (j.done != null) {
             try {
                 j.done.accept(new Placed(j.level, j.st, j.origin));

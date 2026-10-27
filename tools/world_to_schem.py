@@ -212,9 +212,33 @@ def extract(world, b):
                 d = T.Compound({k: v for k, v in be.items() if k not in ("x", "y", "z", "id", "keepPacked")})
                 d["Id"] = T.String(str(be.get("id", "")))
                 d["Pos"] = T.IntArray([x - x1, y - y1, z - z1])
+                sanitize_be(d, world.data_version)
                 bes.append(d)
     print("  chunks read: %d/%d, block entities: %d" % (found, len(need), len(bes)))
     return grid, palette, bes
+
+def _msg_to_json(m):
+    """1.21.5+ sign line (plain String / Compound text component / List) -> 1.21.1 JSON-string line."""
+    if isinstance(m, T.Compound):
+        t = m.get("text")
+        parts = [str(t)] if t is not None else []
+        for e in m.get("extra", []):
+            parts.append(str(e.get("text", "")) if isinstance(e, T.Compound) else str(e))
+        return json.dumps({"text": "".join(parts)}, ensure_ascii=False)
+    if isinstance(m, T.List):
+        return json.dumps({"text": "".join(str(x.get("text", "")) if isinstance(x, T.Compound) else str(x) for x in m)}, ensure_ascii=False)
+    return json.dumps({"text": str(m)}, ensure_ascii=False)
+
+def sanitize_be(d, dv):
+    """DataVersion >= 4325 (1.21.5+): item/text formats differ from 1.21.1 -> normalise signs, drop container items."""
+    if dv < 4325: return
+    d.pop("Items", None)
+    for side in ("front_text", "back_text"):
+        ft = d.get(side)
+        if ft is None: continue
+        for key in ("messages", "filtered_messages"):
+            if key in ft:
+                ft[key] = T.List[T.String]([T.String(_msg_to_json(m)) for m in ft[key]])
 
 def varint(n):
     out = bytearray()

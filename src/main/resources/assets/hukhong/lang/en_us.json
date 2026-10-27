@@ -907,5 +907,8 @@
   "hukhong.artifact.evolve.need": "Requires %s Soul Essence (you have %s).",
   "hukhong.artifact.evolve.done": "%s evolved: %s",
   "hukhong.artifact.tip.cost": "Evolve: %s Soul Essence, requires level %s.",
-  "hukhong.artifact.tip.click": "Click to evolve (or Shift + right-click with Soul Essence)."
+  "hukhong.artifact.tip.click": "Click to evolve (or Shift + right-click with Soul Essence).",
+  "hukhong.trade.herb": "Herb Merchant",
+  "hukhong.trade.pill": "Pill Merchant",
+  "hukhong.trade.soul": "Soul Essence Merchant"
 }

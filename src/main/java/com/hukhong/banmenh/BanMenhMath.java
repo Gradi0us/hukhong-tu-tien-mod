@@ -18,7 +18,12 @@ public final class BanMenhMath {
     /** Số kiếm bay quanh người theo giai đoạn (0..6): Phàm/Linh 1, Huyền 1, Địa 2, Thiên 3, Tiên 5, Thần 9. */
     private static final int[] ORBIT_COUNT = {1, 1, 1, 2, 3, 5, 9};
     /** Phi kiếm: tick bay tới mục tiêu trước khi server áp sát thương, và tick bay về. */
-    public static final int STRIKE_DELAY_TICKS = 6, STRIKE_RETURN_TICKS = 6;
+    public static final int STRIKE_DELAY_TICKS = 6, STRIKE_RETURN_TICKS = 8;
+    /** Tốc độ phi kiếm (block/tick) dùng để tính thời gian bay = thời điểm server áp sát thương. */
+    public static final double FLY_SPEED = 1.6;
+    public static int flightTicks(double dist) { return Math.max(3, Math.min(14, (int) Math.ceil(dist / FLY_SPEED))); }
+    /** Số kiếm phóng cho đòn đánh thường: 1, từ giai đoạn 5 là 2. */
+    public static int strikeSwords(int stage) { return stage >= 5 ? 2 : 1; }
 
     public static int orbitCount(int stage) { return ORBIT_COUNT[Math.max(0, Math.min(MAX_STAGE, stage))]; }
 

@@ -26,7 +26,7 @@ public final class StructureLibrary {
 
     private static final Logger LOG = LogUtils.getLogger();
 
-    public static final List<String> CATEGORIES = List.of("city_large", "city_mountain", "city_ruined", "port", "sect", "village", "ruin", "tower");
+    public static final List<String> CATEGORIES = List.of("city_large", "city_mountain", "city_ruined", "port", "sect", "trade", "village", "ruin", "tower");
 
     public static Path userRoot() { return FMLPaths.GAMEDIR.get().resolve("config").resolve("hukhong").resolve("structures"); }
 
@@ -97,6 +97,24 @@ public final class StructureLibrary {
                 } catch (IOException | RuntimeException ex) {
                     LOG.warn("Skipping structure {}: {}", e.name(), ex.toString());
                 }
+            }
+        }
+        return null;
+    }
+
+
+    /** Doc dung file theo ten (vd "lobby_market" hoac "lobby_market.schem") trong thu muc nguoi dung; null neu khong co/loi. Dung cho lenh thu. */
+    public static LoadedStructure pickNamed(String category, String name) {
+        String n = name.toLowerCase(java.util.Locale.ROOT);
+        for (Entry e : userFiles(category)) {
+            String f = e.name().substring(5).toLowerCase(java.util.Locale.ROOT);
+            if (!f.equals(n) && !f.startsWith(n + ".")) continue;
+            try (InputStream in = e.opener().open()) {
+                LoadedStructure st = StructureParser.parse(e.name(), in);
+                readSidecar(st, e.sidecar());
+                return st;
+            } catch (IOException | RuntimeException ex) {
+                LOG.warn("Cannot load structure {}: {}", e.name(), ex.toString());
             }
         }
         return null;
