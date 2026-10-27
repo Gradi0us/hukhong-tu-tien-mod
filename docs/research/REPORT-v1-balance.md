@@ -166,8 +166,8 @@ HP thiết kế vượt trần 1024 vanilla được quy đổi qua `HuHoa.ehpSc
 
 ## 6. Thời gian lên cấp 100 (chỉ cày quái, không vật phẩm đột phá, spawner = 0)
 
-- EXP_DIV = 540; tìm quái 30s/con; TTK trung bình 4 đạo.
-- **Tổng: 145 giờ** (mục tiêu 120–300h sau khi tăng EXP theo cấp quái).
+- EXP mỗi quái = w x yêu cầu cấp x levelExpMult (0.030 cấp 1-20, 0.016 cấp 100); tìm quái 30s/con; TTK trung bình 4 đạo.
+- **Tổng: 40.4 giờ** (mục tiêu 30–60h tới cấp 100).
 
 ## 7. Nhận xét
 
@@ -187,3 +187,60 @@ HP thiết kế vượt trần 1024 vanilla được quy đổi qua `HuHoa.ehpSc
 | Q+E liên tục (Kiếm, cấp 1) | 6s | >= 20s mọi cấp/đạo |
 | Thời gian tới cấp 100 (cày quái) | 183h | ~500h |
 | HP boss thực tế | bị kẹp 1024 (HP thiết kế 3200-24000 vô hiệu) | HuHoa.ehpScale quy HP thiết kế thành giảm sát thương nhận |
+
+## 9. Pháp Tu (5 đạo): DPS từng nguyên tố so với trung bình Kiếm/Thể/Ma (cửa sổ 180s, giáp 15, tư chất B)
+
+Thủy/Thổ là nguyên tố hỗ trợ (hồi máu + buff / tháp khiêu khích) nên được phép thấp hơn tới 25%. Kim: sát thương và phòng thủ cao nhưng hồi chiêu x1.3.
+
+| Lv | Quang | Lôi | Hỏa | Thủy | Thổ | Kim | TB Kiếm/Thể/Ma |
+|---|---|---|---|---|---|---|---|
+| 1 | 9 (1.24) | 11 (1.62) | 10 (1.39) | 9 (1.30) | 10 (1.40) | 10 (1.41) | 7 |
+| 10 | 33 (0.98) | 35 (1.03) | 35 (1.05) | 34 (1.01) | 35 (1.05) | 38 (1.12) | 33 |
+| 20 | 71 (1.12) | 72 (1.12) | 73 (1.14) | 72 (1.13) | 72 (1.13) | 70 (1.10) | 64 |
+| 30 | 110 (1.09) | 109 (1.08) | 112 (1.10) | 111 (1.10) | 110 (1.09) | 105 (1.04) | 101 |
+| 40 | 145 (1.04) | 143 (1.02) | 147 (1.05) | 147 (1.05) | 145 (1.03) | 137 (0.98) | 140 |
+| 50 | 194 (1.01) | 190 (0.99) | 196 (1.02) | 196 (1.02) | 194 (1.01) | 184 (0.96) | 192 |
+| 60 | 246 (1.02) | 240 (0.99) | 245 (1.02) | 248 (1.03) | 241 (1.00) | 238 (0.99) | 242 |
+| 70 | 354 (1.01) | 344 (0.98) | 353 (1.01) | 356 (1.02) | 347 (0.99) | 342 (0.98) | 351 |
+| 80 | 406 (1.00) | 394 (0.97) | 404 (0.99) | 408 (1.00) | 397 (0.97) | 392 (0.96) | 407 |
+| 90 | 556 (0.99) | 538 (0.96) | 554 (0.98) | 559 (0.99) | 544 (0.97) | 537 (0.95) | 564 |
+| 100 | 1326 (0.89) | 1280 (0.86) | 1321 (0.89) | 1334 (0.90) | 1297 (0.87) | 1281 (0.86) | 1490 |
+
+| Boss | Lv | Nguyên tố | DPS | TTK (s) | Mục tiêu (s) |
+|---|---|---|---|---|---|
+| Hư Vương | 30 | QUANG | 108 | 88 | 60-120 |
+| Hư Vương | 30 | LOI | 113 | 87 | 60-120 |
+| Hư Vương | 30 | HOA | 115 | 86 | 60-120 |
+| Hư Vương | 30 | THUY | 115 | 86 | 60-120 |
+| Hư Vương | 30 | THO | 109 | 88 | 60-120 |
+| Hư Vương | 30 | KIM | 105 | 92 | 60-120 |
+| CHG1 thach_hong | 67 | QUANG | 309 | 230 | 180-300 |
+| CHG1 thach_hong | 67 | LOI | 299 | 238 | 180-300 |
+| CHG1 thach_hong | 67 | HOA | 309 | 230 | 180-300 |
+| CHG1 thach_hong | 67 | THUY | 311 | 228 | 180-300 |
+| CHG1 thach_hong | 67 | THO | 303 | 234 | 180-300 |
+| CHG1 thach_hong | 67 | KIM | 300 | 237 | 180-300 |
+| CHG2 bach_tu_am | 78 | QUANG | 374 | 229 | 180-300 |
+| CHG2 bach_tu_am | 78 | LOI | 363 | 237 | 180-300 |
+| CHG2 bach_tu_am | 78 | HOA | 377 | 229 | 180-300 |
+| CHG2 bach_tu_am | 78 | THUY | 380 | 227 | 180-300 |
+| CHG2 bach_tu_am | 78 | THO | 370 | 233 | 180-300 |
+| CHG2 bach_tu_am | 78 | KIM | 366 | 235 | 180-300 |
+| CHG3 lang_uyen | 86 | QUANG | 428 | 228 | 180-300 |
+| CHG3 lang_uyen | 86 | LOI | 410 | 236 | 180-300 |
+| CHG3 lang_uyen | 86 | HOA | 427 | 228 | 180-300 |
+| CHG3 lang_uyen | 86 | THUY | 427 | 227 | 180-300 |
+| CHG3 lang_uyen | 86 | THO | 419 | 231 | 180-300 |
+| CHG3 lang_uyen | 86 | KIM | 415 | 233 | 180-300 |
+| CHG4 co_vo_tan | 98 | QUANG | 579 | 224 | 180-300 |
+| CHG4 co_vo_tan | 98 | LOI | 562 | 231 | 180-300 |
+| CHG4 co_vo_tan | 98 | HOA | 580 | 224 | 180-300 |
+| CHG4 co_vo_tan | 98 | THUY | 585 | 222 | 180-300 |
+| CHG4 co_vo_tan | 98 | THO | 570 | 228 | 180-300 |
+| CHG4 co_vo_tan | 98 | KIM | 573 | 227 | 180-300 |
+| Nguyên Thủy Tịch Diệt | 100 | QUANG | 1196 | 426 | 360-480 |
+| Nguyên Thủy Tịch Diệt | 100 | LOI | 1169 | 436 | 360-480 |
+| Nguyên Thủy Tịch Diệt | 100 | HOA | 1202 | 424 | 360-480 |
+| Nguyên Thủy Tịch Diệt | 100 | THUY | 1210 | 421 | 360-480 |
+| Nguyên Thủy Tịch Diệt | 100 | THO | 1194 | 428 | 360-480 |
+| Nguyên Thủy Tịch Diệt | 100 | KIM | 1144 | 445 | 360-480 |

@@ -234,7 +234,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
         if (--windup <= 0) {
             fire(sl, k);
             pending = -1;
-            skillCd = EndgameKit.cooldown(phase());
+            skillCd = com.hukhong.events.BossBuff.cd(EndgameKit.cooldown(phase()));
         }
     }
 

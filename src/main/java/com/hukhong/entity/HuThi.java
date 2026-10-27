@@ -35,9 +35,11 @@ public class HuThi extends Zombie implements GeoEntity, HuMob {
     @Override public SpawnGroupData finalizeSpawn(ServerLevelAccessor l, DifficultyInstance d, MobSpawnType t,
                                                   SpawnGroupData g) {
         SpawnGroupData r = super.finalizeSpawn(l, d, t, g);
-        int lv = HuHoa.levelFor(l, blockPosition(), getRandom());
+        boolean cor = com.hukhong.events.CorruptBuff.at(l, blockPosition());
+        int lv = com.hukhong.events.CorruptBuff.level(cor, HuHoa.levelFor(l, blockPosition(), getRandom()));
+        double cm = com.hukhong.events.CorruptBuff.mul(cor);
         entityData.set(LEVEL, lv);
-        HuHoa.applyStats(this, lv, 1.45, 1.0);
+        HuHoa.applyStats(this, lv, 1.45 * cm, cm);
         return r;
     }
 
@@ -58,6 +60,9 @@ public class HuThi extends Zombie implements GeoEntity, HuMob {
     @Override protected void registerGoals() {
         super.registerGoals();
         goalSelector.addGoal(1, new HuSkill.Dash(this));
+        goalSelector.addGoal(1, new HuSkill.Leap(this, 160, 14, 5, 12, 3.5, 1.3));
+        goalSelector.addGoal(1, new HuSkill.Slam(this, 180, 18, 4.5, 1.1));
+        goalSelector.addGoal(0, new HuSkill.Rage(this));
     }
 
     @Override public void aiStep() { super.aiStep(); HuHoa.particles(this); }

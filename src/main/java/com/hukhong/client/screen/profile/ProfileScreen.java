@@ -407,7 +407,7 @@ public class ProfileScreen extends Screen {
     }
 
     private static String artifactVi(Path p) {
-        return switch (p) { case DAO -> "Pháp Bảo"; case THE -> "Bá Thể"; case MA -> "Ma Hồn"; default -> "?"; };
+        return switch (p) { case DAO -> "Pháp Bảo"; case THE -> "Bá Thể"; case MA -> "Ma Hồn"; case PHAP -> "Pháp Khí"; default -> "?"; };
     }
 
     private void artifactTooltip(Path p) {
@@ -429,6 +429,7 @@ public class ProfileScreen extends Screen {
             case DAO -> "hukhong.path.dao";
             case THE -> "hukhong.path.body";
             case MA -> "hukhong.path.demon";
+            case PHAP -> "hukhong.path.phap";
         };
     }
 }

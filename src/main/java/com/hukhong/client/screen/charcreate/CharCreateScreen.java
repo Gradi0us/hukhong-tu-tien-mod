@@ -19,9 +19,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.EnumSet;
 import java.util.Set;
 
-/** Màn tạo nhân vật: bảng 4 đạo + tư chất (lộ dần), xuất thân, tuổi. */
+/** Màn tạo nhân vật: bảng 5 đạo + tư chất (lộ dần), xuất thân, tuổi. */
 public class CharCreateScreen extends Screen {
-    private static final int CELL_W = 90, CELL_H = 70, GAP = 8, REVEAL_STEP = 14;
+    private static final int CELL_W = 76, CELL_H = 70, GAP = 6, REVEAL_STEP = 14;
 
     private final CharRoll roll;
     private final Set<Path> selected = EnumSet.noneOf(Path.class);
@@ -43,6 +43,10 @@ public class CharCreateScreen extends Screen {
         confirm = addRenderableWidget(Button.builder(Component.translatable("hukhong.charcreate.confirm"), b -> {
             int mask = 0;
             for (Path p : selected) mask |= 1 << p.ordinal();
+            if (selected.contains(Path.PHAP)) { // Pháp Tu: thêm màn lộ nguyên tố (1 lần reroll)
+                Minecraft.getInstance().setScreen(new PhapElementScreen(roll, mask));
+                return;
+            }
             PacketDistributor.sendToServer(new ConfirmCharCreatePayload(mask));
             onClose();
         }).bounds(width / 2 - 50, height / 2 + 60, 100, 20).build());
@@ -187,6 +191,7 @@ public class CharCreateScreen extends Screen {
             case DAO -> "hukhong.path.dao";
             case THE -> "hukhong.path.body";
             case MA -> "hukhong.path.demon";
+            case PHAP -> "hukhong.path.phap";
         };
     }
 }

@@ -6,6 +6,12 @@ import com.hukhong.core.CultivationService;
 import com.hukhong.entity.HuHoa;
 import com.hukhong.entity.ModEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -50,6 +56,7 @@ public final class BiCanhManager {
         final Map<UUID, Ret> ret = new HashMap<>();
         final Set<UUID> mobs = new HashSet<>();
         final ServerBossEvent bar;
+        final List<long[]> doorAnims = new ArrayList<>(); // {roomIdx, startTick}
         long endTick;
         int active = -1;
         boolean won;
@@ -171,6 +178,7 @@ public final class BiCanhManager {
         } else {
             p.teleportTo(to, r.x(), r.y(), r.z(), r.yRot(), 0f);
         }
+        com.hukhong.audio.BossMusic.stop(p);
         p.getPersistentData().remove(RET_TAG);
         p.fallDistance = 0;
         p.setDeltaMovement(Vec3.ZERO);
@@ -243,6 +251,9 @@ public final class BiCanhManager {
                     String.format("%02d:%02d", sec / 60, sec % 60)));
         }
 
+        tickDoors(dim, run, now);
+        for (ServerPlayer p : online) confine(dim, run, p, now);
+
         if (run.active < 0) {
             for (ServerPlayer p : online) {
                 int idx = BiCanhLayout.roomAt(run.rooms, p.getBlockX() - run.origin.getX());
@@ -263,14 +274,18 @@ public final class BiCanhManager {
         run.active = idx;
         double scale = BiCanhTier.partyScale(online.size());
         if (r.kind() == Kind.BOSS) {
-            spawn(dim, run, ModEntities.HU_COT.get(), r, 9, 0, 5.0 * scale, 1.8, true);
+            spawn(dim, run, ModEntities.HU_COT.get(), r, BiCanhLayout.ROOM_LEN / 2, 0, 5.0 * scale, 1.8, true);
+            for (ServerPlayer p : online) com.hukhong.audio.BossMusic.start(p, "bicanh_boss");
             for (int i = 0; i < 2 + run.tier.ordinal() / 2; i++) spawnRandom(dim, run, r);
             for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable("hukhong.bicanh.boss_start"));
+            floorTitle(dim, online, Component.translatable("hukhong.bicanh.floor.boss"), Component.translatable("hukhong.bicanh.boss"), true);
         } else {
             int n = (int) Math.round(run.tier.mobsForWave(idx - 1) * scale);
             for (int i = 0; i < n; i++) spawnRandom(dim, run, r);
             for (ServerPlayer p : online)
                 p.sendSystemMessage(Component.translatable("hukhong.bicanh.wave_start", idx, run.tier.waves, n));
+            floorTitle(dim, online, Component.translatable("hukhong.bicanh.floor", idx),
+                    Component.translatable("hukhong.bicanh.floor.sub", idx, run.tier.waves, n), false);
         }
     }
 
@@ -278,11 +293,13 @@ public final class BiCanhManager {
         var rnd = dim.random;
         double w = rnd.nextDouble();
         EntityType<? extends Mob> type = w < 0.60 ? ModEntities.HU_THI.get() : w < 0.85 ? ModEntities.HU_COT.get() : ModEntities.HU_CHU.get();
-        int lx = 2, lz = 0;
-        for (int i = 0; i < 8; i++) {
-            lx = 2 + rnd.nextInt(11);
-            lz = -5 + rnd.nextInt(11);
-            if (dim.getBlockState(new BlockPos(run.origin.getX() + r.x0() + lx, run.origin.getY(), run.origin.getZ() + lz)).isAir()) break;
+        int L = BiCanhLayout.ROOM_LEN, hz = BiCanhLayout.HALF_Z;
+        int lx = L / 2, lz = hz - 3; // du phong: gan tuong
+        for (int i = 0; i < 24; i++) {
+            int tx = 3 + rnd.nextInt(L - 7), tz = -(hz - 2) + rnd.nextInt(2 * (hz - 2) + 1);
+            BlockPos at = new BlockPos(run.origin.getX() + r.x0() + tx, run.origin.getY(), run.origin.getZ() + tz);
+            if (dim.getBlockState(at).isAir() && dim.getBlockState(at.above()).isAir()
+                    && dim.getBlockState(at.below()).blocksMotion() && dim.getFluidState(at.below()).isEmpty()) { lx = tx; lz = tz; break; }
         }
         spawn(dim, run, type, r, lx, lz, 1.0, 1.0, false);
     }
@@ -292,7 +309,7 @@ public final class BiCanhManager {
         Mob m = type.create(dim);
         if (m == null) return;
         BlockPos o = run.origin;
-        m.moveTo(o.getX() + r.x0() + lx + 0.5, o.getY(), o.getZ() + lz + 0.5, dim.random.nextFloat() * 360f, 0f);
+        m.moveTo(o.getX() + r.x0() + lx + 0.5, o.getY() + (boss ? 1 : 0), o.getZ() + lz + 0.5, dim.random.nextFloat() * 360f, 0f);
         m.finalizeSpawn(dim, dim.getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.EVENT, null);
         HuHoa.applyStats(m, run.tier.mobLevel, hpMul, dmgMul);
         m.setPersistenceRequired();
@@ -311,19 +328,27 @@ public final class BiCanhManager {
         run.state[idx] = 2;
         run.active = -1;
         if (r.kind() == Kind.WAVE) {
-            BiCanhArena.setDoor(dim, run.origin, r, false);
-            for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable("hukhong.bicanh.wave_clear", idx));
+            run.doorAnims.add(new long[]{idx, dim.getServer().getTickCount()});
+            burst(dim, run, r);
+            for (ServerPlayer p : online) {
+                p.sendSystemMessage(Component.translatable("hukhong.bicanh.wave_clear", idx));
+                p.connection.send(new ClientboundSetTitlesAnimationPacket(5, 40, 15));
+                p.connection.send(new ClientboundSetSubtitleTextPacket(Component.translatable("hukhong.bicanh.floor_clear.sub")));
+                p.connection.send(new ClientboundSetTitleTextPacket(Component.translatable("hukhong.bicanh.floor_clear", idx)));
+            }
             return;
         }
+        burst(dim, run, r);
+        for (ServerPlayer p : online) com.hukhong.audio.BossMusic.stop(p);
         run.won = true;
         run.endTick = Math.min(run.endTick, dim.getServer().getTickCount() + VICTORY_GRACE_TICKS);
         BlockPos o = run.origin;
-        int cx = o.getX() + r.x0() + 12;
+        int cx = o.getX() + r.x0() + BiCanhLayout.ROOM_LEN - 3;
         dim.setBlock(new BlockPos(o.getX() + r.x0() + 2, o.getY(), o.getZ()), BiCanhRegistry.EXIT.get().defaultBlockState(), 3);
         Random rnd = new Random(dim.random.nextLong());
         int n = Math.min(online.size(), 10);
         for (int i = 0; i < n; i++) {
-            BlockPos cp = new BlockPos(cx, o.getY(), o.getZ() - 6 + i);
+            BlockPos cp = new BlockPos(cx, o.getY(), o.getZ() - n / 2 + i);
             dim.setBlock(cp, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.WEST), 3);
             if (dim.getBlockEntity(cp) instanceof ChestBlockEntity ce) {
                 List<ItemStack> loot = BiCanhLoot.stacks(run.tier, rnd);
@@ -334,5 +359,73 @@ public final class BiCanhManager {
         }
         for (ServerPlayer p : online) com.hukhong.guild.GuildService.onBiCanhClear(p, run.tier.ordinal());
         for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable("hukhong.bicanh.victory", VICTORY_GRACE_TICKS / 20));
+    }
+
+    // ---------------------------------------------------------------- hieu ung chuyen tang / ranh gioi
+
+    private static void floorTitle(ServerLevel dim, List<ServerPlayer> online, Component title, Component sub, boolean boss) {
+        for (ServerPlayer p : online) {
+            p.connection.send(new ClientboundSetTitlesAnimationPacket(8, 40, 14));
+            p.connection.send(new ClientboundSetSubtitleTextPacket(sub));
+            p.connection.send(new ClientboundSetTitleTextPacket(title));
+            dim.playSound(null, p.blockPosition(), boss ? SoundEvents.ENDER_DRAGON_GROWL : SoundEvents.EVOKER_PREPARE_SUMMON,
+                    SoundSource.HOSTILE, boss ? 0.6f : 0.8f, boss ? 0.8f : 1.0f);
+        }
+    }
+
+    /** Chum sang + xung kich tai tam phong vua don. */
+    private static void burst(ServerLevel dim, Run run, Room r) {
+        BlockPos c = BiCanhArena.roomCenter(run.origin, r);
+        double y = c.getY() + 1.5;
+        dim.sendParticles(ParticleTypes.FLASH, c.getX() + 0.5, y, c.getZ() + 0.5, 1, 0, 0, 0, 0);
+        dim.sendParticles(ParticleTypes.END_ROD, c.getX() + 0.5, y, c.getZ() + 0.5, 160, 0.3, 0.6, 0.3, 0.45);
+        dim.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, c.getX() + 0.5, y, c.getZ() + 0.5, 60, 4.0, 1.0, 4.0, 0.2);
+        dim.playSound(null, c, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 1.0f);
+        dim.playSound(null, c, SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.0f, 1.3f);
+    }
+
+    /** Hoat anh mo cua: nhac tung hang song sat tu duoi len, moi 4 tick. */
+    private static void tickDoors(ServerLevel dim, Run run, long now) {
+        if (run.doorAnims.isEmpty()) return;
+        for (java.util.Iterator<long[]> it = run.doorAnims.iterator(); it.hasNext(); ) {
+            long[] a = it.next();
+            long dt = now - a[1];
+            if (dt < 0 || dt % 4 != 0) continue;
+            int row = (int) (dt / 4);
+            Room r = run.rooms.get((int) a[0]);
+            if (row >= BiCanhArena.DOOR_ROWS) { it.remove(); continue; }
+            BiCanhArena.setDoorRow(dim, run.origin, r, row, false);
+            BlockPos d = new BlockPos(run.origin.getX() + r.x0() + BiCanhLayout.ROOM_LEN, run.origin.getY() + row, run.origin.getZ());
+            dim.playSound(null, d, row == 0 ? SoundEvents.IRON_DOOR_OPEN : SoundEvents.CHAIN_PLACE, SoundSource.BLOCKS, 1.0f, 0.6f + 0.1f * row);
+            dim.sendParticles(ParticleTypes.CLOUD, d.getX() + 0.5, d.getY() + 0.5, d.getZ() + 0.5, 6, 0.2, 0.2, 1.6, 0.02);
+        }
+    }
+
+    /** Ranh gioi vo hinh: khong ra khoi the tich Bi Canh; khi dang danh khong qua duoc cua dong. Tuong hat mo gan ranh gioi. */
+    private static void confine(ServerLevel dim, Run run, ServerPlayer p, long now) {
+        BlockPos o = run.origin;
+        int hz = BiCanhLayout.HALF_Z, L = BiCanhLayout.ROOM_LEN;
+        double minX = o.getX() + 0.3;
+        double maxX = o.getX() + BiCanhLayout.endX(run.rooms) - 0.3;
+        if (run.active >= 0 && run.rooms.get(run.active).kind() != Kind.BOSS)
+            maxX = o.getX() + run.rooms.get(run.active).x0() + L - 0.3;
+        double zr = hz + 3.7;
+        double minZ = o.getZ() - zr, maxZ = o.getZ() + 1 + zr;
+        double x = p.getX(), y = p.getY(), z = p.getZ();
+        double nx = Math.max(minX, Math.min(maxX, x)), nz = Math.max(minZ, Math.min(maxZ, z));
+        double ny = y;
+        boolean vert = y < o.getY() - 4 || y > o.getY() + BiCanhLayout.HEIGHT + 3;
+        if (vert) { ny = o.getY() + 1; nx = o.getX() + 3.5; nz = o.getZ() + 0.5; }
+        if (nx != x || nz != z || ny != y) {
+            p.teleportTo(dim, nx, ny, nz, p.getYRot(), p.getXRot());
+            p.setDeltaMovement(Vec3.ZERO);
+            p.fallDistance = 0;
+            p.hurtMarked = true;
+            dim.playSound(null, p.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.6f, 0.6f);
+            return;
+        }
+        if (now % 6 != 0 || run.active < 0) return;
+        if (maxX - x < 3.0) // tuong hat truoc cua dong
+            dim.sendParticles(p, ParticleTypes.ELECTRIC_SPARK, false, maxX + 0.2, y + 1.2, z, 3, 0.05, 0.9, 1.4, 0.01);
     }
 }

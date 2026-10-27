@@ -1,6 +1,5 @@
 package com.hukhong.entity;
 
-import com.hukhong.HuKhong;
 import com.hukhong.effect.ModEffects;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -11,30 +10,21 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.entity.projectile.Arrow;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
+import com.hukhong.events.BossBuff;
 import software.bernie.geckolib.animatable.GeoEntity;
 
 import java.util.EnumSet;
 
 /** Ky nang dac biet quai Hu Hoa: cooldown -> bao truoc (particle) -> phat ky nang. */
-@EventBusSubscriber(modid = HuKhong.MODID)
 public final class HuSkill {
     private HuSkill() {}
-
-    static final String TAG_ARROW = "HuTienDmg";
 
     public static void hu(LivingEntity t, int ticks) {
         t.addEffect(new MobEffectInstance(ModEffects.HU_HOA, ticks, 0));
     }
 
-    private static void burst(Mob m, ParticleOptions p, int n, double r) {
+    static void burst(Mob m, ParticleOptions p, int n, double r) {
         if (m.level() instanceof ServerLevel sl)
             sl.sendParticles(p, m.getX(), m.getY() + m.getBbHeight() * 0.6, m.getZ(), n, r, 0.4, r, 0.02);
     }
@@ -49,7 +39,7 @@ public final class HuSkill {
 
         Base(Mob mob, int cooldown, int windup, double min, double max) {
             this.mob = mob; this.cooldown = cooldown; this.windup = windup; this.min = min; this.max = max;
-            this.cd = cooldown / 2;
+            this.cd = BossBuff.cdFor(mob, cooldown) / 2;
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
 
@@ -73,7 +63,7 @@ public final class HuSkill {
 
         @Override public void start() { phase = 1; timer = windup; mob.getNavigation().stop(); }
 
-        @Override public void stop() { phase = 0; cd = cooldown; }
+        @Override public void stop() { phase = 0; cd = BossBuff.cdFor(mob, cooldown); }
 
         @Override public boolean requiresUpdateEveryTick() { return true; }
 
@@ -90,51 +80,57 @@ public final class HuSkill {
                     fire(t);
                     active = activeTicks();
                     phase = active > 0 ? 2 : 0;
-                    if (phase == 0) cd = cooldown;
+                    if (phase == 0) cd = BossBuff.cdFor(mob, cooldown);
                 }
             } else if (phase == 2) {
                 activeTick(t);
-                if (--active <= 0 && phase == 2) { phase = 0; cd = cooldown; }
+                if (--active <= 0 && phase == 2) { phase = 0; cd = BossBuff.cdFor(mob, cooldown); }
             }
         }
     }
 
-    /** Hu Thi: Hu Hoa Trao - lao toi + danh gay Hu Hoa. */
+    static int lv(Mob m) { return m instanceof HuMob h ? h.huLevel() : 1; }
+
+    /** Sat thuong dien rong quanh mob: nguoi choi trong ban kinh r (ngang) va +-3 (doc). */
+    static int aoe(Mob m, double r, float dmg, java.util.function.Consumer<LivingEntity> then) {
+        int n = 0;
+        for (Player p : m.level().getEntitiesOfClass(Player.class, m.getBoundingBox().inflate(r, 3, r))) {
+            if (p.isSpectator() || p.distanceToSqr(m.getX(), p.getY(), m.getZ()) > r * r) continue;
+            if (p.hurt(m.damageSources().mobAttack(m), dmg)) n++;
+            if (then != null) then.accept(p);
+        }
+        return n;
+    }
+
+    static void ring(Mob m, double r, ParticleOptions pt) {
+        if (!(m.level() instanceof ServerLevel sl)) return;
+        for (int i = 0; i < 36; i++) {
+            double a = i * Math.PI * 2 / 36;
+            sl.sendParticles(pt, m.getX() + Math.cos(a) * r, m.getY() + 0.2, m.getZ() + Math.sin(a) * r, 1, 0.1, 0.05, 0.1, 0.0);
+        }
+    }
+
+    /** Lao thang toi: Hu Thi (Hu Hoa Trao), Hu Giap (Xung Phong), Hu Anh (Luot). Bay: huong lao co thanh phan doc. */
     static final class Dash extends Base {
-        Dash(Mob m) { super(m, 100, 15, 3, 9); }
+        final double speed, mult;
+        Dash(Mob m) { this(m, 100, 15, 3, 9, 1.1, 1.5); }
+        Dash(Mob m, int cd, int windup, double min, double max, double speed, double mult) {
+            super(m, cd, windup, min, max); this.speed = speed; this.mult = mult;
+        }
         @Override void fire(LivingEntity t) {
-            Vec3 d = t.position().subtract(mob.position()).multiply(1, 0, 1).normalize().scale(1.1);
-            mob.setDeltaMovement(d.x, 0.25, d.z);
+            Vec3 d = t.position().subtract(mob.position()).multiply(1, 0, 1).normalize().scale(speed);
+            double dy = mob.isNoGravity() ? Math.max(-0.6, Math.min(0.6, (t.getY(0.5) - mob.getY()) * 0.15)) : 0.25;
+            mob.setDeltaMovement(d.x, dy, d.z);
             mob.hasImpulse = true;
         }
         @Override int activeTicks() { return 10; }
         @Override void activeTick(LivingEntity t) {
             if (mob.distanceToSqr(t) <= 2.5 * 2.5) {
-                int lv = ((HuMob) mob).huLevel();
-                if (t.hurt(mob.damageSources().mobAttack(mob), (float) HuHoa.skillDamage(lv, 1.5))) hu(t, 160);
+                if (t.hurt(mob.damageSources().mobAttack(mob), (float) HuHoa.skillDamage(lv(mob), mult))) hu(t, 160);
                 burst(mob, com.hukhong.vfx.ModParticles.HU_KHONG.get(), 12, 0.5);
                 active = 0;
             }
         }
-        @Override ParticleOptions warn() { return com.hukhong.vfx.ModParticles.HU_KHONG.get(); }
-    }
-
-    /** Hu Cot: Hu Tien - mui ten tim xuyen, no nho gay Hu Hoa. */
-    static final class Shot extends Base {
-        Shot(Mob m) { super(m, 120, 18, 5, 20); }
-        @Override void fire(LivingEntity t) {
-            int lv = ((HuMob) mob).huLevel();
-            double dmg = HuHoa.skillDamage(lv, 1.2);
-            Arrow a = new Arrow(mob.level(), mob, new ItemStack(Items.ARROW), null);
-            a.pickup = AbstractArrow.Pickup.DISALLOWED;
-            a.setBaseDamage(dmg / 2.4);
-            a.setNoGravity(true);
-            a.getPersistentData().putDouble(TAG_ARROW, dmg);
-            double dx = t.getX() - mob.getX(), dy = t.getEyeY() - a.getY(), dz = t.getZ() - mob.getZ();
-            a.shoot(dx, dy, dz, 2.4f, 0.5f);
-            mob.level().addFreshEntity(a);
-        }
-        @Override ParticleOptions warn() { return com.hukhong.vfx.ModParticles.HU_KHONG.get(); }
     }
 
     /** Hu Chu: Hu Vong - phun to lam cham + keo lai gan. */
@@ -156,27 +152,147 @@ public final class HuSkill {
         @Override ParticleOptions warn() { return ParticleTypes.ITEM_COBWEB; }
     }
 
-    @SubscribeEvent
-    public static void onImpact(ProjectileImpactEvent e) {
-        if (!(e.getProjectile() instanceof Arrow a) || a.level().isClientSide) return;
-        if (!a.getPersistentData().contains(TAG_ARROW)) return;
-        double dmg = a.getPersistentData().getDouble(TAG_ARROW);
-        // xuyen thu cong: toi da 2 muc tieu song, bo qua va cham de mui ten bay tiep
-        if (e.getRayTraceResult() instanceof net.minecraft.world.phys.EntityHitResult hit
-                && hit.getEntity() instanceof LivingEntity victim && victim != a.getOwner()) {
-            int n = a.getPersistentData().getInt("HuPierce");
-            if (n < 2) {
-                a.getPersistentData().putInt("HuPierce", n + 1);
-                victim.hurt(a.damageSources().arrow(a, a.getOwner()), (float) dmg);
-                if (victim instanceof Player pl) hu(pl, 120);
-                e.setCanceled(true);
+    /** Nhay vot len dau muc tieu, ha xuong gay no dien rong. */
+    static final class Leap extends Base {
+        final double radius, mult;
+        Leap(Mob m, int cd, int windup, double min, double max, double radius, double mult) {
+            super(m, cd, windup, min, max); this.radius = radius; this.mult = mult;
+        }
+        @Override void fire(LivingEntity t) {
+            Vec3 d = t.position().subtract(mob.position()).multiply(1, 0, 1);
+            double dist = d.length();
+            Vec3 v = dist < 1e-3 ? Vec3.ZERO : d.normalize().scale(Math.max(0.45, Math.min(1.1, dist * 0.1)));
+            mob.setDeltaMovement(v.x, 0.62, v.z);
+            mob.hasImpulse = true;
+        }
+        @Override int activeTicks() { return 40; }
+        @Override void activeTick(LivingEntity t) {
+            if (activeTicks() - active >= 5 && mob.onGround()) {
+                aoe(mob, radius, (float) HuHoa.skillDamage(lv(mob), mult), l -> { if (l instanceof Player) hu(l, 120); });
+                ring(mob, radius, ParticleTypes.POOF);
+                burst(mob, com.hukhong.vfx.ModParticles.HU_KHONG.get(), 14, 0.6);
+                active = 0;
             }
         }
-        if (a.level() instanceof ServerLevel sl)
-            sl.sendParticles(com.hukhong.vfx.ModParticles.HU_KHONG.get(), a.getX(), a.getY(), a.getZ(), 15, 0.4, 0.4, 0.4, 0.02);
-        for (Player p : a.level().getEntitiesOfClass(Player.class, a.getBoundingBox().inflate(2.0))) {
-            p.hurt(a.damageSources().magic(), (float) (dmg * 0.3));
-            hu(p, 120);
+    }
+
+    /** Dap dat: dien rong quanh than, hat tung + lam cham. */
+    static final class Slam extends Base {
+        final double radius, mult;
+        Slam(Mob m, int cd, int windup, double radius, double mult) { super(m, cd, windup, 0, radius + 1.5); this.radius = radius; this.mult = mult; }
+        @Override void fire(LivingEntity t) {
+            aoe(mob, radius, (float) HuHoa.skillDamage(lv(mob), mult), l -> {
+                l.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
+                l.setDeltaMovement(l.getDeltaMovement().add(0, 0.5, 0));
+                l.hurtMarked = true;
+            });
+            ring(mob, radius, ParticleTypes.EXPLOSION);
+            ring(mob, radius * 0.6, com.hukhong.vfx.ModParticles.HU_KHONG.get());
+            mob.playSound(net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(), 0.8f, 1.2f);
+        }
+        @Override ParticleOptions warn() { return ParticleTypes.CRIT; }
+    }
+
+    /** Doc Thuy: nuoc bot doc (thay cung ten): trung thi no doc ban kinh nho. */
+    static final class Spit extends Base {
+        final double mult, aoe;
+        Spit(Mob m, int cd, int windup, double min, double max, double mult, double aoe) {
+            super(m, cd, windup, min, max); this.mult = mult; this.aoe = aoe;
+        }
+        @Override void fire(LivingEntity t) {
+            PoisonSpit.launch(mob, t, (float) HuHoa.skillDamage(lv(mob), mult), aoe);
+        }
+        @Override ParticleOptions warn() { return ParticleTypes.ITEM_SLIME; }
+    }
+
+    /** Lui nhanh ra xa khi bi ap sat. */
+    static final class Backstep extends Base {
+        Backstep(Mob m) { super(m, 80, 6, 0, 3.5); }
+        @Override void fire(LivingEntity t) {
+            Vec3 d = mob.position().subtract(t.position()).multiply(1, 0, 1).normalize().scale(1.0);
+            mob.setDeltaMovement(d.x, 0.35, d.z);
+            mob.hasImpulse = true;
+        }
+    }
+
+    /** Bung doc quanh than: giam suc (yeu, cham, mu ngan), sat thuong nho. */
+    static final class VenomBurst extends Base {
+        final double radius;
+        VenomBurst(Mob m, int cd, int windup, double radius) { super(m, cd, windup, 0, radius); this.radius = radius; }
+        @Override void fire(LivingEntity t) {
+            aoe(mob, radius, (float) HuHoa.skillDamage(lv(mob), 0.5), l -> {
+                l.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1));
+                l.addEffect(new MobEffectInstance(MobEffects.POISON, 80, 0));
+                l.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
+            });
+            ring(mob, radius, ParticleTypes.ITEM_SLIME);
+            burst(mob, ParticleTypes.SPORE_BLOSSOM_AIR, 30, radius * 0.4);
+        }
+        @Override ParticleOptions warn() { return ParticleTypes.SPORE_BLOSSOM_AIR; }
+    }
+
+    /** Chu Thuat: tia Hu Hoa tuc thi, yeu + Hu Hoa. */
+    static final class Curse extends Base {
+        final double mult;
+        Curse(Mob m, int cd, int windup, double min, double max, double mult) { super(m, cd, windup, min, max); this.mult = mult; }
+        @Override void fire(LivingEntity t) {
+            t.hurt(mob.damageSources().indirectMagic(mob, mob), (float) HuHoa.skillDamage(lv(mob), mult));
+            t.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 0));
+            hu(t, 140);
+            if (mob.level() instanceof ServerLevel sl) {
+                Vec3 a = mob.position().add(0, mob.getBbHeight() * 0.7, 0), b = t.position().add(0, t.getBbHeight() * 0.5, 0);
+                for (int i = 0; i <= 12; i++) {
+                    Vec3 p = a.lerp(b, i / 12.0);
+                    sl.sendParticles(com.hukhong.vfx.ModParticles.HU_KHONG.get(), p.x, p.y, p.z, 2, 0.05, 0.05, 0.05, 0.0);
+                }
+            }
+        }
+    }
+
+    /** Trieu Hoi Hu Trung (toi da {@code cap} con quanh day). */
+    static final class SummonSwarm extends Base {
+        final int count, cap;
+        SummonSwarm(Mob m, int cd, int windup, int count, int cap) { super(m, cd, windup, 0, 24); this.count = count; this.cap = cap; }
+        @Override public boolean canUse() {
+            return super.canUse() && mob.level().getEntitiesOfClass(HuTrung.class, mob.getBoundingBox().inflate(16)).size() < cap;
+        }
+        @Override void fire(LivingEntity t) {
+            if (!(mob.level() instanceof ServerLevel sl)) return;
+            for (int i = 0; i < count; i++) {
+                HuTrung c = V3Entities.HU_TRUNG.get().create(sl);
+                if (c == null) continue;
+                double a = mob.getRandom().nextDouble() * Math.PI * 2;
+                c.moveTo(mob.getX() + Math.cos(a) * 2, mob.getY(), mob.getZ() + Math.sin(a) * 2, mob.getRandom().nextFloat() * 360f, 0f);
+                c.finalizeSpawn(sl, sl.getCurrentDifficultyAt(c.blockPosition()), net.minecraft.world.entity.MobSpawnType.MOB_SUMMONED, null);
+                c.setTarget(t);
+                sl.addFreshEntity(c);
+            }
+            burst(mob, com.hukhong.vfx.ModParticles.HU_KHONG.get(), 30, 1.2);
+        }
+    }
+
+    /** Pha 2 cua boss thuong (quai Hu co tag boss, vd. boss Bi Canh): duoi 50% mau thi cuong hoa + soc dia. */
+    static final class Rage extends Base {
+        boolean done;
+        Rage(Mob m) { super(m, 400, 20, 0, 40); }
+        @Override public boolean canUse() {
+            if (done || !BossBuff.isBoss(mob) || mob.getHealth() > mob.getMaxHealth() * 0.5f) return false;
+            LivingEntity t = mob.getTarget();
+            return t != null && t.isAlive();
+        }
+        @Override void fire(LivingEntity t) {
+            done = true;
+            mob.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 20 * 600, 1));
+            mob.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20 * 600, 0));
+            aoe(mob, 7, (float) HuHoa.skillDamage(lv(mob), 2.0), l -> {
+                Vec3 away = l.position().subtract(mob.position()).multiply(1, 0, 1).normalize();
+                l.setDeltaMovement(l.getDeltaMovement().add(away.x * 1.2, 0.4, away.z * 1.2));
+                l.hurtMarked = true;
+                hu(l, 160);
+            });
+            ring(mob, 7, ParticleTypes.SOUL_FIRE_FLAME);
+            burst(mob, com.hukhong.vfx.ModParticles.HU_KHONG.get(), 60, 1.5);
+            mob.playSound(net.minecraft.sounds.SoundEvents.ENDER_DRAGON_GROWL, 1.5f, 0.8f);
         }
     }
 }

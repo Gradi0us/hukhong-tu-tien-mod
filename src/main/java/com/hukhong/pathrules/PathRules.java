@@ -33,6 +33,8 @@ public final class PathRules {
     public static final double KIEM_HIT_MANA_PCT = 0.04;
     public static final int KIEM_HIT_MANA_ICD_TICKS = 40;
     public static final int THE_PASSIVE_REGEN = 2;
+    /** Pháp Tu: Pháp Lực hồi mỗi giây (x resource_regen), thiền nhanh hơn. */
+    public static final int PHAP_REGEN = 5, PHAP_MEDITATE_REGEN = 13;
     public static final int THE_HIT_SMALL = 1, THE_HIT_BIG = 3, THE_MELEE_GAIN = 2, MA_HIT_GAIN = 1;
 
     private PathRules() {}

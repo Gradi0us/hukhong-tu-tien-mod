@@ -14,6 +14,7 @@ public final class SkillNet {
         com.hukhong.audio.AudioNet.register(r);
         com.hukhong.banmenh.BanMenhNet.register(r);
         com.hukhong.artifact.ArtifactNet.register(r);
+        com.hukhong.passive.PassiveNet.register(r);
         r.playToClient(SkillSyncPayload.TYPE, SkillSyncPayload.STREAM_CODEC,
                 (pl, ctx) -> ctx.enqueueWork(() -> ClientSkillState.update(pl)));
         r.playToClient(FxPayload.TYPE, FxPayload.STREAM_CODEC, FxPayload::handle);

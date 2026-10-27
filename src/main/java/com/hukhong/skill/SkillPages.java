@@ -7,17 +7,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/** Logic thuần: trang kỹ năng đa đạo (phím V). Thứ tự cố định Kiếm, Đạo, Thể, Ma. */
+/** Logic thuần: trang kỹ năng đa đạo (phím V). Thứ tự cố định Kiếm, Đạo, Thể, Ma, Pháp. */
 public final class SkillPages {
     private SkillPages() {}
 
     /** Phân Tâm: hồi chiêu chung khi đổi trang (3 giây). */
     public static final int SWITCH_COOLDOWN_TICKS = 60;
 
-    private static final Path[] ORDER = {Path.KIEM, Path.DAO, Path.THE, Path.MA};
+    private static final Path[] ORDER = {Path.KIEM, Path.DAO, Path.THE, Path.MA, Path.PHAP};
 
     public static List<Path> owned(Set<Path> paths) {
-        List<Path> l = new ArrayList<>(4);
+        List<Path> l = new ArrayList<>(5);
         for (Path p : ORDER) if (paths.contains(p)) l.add(p);
         return l;
     }
@@ -28,6 +28,7 @@ public final class SkillPages {
             case DAO -> "hukhong.path.dao";
             case THE -> "hukhong.path.body";
             case MA -> "hukhong.path.demon";
+            case PHAP -> "hukhong.path.phap";
         };
     }
 

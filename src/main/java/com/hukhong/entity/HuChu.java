@@ -35,9 +35,11 @@ public class HuChu extends Spider implements GeoEntity, HuMob {
     @Override public SpawnGroupData finalizeSpawn(ServerLevelAccessor l, DifficultyInstance d, MobSpawnType t,
                                                   SpawnGroupData g) {
         SpawnGroupData r = super.finalizeSpawn(l, d, t, g);
-        int lv = HuHoa.levelFor(l, blockPosition(), getRandom());
+        boolean cor = com.hukhong.events.CorruptBuff.at(l, blockPosition());
+        int lv = com.hukhong.events.CorruptBuff.level(cor, HuHoa.levelFor(l, blockPosition(), getRandom()));
+        double cm = com.hukhong.events.CorruptBuff.mul(cor);
         entityData.set(LEVEL, lv);
-        HuHoa.applyStats(this, lv, 1.8, 1.2);
+        HuHoa.applyStats(this, lv, 1.8 * cm, 1.2 * cm);
         return r;
     }
 
@@ -58,6 +60,10 @@ public class HuChu extends Spider implements GeoEntity, HuMob {
     @Override protected void registerGoals() {
         super.registerGoals();
         goalSelector.addGoal(1, new HuSkill.Web(this));
+        goalSelector.addGoal(1, new HuSkill.Spit(this, 110, 16, 5, 18, 1.0, 2.5));
+        goalSelector.addGoal(1, new HuSkill.Leap(this, 150, 12, 4, 10, 3.0, 1.2));
+        goalSelector.addGoal(1, new HuSkill.VenomBurst(this, 200, 20, 4.5));
+        goalSelector.addGoal(0, new HuSkill.Rage(this));
     }
 
     @Override public void aiStep() { super.aiStep(); HuHoa.particles(this); }

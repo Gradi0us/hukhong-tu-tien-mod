@@ -84,7 +84,7 @@ public final class SkillHud {
             boolean dome = rs != null && rs.base() == Skill.KIEM_ULT; // Kiếm Vực: kênh bật/tắt
             boolean domeOn = dome && ClientSkillState.domain();
             int baseCost = rs != null ? rs.cost() : bm != null ? bm.cost : 50;
-            ResourceLocation icon = tex(rs != null ? rs.icon() : bm != null ? bm.icon : bones ? "bm_bone" : "locked");
+            ResourceLocation icon = tex(com.hukhong.client.phaptu.PhapClient.icon(rs != null ? rs.icon() : bm != null ? bm.icon : bones ? "bm_bone" : "locked"));
             if (exists(icon)) g.blit(icon, x + 2, y + 2, 0, 0, 16, 16, 16, 16);
             else g.fill(x + 2, y + 2, x + 18, y + 18, rs == null ? 0xFF444444 : (sp.argb & 0x00FFFFFF) | 0xFF000000);
             if (has) {

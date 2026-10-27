@@ -16,7 +16,12 @@ public enum Skill {
     DAO_ULT(Path.DAO, 3, "dao_ult", 100, 1800),
     THE_1(Path.THE, 0, "the_1", 30, 300),
     THE_2(Path.THE, 1, "the_2", 25, 360),
-    THE_ULT(Path.THE, 3, "the_ult", 100, 2000);
+    THE_ULT(Path.THE, 3, "the_ult", 100, 2000),
+    /** Pháp Tu: 4 phím chung cho 6 nguyên tố; hiệu ứng/hệ số theo nguyên tố ở com.hukhong.phaptu (PhapSkills, PhapMath). */
+    PHAP_1(Path.PHAP, 0, "phap_1", 3, 14),
+    PHAP_2(Path.PHAP, 1, "phap_2", 25, 160),
+    PHAP_3(Path.PHAP, 2, "phap_3", 35, 400),
+    PHAP_ULT(Path.PHAP, 3, "phap_ult", 90, 1500);
 
     /** Hệ số sát thương kỹ năng 1 (nhân Phép lực / Công lực) - dùng chung với bài test cân bằng. */
     public static final double DAO_1_COEF = 0.95, THE_1_COEF = 4.00;

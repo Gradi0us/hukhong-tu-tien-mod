@@ -62,7 +62,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class HuVuong extends Monster implements GeoEntity, HuMob {
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(HuVuong.class, EntityDataSerializers.INT);
     private static final int WINDUP = 30;
-    private static final int SLAM = 1, SUMMON = 2, PULSE = 3;
+    private static final int SLAM = 1, SUMMON = 2, PULSE = 3, BARRAGE = 4;
     private static final ResourceLocation HP_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "boss_players_hp");
     private static final ResourceLocation DMG_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "boss_players_dmg");
     private static final ResourceLocation SPD_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "boss_enrage_speed");
@@ -165,7 +165,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
             if (--windup <= 0) {
                 fire(sl, pending);
                 pending = 0;
-                skillCd = phase() == 1 ? 100 : phase() == 2 ? 80 : 60;
+                skillCd = com.hukhong.events.BossBuff.cd(phase() == 1 ? 100 : phase() == 2 ? 80 : 60);
             }
             return;
         }
@@ -173,13 +173,13 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
         if (t == null || !t.isAlive() || distanceToSqr(t) > 20 * 20) return;
         int pick = switch (phase()) {
             case 1 -> SLAM;
-            case 2 -> random.nextInt(3) == 0 ? SUMMON : SLAM;
-            default -> switch (random.nextInt(3)) { case 0 -> SUMMON; case 1 -> PULSE; default -> SLAM; };
+            case 2 -> switch (random.nextInt(4)) { case 0 -> SUMMON; case 1 -> BARRAGE; default -> SLAM; };
+            default -> switch (random.nextInt(4)) { case 0 -> SUMMON; case 1 -> PULSE; case 2 -> BARRAGE; default -> SLAM; };
         };
         if (pick == SUMMON && minionCount(sl) >= 6) pick = SLAM;
         pending = pick;
         windup = WINDUP;
-        triggerAnim("skill", pick == SUMMON ? "summon" : "slam");
+        triggerAnim("skill", pick == SUMMON || pick == BARRAGE ? "summon" : "slam");
         playSound(SoundEvents.WARDEN_ATTACK_IMPACT, 1.5f, 0.6f);
     }
 
@@ -204,6 +204,18 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
             }
             sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 1, getZ(), 40, 2, 1, 2, 0.05);
             playSound(SoundEvents.EVOKER_PREPARE_SUMMON, 1.5f, 0.7f);
+            return;
+        }
+        if (skill == BARRAGE) {  // Mua Nuoc Bot Doc (pha 2+): xoe 5 tia ve phia muc tieu + 4 vien ngau nhien
+            LivingEntity tg = getTarget();
+            Vec3 d = tg != null ? tg.position().subtract(position()).multiply(1, 0, 1) : getViewVector(1f).multiply(1, 0, 1);
+            double a0 = Math.atan2(d.z, d.x);
+            Vec3 from = position().add(0, getBbHeight() * 0.7, 0);
+            for (int i = 0; i < 9; i++) {
+                double a = i < 5 ? a0 + Math.toRadians((i - 2) * 14) : random.nextDouble() * Math.PI * 2;
+                PoisonSpit.launchDir(this, from, new Vec3(Math.cos(a), 0.15, Math.sin(a)), (float) (base * 0.7), 2.8, 1.1f);
+            }
+            playSound(SoundEvents.SLIME_SQUISH, 2f, 0.5f);
             return;
         }
         double r = radius(skill);

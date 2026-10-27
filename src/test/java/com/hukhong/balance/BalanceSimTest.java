@@ -11,6 +11,8 @@ import com.hukhong.entity.HuVuong;
 import com.hukhong.events.BossScaling;
 import com.hukhong.honcot.HonCotMath;
 import com.hukhong.pathrules.PathRules;
+import com.hukhong.phaptu.PhapElement;
+import com.hukhong.phaptu.PhapMath;
 import com.hukhong.skill.BanMenhSkill;
 import com.hukhong.skill.Skill;
 import com.hukhong.skillbook.SkillBookMath;
@@ -55,7 +57,7 @@ class BalanceSimTest {
     static double weapon(int lv) { return lv < 20 ? 5 : lv < 40 ? 6 : lv < 60 ? 7 : 8; }
 
     record Player(Path path, int lv, double power, double def, double crit, double critDmg, double regen,
-                  double resMax, double hp, double lifesteal) {
+                  double resMax, double hp, double lifesteal, double atk) {
         double critMul() { return 1 + crit * (critDmg - 1); }
         double mitigation() { return def / (def + 100.0); }
     }
@@ -69,11 +71,12 @@ class BalanceSimTest {
         double hpGear = (nb >= 4 ? 0.15 * bm : 0) + (nb >= 6 ? 0.05 * bm : 0);
         double regenAdd = lv >= 30 ? REGEN_CORE[t] * CORE_EFF : 0;
         double than = lv >= StatService.THAN_LEVEL ? 1 + StatService.THAN_BONUS : 1.0;
-        double base = p == Path.DAO ? s.spell() : s.attack();
+        double base = p == Path.DAO || p == Path.PHAP ? s.spell() : s.attack();
         double power = base * (1 + offGear + (p == Path.MA ? MA_ATK_BONUS : 0)) * than;
         double hp = Math.min(StatService.MAX_HP_CAP, StatService.maxHealth(lv, Set.of(p), Map.of(p, Aptitude.B)) * (1 + hpGear));
         return new Player(p, lv, power, s.defense() * (1 + defGear) * than, Math.min(1, s.crit() * than),
-                s.critDamage() * than, (s.regen() + regenAdd) * than, s.maxResource() * than, hp, s.lifesteal() * than);
+                s.critDamage() * than, (s.regen() + regenAdd) * than, s.maxResource() * than, hp, s.lifesteal() * than,
+                s.attack() * (1 + offGear) * than);
     }
 
     // ------------------------------------------------------------------ kỹ năng
@@ -96,6 +99,7 @@ class BalanceSimTest {
                 c.add(cast("E", Skill.MA_2, 0, sl));       // Ma Khí Hộ Thể (lá chắn)
                 c.add(cast("T", Skill.MA_ULT, 0, sl));     // +40% Công 12s: quy đổi ở fight()
             }
+            case PHAP -> phapCasts(c, A, cm, sl);
             case DAO -> {
                 c.add(cast("Q", Skill.DAO_1, Skill.DAO_1_COEF * A * cm, sl));
                 c.add(cast("E", Skill.DAO_2, 0, sl));
@@ -120,6 +124,23 @@ class BalanceSimTest {
         return c;
     }
 
+    // ------------------------------------------------------------------ Pháp Tu (6 nguyên tố, mô phỏng riêng từng nguyên tố)
+    static PhapElement SIM_EL = PhapElement.QUANG;
+    static Aptitude SIM_APT = Aptitude.B;
+
+    static void phapCasts(List<Cast> c, double A, double cm, int sl) {
+        Skill[] ss = {Skill.PHAP_1, Skill.PHAP_2, Skill.PHAP_3, Skill.PHAP_ULT};
+        String[] nm = {"Q", "E", "R", "T"};
+        double mult = PhapMath.damageMult(SIM_EL, SIM_APT), cdm = PhapMath.cooldownMult(SIM_EL);
+        for (int i = 0; i < 4; i++)
+            c.add(new Cast(nm[i], PhapMath.coef(SIM_EL, i) * A * cm * mult, SkillBookMath.cooldown(ss[i].cooldownTicks, sl) / 20.0 * cdm, ss[i].cost));
+    }
+
+    /** Sát thương thêm / giây từ bị động Pháp Tu (Hỏa cháy, Thổ tháp, Lôi nổ, Thủy xung). */
+    static double passiveBonus(Player pl) {
+        return pl.path() == Path.PHAP ? PhapMath.passiveDps(SIM_EL, SIM_APT, pl.power()) * pl.critMul() : 0;
+    }
+
     static Cast cast(String n, Skill s, double dmg, int skillLevel) {
         return new Cast(n, dmg, SkillBookMath.cooldown(s.cooldownTicks, skillLevel) / 20.0, s.cost);
     }
@@ -128,6 +149,7 @@ class BalanceSimTest {
         return switch (pl.path()) {
             case THE -> pl.power() * (1 + com.hukhong.gates.DamageRules.FIST_AURA_COEF * AURA_AVG) * pl.critMul();
             case DAO -> 0;
+            case PHAP -> (weapon(pl.lv()) + pl.atk()) * pl.critMul();
             default -> (weapon(pl.lv()) + pl.power()) * pl.critMul();
         };
     }
@@ -148,6 +170,7 @@ class BalanceSimTest {
             case DAO -> PathRules.DAO_REGEN * pl.regen();
             case THE -> (PathRules.THE_MELEE_GAIN * meleeRate(Path.THE) * MELEE_UPTIME + PathRules.THE_HIT_BIG * 0.5) * pl.regen();
             case MA -> Math.min(10, PathRules.MA_HIT_GAIN * (meleeRate(Path.MA) * MELEE_UPTIME + castsPerSec)) * pl.regen();
+            case PHAP -> PathRules.PHAP_REGEN * pl.regen();
         };
     }
 
@@ -162,7 +185,7 @@ class BalanceSimTest {
         double f = cost <= 0 ? 1 : Math.min(1, budget / cost);
         double total = 0;
         for (Cast c : cs) total += (1 + Math.floor(T * SKILL_UPTIME / c.cd())) * (c.cost() > 0 ? f : 1) * c.dmg();
-        double skillDps = total / T;
+        double skillDps = total / T + passiveBonus(pl);
         if (pl.path() == Path.MA) skillDps *= 1 + 0.4 * Math.min(1, 12.0 / (SkillBookMath.cooldown(Skill.MA_ULT.cooldownTicks, SkillBookMath.typicalLevel(pl.lv())) / 20.0)); // Ma Thần +40% Công 12s/CD
         double mh = meleeHit(pl);
         // ehp: sát thương thực bị chia ehp trước giáp (HuHoa.ehpScale), rồi quy lại HP thiết kế
@@ -215,7 +238,7 @@ class BalanceSimTest {
         double d = 0, e = mobEhp(designHp);
         for (Cast c : casts(pl, true)) if (c.name().equals("Q") || c.name().equals("E")) d += c.dmg() / c.cd();
         double mh = meleeHit(pl);
-        return d + mh * armorFactor(mobArmor(lv), mh / e) * meleeRate(pl.path());
+        return d + passiveBonus(pl) + mh * armorFactor(mobArmor(lv), mh / e) * meleeRate(pl.path());
     }
 
     static double ttkMob(Player pl, Mob m, int lv) {
@@ -269,7 +292,7 @@ class BalanceSimTest {
     static double hoursTo100() {
         double avgW = (HU_THI.w() + HU_COT.w() + HU_CHU.w()) / 3.0, sec = 0;
         for (int lv = 1; lv < 100; lv++) {
-            double perKill = avgW * 40 * Math.pow(lv, 2.15) / HuHoa.EXP_DIV * HuHoa.levelExpMult(lv);
+            double perKill = avgW * CultivationService.expToNext(lv) * HuHoa.levelExpMult(lv);
             double kills = CultivationService.barSize(lv) / perKill;
             double t = 0;
             for (Path p : PATHS) {
@@ -279,6 +302,54 @@ class BalanceSimTest {
             sec += kills * (t / PATHS.length + SEEK_SECONDS);
         }
         return sec / 3600.0;
+    }
+
+    // ------------------------------------------------------------------ Pháp Tu: cân bằng từng nguyên tố (tư chất B)
+    static boolean phapSupport(PhapElement e) { return e == PhapElement.THUY || e == PhapElement.THO; }
+
+    static void phapSection(StringBuilder md, List<String> fails) {
+        md.append("\n## 9. Pháp Tu (5 đạo): DPS từng nguyên tố so với trung bình Kiếm/Thể/Ma (cửa sổ 180s, giáp 15, tư chất B)\n\n");
+        md.append("Thủy/Thổ là nguyên tố hỗ trợ (hồi máu + buff / tháp khiêu khích) nên được phép thấp hơn tới 25%. Kim: sát thương và phòng thủ cao nhưng hồi chiêu x")
+                .append(PhapMath.KIM_COOLDOWN_MULT).append(".\n\n");
+        md.append("| Lv | Quang | Lôi | Hỏa | Thủy | Thổ | Kim | TB Kiếm/Thể/Ma |\n|---|---|---|---|---|---|---|---|\n");
+        PhapElement keep = SIM_EL;
+        try {
+            for (int lv : LV) {
+                double mean = 0;
+                for (Path p : new Path[]{Path.KIEM, Path.THE, Path.MA}) mean += dpsAt(player(p, lv), 180, 15, 1, false)[0] / 3;
+                StringBuilder row = new StringBuilder("| " + lv + " |");
+                for (PhapElement e : PhapElement.values()) {
+                    SIM_EL = e;
+                    Player pl = player(Path.PHAP, lv);
+                    double dps = dpsAt(pl, 180, 15, 1, false)[0];
+                    row.append(String.format(" %.0f (%.2f) |", dps, dps / mean));
+                    double lo = phapSupport(e) ? 0.75 : 0.85;
+                    if (lv >= 10 && (dps / mean < lo || dps / mean > 1.15)) fails.add("phap dps ratio " + e + " L" + lv + " = " + dps / mean);
+                    double sus = sustain(pl);
+                    if (sus < 20) fails.add("phap sustain<20s " + e + " L" + lv + " = " + sus);
+                    for (Mob m : MOBS) {
+                        int h = hitsToKill(pl, m, lv), kill = mobHitsToKillPlayer(pl, m, lv);
+                        if (h < 6 || h > 10) fails.add("phap hits " + e + " " + m.name() + " L" + lv + " = " + h);
+                        if (kill < 8 || kill > 70) fails.add("phap mob kills player outside 8-70 hits " + e + " " + m.name() + " L" + lv + " = " + kill);
+                        if (mobBigHitFrac(pl, m, lv) >= 0.5) fails.add("phap one-shot risk " + e + " L" + lv);
+                    }
+                    double ttk = ttkMob(pl, HU_THI, lv);
+                    if (ttk < 3 || ttk > 6.5) fails.add("phap ttk sec " + e + " L" + lv + " = " + ttk);
+                }
+                row.append(String.format(" %.0f |%n", mean));
+                md.append(row);
+            }
+            md.append("\n| Boss | Lv | Nguyên tố | DPS | TTK (s) | Mục tiêu (s) |\n|---|---|---|---|---|---|\n");
+            for (Boss b : bosses()) for (PhapElement e : PhapElement.values()) {
+                SIM_EL = e;
+                Fight f = fightBoss(player(Path.PHAP, b.lv()), b);
+                md.append(String.format("| %s | %d | %s | %.0f | %.0f | %.0f-%.0f |%n", b.name(), b.lv(), e, f.dps(), f.ttk(), b.minSec(), b.maxSec()));
+                double hi = phapSupport(e) ? 1.4 : 1.1;
+                if (f.ttk() < b.minSec() * 0.9 || f.ttk() > b.maxSec() * hi) fails.add("phap boss ttk " + b.name() + " " + e + " = " + f.ttk());
+            }
+        } finally {
+            SIM_EL = keep;
+        }
     }
 
     // ------------------------------------------------------------------ test
@@ -380,8 +451,8 @@ class BalanceSimTest {
         // --- 6. EXP
         double hours = hoursTo100();
         md.append(String.format("%n## 6. Thời gian lên cấp 100 (chỉ cày quái, không vật phẩm đột phá, spawner = 0)%n%n"));
-        md.append(String.format("- EXP_DIV = %.0f; tìm quái %.0fs/con; TTK trung bình 4 đạo.%n- **Tổng: %.0f giờ** (mục tiêu 120–300h sau khi tăng EXP theo cấp quái).%n", HuHoa.EXP_DIV, SEEK_SECONDS, hours));
-        if (hours < 120 || hours > 300) fails.add("hours to 100 = " + hours);
+        md.append(String.format("- EXP mỗi quái = w x yêu cầu cấp x levelExpMult (0.030 cấp 1-20, 0.016 cấp 100); tìm quái %.0fs/con; TTK trung bình 4 đạo.%n- **Tổng: %.1f giờ** (mục tiêu 30–60h tới cấp 100).%n", SEEK_SECONDS, hours));
+        if (hours < 30 || hours > 60) fails.add("hours to 100 = " + hours);
 
         md.append("\n## 7. Nhận xét\n\n- Hồi nhanh bằng đan: Chỉ Huyết 15% HP + Hồi Xuân 30% HP, hồi chiêu riêng 10s mỗi loại (chưa tính vào bảng).\n");
         md.append("- Đạo: đòn thường (không phải kỹ năng) x0 với quái, x1 với người chơi (R12); kỹ năng không bị chặn. Đạo mạnh ở buff đồng đội (Ban Phúc/Thánh Giáng), không mô phỏng ở đây.\n");
@@ -395,6 +466,8 @@ class BalanceSimTest {
         md.append("| Q+E liên tục (Kiếm, cấp 1) | 6s | >= 20s mọi cấp/đạo |\n");
         md.append("| Thời gian tới cấp 100 (cày quái) | 183h | ~500h |\n");
         md.append("| HP boss thực tế | bị kẹp 1024 (HP thiết kế 3200-24000 vô hiệu) | HuHoa.ehpScale quy HP thiết kế thành giảm sát thương nhận |\n");
+
+        phapSection(md, fails);
 
         java.nio.file.Path root = Paths.get("").toAbsolutePath();
         while (root != null && !Files.exists(root.resolve("build.gradle"))) root = root.getParent();

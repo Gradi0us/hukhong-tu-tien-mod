@@ -119,7 +119,7 @@ public final class CityBuilder {
                 c.getY() + 1, c.getX(), c.getZ()));
         if (d.category().equals("city_ruined")) RuinGuard.spawnBoss(l, d, c.above());
         else {
-            CityMarket.populate(l, d, c.above(), java.util.List.of());
+            CityMarket.populate(l, d, c.above(), java.util.List.of(), AltarShrine.procT(d.category()));
             com.hukhong.guild.GuildBuilder.ensure(l, d); // Hiep Hoi Mao Hiem Gia
         }
         return c;
@@ -136,12 +136,7 @@ public final class CityBuilder {
         BlockPos fallback = p.origin().offset(p.st().sx / 2, 1, p.st().sz / 2);
         boolean marked = p.st().marker("altar") != null;
         BlockPos altar = p.marker("altar", fallback);
-        if (!marked) {
-            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
-                set(l, altar.getX() + dx, altar.getY() - 1, altar.getZ() + dz, Blocks.CHISELED_STONE_BRICKS);
-                for (int h = 1; h <= 3; h++) air(l, altar.getX() + dx, altar.getY() + h, altar.getZ() + dz);
-            }
-        }
+        int shrineT = AltarShrine.build(l, altar, marked ? 7 : 9, false); // lat 3x3 neu khong du cho; marker: gioi han nho hon, tranh de thiet ke san
         set(l, altar.getX(), altar.getY(), altar.getZ(), ModBlocks.AN_HON_DAI.get());
         for (int h = 1; h <= 5; h++) {
             BlockPos up = altar.above(h);
@@ -161,7 +156,7 @@ public final class CityBuilder {
                 altar.getY(), altar.getX(), altar.getZ()));
         if (d.category().equals("city_ruined")) { RuinGuard.spawnBoss(l, d, altar); return; }
         for (BlockPos np : npc) spawnVillager(l, np.getX(), np.getY(), np.getZ());
-        CityMarket.populate(p, d);
+        CityMarket.populate(p, d, shrineT);
         com.hukhong.guild.GuildBuilder.placeImported(p, d); // marker hukhong:guild; khong co thi GuildEvents dung lazy
     }
 
@@ -341,7 +336,7 @@ public final class CityBuilder {
         }
 
         // 7) Ấn Hồn Đài + cot sang
-        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) set(l, cx + dx, plazaY, cz + dz, Blocks.CHISELED_STONE_BRICKS);
+        AltarShrine.build(l, new BlockPos(cx, plazaY + 1, cz), AltarShrine.procR(cat), true);
         set(l, cx, plazaY + 1, cz, ModBlocks.AN_HON_DAI.get());
         for (int h = 2; h <= 6; h++) set(l, cx, plazaY + h, cz, Blocks.END_ROD);
         // 8) bien ten + bang Thanh

@@ -51,6 +51,11 @@ public final class FlightClient {
             if (m == FlightMode.KIEM) {
                 mc.level.addParticle(ModParticles.KIEM_KHI.get(), p.getX() + (rnd.nextDouble() - 0.5) * 0.4,
                         p.getY() + 0.1, p.getZ() + (rnd.nextDouble() - 0.5) * 0.4, 0, 0.01, 0);
+            } else if (m == FlightMode.PHAP) {
+                var el = com.hukhong.phaptu.PhapTu.rawElement(p);
+                int c = el == null ? 0x3FD6C4 : el.rgb;
+                mc.level.addParticle(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((c >> 16) & 255) / 255f, ((c >> 8) & 255) / 255f, (c & 255) / 255f), 1.1f),
+                        p.getX() + (rnd.nextDouble() - 0.5) * 0.9, p.getY() + 0.1, p.getZ() + (rnd.nextDouble() - 0.5) * 0.9, 0, 0.01, 0);
             } else if (m == FlightMode.MA) {
                 mc.level.addParticle(ParticleTypes.LARGE_SMOKE, p.getX() + (rnd.nextDouble() - 0.5) * 0.9,
                         p.getY() + 0.05, p.getZ() + (rnd.nextDouble() - 0.5) * 0.9, 0, 0.005, 0);

@@ -23,6 +23,7 @@ public final class CurrencyRegistry {
 
     public static void register(IEventBus bus) {
         ITEMS.register(bus);
+        WalletAttachment.register(bus);
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) { e.accept(HA.get()); e.accept(TRUNG.get()); e.accept(THUONG.get()); }
         });

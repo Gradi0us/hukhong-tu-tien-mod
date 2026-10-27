@@ -283,7 +283,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
         if (--windup <= 0) {
             fire(sl, k);
             pending = -1;
-            skillCd = ChgKit.cooldown(def, phase());
+            skillCd = com.hukhong.events.BossBuff.cd(ChgKit.cooldown(def, phase()));
         }
     }
 

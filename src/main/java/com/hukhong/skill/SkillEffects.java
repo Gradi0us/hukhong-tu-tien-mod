@@ -50,6 +50,7 @@ public final class SkillEffects {
             case MA_1 -> huyetTrao(lv, p);
             case MA_2 -> maKhiHoThe(lv, p);
             case MA_ULT -> maThanGiangThe(lv, p);
+            case PHAP_1, PHAP_2, PHAP_3, PHAP_ULT -> com.hukhong.phaptu.PhapSkills.run(s.slot, p);
         }
     }
 
@@ -67,7 +68,7 @@ public final class SkillEffects {
                 e -> e instanceof LivingEntity le && valid(p, le));
         if (eh != null) {
             end = eh.getLocation();
-            DamageRules.hurtBySkill(p, (LivingEntity) eh.getEntity(), (float) (Skill.DAO_1_COEF * com.hukhong.stats.StatService.spellPower(p)));
+            DamageRules.hurtBySkill(p, (LivingEntity) eh.getEntity(), (float) (Skill.DAO_1_COEF * com.hukhong.passive.PassiveMath.DAO_SKILL_MULT * com.hukhong.stats.StatService.spellPower(p)));
         }
         Vec3 from = eye.add(look.scale(0.8)).subtract(0, 0.2, 0);
         beam(lv, from, end);

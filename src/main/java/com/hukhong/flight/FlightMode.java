@@ -7,7 +7,8 @@ public enum FlightMode {
     KIEM(Path.KIEM, 20, 4.0, 4.0, 6.0, 0.075f, 4),      // ngự kiếm: 4 LL/s, bay nhanh 6/s, tốc x1.5
     DAO(Path.DAO, 60, 2.5, 1.0, 2.5, 0.065f, 3),        // cánh thiên sứ: 2.5 TL/s, đứng yên 1/s
     THE(Path.THE, 60, 1.0, 0.5, 2.0, 0.06f, 20),        // đạp không: chỉ Bá Khí (không dùng mayfly)
-    MA(Path.MA, 60, 3.0, 1.5, 3.0, 0.065f, 3);          // ma vân [GIẢ ĐỊNH 3/s]
+    MA(Path.MA, 60, 3.0, 1.5, 3.0, 0.065f, 3),         // ma vân [GIẢ ĐỊNH 3/s]
+    PHAP(Path.PHAP, 60, 2.5, 1.0, 2.5, 0.065f, 3);      // pháp ấn: bay bằng Pháp Lực, như Đạo
 
     public final Path path;
     public final int minLevel;

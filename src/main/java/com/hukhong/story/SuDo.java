@@ -145,7 +145,8 @@ public class SuDo extends Monster implements GeoEntity {
                 sl.sendParticles(ParticleTypes.HEART, s.getX(), s.getY() + 1.5, s.getZ(), 3, 0.3, 0.3, 0.3, 0.0);
             }
             if (hurt || t != null) { triggerAnim("skill", "cast"); playSound(SoundEvents.EVOKER_PREPARE_SUMMON, 1f, 0.8f); }
-            skillCd = 100;
+            skillCd = com.hukhong.events.BossBuff.cd(100);
+            if (phase2() && t != null) swarm(sl, t);
             return;
         }
         if (t == null || !t.isAlive()) return;
@@ -160,13 +161,46 @@ public class SuDo extends Monster implements GeoEntity {
             }
             triggerAnim("skill", "cast");
             playSound(SoundEvents.EVOKER_CAST_SPELL, 1f, 0.8f);
-            skillCd = 60;
+            skillCd = com.hukhong.events.BossBuff.cd(60);
+            if (phase2()) spitFan(sl, t);
         } else if (variant == 0 && d2 > 16 && d2 <= 100) { // Dạ Kiếm: lao tới
             Vec3 dir = t.position().subtract(position()).multiply(1, 0, 1).normalize();
             setDeltaMovement(dir.x * 0.9, 0.25, dir.z * 0.9);
             hurtMarked = true;
             triggerAnim("skill", "attack");
-            skillCd = 80;
+            skillCd = com.hukhong.events.BossBuff.cd(80);
+        } else if (variant == 0 && phase2() && d2 <= 36) { // Da Kiem pha 2: Kiem Khi Vong (soc dia r=5)
+            for (net.minecraft.world.entity.player.Player pl : sl.getEntitiesOfClass(net.minecraft.world.entity.player.Player.class, getBoundingBox().inflate(5, 2, 5))) {
+                if (pl.isSpectator()) continue;
+                pl.hurt(damageSources().mobAttack(this), (float) (4 + suLevel() * 0.25));
+                pl.setDeltaMovement(pl.getDeltaMovement().add(0, 0.5, 0));
+                pl.hurtMarked = true;
+            }
+            sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, getX(), getY() + 0.3, getZ(), 40, 2.5, 0.3, 2.5, 0.05);
+            triggerAnim("skill", "attack");
+            skillCd = com.hukhong.events.BossBuff.cd(90);
+        }
+    }
+
+    /** Pha 2: duoi 50% mau -> ky nang moi (Da Kiem: Kiem Khi Vong; Chu Su: xoe nuoc bot doc; Te Tu: goi Hu Trung). */
+    public boolean phase2() { return getHealth() < getMaxHealth() * 0.5f; }
+
+    private void spitFan(ServerLevel sl, LivingEntity t) {
+        Vec3 d = t.position().subtract(position()).multiply(1, 0, 1);
+        double a0 = Math.atan2(d.z, d.x);
+        for (int i = -1; i <= 1; i++)
+            com.hukhong.entity.PoisonSpit.launchDir(this, position().add(0, 1.6, 0), new Vec3(Math.cos(a0 + i * 0.25), 0.12, Math.sin(a0 + i * 0.25)),
+                    (float) (3 + suLevel() * 0.25), 2.5, 1.2f);
+    }
+
+    private void swarm(ServerLevel sl, LivingEntity t) {
+        for (int i = 0; i < 2; i++) {
+            com.hukhong.entity.HuTrung c = com.hukhong.entity.V3Entities.HU_TRUNG.get().create(sl);
+            if (c == null) continue;
+            c.moveTo(getX() + (i == 0 ? 2 : -2), getY(), getZ(), random.nextFloat() * 360f, 0f);
+            c.finalizeSpawn(sl, sl.getCurrentDifficultyAt(c.blockPosition()), net.minecraft.world.entity.MobSpawnType.MOB_SUMMONED, null);
+            c.setTarget(t);
+            sl.addFreshEntity(c);
         }
     }
 

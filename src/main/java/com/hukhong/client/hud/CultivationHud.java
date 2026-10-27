@@ -7,6 +7,8 @@ import com.hukhong.core.CultivationData;
 import com.hukhong.core.CultivationService;
 import com.hukhong.core.Path;
 import com.hukhong.core.Realm;
+import com.hukhong.currency.TuTinhText;
+import com.hukhong.currency.Wallet;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -96,10 +98,13 @@ public final class CultivationHud {
         if (d.inBottleneck()) {
             g.drawString(font, Component.translatable("hukhong.hud.bottleneck"), x + 60, y, 0xFFFF5555, true);
         }
+        // Dong tien (vi Tu Tinh) ngay duoi HUD tu luyen
+        g.drawString(font, Component.translatable("hukhong.hud.tutinh", TuTinhText.of(Wallet.count(mc.player))),
+                x, y + 11, 0xFFE0C080, true);
     }
 
     private static int colorblindPath(Path p) {
-        return switch (p) { case KIEM -> 0xFF56B4E9; case DAO -> 0xFFF0E442; case THE -> 0xFFE69F00; case MA -> 0xFFCC79A7; };
+        return switch (p) { case KIEM -> 0xFF56B4E9; case DAO -> 0xFFF0E442; case THE -> 0xFFE69F00; case MA -> 0xFFCC79A7; case PHAP -> 0xFF009E73; };
     }
 
     private static String roman(int n) {

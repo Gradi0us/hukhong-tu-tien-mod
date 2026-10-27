@@ -38,7 +38,7 @@ public final class GuildBuilder {
 
     private static final Logger LOG = LogUtils.getLogger();
     public static final String NPC_TAG = "hukhong_guild_npc";
-    private static final int W = 4, D = 3; // nua rong / nua sau
+    private static final int W = GuildHallBuild.SPAN, D = GuildHallBuild.SPAN; // nua o vuong can cho (dai sanh 15x11 + hien)
 
     private static final ProcKit.Mat MAT = new ProcKit.Mat(Blocks.STONE_BRICKS, Blocks.DARK_OAK_LOG, Blocks.SPRUCE_PLANKS,
             Blocks.DARK_OAK_STAIRS, Blocks.DARK_OAK_PLANKS);
@@ -53,6 +53,15 @@ public final class GuildBuilder {
         WorldBuildData.Settlement st = WorldBuildData.get(ow).settlements().get(d.id());
         if (st == null) return false;
         int cx = st.cx(), cz = st.cz();
+        GuildScan.Hit hit = GuildScan.find(ow, st.ax(), st.az(), st.y()); // thanh import: tan dung cong trinh lon co san
+        if (hit != null) {
+            set(ow, hit.board().getX(), hit.board().getY(), hit.board().getZ(), GuildRegistry.BOARD.get());
+            set(ow, hit.board().getX(), hit.board().getY() + 1, hit.board().getZ(), Blocks.LANTERN);
+            spawnNpc(ow, hit.npc());
+            halls.put(d.id(), hit.npc());
+            LOG.info("Guild hall of {} adopted existing building ({} cells) at {}", d.id(), hit.area(), hit.npc());
+            return true;
+        }
         int[] spot = findInside(ow, st);
         int floorY, hx, hz;
         Direction out;
@@ -65,8 +74,7 @@ public final class GuildBuilder {
             hx = adj[0]; hz = adj[1]; floorY = adj[2];
             out = Direction.from3DDataValue(adj[3]);
         }
-        build(ow, hx, hz, floorY, out);
-        BlockPos npc = new BlockPos(hx, floorY + 1, hz);
+        BlockPos npc = GuildHallBuild.build(ow, hx, hz, floorY, out);
         spawnNpc(ow, npc);
         halls.put(d.id(), npc);
         LOG.info("Guild hall of {} built at {} ({})", d.id(), npc, spot != null ? "inside" : "adjacent");
@@ -107,7 +115,7 @@ public final class GuildBuilder {
         List<int[]> cand = new ArrayList<>();
         for (int x = st.minX() + W + 3; x <= st.maxX() - W - 3; x += 3)
             for (int z = st.minZ() + D + 3; z <= st.maxZ() - D - 3; z += 3) {
-                if (Math.abs(x - cx) <= 6 || Math.abs(z - cz) <= 5) continue; // quang truong + truc duong
+                if (Math.abs(x - cx) <= 8 || Math.abs(z - cz) <= 8) continue; // quang truong + truc duong
                 cand.add(new int[]{x, z});
             }
         cand.sort(Comparator.comparingInt(c -> (c[0] - cx) * (c[0] - cx) + (c[1] - cz) * (c[1] - cz)));
@@ -129,30 +137,10 @@ public final class GuildBuilder {
             if (b.is(BiomeTags.IS_OCEAN) || b.is(BiomeTags.IS_RIVER)) continue;
             int gy = l.getHeight(Heightmap.Types.WORLD_SURFACE_WG, ax, az) - 1;
             if (!l.getFluidState(new BlockPos(ax, gy, az)).isEmpty()) continue;
-            int y0 = CityBuilder.prepare(l, ax, az, W + 2, 10);
+            int y0 = CityBuilder.prepare(l, ax, az, W + 2, 24);
             return new int[]{ax, az, y0, s.getOpposite().get3DDataValue()};
         }
         return null;
-    }
-
-    // ---- xay ----
-
-    private static void build(ServerLevel l, int hx, int hz, int y, Direction out) {
-        ProcKit.house(l, hx, hz, y, W, D, 1, MAT, out);
-        air(l, hx + W - 1, y + 1, hz + D - 1); // bo ban che tao / lo nung mac dinh
-        air(l, hx - W + 1, y + 1, hz + D - 1);
-        BlockPos board = new BlockPos(hx - out.getStepX() * (W - 1), y + 1, hz - out.getStepZ() * (D - 1));
-        set(l, board.getX(), board.getY(), board.getZ(), GuildRegistry.BOARD.get());
-        set(l, hx - out.getStepX() * (W - 1) + out.getClockWise().getStepX(), y + 1, hz - out.getStepZ() * (D - 1) + out.getClockWise().getStepZ(), Blocks.BARREL);
-        int sx = hx + out.getStepX() * (W + 1), sz = hz + out.getStepZ() * (D + 1);
-        int rot = switch (out) { case SOUTH -> 0; case WEST -> 4; case NORTH -> 8; default -> 12; };
-        BlockPos sp = new BlockPos(sx + out.getClockWise().getStepX() * 2, y + 1, sz + out.getClockWise().getStepZ() * 2);
-        l.setBlock(sp, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, rot), 18);
-        if (l.getBlockEntity(sp) instanceof SignBlockEntity s) {
-            s.setText(s.getFrontText().setMessage(1, Component.translatable("hukhong.guild.sign")), true);
-            s.setWaxed(true);
-            s.setChanged();
-        }
     }
 
     // ---- le tan ----

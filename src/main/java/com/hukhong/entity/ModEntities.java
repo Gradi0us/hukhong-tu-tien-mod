@@ -54,6 +54,7 @@ public final class ModEntities {
         com.hukhong.effect.ModEffects.register(bus);
         TYPES.register(bus);
         EGGS.register(bus);
+        V3Entities.register(bus);
     }
 
     @SubscribeEvent

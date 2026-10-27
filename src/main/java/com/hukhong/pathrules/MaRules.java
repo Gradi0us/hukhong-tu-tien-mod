@@ -260,8 +260,8 @@ public final class MaRules {
         if (sinceCombat > 60) Resources.add(p, -2); // Ô Uế Lực không tự hồi, tan -2/s ngoài combat
         if (!m.absorb) m.huyetTe = 0;
         if (m.lostTicks <= 0) {
-            if (st.meditating() && sinceCombat > 100) addAcTinh(p, -1.5);          // thiền
-            else if (sinceCombat > 200 && m.acTinh < 60) addAcTinh(p, -0.2);       // tự giảm
+            // Ngoai chien dau (>5s) hoac dang thien: Ac Tinh giam nhanh -3/s
+            if (sinceCombat > 100 || st.meditating()) addAcTinh(p, -3);
         }
         if (now % 1200 == 0 && sinceCombat > 100 && m.huyetTe > 0) m.huyetTe = Math.max(0, m.huyetTe - 1);
         // Mất Kiểm Soát: mỗi 20s xác suất (Ác Tính - 75)% khi 80..94

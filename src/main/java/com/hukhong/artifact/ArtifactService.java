@@ -36,7 +36,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 public final class ArtifactService {
     private ArtifactService() {}
 
-    private static final Path[] ORDER = {Path.DAO, Path.THE, Path.MA};
+    private static final Path[] ORDER = {Path.DAO, Path.THE, Path.MA, Path.PHAP};
 
     public static ArtifactData get(Player p) { return p.getData(ArtifactAttachments.ARTIFACT.get()); }
 
@@ -121,6 +121,7 @@ public final class ArtifactService {
         int dao = d.paths().contains(Path.DAO) ? BanMenhMath.effectiveStage(a.dao(), d.level()) : 0;
         int the = d.paths().contains(Path.THE) ? BanMenhMath.effectiveStage(a.the(), d.level()) : 0;
         int ma = d.paths().contains(Path.MA) ? BanMenhMath.effectiveStage(a.ma(), d.level()) : 0;
+        int phap = d.paths().contains(Path.PHAP) ? BanMenhMath.effectiveStage(a.phap(), d.level()) : 0;
         var mulBase = AttributeModifier.Operation.ADD_MULTIPLIED_BASE;
         var add = AttributeModifier.Operation.ADD_VALUE;
         mod(p, ModAttributes.holder(ModAttributes.RESOURCE_REGEN), "dao_regen", ArtifactMath.daoRegen(dao), mulBase);
@@ -130,5 +131,7 @@ public final class ArtifactService {
         mod(p, ModAttributes.holder(ModAttributes.DEFENSE), "the_defense", ArtifactMath.theDefense(the), mulBase);
         mod(p, ModAttributes.holder(ModAttributes.ATTACK_POWER), "ma_attack", ArtifactMath.maAttack(ma), mulBase);
         mod(p, ModAttributes.holder(ModAttributes.LIFESTEAL), "ma_lifesteal", ArtifactMath.maLifesteal(ma), add);
+        mod(p, ModAttributes.holder(ModAttributes.SPELL_POWER), "phap_spell", ArtifactMath.phapSpell(phap), mulBase);
+        mod(p, ModAttributes.holder(ModAttributes.MAX_RESOURCE), "phap_max_resource", ArtifactMath.phapMaxResource(phap), mulBase);
     }
 }

@@ -10,7 +10,7 @@ public final class ArtifactMath {
     public static final int MAX_STAGE = BanMenhMath.MAX_STAGE;
 
     /** Đạo có pháp khí (Kiếm dùng Bản Mệnh Kiếm). */
-    public static boolean hasArtifact(Path p) { return p == Path.DAO || p == Path.THE || p == Path.MA; }
+    public static boolean hasArtifact(Path p) { return p == Path.DAO || p == Path.THE || p == Path.MA || p == Path.PHAP; }
 
     public static int tinhCost(int targetStage) { return BanMenhMath.tinhCost(targetStage); }
 
@@ -38,4 +38,8 @@ public final class ArtifactMath {
     public static double maAttack(int stage) { return 0.02 * c(stage); }
     /** Ma: hút huyết +0.4%/giai đoạn (phân số). */
     public static double maLifesteal(int stage) { return 0.004 * c(stage); }
+    /** Pháp: Phép lực +2%/giai đoạn. */
+    public static double phapSpell(int stage) { return 0.02 * c(stage); }
+    /** Pháp: Pháp Lực tối đa +3%/giai đoạn. */
+    public static double phapMaxResource(int stage) { return 0.03 * c(stage); }
 }

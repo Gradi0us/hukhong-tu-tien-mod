@@ -103,7 +103,11 @@ public final class BanMenhStrike {
 
     /** Kiếm quét cung trước mặt: sinh vật quanh chủ trong hình quạt ~3,8 block (hướng về mục tiêu chính) cũng trúng, 50% đòn gốc. */
     private static void sweep(ServerPlayer p, LivingEntity main, ItemStack s) {
-        final double reach = SWEEP_REACH;
+        var cd = p.getData(com.hukhong.core.ModAttachments.CULTIVATION);
+        double bonus = cd.paths().contains(com.hukhong.core.Path.KIEM)
+                ? com.hukhong.passive.PassiveMath.kiemSweepBonus(cd.aptitude().get(com.hukhong.core.Path.KIEM)) : 0;
+        final double reach = SWEEP_REACH * (1 + bonus);
+        if (p.level() instanceof net.minecraft.server.level.ServerLevel lv) sweepFx(lv, p, reach);
         Vec3 dir = main.position().subtract(p.position());
         dir = new Vec3(dir.x, 0, dir.z);
         if (dir.lengthSqr() < 1e-3) { Vec3 lk = p.getLookAngle(); dir = new Vec3(lk.x, 0, lk.z); }
@@ -122,6 +126,14 @@ public final class BanMenhStrike {
         if (list.isEmpty()) return;
         float dmg = (float) (com.hukhong.stats.StatService.attackPower(p) * BanMenhService.QUALITY[BanMenhKiemItem.stageOf(s)] * 0.5);
         for (LivingEntity e : list) BanMenhEvents.extra(p, e, dmg);
+    }
+
+    /** Cung chém mềm, rõ và chậm hơn (9 nhịp thay vì 5), màu xanh nhạt. */
+    private static void sweepFx(net.minecraft.server.level.ServerLevel lv, ServerPlayer p, double reach) {
+        com.hukhong.vfx.Fx.slash(lv, p, 25, Math.min(4.6, reach * 0.9), 0, 9, 1.4f);
+        Vec3 look = p.getLookAngle();
+        Vec3 from = p.getEyePosition().subtract(0, 0.5, 0).add(look.scale(0.6));
+        com.hukhong.vfx.Fx.qi(lv, from, look.scale(reach * 0.8), 2.2f, 0xBFE4FF, 25, 14);
     }
 
     public static final double SWEEP_REACH = 3.8, SWEEP_COS_HALF = 0.3;

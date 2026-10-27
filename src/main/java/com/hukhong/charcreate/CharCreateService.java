@@ -25,8 +25,12 @@ import java.util.Set;
 public final class CharCreateService {
     private CharCreateService() {}
 
-    /** 10A: mở cả 4 đạo (Kiếm, Đạo, Thể, Ma). */
-    public static final Set<Path> UNLOCKED = Set.of(Path.KIEM, Path.DAO, Path.THE, Path.MA);
+    /** Mở cả 5 đạo (Kiếm, Đạo, Thể, Ma, Pháp). */
+    public static final Set<Path> UNLOCKED = Set.of(Path.KIEM, Path.DAO, Path.THE, Path.MA, Path.PHAP);
+
+    /** Bit cờ trong mask gói xác nhận: Pháp Tu đã dùng lượt reroll nguyên tố duy nhất. */
+    public static final int REROLL_BIT = 1 << 8;
+    private static final int PATH_MASK = (1 << Path.values().length) - 1;
 
     public static int requiredPicks(CharRoll roll) { return Math.min(roll.slots(), UNLOCKED.size()); }
 
@@ -41,6 +45,7 @@ public final class CharCreateService {
     /** Roll mới (lần đầu hoặc /hukhong reroll): xóa đạo, ghi tuổi khởi đầu, mở màn. */
     public static void reroll(ServerPlayer p) {
         CharRoll roll = CharRoll.roll(p.getRandom().nextLong());
+        com.hukhong.phaptu.PhapTu.setElement(p, null);
         CultivationData d = CultivationService.get(p);
         p.setData(ModAttachments.CULTIVATION, d.withCharacter(Set.of(), Map.of(), roll.origin().id, roll));
         AgeData a = p.getData(ModAttachments.AGE);
@@ -60,13 +65,15 @@ public final class CharCreateService {
         if (roll == null || !d.paths().isEmpty()) return;
         Set<Path> set = EnumSet.noneOf(Path.class);
         for (Path x : Path.values()) if ((mask & (1 << x.ordinal())) != 0) set.add(x);
-        boolean extraBits = (mask >>> Path.values().length) != 0;
+        boolean rerolled = (mask & REROLL_BIT) != 0;
+        boolean extraBits = (mask & ~(PATH_MASK | REROLL_BIT)) != 0;
         if (extraBits || set.size() != requiredPicks(roll) || !UNLOCKED.containsAll(set)) {
             open(p, roll); // yêu cầu không hợp lệ: mở lại
             return;
         }
         Map<Path, Aptitude> apt = new EnumMap<>(Path.class);
         for (Path x : set) apt.put(x, roll.aptitude().get(x));
+        com.hukhong.phaptu.PhapTu.setElement(p, set.contains(Path.PHAP) ? com.hukhong.phaptu.PhapElement.roll(roll.seed(), rerolled) : null);
         CultivationData nd = d.withCharacter(set, apt, roll.origin().id, roll);
         // Tiên Thiên: cấp khởi đầu 1..10 theo tư chất tốt nhất (đặt trực tiếp, không qua EXP -> không kích Bình Cảnh/khóa mốc nhầm).
         int tt = TienThien.roll(apt.values(), new java.util.Random(roll.seed() ^ 0x5454L));

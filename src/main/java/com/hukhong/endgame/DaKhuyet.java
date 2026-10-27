@@ -105,7 +105,7 @@ public class DaKhuyet extends Monster implements GeoEntity {
         if (--windup <= 0) {
             fire(sl, pending);
             pending = -1;
-            skillCd = 110;
+            skillCd = com.hukhong.events.BossBuff.cd(110);
         }
     }
 
@@ -117,13 +117,25 @@ public class DaKhuyet extends Monster implements GeoEntity {
         if (skillCd > 0) { skillCd--; return; }
         LivingEntity t = getTarget();
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
-        pending = random.nextInt(3) == 0 ? 1 : 0;
-        windup = pending == 0 ? 35 : 45;
-        triggerAnim("skill", pending == 0 ? "skill_a" : "skill_b");
+        boolean ph2 = getHealth() < getMaxHealth() * 0.5f;  // pha 2: them Mua Manh Khuyet
+        pending = ph2 && random.nextInt(3) == 0 ? 2 : random.nextInt(3) == 0 ? 1 : 0;
+        windup = pending == 0 ? 35 : pending == 1 ? 45 : 40;
+        triggerAnim("skill", pending == 1 ? "skill_b" : "skill_a");
         playSound(SoundEvents.AMETHYST_BLOCK_RESONATE, 2f, 0.5f);
     }
 
     private void fire(ServerLevel sl, int skill) {
+        if (skill == 2) {  // Mua Manh Khuyet (pha 2): vong nuoc bot doc + soc nhe
+            net.minecraft.world.phys.Vec3 from = position().add(0, 1.8, 0);
+            for (int i = 0; i < 10; i++) {
+                double a = i * Math.PI * 2 / 10;
+                com.hukhong.entity.PoisonSpit.launchDir(this, from, new net.minecraft.world.phys.Vec3(Math.cos(a), 0.2, Math.sin(a)),
+                        (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.5), 3.0, 1.0f);
+            }
+            sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 50, 3, 1, 3, 0.1);
+            playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.5f, 1.0f);
+            return;
+        }
         if (skill == 0) {  // Đêm Khuyết
             double dmg = getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.8;
             for (Player p : sl.getEntitiesOfClass(Player.class, getBoundingBox().inflate(10, 3, 10))) {

@@ -35,9 +35,11 @@ public class HuCot extends Skeleton implements GeoEntity, HuMob {
     @Override public SpawnGroupData finalizeSpawn(ServerLevelAccessor l, DifficultyInstance d, MobSpawnType t,
                                                   SpawnGroupData g) {
         SpawnGroupData r = super.finalizeSpawn(l, d, t, g);
-        int lv = HuHoa.levelFor(l, blockPosition(), getRandom());
+        boolean cor = com.hukhong.events.CorruptBuff.at(l, blockPosition());
+        int lv = com.hukhong.events.CorruptBuff.level(cor, HuHoa.levelFor(l, blockPosition(), getRandom()));
+        double cm = com.hukhong.events.CorruptBuff.mul(cor);
         entityData.set(LEVEL, lv);
-        HuHoa.applyStats(this, lv, 1.5, 1.0);
+        HuHoa.applyStats(this, lv, 1.5 * cm, cm);
         return r;
     }
 
@@ -57,8 +59,19 @@ public class HuCot extends Skeleton implements GeoEntity, HuMob {
 
     @Override protected void registerGoals() {
         super.registerGoals();
-        goalSelector.addGoal(1, new HuSkill.Shot(this));
+        goalSelector.addGoal(1, new HuSkill.Spit(this, 100, 18, 5, 20, 1.2, 2.5));
+        goalSelector.addGoal(1, new HuSkill.Backstep(this));
+        goalSelector.addGoal(1, new HuSkill.Dash(this, 150, 14, 4, 9, 1.0, 1.1));
+        goalSelector.addGoal(1, new HuSkill.Curse(this, 170, 20, 6, 16, 1.1));
+        goalSelector.addGoal(0, new HuSkill.Rage(this));
+        goalSelector.addGoal(4, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.2, false));
     }
+
+    /** Khong dung cung: ban nuoc bot doc (HuSkill.Spit) thay mui ten. */
+    @Override protected void populateDefaultEquipmentSlots(net.minecraft.util.RandomSource r, DifficultyInstance d) {}
+    @Override public void reassessWeaponGoal() {}
+    @Override public void performRangedAttack(net.minecraft.world.entity.LivingEntity t, float f) {}
+    @Override public boolean canFireProjectileWeapon(net.minecraft.world.item.ProjectileWeaponItem w) { return false; }
 
     @Override public void aiStep() { super.aiStep(); HuHoa.particles(this); }
 

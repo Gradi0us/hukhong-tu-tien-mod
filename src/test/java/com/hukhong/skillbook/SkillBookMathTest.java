@@ -86,6 +86,7 @@ class SkillBookMathTest {
             assertTrue(b.cost > 0 && b.cooldownTicks > 0);
         }
         for (Path p : Path.values()) {
+            if (p == Path.PHAP) continue; // Pháp Tu dùng kỹ năng theo nguyên tố, chưa có bí tịch riêng
             assertEquals(4, BookSkill.ofPath(p).size(), "mỗi đạo 4 kỹ năng " + p);
             for (SkillGrade g : SkillGrade.values())
                 assertEquals(1, BookSkill.ofPath(p).stream().filter(b -> b.grade == g).count(), p + " " + g);

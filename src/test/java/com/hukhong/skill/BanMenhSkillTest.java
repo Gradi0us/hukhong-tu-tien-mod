@@ -9,6 +9,7 @@ class BanMenhSkillTest {
     @Test
     void lockedBelowUnlockLevelAndOnePerPath() {
         for (Path p : Path.values()) {
+            if (p == Path.PHAP) continue; // Pháp Tu: phím R là kỹ năng nguyên tố, không có Bản Mệnh
             assertNull(BanMenhSkill.of(p, BanMenhSkill.UNLOCK_LEVEL - 1));
             assertNotNull(BanMenhSkill.of(p, BanMenhSkill.UNLOCK_LEVEL));
         }

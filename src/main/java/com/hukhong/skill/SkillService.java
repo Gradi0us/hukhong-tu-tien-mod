@@ -92,7 +92,8 @@ public final class SkillService {
             sync(p);
             return;
         }
-        if (!Resources.tryConsume(p, r.cost(), com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
+        if (!com.hukhong.phaptu.PhapRuntime.consumeFree(p, page, slot)
+                && !Resources.tryConsume(p, r.cost(), com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
             return;
         }
@@ -102,7 +103,7 @@ public final class SkillService {
         } else {
             BookSkillEffects.run(r.book(), p, lvl);
         }
-        st.cooldownEnd[slot] = now + SkillBookMath.cooldown(r.baseCooldown(), lvl);
+        st.cooldownEnd[slot] = now + Math.round(SkillBookMath.cooldown(r.baseCooldown(), lvl) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page));
         st.lastCombat = now;
         sync(p);
     }
@@ -119,7 +120,7 @@ public final class SkillService {
             rem.add((int) Math.max(0, st.cooldownEnd[i] - now));
             tot.add(i == 2 && r == null ? Math.max(1, st.rTotal) : r == null ? 1
                     : r.base() == Skill.KIEM_ULT ? SkillEffects.DOMAIN_LOCK_TICKS
-                    : SkillBookMath.cooldown(r.baseCooldown(), bd.level(r.id())));
+                    : (int) Math.round(SkillBookMath.cooldown(r.baseCooldown(), bd.level(r.id())) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)));
         }
         PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot, st.page, st.domainOn));
     }
