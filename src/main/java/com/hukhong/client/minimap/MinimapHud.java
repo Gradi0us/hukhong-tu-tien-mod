@@ -104,6 +104,7 @@ public final class MinimapHud {
         // marker thành/tông
         double px = Math.floor(mc.player.getX()), pz = Math.floor(mc.player.getZ());
         int lim = r - 4;
+        if (ClientConfig.minimapMobs()) drawMobs(g, mc, cx, cy, px, pz, lim, round);
         if (MinimapState.markersVisible()) {
             for (MapMarkersPayload.Marker m : MinimapState.markers()) {
                 boolean wp = MinimapState.isWaypoint(m);
@@ -224,5 +225,23 @@ public final class MinimapHud {
         double k = round ? Math.sqrt(dx * dx + dz * dz) : Math.max(Math.abs(dx), Math.abs(dz));
         if (k < 1e-6) return new int[]{0, 0};
         return new int[]{(int) Math.round(dx / k * lim), (int) Math.round(dz / k * lim)};
+    }
+
+    /** Quái thù địch gần (chấm đỏ; boss = đầu lâu to, vẽ sau cùng). Chỉ dữ liệu client đã biết, tối đa 64 chấm. */
+    private static void drawMobs(GuiGraphics g, Minecraft mc, int cx, int cy, double px, double pz, int lim, boolean round) {
+        java.util.List<int[]> bosses = new java.util.ArrayList<>();
+        int n = 0;
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.LivingEntity le) || !(e instanceof net.minecraft.world.entity.monster.Enemy)
+                    || !le.isAlive() || le.isInvisible() || Math.abs(le.getY() - mc.player.getY()) > 48) continue;
+            double dx = le.getX() - px, dz = le.getZ() - pz;
+            if (!inside(dx, dz, lim, round)) continue;
+            int ix = cx + (int) Math.round(dx), iy = cy + (int) Math.round(dz);
+            boolean isBoss = le.getMaxHealth() >= 100f || le instanceof net.minecraft.world.entity.boss.wither.WitherBoss
+                    || le instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+            if (isBoss) bosses.add(new int[]{ix, iy});
+            else { MapIcons.mobDot(g, ix, iy); if (++n >= 64) break; }
+        }
+        for (int[] b : bosses) MapIcons.bossSkull(g, b[0], b[1]);
     }
 }

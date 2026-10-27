@@ -54,7 +54,32 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue ZONE_TITLES = B
             .comment("Hiện thẻ tên khu vực (Thành/Cảng/Tông Môn) khi bước vào")
             .translation("hukhong.configuration.zoneTitles").define("zoneTitles", true);
+    public static final ModConfigSpec.BooleanValue MOB_BARS = B
+            .comment("Thanh máu + HP/Max + cấp trên đầu quái gần (hiện khi bị đánh/ngắm)")
+            .translation("hukhong.configuration.mobBars").define("mobBars", true);
+    public static final ModConfigSpec.BooleanValue MOB_BARS_PLAYERS = B
+            .comment("Hiện thanh máu cả trên người chơi khác")
+            .translation("hukhong.configuration.mobBarsPlayers").define("mobBarsPlayers", false);
+    public static final ModConfigSpec.BooleanValue MOB_BARS_ALWAYS = B
+            .comment("Luôn hiện thanh máu của quái đã mất máu (không chỉ khi vừa bị đánh/ngắm)")
+            .translation("hukhong.configuration.mobBarsAlways").define("mobBarsAlways", false);
+    public static final ModConfigSpec.IntValue MOB_BAR_RANGE = B
+            .comment("Tầm hiện thanh máu (block)")
+            .translation("hukhong.configuration.mobBarRange").defineInRange("mobBarRange", 24, 4, 64);
+    public static final ModConfigSpec.BooleanValue DAMAGE_NUMBERS = B
+            .comment("Số sát thương/hồi máu nổi (bạo kích vàng to, kỹ năng theo màu đạo, hồi máu xanh lá)")
+            .translation("hukhong.configuration.damageNumbers").define("damageNumbers", true);
+    public static final ModConfigSpec.BooleanValue MINIMAP_MOBS = B
+            .comment("Minimap: chấm đỏ quái thù địch gần, boss là đầu lâu to")
+            .translation("hukhong.configuration.minimapMobs").define("minimapMobs", true);
     public static final ModConfigSpec SPEC = B.build();
+
+    public static boolean mobBars() { return !SPEC.isLoaded() || MOB_BARS.get(); }
+    public static boolean mobBarsPlayers() { return SPEC.isLoaded() && MOB_BARS_PLAYERS.get(); }
+    public static boolean mobBarsAlways() { return SPEC.isLoaded() && MOB_BARS_ALWAYS.get(); }
+    public static int mobBarRange() { return SPEC.isLoaded() ? MOB_BAR_RANGE.get() : 24; }
+    public static boolean damageNumbers() { return !SPEC.isLoaded() || DAMAGE_NUMBERS.get(); }
+    public static boolean minimapMobs() { return !SPEC.isLoaded() || MINIMAP_MOBS.get(); }
 
     public static boolean screenEffectsOff() { return SPEC.isLoaded() && DISABLE_SCREEN_EFFECTS.get(); }
     public static ParticleLevel particles() { return SPEC.isLoaded() ? PARTICLES.get() : ParticleLevel.ALL; }

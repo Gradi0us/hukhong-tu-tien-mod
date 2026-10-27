@@ -313,7 +313,7 @@ public final class StoryFlow {
         return n;
     }
 
-    private static List<Entity> flowEntities(ServerPlayer p, double r) {
+    static List<Entity> flowEntities(ServerPlayer p, double r) {
         String own = TAG_OWNER + p.getUUID();
         return p.serverLevel().getEntities((Entity) null, p.getBoundingBox().inflate(r),
                 e -> e.getTags().contains(TAG_FLOW) && e.getTags().contains(own));

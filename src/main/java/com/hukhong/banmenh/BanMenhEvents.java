@@ -33,6 +33,7 @@ public final class BanMenhEvents {
     private BanMenhEvents() {}
 
     private static boolean reentry = false;
+    private static final boolean BC_LOADED = net.neoforged.fml.ModList.get().isLoaded("bettercombat");
     private static final Map<UUID, Integer> HIT_COUNT = new HashMap<>();
     private static final Map<UUID, Long> FREEZE_CD = new HashMap<>();
 
@@ -50,6 +51,7 @@ public final class BanMenhEvents {
             return;
         }
         LivingEntity target = e.getEntity();
+        if (!BanMenhStrike.inStrike && BC_LOADED) BanMenhStrike.bcFx(p, target, stack);
         int st = BanMenhKiemItem.stageOf(stack);
         RandomSource rng = p.getRandom();
         double ap = StatService.attackPower(p);

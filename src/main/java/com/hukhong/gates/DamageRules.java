@@ -26,6 +26,9 @@ public final class DamageRules {
 
     private static boolean skillActive = false;
 
+    /** Đòn vừa resolve có bạo kích (cho số sát thương nổi; đọc-và-xóa). */
+    public static boolean lastCrit = false;
+
     public static boolean isSkill() { return skillActive; }
 
     /** Gây sát thương phép/kỹ năng từ caster (bỏ qua luật đòn thường = 0). */
@@ -54,6 +57,7 @@ public final class DamageRules {
     /** Trả sát thương cuối cho đòn của người chơi attacker (đã gồm Công, Bạo Kích, Hấp Huyết). */
     public static float resolve(ServerPlayer atk, LivingEntity target, DamageSource src, float amount) {
         CultivationData d = atk.getData(ModAttachments.CULTIVATION);
+        lastCrit = false;
         float out = amount;
         boolean fixed = false;
         if (!skillActive) {
@@ -78,6 +82,7 @@ public final class DamageRules {
             double cc = com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_CHANCE);
             if (cc > 0 && atk.getRandom().nextDouble() < cc) {
                 out *= (float) com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_DAMAGE);
+                lastCrit = true;
             }
             double ls = com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.LIFESTEAL);
             if (ls > 0 && !com.hukhong.pathrules.MaRules.noLifesteal(atk)) atk.heal(Math.min((float) (out * ls), atk.getMaxHealth() * 0.04f));

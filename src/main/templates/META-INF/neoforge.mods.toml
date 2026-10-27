@@ -84,6 +84,13 @@ Mod tu tiên cho Minecraft: tu luyện, cảnh giới, linh khí và hư không.
     ordering="NONE"
     side="BOTH"
 
+[[dependencies.${mod_id}]]
+    modId="bettercombat"
+    type="optional"
+    versionRange="[2.3,)"
+    ordering="NONE"
+    side="BOTH"
+
 # Here's another dependency
 [[dependencies.${mod_id}]]
     modId="minecraft"

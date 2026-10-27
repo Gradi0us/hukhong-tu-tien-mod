@@ -31,6 +31,19 @@ import java.util.UUID;
 public final class BanMenhStrike {
     private BanMenhStrike() {}
 
+    /** Đang trong p.attack() do phi kiếm gọi (để BanMenhEvents không phát thêm fx khi Better Combat bật). */
+    static boolean inStrike = false;
+
+    /** Better Combat: đòn thường đến bằng gói của BC (không qua chuột/OrbitInput) -> phát fx phi kiếm cho đúng cảm giác. */
+    static void bcFx(ServerPlayer p, LivingEntity t, ItemStack s) {
+        long now = p.level().getGameTime();
+        Long ready = READY.get(p.getUUID());
+        if (ready != null && now < ready) return;
+        READY.put(p.getUUID(), now + 5 + BanMenhMath.STRIKE_RETURN_TICKS);
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(p, new BanMenhStrikeFxPayload(p.getId(), t.getId(), 5,
+                BanMenhMath.strikeSwords(BanMenhKiemItem.stageOf(s))));
+    }
+
     private record Pending(UUID player, UUID target, long due) {}
 
     private static final List<Pending> PENDING = new ArrayList<>();
@@ -96,7 +109,8 @@ public final class BanMenhStrike {
             if (s.isEmpty()) continue; // đã đổi tay / mất kiếm: hủy đòn
             if (!(p.serverLevel().getEntity(pd.target()) instanceof LivingEntity t) || !t.isAlive()) continue;
             if (!inRange(p.getEyePosition(), t, BanMenhMath.strikeRange(BanMenhKiemItem.stageOf(s)) + 2.0)) continue;
-            p.attack(t);
+            inStrike = true;
+            try { p.attack(t); } finally { inStrike = false; }
             sweep(p, t, s);
         }
     }

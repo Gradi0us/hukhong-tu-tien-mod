@@ -20,6 +20,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
@@ -63,6 +64,61 @@ public final class Prebuild {
     private static List<ChunkPos> held = new ArrayList<>();
     private static int phaseTicks;
     private static ServerBossEvent bar;
+    private static boolean blocking;
+    /** Van ban tien do cho man hinh tai (client luong tich hop doc); null = khong dang dung. */
+    public static volatile String overlayText;
+    public static volatile float overlayFraction;
+
+    /** Dung toan bo truoc khi nguoi choi vao the gioi moi (chay tren luong server, dong bo). Loi => de tick-prebuild cu lam tiep. */
+    @SubscribeEvent
+    public static void onStarted(ServerStartedEvent e) {
+        MinecraftServer server = e.getServer();
+        ServerLevel ow = server.getLevel(Level.OVERWORLD);
+        if (ow == null || state != State.UNINIT) return;
+        long t0 = System.nanoTime();
+        blocking = true;
+        try {
+            init(server, ow);
+            while (state == State.RUNNING) {
+                bumpWatchdog(server);
+                try {
+                    step(server, ow);
+                } catch (RuntimeException ex) {
+                    LOG.error("Prebuild step failed for {}, skipping target: {}", targets.get(idx).id(), ex.toString(), ex);
+                    release(ow);
+                    next(ow, server);
+                }
+                if (state == State.RUNNING && phase == Phase.PRELOAD && !preload.isDone()) {
+                    try { Thread.sleep(1); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                }
+            }
+            LOG.info("Prebuild (blocking, pre-join) finished in {} ms", (System.nanoTime() - t0) / 1_000_000L);
+        } catch (RuntimeException ex) {
+            LOG.error("Blocking prebuild failed, falling back to progressive build: {}", ex.toString(), ex);
+            release(ow);
+        } finally {
+            blocking = false;
+            overlayText = null;
+            bumpWatchdog(server);
+        }
+    }
+
+    private static java.lang.reflect.Field tickField;
+    private static boolean tickFieldTried;
+
+    /** Giu watchdog (max-tick-time) va "can't keep up" khong kich hoat trong luc dung dong bo. */
+    private static void bumpWatchdog(MinecraftServer server) {
+        try {
+            if (!tickFieldTried) {
+                tickFieldTried = true;
+                tickField = MinecraftServer.class.getDeclaredField("nextTickTimeNanos");
+                tickField.setAccessible(true);
+            }
+            if (tickField != null) tickField.setLong(server, System.nanoTime());
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            if (tickField == null) LOG.warn("Cannot bump watchdog clock: {}", ex.toString());
+        }
+    }
 
     /** Con dang giu quyen dung (sinh lazy cua thanh/tong tam tat). */
     public static boolean owns() { return state != State.DONE; }
@@ -70,7 +126,7 @@ public final class Prebuild {
     @SubscribeEvent
     public static void onTick(ServerTickEvent.Post e) {
         MinecraftServer server = e.getServer();
-        if (state == State.DONE) return;
+        if (state == State.DONE || blocking) return;
         ServerLevel ow = server.getLevel(Level.OVERWORLD);
         if (ow == null) return;
         if (state == State.UNINIT) {
@@ -129,6 +185,10 @@ public final class Prebuild {
         Target t = targets.get(Math.min(idx, targets.size() - 1));
         bar.setName(Component.translatable("hukhong.prebuild.bar", Component.translatable(t.nameKey()), idx + 1, total));
         bar.setProgress(Math.min(1f, (idx + within) / total));
+        if (blocking) {
+            overlayText = Component.translatableWithFallback("hukhong.prebuild.loading", "Đang kiến tạo thế giới: %s (%s/%s)", Component.translatable(t.nameKey()), idx + 1, total).getString();
+            overlayFraction = Math.min(1f, (idx + within) / total);
+        }
     }
 
     private static BlockPos anchor(ServerLevel ow, Target t) {
@@ -156,7 +216,7 @@ public final class Prebuild {
                 }
             }
             case FIND -> {
-                finder.step(FIND_BUDGET_NS);
+                finder.step(blocking ? 1_000_000_000L : FIND_BUDGET_NS);
                 if (!finder.finished()) return;
                 site = finder.result();
                 data.setPortSite(t.id(), site.getX(), site.getZ());
@@ -164,7 +224,7 @@ public final class Prebuild {
                 enterLoad(ow);
             }
             case LOAD -> {
-                if (phaseTicks % 10 != 0) return;
+                if (!blocking && phaseTicks % 10 != 0) return;
                 int ready = 0;
                 for (ChunkPos c : held) if (ow.getChunkSource().getChunkNow(c.x, c.z) != null) ready++;
                 progress(ow, 0.7f * ready / Math.max(1, held.size()));
@@ -175,6 +235,7 @@ public final class Prebuild {
                 phaseTicks = 0;
             }
             case DRAIN -> {
+                if (blocking) StructurePlacer.drainAll();
                 if (StructurePlacer.pending() > 0) { if (phaseTicks % 20 == 0) progress(ow, 0.7f + 0.3f * (1f - Math.min(1f, StructurePlacer.pending() / 3f))); return; }
                 if (t.city != null) {
                     if (t.city.index() == 0) CitySavedData.get(ow).markBuilt(center);
@@ -198,6 +259,7 @@ public final class Prebuild {
             held.add(c);
         }
         LOG.info("Prebuild {}: loading {} chunks around {}", t.id(), held.size(), site);
+        if (blocking) for (ChunkPos c : held) ow.getChunk(c.x, c.z, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
         phase = Phase.LOAD;
         phaseTicks = 0;
     }

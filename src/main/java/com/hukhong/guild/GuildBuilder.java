@@ -1,146 +1,137 @@
 package com.hukhong.guild;
 
-import com.hukhong.city.CityBuilder;
+import com.hukhong.city.AltarShrine;
 import com.hukhong.city.CityDef;
 import com.hukhong.city.TradeDistrict;
 import com.hukhong.city.WorldBuildData;
-import com.hukhong.structures.ProcKit;
 import com.hukhong.structures.StructurePlacer;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.StandingSignBlock;
-import net.minecraft.world.level.block.entity.SignBlockEntity;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
-import static com.hukhong.structures.ProcKit.air;
-import static com.hukhong.structures.ProcKit.set;
-
 /**
- * Dung Hiep Hoi Mao Hiem Gia o moi thanh / cang: nha 9x7 canh quang truong neu con cho trong, khong thi ngay ben ngoai tuong.
- * Cau truc import co marker hukhong:guild thi dung ban co san (chi sinh le tan + bang tai marker).
+ * Dung Hiep Hoi Mao Hiem Gia o moi thanh / cang: dai sanh luon nam ben PHAI Ấn Hồn Đài (cong torii o truc Nam => nhin tu loi vao
+ * huong Bac, ben phai = Dong), sat vanh ngoai dien dan, mat tien quay ve dien dan, noi bang loi di ngan. Chi san/don dung vet dat dai sanh.
  */
 public final class GuildBuilder {
     private GuildBuilder() {}
 
     private static final Logger LOG = LogUtils.getLogger();
     public static final String NPC_TAG = "hukhong_guild_npc";
-    private static final int W = GuildHallBuild.SPAN, D = GuildHallBuild.SPAN; // nua o vuong can cho (dai sanh 15x11 + hien)
 
-    private static final ProcKit.Mat MAT = new ProcKit.Mat(Blocks.STONE_BRICKS, Blocks.DARK_OAK_LOG, Blocks.SPRUCE_PLANKS,
-            Blocks.DARK_OAK_STAIRS, Blocks.DARK_OAK_PLANKS);
+    /** Be rong vet dat quanh dai sanh (u: +-(W+2), v: -(D+2)..D+4). */
+    private static final int HALF_U = GuildHallBuild.W + 2, V_BACK = GuildHallBuild.D + 2, V_FRONT = GuildHallBuild.D + 4;
+    /** Khoang duong di ngan giua vanh ngoai Ấn Hồn Đài va mep dat dai sanh. */
+    private static final int PATH_GAP = 3;
 
     public static boolean eligible(CityDef d) { return !d.category().equals("city_ruined"); }
 
-    /** Bao dam co Hiep Hoi (da dung xong thanh = co Settlement). true neu da co hoac vua dung. */
+    /** Ban kinh vet ngoai cua dien dan (T): quet ve phia dong tim vien da/ngoi sam; khong thay thi uoc luong theo loai. */
+    static int shrineOuter(ServerLevel l, WorldBuildData.Settlement st, CityDef d) {
+        int fy = st.y() - 1;
+        for (int t = 13; t >= 5; t--) {
+            BlockPos p = new BlockPos(st.ax() + t, fy, st.az());
+            if (!l.hasChunkAt(p)) break;
+            var b = l.getBlockState(p);
+            if (b.is(Blocks.POLISHED_BLACKSTONE_BRICKS) || b.is(Blocks.DEEPSLATE_TILES)) return t;
+        }
+        return AltarShrine.procT(d.category());
+    }
+
+    /** Tam dai sanh theo quy tac: ben phai Ấn Hồn Đài (huong Dong), sat vanh ngoai. y = mat nen dien dan. */
+    public static BlockPos hallCenter(WorldBuildData.Settlement st, int shrineT) {
+        return new BlockPos(st.ax() + shrineT + PATH_GAP + 1 + HALF_U, st.y() - 1, st.az());
+    }
+
+    /** Bao dam co Hiep Hoi o dung cho (da dung xong thanh = co Settlement). true neu da co hoac vua dung/dung lai. */
     public static boolean ensure(ServerLevel ow, CityDef d) {
         if (!eligible(d)) return false;
         GuildHalls halls = GuildHalls.get(ow);
-        if (halls.has(d.id())) return true;
+        if (halls.has(d.id()) && halls.isCurrent(d.id())) return true;
         WorldBuildData.Settlement st = WorldBuildData.get(ow).settlements().get(d.id());
         if (st == null) return false;
-        int cx = st.cx(), cz = st.cz();
-        GuildScan.Hit hit = GuildScan.find(ow, st.ax(), st.az(), st.y()); // thanh import: tan dung cong trinh lon co san
-        if (hit != null) {
-            set(ow, hit.board().getX(), hit.board().getY(), hit.board().getZ(), GuildRegistry.BOARD.get());
-            set(ow, hit.board().getX(), hit.board().getY() + 1, hit.board().getZ(), Blocks.LANTERN);
-            spawnNpc(ow, hit.npc());
-            halls.put(d.id(), hit.npc());
-            LOG.info("Guild hall of {} adopted existing building ({} cells) at {}", d.id(), hit.area(), hit.npc());
-            return true;
-        }
-        int[] spot = findInside(ow, st);
-        int floorY, hx, hz;
-        Direction out;
-        if (spot != null) {
-            hx = spot[0]; hz = spot[1]; floorY = spot[2];
-            out = Math.abs(cx - hx) >= Math.abs(cz - hz) ? (cx > hx ? Direction.EAST : Direction.WEST) : (cz > hz ? Direction.SOUTH : Direction.NORTH);
-        } else {
-            int[] adj = adjacent(ow, st);
-            if (adj == null) return false;
-            hx = adj[0]; hz = adj[1]; floorY = adj[2];
-            out = Direction.from3DDataValue(adj[3]);
-        }
-        BlockPos npc = GuildHallBuild.build(ow, hx, hz, floorY, out);
+        int t = shrineOuter(ow, st, d);
+        BlockPos hc = hallCenter(st, t);
+        if (!footprintLoaded(ow, hc, t, st)) return false;
+        if (halls.has(d.id())) removeOld(ow, halls.get(d.id()));
+        flatten(ow, hc.getX(), hc.getZ(), hc.getY() - 1);
+        pathToShrine(ow, st, t, hc);
+        BlockPos npc = GuildHallBuild.build(ow, hc.getX(), hc.getZ(), hc.getY() - 1, Direction.WEST);
         spawnNpc(ow, npc);
         halls.put(d.id(), npc);
-        LOG.info("Guild hall of {} built at {} ({})", d.id(), npc, spot != null ? "inside" : "adjacent");
+        LOG.info("Guild hall of {} built at {} (east of the Altar Shrine)", d.id(), npc);
         return true;
     }
 
-    /** Chi cong nhan marker hukhong:guild cua cau truc import. */
+    /** Cong trinh import khong con 'tiep quan' / marker: dat theo quy tac chung. */
     public static void placeImported(StructurePlacer.Placed p, CityDef d) {
-        if (!eligible(d) || p.st().marker("guild") == null) return;
-        ServerLevel l = p.level();
-        GuildHalls halls = GuildHalls.get(l);
-        if (halls.has(d.id())) return;
-        BlockPos m = p.marker("guild", p.origin());
-        BlockPos board = l.getBlockState(m.east()).isAir() ? m.east() : m.west();
-        set(l, board.getX(), board.getY(), board.getZ(), GuildRegistry.BOARD.get());
-        spawnNpc(l, m);
-        halls.put(d.id(), m);
+        if (eligible(d)) ensure(p.level(), d);
     }
 
-    // ---- tim cho ----
-
-    private static boolean flat(ServerLevel l, int x, int z, int[] yOut) {
-        int y0 = -9999;
-        for (int xx = x - W - 1; xx <= x + W + 1; xx++) for (int zz = z - D - 1; zz <= z + D + 1; zz++) {
-            if (!l.hasChunkAt(new BlockPos(xx, 64, zz))) return false;
-            int y = l.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, xx, zz) - 1;
-            if (y0 == -9999) y0 = y;
-            if (y != y0) return false;
-            BlockPos bp = new BlockPos(xx, y, zz);
-            if (!l.getFluidState(bp).isEmpty() || !l.getBlockState(bp).blocksMotion()) return false;
-        }
-        yOut[0] = y0;
+    private static boolean footprintLoaded(ServerLevel l, BlockPos hc, int t, WorldBuildData.Settlement st) {
+        int[][] pts = {{st.ax() + t + 1, st.az()}, {hc.getX() - V_FRONT, hc.getZ() - HALF_U}, {hc.getX() + V_BACK, hc.getZ() + HALF_U},
+                {hc.getX() - V_FRONT, hc.getZ() + HALF_U}, {hc.getX() + V_BACK, hc.getZ() - HALF_U}, {hc.getX(), hc.getZ()}};
+        for (int[] p : pts) if (!l.hasChunkAt(new BlockPos(p[0], hc.getY(), p[1]))) return false;
         return true;
     }
 
-    private static int[] findInside(ServerLevel l, WorldBuildData.Settlement st) {
-        int cx = st.cx(), cz = st.cz();
-        List<int[]> cand = new ArrayList<>();
-        for (int x = st.minX() + W + 3; x <= st.maxX() - W - 3; x += 3)
-            for (int z = st.minZ() + D + 3; z <= st.maxZ() - D - 3; z += 3) {
-                if (Math.abs(x - cx) <= 8 || Math.abs(z - cz) <= 8) continue; // quang truong + truc duong
-                cand.add(new int[]{x, z});
+    /** Chi san/don dung vet dat dai sanh: lap dat duoi toi 24 o, don 22 o phia tren. */
+    private static void flatten(ServerLevel l, int hx, int hz, int floorY) {
+        for (int x = hx - V_FRONT; x <= hx + V_BACK; x++) for (int z = hz - HALF_U; z <= hz + HALF_U; z++) {
+            for (int d = 0; d <= 24; d++) {
+                BlockPos bp = new BlockPos(x, floorY - d, z);
+                var s = l.getBlockState(bp);
+                if (d > 0 && s.blocksMotion() && l.getFluidState(bp).isEmpty()) break;
+                l.setBlock(bp, (d == 0 ? Blocks.STONE_BRICKS : Blocks.STONE).defaultBlockState(), 18);
             }
-        cand.sort(Comparator.comparingInt(c -> (c[0] - cx) * (c[0] - cx) + (c[1] - cz) * (c[1] - cz)));
-        int[] y = new int[1];
-        for (int[] c : cand) if (flat(l, c[0], c[1], y)) return new int[]{c[0], c[1], y[0]};
-        return null;
+            for (int h = 1; h <= 22; h++) {
+                BlockPos bp = new BlockPos(x, floorY + h, z);
+                if (!l.getBlockState(bp).isAir()) l.setBlock(bp, Blocks.AIR.defaultBlockState(), 18);
+            }
+        }
     }
 
-    /** Ngay ben ngoai tuong: thu Dong, Tay, Nam, Bac, 3 lech moi huong. Tra {x, z, floorY, huong cua (3D data value)}. */
-    private static int[] adjacent(ServerLevel l, WorldBuildData.Settlement st) {
-        int cx = st.cx(), cz = st.cz();
-        Direction[] sides = {Direction.EAST, Direction.WEST, Direction.SOUTH, Direction.NORTH};
-        for (Direction s : sides) for (int off : new int[]{0, 12, -12}) {
-            int ax = s.getAxis() == Direction.Axis.X ? (s == Direction.EAST ? st.maxX() + 8 + W : st.minX() - 8 - W) : cx + off;
-            int az = s.getAxis() == Direction.Axis.Z ? (s == Direction.SOUTH ? st.maxZ() + 8 + D : st.minZ() - 8 - D) : cz + off;
-            BlockPos p = new BlockPos(ax, 64, az);
-            if (!l.hasChunkAt(p)) continue;
-            var b = l.getBiome(p);
-            if (b.is(BiomeTags.IS_OCEAN) || b.is(BiomeTags.IS_RIVER)) continue;
-            int gy = l.getHeight(Heightmap.Types.WORLD_SURFACE_WG, ax, az) - 1;
-            if (!l.getFluidState(new BlockPos(ax, gy, az)).isEmpty()) continue;
-            int y0 = CityBuilder.prepare(l, ax, az, W + 2, 24);
-            return new int[]{ax, az, y0, s.getOpposite().get3DDataValue()};
+    /** Loi di ngan 3 o rong tu vanh ngoai dien dan toi bac thang hien dai sanh. */
+    private static void pathToShrine(ServerLevel l, WorldBuildData.Settlement st, int t, BlockPos hc) {
+        int fy = st.y() - 1;
+        for (int x = st.ax() + t + 1; x <= hc.getX() - V_FRONT; x++) for (int dz = -1; dz <= 1; dz++) {
+            int z = st.az() + dz;
+            for (int d = 1; d <= 24; d++) {
+                BlockPos bp = new BlockPos(x, fy - d, z);
+                if (l.getBlockState(bp).blocksMotion() && l.getFluidState(bp).isEmpty()) break;
+                l.setBlock(bp, Blocks.STONE.defaultBlockState(), 18);
+            }
+            l.setBlock(new BlockPos(x, fy, z), (Math.abs(dz) == 1 ? Blocks.POLISHED_BLACKSTONE_BRICKS : Blocks.STONE_BRICKS).defaultBlockState(), 18);
+            for (int h = 1; h <= 4; h++) {
+                BlockPos bp = new BlockPos(x, fy + h, z);
+                if (!l.getBlockState(bp).isAir()) l.setBlock(bp, Blocks.AIR.defaultBlockState(), 18);
+            }
         }
-        return null;
+    }
+
+    /** Go le tan + bang cua hall cu (vi tri sai) truoc khi dung lai o cho dung. */
+    static void removeOld(ServerLevel l, BlockPos old) {
+        if (l.hasChunkAt(old)) {
+            for (Villager v : l.getEntitiesOfClass(Villager.class, new AABB(old).inflate(24, 16, 24), v -> v.getTags().contains(NPC_TAG))) v.discard();
+        }
+        for (int x = old.getX() - 12; x <= old.getX() + 12; x++) for (int z = old.getZ() - 12; z <= old.getZ() + 12; z++) {
+            if (!l.hasChunkAt(new BlockPos(x, old.getY(), z))) continue;
+            for (int y = old.getY() - 6; y <= old.getY() + 10; y++) {
+                BlockPos bp = new BlockPos(x, y, z);
+                if (l.getBlockState(bp).is(GuildRegistry.BOARD.get())) {
+                    l.setBlock(bp, Blocks.AIR.defaultBlockState(), 18);
+                    if (l.getBlockState(bp.above()).is(Blocks.LANTERN)) l.setBlock(bp.above(), Blocks.AIR.defaultBlockState(), 18);
+                }
+            }
+        }
     }
 
     // ---- le tan ----

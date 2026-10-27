@@ -13,6 +13,7 @@ public final class SkillNet {
         com.hukhong.flight.FlightNet.register(r);
         com.hukhong.audio.AudioNet.register(r);
         com.hukhong.banmenh.BanMenhNet.register(r);
+        com.hukhong.client.combatui.CombatTextPayload.register(r);
         com.hukhong.artifact.ArtifactNet.register(r);
         com.hukhong.passive.PassiveNet.register(r);
         com.hukhong.client.ambient.AmbientSyncPayload.register(r);

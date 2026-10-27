@@ -5,12 +5,39 @@ import com.hukhong.story.StoryDocs;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import com.hukhong.client.objective.ClientObjective;
+import com.hukhong.travel.TravelNet;
+import com.hukhong.travel.TravelRegistry;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
+import net.neoforged.neoforge.network.PacketDistributor;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Nhật ký truyện (phím J): danh sách Văn Kiện đã thu + nội dung + tiến trình. Chỉ đọc. */
 public class JournalScreen extends Screen {
     private static final int GOLD = 0xFFFFD34F, GREY = 0xFF888888, WHITE = 0xFFEEEEEE, ROW = 12;
     private String selected;
     private int x0, y0, pw, ph;
+    private int destIdx;
+    private Button destBtn, goBtn, npcBtn;
+    private static long npcReadyMs;
+
+    /** "obj" (neu co muc tieu cung chieu) + cac diem da kham pha. */
+    private List<String> dests() {
+        List<String> l = new ArrayList<>();
+        if (ClientObjective.sameDimTarget() != null) l.add("obj");
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) l.addAll(mc.player.getData(TravelRegistry.TRAVEL.get()).seen());
+        return l;
+    }
+
+    private Component destLabel() {
+        List<String> l = dests();
+        if (l.isEmpty()) return Component.translatable("hukhong.travel.none");
+        String id = l.get(Math.floorMod(destIdx, l.size()));
+        return Component.translatable(id.equals("obj") ? "hukhong.travel.objective" : com.hukhong.travel.TravelMath.nameKey(id));
+    }
 
     public JournalScreen() { super(Component.translatable("hukhong.story.journal.title")); }
 
@@ -23,6 +50,18 @@ public class JournalScreen extends Screen {
         x0 = (width - pw) / 2;
         y0 = (height - ph) / 2;
         if (selected == null) for (String d : StoryClient.data().docs()) { selected = d; break; }
+        int bx = x0 + 124;
+        destBtn = addRenderableWidget(Button.builder(destLabel(), b -> { destIdx++; b.setMessage(destLabel()); })
+                .bounds(bx, y0 + 18, 110, 12).build());
+        goBtn = addRenderableWidget(Button.builder(Component.translatable("hukhong.travel.go"), b -> {
+            List<String> l = dests();
+            if (!l.isEmpty()) PacketDistributor.sendToServer(new TravelNet.Go(l.get(Math.floorMod(destIdx, l.size()))));
+            onClose();
+        }).bounds(bx + 114, y0 + 18, 80, 12).build());
+        npcBtn = addRenderableWidget(Button.builder(Component.translatable("hukhong.quest.npc.button"), b -> {
+            PacketDistributor.sendToServer(new TravelNet.Resummon());
+            npcReadyMs = System.currentTimeMillis() + 60_000L;
+        }).bounds(bx, y0 + 32, 110, 12).build());
     }
 
     @Override
@@ -71,6 +110,12 @@ public class JournalScreen extends Screen {
             g.drawString(font, font.plainSubstrByWidth(t.getString(), pw - 16), x0 + 8, ly, unlocked ? 0xFF55FF55 : GREY, false);
             ly += ROW;
         }
+        npcBtn.active = System.currentTimeMillis() >= npcReadyMs;
+        goBtn.active = !dests().isEmpty();
+        destBtn.setMessage(destLabel());
+        destBtn.render(g, mx, my, pt);
+        goBtn.render(g, mx, my, pt);
+        npcBtn.render(g, mx, my, pt);
     }
 
     @Override

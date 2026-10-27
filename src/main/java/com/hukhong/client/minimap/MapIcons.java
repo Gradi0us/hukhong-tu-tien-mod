@@ -113,4 +113,21 @@ final class MapIcons {
             g.fill(x, y, x + 1, y + 1, color);
         }
     }
+
+    /** Quái thù địch: chấm đỏ 3x3 viền tối. */
+    static void mobDot(GuiGraphics g, int cx, int cy) {
+        g.fill(cx - 2, cy - 2, cx + 3, cy + 3, INK);
+        g.fill(cx - 1, cy - 1, cx + 2, cy + 2, RED);
+    }
+
+    /** Boss: đầu lâu 9x9 (trắng, hốc mắt tối) viền đỏ. */
+    static void bossSkull(GuiGraphics g, int cx, int cy) {
+        g.fill(cx - 5, cy - 5, cx + 6, cy + 6, INK);
+        g.fill(cx - 4, cy - 4, cx + 5, cy + 4, RED);
+        g.fill(cx - 3, cy - 3, cx + 4, cy + 2, WHITE);
+        g.fill(cx - 2, cy + 2, cx + 3, cy + 4, WHITE);
+        g.fill(cx - 2, cy - 1, cx, cy + 1, INK);
+        g.fill(cx + 1, cy - 1, cx + 3, cy + 1, INK);
+        g.fill(cx, cy + 1, cx + 1, cy + 2, INK);
+    }
 }

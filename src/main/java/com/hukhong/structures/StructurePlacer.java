@@ -97,13 +97,21 @@ public final class StructurePlacer {
         LOG.info("Queued structure {} at {} ({} columns)", st.name, origin, j.cols.length);
     }
 
+    /** Dat het hang doi ngay lap tuc, khong chia tick (dung luc tao the gioi, truoc khi nguoi choi vao). */
+    public static void drainAll() {
+        while (!QUEUE.isEmpty()) run(Long.MAX_VALUE);
+    }
+
     @SubscribeEvent
     public static void onTick(ServerTickEvent.Post e) {
+        run(System.nanoTime() + BUDGET_NS);
+    }
+
+    private static void run(long end) {
         Job j = QUEUE.peek();
         if (j == null) return;
-        long end = System.nanoTime() + BUDGET_NS;
         try {
-            while (j.next < j.cols.length && System.nanoTime() < end) {
+            while (j.next < j.cols.length && (end == Long.MAX_VALUE || System.nanoTime() < end)) {
                 int c = j.cols[j.next++];
                 try {
                     column(j, c & 0xFFFF, c >>> 16);
