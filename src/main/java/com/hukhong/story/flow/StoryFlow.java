@@ -172,7 +172,7 @@ public final class StoryFlow {
             }
             case LEVEL -> d.level() >= s.n();
             case MILESTONE -> d.level() >= s.n() && !d.milestoneLocked();
-            case SECT -> SectService.get(p).member();
+            case SECT -> SectService.get(p).member() || guildStarted(p);
             case DOCS -> sd.docs().size() >= s.n();
             case LAIR_SEEN -> (sd.lair() & 3) != 0;
             case CHG -> ChgKit.defeated(sd.lair(), s.n());
@@ -255,10 +255,19 @@ public final class StoryFlow {
         double bd = Double.MAX_VALUE;
         if (best == null) for (SectDef d : SectDef.ALL) {
             if (d.hidden() || !d.buildable()) continue;
+            // chỉ chỉ đường tới tông môn mình đủ điều kiện gia nhập (tránh kẹt ở tông từ chối)
+            if (SectService.checkApply(p, d, false) != com.hukhong.society.SectMath.OK) continue;
             double dd = SectEvents.site(ow, d).distSqr(p.blockPosition());
             if (dd < bd) { bd = dd; best = d; }
         }
+        if (best == null && !sd.member()) return cityPos(p, "luu_ly_cang"); // không hợp tông nào → đi Hiệp Hội (trong thành)
         return best == null ? null : SectEvents.site(ow, best);
+    }
+
+    /** Lối thay thế cho người không vào được tông môn: đã làm ít nhất 1 nhiệm vụ Hiệp Hội. */
+    static boolean guildStarted(ServerPlayer p) {
+        var g = com.hukhong.guild.GuildService.get(p);
+        return g.points() > 0 || g.done() > 0;
     }
 
     private static double dist2(ServerPlayer p, BlockPos t) {
