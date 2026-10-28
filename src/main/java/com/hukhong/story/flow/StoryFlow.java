@@ -224,7 +224,7 @@ public final class StoryFlow {
                 case "hua_co" -> cityPos(p, "co_tien_thanh");
                 default -> null; // NPC đi theo người chơi (su_phu)
             };
-            case BICANH -> cityPos(p, s.arg());
+            case BICANH -> { BlockPos c = cityPos(p, s.arg()); BlockPos pt = c == null || ow == null ? null : storyPortal(ow, c); yield pt != null ? pt : c; }
             case LINH_KHI, SECT -> sectPos(p, ow);
             case CHG -> lair(ow, s.n());
             case GATE -> WorldTierData.get(ow).gateway();
@@ -454,7 +454,28 @@ public final class StoryFlow {
                 }
                 if (!InvasionManager.active() && !InvasionManager.warning() && dist2(p, cd.center()) < 80.0 * 80.0) InvasionManager.warn(ow, 600);
             }
+            case BICANH -> {
+                if (p.tickCount % 100 != 7 || p.level().dimension() != Level.OVERWORLD) return;
+                ServerLevel ow = ow(p);
+                BlockPos city = cityPos(p, s.arg());
+                if (ow == null || city == null || dist2(p, city) > 300.0 * 300.0) return;
+                if (storyPortal(ow, city) == null) {
+                    com.hukhong.bicanh.BiCanhEvents.spawnPortalAround(ow, p, city.getX(), city.getZ(), 90, 150,
+                            com.hukhong.bicanh.BiCanhTier.BACH, 16);
+                }
+                setObjective(p, s); // cập nhật đích chỉ tới cổng thật
+            }
             default -> { }
         }
+    }
+
+    /** Cổng Bí Cảnh đang mở gần thành (≤220 block), hoặc null. */
+    static BlockPos storyPortal(ServerLevel ow, BlockPos city) {
+        BlockPos best = null; double bd = 220.0 * 220.0;
+        for (var pt : com.hukhong.bicanh.BiCanhSaved.get(ow).portals) {
+            double d = pt.pos().distSqr(city);
+            if (d < bd) { bd = d; best = pt.pos(); }
+        }
+        return best;
     }
 }

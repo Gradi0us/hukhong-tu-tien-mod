@@ -58,10 +58,16 @@ public final class BiCanhEvents {
 
     /** Sinh cổng quanh người chơi (tier null = tung theo cấp người chơi). Trả vị trí hoặc null. */
     public static BlockPos spawnPortalNear(ServerLevel ow, ServerPlayer p, BiCanhTier tier) {
+        return spawnPortalAround(ow, p, p.getX(), p.getZ(), 24, 64, tier, 12);
+    }
+
+    /** Sinh cổng quanh tâm (cx,cz) trong vành [dmin,dmax]; thử {@code tries} lần. Dùng cho nhiệm vụ truyện (ngoài vùng an toàn của thành). */
+    public static BlockPos spawnPortalAround(ServerLevel ow, ServerPlayer p, double cx, double cz, int dmin, int dmax, BiCanhTier tier, int tries) {
         BiCanhTier t = tier != null ? tier : BiCanhTier.roll(ow.random.nextDouble(), CultivationService.get(p).level());
-        for (int i = 0; i < 12; i++) {
-            double ang = ow.random.nextDouble() * Math.PI * 2, dist = 24 + ow.random.nextInt(41);
-            int x = (int) Math.floor(p.getX() + Math.cos(ang) * dist), z = (int) Math.floor(p.getZ() + Math.sin(ang) * dist);
+        for (int i = 0; i < tries; i++) {
+            double ang = ow.random.nextDouble() * Math.PI * 2, dist = dmin + ow.random.nextInt(Math.max(1, dmax - dmin + 1));
+            int x = (int) Math.floor(cx + Math.cos(ang) * dist), z = (int) Math.floor(cz + Math.sin(ang) * dist);
+            if (!ow.hasChunk(x >> 4, z >> 4)) ow.getChunk(x >> 4, z >> 4);
             if (!ow.hasChunk(x >> 4, z >> 4)) continue;
             int y = ow.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos mouth = new BlockPos(x, y, z);
