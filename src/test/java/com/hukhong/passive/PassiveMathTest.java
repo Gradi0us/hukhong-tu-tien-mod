@@ -27,8 +27,8 @@ class PassiveMathTest {
         assertEquals(1, PassiveMath.theTiers(3));
         assertEquals(5, PassiveMath.theTiers(15));
         assertEquals(5, PassiveMath.theTiers(99));
-        assertEquals(1.5 * 5, PassiveMath.theArmor(Aptitude.SSS, 15), 1e-9);
-        assertEquals(3.0 * 5, PassiveMath.theMaxHp(Aptitude.SSS, 15), 1e-9);
+        assertEquals(3.0 * 5, PassiveMath.theArmor(Aptitude.SSS, 15), 1e-9);
+        assertEquals(6.0 * 5, PassiveMath.theMaxHp(Aptitude.SSS, 15), 1e-9);
         assertEquals(0, PassiveMath.theArmor(Aptitude.SSS, 2), 1e-9);
         assertTrue(PassiveMath.theArmor(Aptitude.D, 9) < PassiveMath.theArmor(Aptitude.SSS, 9));
     }

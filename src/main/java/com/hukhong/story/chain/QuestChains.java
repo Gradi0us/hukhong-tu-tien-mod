@@ -122,12 +122,23 @@ public final class QuestChains {
 
     // ------------------------------------------------------------------ dich den (luu trong co)
     static void pickTarget(ServerPlayer p, String chain, int dmin, int dmax) {
-        double a = p.getRandom().nextDouble() * Math.PI * 2, r = dmin + p.getRandom().nextInt(Math.max(1, dmax - dmin));
-        int x = (int) Math.round(p.getX() + Math.cos(a) * r), z = (int) Math.round(p.getZ() + Math.sin(a) * r);
+        int x = 0, z = 0;
+        // Chi chon dat lien (khong bien/song) - tranh hang/cong bi chim duoi nuoc. Het luot thu thi lay diem cuoi.
+        for (int tries = 0; tries < 32; tries++) {
+            double a = p.getRandom().nextDouble() * Math.PI * 2, r = dmin + p.getRandom().nextInt(Math.max(1, dmax - dmin));
+            x = (int) Math.round(p.getX() + Math.cos(a) * r);
+            z = (int) Math.round(p.getZ() + Math.sin(a) * r);
+            if (dryLand(p.serverLevel(), x, z)) break;
+        }
         QuestData q = quest(p);
         String old = q.valueOf("qc." + chain + ".at:");
         if (!old.isEmpty()) q = q.withoutFlag("qc." + chain + ".at:" + old);
         DialogueService.setQuest(p, q.withFlag("qc." + chain + ".at:" + x + ":" + z));
+    }
+
+    /** Dat lien quanh (x,z): khong bien/song, it nuoc trong ban kinh 14, do doc vua phai (khong nap chunk). */
+    static boolean dryLand(ServerLevel sl, int x, int z) {
+        return com.hukhong.city.DrySites.suitable(sl, x, z, 14, 14);
     }
 
     public static BlockPos target(ServerPlayer p, String chain) {
@@ -301,6 +312,10 @@ public final class QuestChains {
             if (portal != null) {
                 setStage(p, DYING, 2);
                 if (q.has(choiceFlag(DYING, "keep"))) spawnAmbush(p, portal, 2, Component.translatable("hukhong.qc.dying.owner"), TAG_AMB);
+            } else if (!dryLand(sl, yt.getX(), yt.getZ())) {
+                // Diem cu (luu tu ban truoc) nam tren nuoc -> chon lai diem dat lien gan do
+                pickTarget(p, DYING, 40, 90);
+                p.displayClientMessage(Component.translatable("hukhong.qc.dying.moved"), true);
             }
         } else if (st == 2) {
             if (BiCanhManager.inRun(p)) { reward(p, DYING); setStage(p, DYING, 9); }

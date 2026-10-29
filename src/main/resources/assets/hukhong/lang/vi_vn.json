@@ -1446,5 +1446,6 @@
   "hukhong.liberation.objective": "Giải phóng vùng đất: hạ Hộ Vệ Tâm Hư Hóa",
   "hukhong.liberation.enter": "Bạn bước vào vùng Hư Hóa. Hạ Hộ Vệ ở Tâm Hư Hóa để giải phóng vùng đất.",
   "hukhong.liberation.tracker": "Giải phóng vùng đất: Tâm Hư Hóa cách %s block, hướng %s",
-  "hukhong.liberation.done": "Vùng đất đã được giải phóng! Hư Hóa tan dần, trời quang trở lại. +%s EXP, +%s Hồn Tinh"
+  "hukhong.liberation.done": "Vùng đất đã được giải phóng! Hư Hóa tan dần, trời quang trở lại. +%s EXP, +%s Hồn Tinh",
+  "hukhong.qc.dying.moved": "Vị trí hang cũ đã chìm dưới nước — mảnh bản đồ chỉ sang một hang mới trên đất liền gần đây."
 }
