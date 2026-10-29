@@ -125,6 +125,7 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
     public int phase() { return entityData.get(PHASE); }
 
     @Override public int huLevel() { return entityData.get(LEVEL); }
+    @Override public void setHuLevel(int level) { entityData.set(LEVEL, Math.max(1, level)); }
     @Override public double huWeight() { return 30.0; }
     @Override public float honTinhChance() { return 0f; }
     @Override public boolean isPushable() { return false; }

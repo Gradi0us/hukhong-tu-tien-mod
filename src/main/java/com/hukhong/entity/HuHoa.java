@@ -96,6 +96,7 @@ public final class HuHoa {
         mod(m, Attributes.ARMOR, "hu_lv_armor", Math.min(20, 0.25 * (level - 1)), add);
         mod(m, Attributes.MOVEMENT_SPEED, "hu_lv_speed", Math.min(0.30, 0.005 * (level - 1)), mul);
         m.setHealth(m.getMaxHealth());
+        if (m instanceof HuMob hm) hm.setHuLevel(level); // cap hien thi luon khop cap tinh chi so
     }
 
     public static Component name(int level, Component base) {

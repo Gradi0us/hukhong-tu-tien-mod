@@ -311,7 +311,7 @@ public final class BiCanhManager {
     }
 
     /** He so sat thuong boss Bi Canh (truoc 1.8 - qua manh voi cap thap). BossBuff con nhan them 1.3. */
-    public static final double BOSS_DMG_MUL = 1.15;
+    public static final double BOSS_DMG_MUL = 1.8;
 
     /** Cap quai trong run = cap trung binh nguoi choi trong Bi Canh (ban kinh 200 quanh goc), kep trong khoang cua bac. */
     static int runLevel(ServerLevel dim, Run run) {

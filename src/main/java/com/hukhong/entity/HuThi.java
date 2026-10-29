@@ -68,6 +68,7 @@ public class HuThi extends Zombie implements GeoEntity, HuMob {
     @Override public void aiStep() { super.aiStep(); HuHoa.particles(this); }
 
     @Override public int huLevel() { return entityData.get(LEVEL); }
+    @Override public void setHuLevel(int level) { entityData.set(LEVEL, Math.max(1, level)); }
     @Override public double huWeight() { return 1.0; }
     @Override public float honTinhChance() { return 0.20f; }
 
