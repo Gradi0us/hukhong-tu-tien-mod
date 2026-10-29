@@ -98,9 +98,7 @@ public final class CultivationHud {
         if (d.inBottleneck()) {
             g.drawString(font, Component.translatable("hukhong.hud.bottleneck"), x + 60, y, 0xFFFF5555, true);
         }
-        // Dong tien (vi Tu Tinh) ngay duoi HUD tu luyen
-        g.drawString(font, Component.translatable("hukhong.hud.tutinh", TuTinhText.of(Wallet.count(mc.player))),
-                x, y + 11, 0xFFE0C080, true);
+        // Vi Tu Tinh: khong ve tren HUD nua (xem bang K, tab Chi so); nhan tien hien thong bao kem icon.
     }
 
     private static int colorblindPath(Path p) {

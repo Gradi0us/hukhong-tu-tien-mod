@@ -174,6 +174,9 @@ public class ProfileScreen extends Screen {
         g.drawString(font, life == com.hukhong.age.AgeMath.UNLIMITED ? Component.translatable("hukhong.profile.lifespan.inf")
                 : Component.translatable("hukhong.profile.lifespan", life), lx, y, 0xFFBBBBBB);
         y += 11;
+        g.drawString(font, t("hukhong.profile.wallet", "Tử Tinh: %s",
+                com.hukhong.currency.TuTinhText.of(com.hukhong.currency.Wallet.count(minecraft.player))), lx, y, 0xFFE0C080);
+        y += 11;
         int leftEnd = y;
 
         // cột phải: bảng chỉ số

@@ -47,7 +47,7 @@ public final class ObjectiveHud {
         int maxW = Math.max(100, (int) (g.guiWidth() * 0.4f));
         List<FormattedCharSequence> ls = font.split(line, (int) (maxW / sc));
         if (ls.size() > 3) ls = ls.subList(0, 3);
-        int x = 6, y = 50, pad = 3;
+        int x = 6, y = 61, pad = 3; // duoi dong Kiep So
         float w = 0;
         for (var l : ls) w = Math.max(w, font.width(l) * sc);
         int boxW = (int) Math.ceil(w) + 2 * pad + 2, boxH = (int) Math.ceil(ls.size() * 9 * sc) + 2 * pad;

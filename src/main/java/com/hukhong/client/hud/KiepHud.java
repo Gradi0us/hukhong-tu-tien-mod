@@ -30,6 +30,6 @@ public final class KiepHud {
         float k = Difficulty.clientKiep, m = Difficulty.clientMult;
         int col = m < 1.3f ? 0xFFE0C080 : m < 1.8f ? 0xFFFF9A40 : 0xFFFF5555;
         g.drawString(mc.font, Component.translatable("hukhong.hud.kiep", String.format("%.1f", k), String.format("%.2f", m)),
-                6, 58, col, true);
+                6, 50, col, true); // cho dong Tu Tinh cu (da bo)
     }
 }
