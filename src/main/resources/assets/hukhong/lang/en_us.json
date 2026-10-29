@@ -1561,5 +1561,6 @@
   "hukhong.phap.thiem_bo.run": "Flash Step: light races at your heels!",
   "hukhong.phap.thiem_bo.out_of_mana": "Flash Step fades: out of mana",
   "hukhong.phap.thiem_bo.immune": "Overlord Body: immune to all damage for 3s",
-  "hukhong.phap.thiem_bo.immune_end": "Overlord Body fades"
+  "hukhong.phap.thiem_bo.immune_end": "Overlord Body fades",
+  "hukhong.phap.loi_tran.run": "⚡ Thunder Array — body empowered, speed surges"
 }

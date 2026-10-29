@@ -34,6 +34,8 @@ public final class PhapBeamMath {
     // ---- sát thương
     public static final double APT_MIN = 0.70, APT_MAX = 1.30;
     /** Hệ số nhịp = coef T cũ x PULSE_RATIO: 20 nhịp x 1,30 (SSS) x 0,105 ~ 2,73 lần T cũ. */
+    /** Tỉ lệ bạo kích cộng thêm (phân số) khi đang bắn tia (29/10). */
+    public static final double FIRE_CRIT_BONUS = 0.35;
     public static final double PULSE_RATIO = 0.17;   // 29/10: x1.62 (0.105 -> 0.17) theo phản hồi "sát thương hơi thấp"
 
     public static boolean locksT(PhapElement e) {

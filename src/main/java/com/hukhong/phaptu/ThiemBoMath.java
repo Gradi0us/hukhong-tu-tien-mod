@@ -35,4 +35,12 @@ public final class ThiemBoMath {
 
     /** Khoảng lùi an toàn: trừ biên 0,5 block sát tường. */
     public static double safeDist(double clearDist) { return Math.max(0, Math.min(DASH_DIST, clearDist - 0.5)); }
+
+    // ---- Lôi Trận (Pháp Lôi, giữ E): cùng tốc độ/tiêu hao như Thiểm Bộ + cường hoá thân thể
+    /** Giảm sát thương nhận khi đang Lôi Trận. */
+    public static final double LOI_DR = 0.20;
+    /** Mỗi LOI_ZAP_TICKS: sét nhỏ đánh kẻ địch gần nhất trong LOI_ZAP_RANGE ô, LOI_ZAP_COEF x Phép lực. */
+    public static final int LOI_ZAP_TICKS = 10;
+    public static final double LOI_ZAP_RANGE = 4.0, LOI_ZAP_COEF = 0.30;
+    public static double loiZapDamage(double spellPower) { return LOI_ZAP_COEF * spellPower; }
 }

@@ -156,6 +156,8 @@ public final class PhapBeamService {
         s.age = 0;
         s.drainAcc = 0;
         slow(p, PhapBeamMath.FIRE_SLOW);
+        AttributeInstance cc = p.getAttribute(com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.CRIT_CHANCE));
+        if (cc != null) cc.addOrUpdateTransientModifier(new AttributeModifier(CRIT_ID, PhapBeamMath.FIRE_CRIT_BONUS, AttributeModifier.Operation.ADD_VALUE));
         CastAnimHook.send(p, CastAnim.CHANNEL);
         if (p.level() instanceof ServerLevel lv) {
             Vec3 at = origin(p);
@@ -349,9 +351,13 @@ public final class PhapBeamService {
         if (a != null) a.addOrUpdateTransientModifier(new AttributeModifier(SLOW_ID, amount, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
     }
 
+    private static final net.minecraft.resources.ResourceLocation CRIT_ID = com.hukhong.stats.ModAttributes.id("phap/beam_crit");
+
     private static void unslow(ServerPlayer p) {
         AttributeInstance a = p.getAttribute(Attributes.MOVEMENT_SPEED);
         if (a != null) a.removeModifier(SLOW_ID);
+        AttributeInstance cc = p.getAttribute(com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.CRIT_CHANCE));
+        if (cc != null) cc.removeModifier(CRIT_ID); // bao kich +35% chi khi dang ban
     }
 
     private static void play(ServerLevel lv, Vec3 at, SoundEvent s, float vol, float pitch) {

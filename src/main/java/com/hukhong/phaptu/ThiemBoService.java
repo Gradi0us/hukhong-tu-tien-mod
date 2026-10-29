@@ -60,7 +60,9 @@ public final class ThiemBoService {
     private static final Map<UUID, Long> IMMUNE = new ConcurrentHashMap<>();
     private static final ResourceLocation SPEED_ID = ModAttributes.id("phap/thiem_bo_speed");
     private static final ResourceLocation STEP_ID = ModAttributes.id("phap/thiem_bo_step");
-    private static final int GOLD = 0xFFE066;
+    private static final int GOLD = 0xFFE066, VIOLET = 0x9A7BFF, CYAN = 0x8FD8FF;
+    static boolean isLoi(ServerPlayer p) { return PhapTu.element(p) == PhapElement.LOI; }
+    static int col(ServerPlayer p) { return isLoi(p) ? VIOLET : GOLD; }
 
     public static void register(PayloadRegistrar r) {
         r.playToServer(ThiemBoPayload.TYPE, ThiemBoPayload.STREAM_CODEC, (pl, ctx) -> {
@@ -73,7 +75,8 @@ public final class ThiemBoService {
     /** Quang, thế bật, trang Pháp Tu, phím E đang là Thiểm Bộ mặc định (không bị gán sách kỹ năng khác). */
     public static boolean eligible(ServerPlayer p) {
         if (!p.isAlive() || p.isSpectator() || MaRules.isLost(p)) return false;
-        if (PhapTu.element(p) != PhapElement.QUANG) return false;
+        PhapElement el = PhapTu.element(p);
+        if (el != PhapElement.QUANG && el != PhapElement.LOI) return false; // Quang: Thiem Bo; Loi: Loi Tran (giu E)
         SkillState st = SkillService.state(p);
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         Path page = Skill.skillPath(d, st.page);
@@ -173,7 +176,9 @@ public final class ThiemBoService {
         AttributeInstance st = p.getAttribute(Attributes.STEP_HEIGHT);
         if (st != null) st.addOrUpdateTransientModifier(new AttributeModifier(STEP_ID, ThiemBoMath.STEP_BONUS, AttributeModifier.Operation.ADD_VALUE));
         p.setSprinting(true);
-        p.displayClientMessage(Component.translatable("hukhong.phap.thiem_bo.run").withColor(GOLD), true);
+        p.displayClientMessage(isLoi(p) ? Component.translatable("hukhong.phap.loi_tran.run").withColor(VIOLET)
+                : Component.translatable("hukhong.phap.thiem_bo.run").withColor(GOLD), true);
+        if (isLoi(p)) Fx.shell(lv, p, p, 1.15f, VIOLET, 14);
         lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 0.25f, 2.0f);
     }
 
@@ -194,8 +199,10 @@ public final class ThiemBoService {
         s.last = cur;
         if (prev.distanceToSqr(cur) < 0.01) return;
         Vec3 a = prev.add(0, 0.9, 0), b = cur.add(0, 0.9, 0);
-        Fx.ribbon(lv, p, a, b, 0, 8, 0, 0.28f, GOLD);
-        Fx.ribbon(lv, p, a.add(0, 0.5, 0), b.add(0, 0.5, 0), 0, 6, 0, 0.1f, 0xFFFFFF);
+        boolean loi = isLoi(p);
+        Fx.ribbon(lv, p, a, b, 0, 8, 0, 0.28f, loi ? VIOLET : GOLD);
+        Fx.ribbon(lv, p, a.add(0, 0.5, 0), b.add(0, 0.5, 0), 0, 6, 0, 0.1f, loi ? CYAN : 0xFFFFFF);
+        if (loi && s.held % ThiemBoMath.LOI_ZAP_TICKS == 0) loiZap(p, lv);
         var rnd = p.getRandom();
         for (int i = 0; i < 2; i++) {
             Vec3 q = prev.lerp(cur, rnd.nextDouble()).add((rnd.nextDouble() - 0.5) * 0.5, 0.2 + rnd.nextDouble() * 1.4, (rnd.nextDouble() - 0.5) * 0.5);
@@ -203,6 +210,22 @@ public final class ThiemBoService {
         }
         if (s.held % 6 == 0) lv.playSound(null, cur.x, cur.y, cur.z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 0.35f, 1.9f);
         if (s.held % 14 == 0) lv.playSound(null, cur.x, cur.y, cur.z, SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 0.3f, 1.9f);
+    }
+
+    /** Loi Tran: tia set nho tu than nguoi danh ke dich gan nhat (ban kinh LOI_ZAP_RANGE). */
+    private static void loiZap(ServerPlayer p, ServerLevel lv) {
+        double r = ThiemBoMath.LOI_ZAP_RANGE;
+        var list = lv.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, p.getBoundingBox().inflate(r),
+                e -> e != p && e.isAlive() && PhapRuntime.valid(p, e));
+        net.minecraft.world.entity.LivingEntity t = null;
+        for (var e : list) if (t == null || e.distanceToSqr(p) < t.distanceToSqr(p)) t = e;
+        if (t == null) return;
+        float dmg = (float) ThiemBoMath.loiZapDamage(com.hukhong.stats.StatService.spellPower(p));
+        com.hukhong.skillbook.SkillBookRuntime.hurt(p, t, dmg);
+        Vec3 a = p.position().add(0, 1.1, 0), b = t.position().add(0, t.getBbHeight() * 0.6, 0);
+        Fx.ribbon(lv, p, a, b, 0, 4, 0, 0.08f, CYAN);
+        lv.sendParticles(ParticleTypes.ELECTRIC_SPARK, b.x, b.y, b.z, 8, 0.2, 0.3, 0.2, 0.1);
+        lv.playSound(null, b.x, b.y, b.z, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.PLAYERS, 0.35f, 1.8f);
     }
 
     // ------------------------------------------------------------------ bấm nhanh: lùi + Bá Thể
@@ -258,7 +281,11 @@ public final class ThiemBoService {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onIncoming(LivingIncomingDamageEvent e) {
-        if (!(e.getEntity() instanceof ServerPlayer p) || !immune(p)) return;
+        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        if (!immune(p)) {
+            if (sprinting(p) && isLoi(p)) e.setAmount((float) (e.getAmount() * (1 - ThiemBoMath.LOI_DR))); // Loi Tran cuong hoa than the
+            return;
+        }
         if (e.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return; // hư không / lệnh /kill
         e.setCanceled(true);
         if (p.level() instanceof ServerLevel lv)

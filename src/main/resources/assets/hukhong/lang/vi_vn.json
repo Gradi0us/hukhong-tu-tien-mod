@@ -1561,5 +1561,6 @@
   "hukhong.phap.thiem_bo.run": "Thiểm Bộ: tia sáng cuốn theo gót chân!",
   "hukhong.phap.thiem_bo.out_of_mana": "Thiểm Bộ tan: hết Pháp Lực",
   "hukhong.phap.thiem_bo.immune": "Bá Thể: miễn nhiễm mọi sát thương trong 3 giây",
-  "hukhong.phap.thiem_bo.immune_end": "Bá Thể tan biến"
+  "hukhong.phap.thiem_bo.immune_end": "Bá Thể tan biến",
+  "hukhong.phap.loi_tran.run": "⚡ Lôi Trận — thân thể cường hóa, tốc độ tăng vọt"
 }
