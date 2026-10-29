@@ -139,7 +139,7 @@ public final class SkillBookService {
                 return;
             }
         }
-        take(p, s -> s.is(ModItems.HON_TINH.get()), c.honTinh());
+        com.hukhong.currency.Wallet.payHonTinh(p, c.honTinh());
         if (c.scrolls() > 0) take(p, s -> SkillBookRegistry.skillOf(s) == book, c.scrolls());
         if (c.contribution() > 0) p.setData(SocietyRegistry.SECT, sect.withWallet(sect.wallet() - c.contribution()));
         set(p, d.withLevel(id, lv + 1));
@@ -150,7 +150,7 @@ public final class SkillBookService {
     public static Component nameOf(String id) { return SkillBook.nameOf(id); }
 
     // ------------------------------------------------------------------ kho đồ
-    public static int honTinh(ServerPlayer p) { return count(p, s -> s.is(ModItems.HON_TINH.get())); }
+    public static int honTinh(ServerPlayer p) { return (int) Math.min(Integer.MAX_VALUE, com.hukhong.currency.Wallet.honTinh(p)); }
 
     public static int countScrolls(ServerPlayer p, BookSkill b) { return b == null ? 0 : count(p, s -> SkillBookRegistry.skillOf(s) == b); }
 

@@ -63,8 +63,7 @@ public final class CoreService {
     public static int luckOf(ServerPlayer p, CultivationData d) {
         int apt = CoreRoller.aptitudeLuck(bestAptitude(d));
         int stars = 0;
-        for (ItemStack s : p.getInventory().items) if (s.is(ModItems.HON_TINH.get())) stars += s.getCount();
-        for (ItemStack s : p.getInventory().offhand) if (s.is(ModItems.HON_TINH.get())) stars += s.getCount();
+        stars = (int) Math.min(MAX_HON_TINH_LUCK, com.hukhong.currency.Wallet.honTinh(p));
         return apt + Math.min(MAX_HON_TINH_LUCK, stars * LUCK_PER_HON_TINH);
     }
 

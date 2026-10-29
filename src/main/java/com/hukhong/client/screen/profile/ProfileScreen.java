@@ -33,7 +33,8 @@ public class ProfileScreen extends Screen {
     private static final int GOLD = 0xFFFFD34F, GREEN = 0xFF55FF55, GREY = 0xFF888888;
     private static final int ROW = 14, TAB_H = 14;
 
-    private static final int TABS = 6, TAB_GAP = 3;
+    private static final int TABS = 7, TAB_GAP = 3;
+    private final LichTab lich = new LichTab();
     private final List<int[]> boneRows = new ArrayList<>(); // {y, slot}
     private int tab = 0;
     private double scroll = 0;
@@ -50,7 +51,7 @@ public class ProfileScreen extends Screen {
 
     public ProfileScreen() { super(Component.translatable("hukhong.profile.title")); }
 
-    /** Mở thẳng một tab (0 Chỉ số, 1 Lõi, 2 Hệ, 3 Hồn Cốt, 4 Nội Tại, 5 Kỹ Năng). */
+    /** Mở thẳng một tab (0 Chỉ số, 1 Lõi, 2 Hệ, 3 Hồn Cốt, 4 Nội Tại, 5 Kỹ Năng, 6 Lịch). */
     public ProfileScreen withTab(int t) { tab = Math.max(0, Math.min(TABS - 1, t)); return this; }
 
     @Override
@@ -114,6 +115,7 @@ public class ProfileScreen extends Screen {
             case 3 -> t("hukhong.profile.tab.bones", "Hồn Cốt");
             case 4 -> t("hukhong.profile.tab.passives", "Nội Tại");
             case 5 -> t("hukhong.profile.tab.skills", "Kỹ Năng");
+            case 6 -> t("hukhong.profile.tab.cal", "Lịch");
             default -> t("hukhong.profile.tab.systems", "Hệ");
         };
     }
@@ -160,6 +162,7 @@ public class ProfileScreen extends Screen {
             case 3 -> renderBones(g, mx, my);
             case 4 -> renderPassives(g);
             case 5 -> renderSkills(g);
+            case 6 -> lich.render(g, font, cx, cy, cw, (int) scroll, mx, my, tooltip);
             default -> renderSystems(g);
         };
         g.disableScissor();
@@ -218,6 +221,9 @@ public class ProfileScreen extends Screen {
         y += 11;
         g.drawString(font, t("hukhong.profile.wallet", "Tử Tinh: %s",
                 com.hukhong.currency.TuTinhText.of(com.hukhong.currency.Wallet.count(minecraft.player))), lx, y, 0xFFE0C080);
+        y += 11;
+        g.drawString(font, t("hukhong.profile.hontinh", "Hồn Tinh: %s",
+                com.hukhong.currency.TuTinhText.honTinh(com.hukhong.currency.Wallet.honTinh(minecraft.player))), lx, y, 0xFFC9A0F0);
         y += 11;
         int leftEnd = y;
 
@@ -510,6 +516,7 @@ public class ProfileScreen extends Screen {
                 return true;
             }
         }
+        if (tab == 6 && mx >= cx && mx < cx + cw && my >= cy && my < cy + ch && lich.click(mx, my)) return true;
         if (tab == 3 && mx >= cx && mx < cx + cw && my >= cy && my < cy + ch) {
             for (int[] r : boneRows) {
                 if (my >= r[0] && my < r[0] + ROW * 2) {

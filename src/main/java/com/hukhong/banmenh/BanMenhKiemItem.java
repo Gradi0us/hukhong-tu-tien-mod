@@ -111,7 +111,7 @@ public class BanMenhKiemItem extends SwordItem {
     @Override
     public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (hand == net.minecraft.world.InteractionHand.MAIN_HAND && player.getOffhandItem().is(ModItems.HON_TINH.get())) {
+        if (hand == net.minecraft.world.InteractionHand.MAIN_HAND && (player.isShiftKeyDown() || player.getOffhandItem().is(ModItems.HON_TINH.get()))) {
             if (!level.isClientSide && player instanceof ServerPlayer sp) BanMenhService.tryEvolve(sp, stack, true);
             return net.minecraft.world.InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }

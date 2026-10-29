@@ -1,0 +1,6 @@
+{
+  "type": "prophecy", "lane": "story",
+  "recurrence": {"type": "every", "days": 3}, "start_offset": 50000, "duration": 14000,
+  "location": {"city": 6}, "level": [45, 70], "rewards": "hukhong.cal.reward.prophecy_chg_hang_ch7",
+  "lore": {"faction": "CHG", "chapter": [7, 7], "sets_flags": ["wl.prophecy_chg_hang"]}
+}

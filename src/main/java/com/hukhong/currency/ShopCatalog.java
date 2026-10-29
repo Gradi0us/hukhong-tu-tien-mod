@@ -116,7 +116,7 @@ public final class ShopCatalog {
             add(o, 8L, AlchemyRegistry.HUYET_THAM.get(), 1, 0);
             add(o, 10L, AlchemyRegistry.HOA_LIEN.get(), 1, 0);
         }
-        if (kind == 4 || kind == 5) add(o, 30L, ModItems.HON_TINH.get(), 1, 0);
+        // Hon Tinh la tien trong vi, khong con thu mua duoc.
         return o;
     }
 

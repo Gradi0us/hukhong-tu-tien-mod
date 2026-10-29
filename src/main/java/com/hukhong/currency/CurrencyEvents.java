@@ -54,7 +54,16 @@ public final class CurrencyEvents {
         if (!(e.getPlayer() instanceof ServerPlayer sp)) return;
         ItemEntity ie = e.getItemEntity();
         ItemStack s = ie.getItem();
-        if (!isCoin(s) || ie.hasPickUpDelay()) return;
+        if (ie.hasPickUpDelay()) return;
+        if (s.is(com.hukhong.item.ModItems.HON_TINH.get())) {
+            e.setCanPickup(net.neoforged.neoforge.common.util.TriState.FALSE);
+            sp.take(ie, s.getCount());
+            long n = s.getCount();
+            ie.discard();
+            Wallet.grantHonTinh(sp, n);
+            return;
+        }
+        if (!isCoin(s)) return;
         long v = WalletMath.convert(s.is(CurrencyRegistry.HA.get()) ? s.getCount() : 0,
                 s.is(CurrencyRegistry.TRUNG.get()) ? s.getCount() : 0, s.is(CurrencyRegistry.THUONG.get()) ? s.getCount() : 0);
         e.setCanPickup(net.neoforged.neoforge.common.util.TriState.FALSE);
@@ -68,7 +77,9 @@ public final class CurrencyEvents {
     @SubscribeEvent
     public static void onTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer sp) || sp.tickCount % 20 != 7) return;
-        if (sp.containerMenu.getCarried() != null && isCoin(sp.containerMenu.getCarried())) return; // dang cam tren chuot
+        var carried = sp.containerMenu.getCarried();
+        if (carried != null && (isCoin(carried) || carried.is(com.hukhong.item.ModItems.HON_TINH.get()))) return; // dang cam tren chuot
+        if (Wallet.convertHonTinhInventory(sp) > 0) sp.inventoryMenu.broadcastChanges();
         long v = Wallet.convertInventory(sp);
         if (v > 0) {
             sp.inventoryMenu.broadcastChanges();
@@ -80,6 +91,7 @@ public final class CurrencyEvents {
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer sp)) return;
+        Wallet.convertHonTinhInventory(sp);
         long v = Wallet.convertInventory(sp);
         if (v > 0) sp.displayClientMessage(Component.translatable("hukhong.tutinh.converted", TuTinhText.of(v)), false);
     }

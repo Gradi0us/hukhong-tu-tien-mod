@@ -1,0 +1,6 @@
+{
+  "type": "prophecy", "lane": "story",
+  "recurrence": {"type": "every", "days": 3}, "start_offset": 20000, "duration": 14000,
+  "location": {"city": 0}, "level": [10, 30], "rewards": "hukhong.cal.reward.prophecy_bi_canh_ch3",
+  "lore": {"faction": "TIEN_NHAN", "chapter": [3, 3], "sets_flags": ["wl.prophecy_bicanh"]}
+}

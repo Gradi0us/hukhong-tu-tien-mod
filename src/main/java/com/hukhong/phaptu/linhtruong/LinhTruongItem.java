@@ -98,7 +98,7 @@ public class LinhTruongItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (hand == InteractionHand.MAIN_HAND && player.getOffhandItem().is(ModItems.HON_TINH.get())) {
+        if (hand == InteractionHand.MAIN_HAND && (player.isShiftKeyDown() || player.getOffhandItem().is(ModItems.HON_TINH.get()))) {
             if (!level.isClientSide && player instanceof ServerPlayer sp && isOwner(stack, sp)) {
                 if (ArtifactService.tryUpgrade(sp, Path.PHAP)) LinhTruongService.syncStack(sp, stack);
             }

@@ -1,0 +1,6 @@
+{
+  "type": "yeu_vuong", "lane": "world",
+  "recurrence": {"type": "random", "weight": 0.35}, "start_offset": 30000, "duration": 12000,
+  "location": "random_city", "level": [40, 65], "rewards": "hukhong.cal.reward.yeu_vuong",
+  "lore": {"faction": "YEU_TOC"}
+}

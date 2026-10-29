@@ -128,7 +128,7 @@ public class CongPhapScreen extends Screen {
         return n;
     }
 
-    private int clientHonTinh() { return clientCount(s -> s.is(com.hukhong.item.ModItems.HON_TINH.get())); }
+    private int clientHonTinh() { return minecraft == null || minecraft.player == null ? 0 : (int) Math.min(Integer.MAX_VALUE, com.hukhong.currency.Wallet.honTinh(minecraft.player)); }
 
     private int clientScrolls(BookSkill b) { return b == null ? 0 : clientCount(s -> SkillBookRegistry.skillOf(s) == b); }
 

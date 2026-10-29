@@ -197,6 +197,7 @@ public final class LiberationManager {
         LiberationData ld = LiberationData.get(ow);
         ld.clearArena(heart);
         ld.addLiberated();
+        com.hukhong.story.world.HuAnh.addNear(ow, heart, -15);
         GUARD_AT.remove(LiberationData.key(heart));
         CRACKS.remove(LiberationData.key(heart));
         GEYSERS.removeIf(g -> Math.hypot(g.pos.getX() - heart.getX(), g.pos.getZ() - heart.getZ()) < REGION + 16);
@@ -210,7 +211,7 @@ public final class LiberationManager {
                 long exp = HuHoa.exp(30.0, zl, CultivationService.get(p).level());
                 if (exp > 0) CultivationService.addExp(p, exp);
                 int n = 12 + ow.random.nextInt(9);
-                ow.addFreshEntity(new ItemEntity(ow, p.getX(), p.getY() + 0.5, p.getZ(), new ItemStack(ModItems.HON_TINH.get(), n)));
+                com.hukhong.currency.Wallet.grantHonTinh(p, n);
                 p.sendSystemMessage(Component.translatableWithFallback("hukhong.liberation.done",
                         "Vùng đất đã được giải phóng! Hư Hóa tan dần, trời quang trở lại. +%s EXP, +%s Hồn Tinh", exp, n));
                 ow.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.0f, 1.2f);

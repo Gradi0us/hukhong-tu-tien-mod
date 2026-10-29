@@ -97,7 +97,7 @@ public final class SkillBookGameTests {
         // thiếu Hồn Tinh: không nâng
         SkillBookService.upgrade(p, "kiem_1", SkillBookMath.Mode.HON_TINH.ordinal());
         if (SkillBookService.data(p).level("kiem_1") != 1) h.fail("nang cap khi thieu Hon Tinh");
-        p.getInventory().add(new ItemStack(ModItems.HON_TINH.get(), 100));
+        com.hukhong.currency.Wallet.setHonTinh(p, 100); // Hon Tinh la tien trong vi
         SkillBookService.upgrade(p, "kiem_1", SkillBookMath.Mode.HON_TINH.ordinal());
         if (SkillBookService.data(p).level("kiem_1") != 2) h.fail("khong len cap 2");
         int expectLeft = 100 - SkillBookMath.cost(1, SkillBookService.gradeOf("kiem_1"), SkillBookMath.Mode.HON_TINH).honTinh();

@@ -57,13 +57,18 @@ public final class StoryService {
         d = d.withDoc(docId);
         p.displayClientMessage(Component.translatable("hukhong.story.collected", Component.translatable(doc.itemKey())), false);
         p.displayClientMessage(Component.translatable(doc.textKey()), false);
+        if (doc.chain() == 'c') { // Di thư Tiền Nhân: không gợi ý hang, chỉ ghi nhật ký
+            p.setData(StoryRegistry.STORY.get(), d);
+            sync(p);
+            return true;
+        }
         int bit = StoryDocs.lairBit(doc.chain());
         if ((d.lair() & bit) == 0 && d.chainCount(doc.chain()) >= StoryDocs.CLUES_FOR_LAIR) {
             d = d.withLair(bit); // chỉ lưu cờ; boss CHG ở bước sau
             p.displayClientMessage(Component.translatable("hukhong.story.lair." + doc.chain()), false);
             com.hukhong.chg.ChgService.revealLair(p, doc.chain() == 'a' ? 1 : 2);
         }
-        boolean full = d.chainCount(doc.chain()) >= 6;
+        boolean full = d.chainCount(doc.chain()) == 6; // đúng lần thứ 6 (bộ mở rộng lên 10 không kích lại)
         p.setData(StoryRegistry.STORY.get(), d);
         sync(p);
         if (full) com.hukhong.chg.ChgService.earlyEvent(p, doc.chain() == 'a' ? 1 : 2);

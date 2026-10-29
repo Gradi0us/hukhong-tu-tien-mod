@@ -224,11 +224,11 @@ public final class InvasionManager {
     private static void win(Invasion inv) {
         CitySavedData cd = CitySavedData.get(inv.level);
         cd.addWin();
+        com.hukhong.story.world.HuAnh.addNear(inv.level, inv.center, -10);
         CorruptionData.get(inv.level).cleanseNear(inv.center.getX(), inv.center.getZ(), BossScaling.cleanseCount(cd.invasionsWon()));
         for (ServerPlayer p : inv.level.players()) {
             if (p.distanceToSqr(inv.altar.getX(), inv.altar.getY(), inv.altar.getZ()) > 160 * 160) continue;
-            ItemStack st = new ItemStack(ModItems.HON_TINH.get(), 5);
-            if (!p.getInventory().add(st)) p.drop(st, false);
+            com.hukhong.currency.Wallet.grantHonTinh(p, 5);
         }
         com.hukhong.siege.SiegeDirector.victory();
         title(inv.level, Component.translatable("hukhong.invade.win"), Component.translatable("hukhong.invade.win_sub"));
@@ -238,6 +238,7 @@ public final class InvasionManager {
     private static void lose(Invasion inv) {
         CitySavedData d = CitySavedData.get(inv.level);
         d.setState(CitySavedData.State.RUIN);
+        com.hukhong.story.world.HuAnh.addNear(inv.level, inv.center, 20);
         CityBuilder.ruin(inv.level, inv.center);
         title(inv.level, Component.translatable("hukhong.invade.lose"), Component.translatable("hukhong.invade.lose_sub"));
         end(null);

@@ -130,29 +130,13 @@ public final class BanMenhService {
 
     // ------------------------------------------------------------------ tiến hóa bằng Hồn Tinh
 
+    /** Hồn Tinh trong ví (offhandOnly giữ lại cho tương thích chữ ký; ví không phân biệt tay). */
     public static int countTinh(ServerPlayer p, boolean offhandOnly) {
-        int n = 0;
-        var inv = p.getInventory();
-        for (ItemStack s : inv.offhand) if (s.is(ModItems.HON_TINH.get())) n += s.getCount();
-        if (!offhandOnly) for (ItemStack s : inv.items) if (s.is(ModItems.HON_TINH.get())) n += s.getCount();
-        return n;
+        return (int) Math.min(Integer.MAX_VALUE, com.hukhong.currency.Wallet.honTinh(p));
     }
 
     public static void takeTinh(ServerPlayer p, int n, boolean offhandOnly) {
-        var inv = p.getInventory();
-        for (ItemStack s : inv.offhand) {
-            if (n <= 0) return;
-            if (!s.is(ModItems.HON_TINH.get())) continue;
-            int t = Math.min(n, s.getCount());
-            s.shrink(t); n -= t;
-        }
-        if (offhandOnly) return;
-        for (ItemStack s : inv.items) {
-            if (n <= 0) return;
-            if (!s.is(ModItems.HON_TINH.get())) continue;
-            int t = Math.min(n, s.getCount());
-            s.shrink(t); n -= t;
-        }
+        com.hukhong.currency.Wallet.payHonTinh(p, n);
     }
 
     /**

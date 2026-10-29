@@ -476,7 +476,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recentlyHit) {
         super.dropCustomDeathLoot(sl, src, recentlyHit);
         drop(sl, new ItemStack(ChgRegistry.CORES.get(idx - 1).get(), 1 + (random.nextFloat() < 0.3f ? 1 : 0)));
-        drop(sl, new ItemStack(com.hukhong.item.ModItems.HON_TINH.get(), 12 + 4 * idx + random.nextInt(6)));
+        com.hukhong.currency.Wallet.grantHonTinhBoss(sl, position(), src, 12 + 4 * idx + random.nextInt(6));
         drop(sl, com.hukhong.skillbook.SkillBookRewards.stack(new java.util.Random(random.nextLong()),
                 com.hukhong.skillbook.SkillBookRewards.chgGrade(idx, random.nextDouble()), com.hukhong.skillbook.SkillBookRewards.killerPaths(src)));
     }

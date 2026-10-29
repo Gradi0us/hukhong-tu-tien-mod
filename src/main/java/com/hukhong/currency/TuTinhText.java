@@ -17,12 +17,17 @@ public final class TuTinhText {
         return out;
     }
 
+    /** "[icon] 12" cho so du / popup Hon Tinh (dau cach nam NGOAI component icon). */
+    public static MutableComponent honTinh(long n) {
+        return Component.empty().append(icon(3)).append(" ").append(Component.literal(String.valueOf(n)));
+    }
+
     private static final net.minecraft.resources.ResourceLocation FONT =
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.hukhong.HuKhong.MODID, "icons");
 
     /** Icon vien Tu Tinh trong chu (0 = Ha, 1 = Trung, 2 = Thuong) qua font bitmap assets/hukhong/font/icons.json. */
     public static MutableComponent icon(int tier) {
-        return Component.literal(String.valueOf((char) (0xE000 + Math.max(0, Math.min(2, tier)))))
+        return Component.literal(String.valueOf((char) (0xE000 + Math.max(0, Math.min(3, tier)))))
                 .withStyle(st -> st.withFont(FONT).withColor(0xFFFFFF));
     }
 }

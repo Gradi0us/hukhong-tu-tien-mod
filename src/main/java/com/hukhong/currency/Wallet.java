@@ -30,6 +30,56 @@ public final class Wallet {
     /** Nhan v Ha vao vi. */
     public static void give(Player p, long v) { set(p, WalletMath.credit(count(p), v)); }
 
+    // ---- Hon Tinh (vi rieng, don vi = 1 vien) ----
+
+    public static long honTinh(Player p) { return p.getData(WalletAttachment.HON_TINH.get()); }
+
+    public static void setHonTinh(Player p, long v) { p.setData(WalletAttachment.HON_TINH.get(), Math.max(0, v)); }
+
+    /** Tru n Hon Tinh tu vi. false neu khong du. Chi goi tren server. */
+    public static boolean payHonTinh(Player p, long n) {
+        if (!WalletMath.canPay(honTinh(p), n)) return false;
+        setHonTinh(p, WalletMath.debit(honTinh(p), n));
+        return true;
+    }
+
+    /** Cong n Hon Tinh vao vi + popup icon (action bar). */
+    public static void grantHonTinh(net.minecraft.server.level.ServerPlayer p, long n) {
+        if (n <= 0) return;
+        setHonTinh(p, WalletMath.credit(honTinh(p), n));
+        p.displayClientMessage(net.minecraft.network.chat.Component.translatableWithFallback("hukhong.hontinh.gain", "+%s Hồn Tinh",
+                TuTinhText.honTinh(n)), true);
+    }
+
+    public static final double SHARE_RADIUS = 32;
+
+    /** Boss chet: nguoi giet (neu la nguoi choi) + moi nguoi trong 32 block deu nhan n; khong ai -> roi vat pham (nhat len se tu doi vao vi). */
+    public static void grantHonTinhBoss(net.minecraft.server.level.ServerLevel sl, net.minecraft.world.phys.Vec3 at,
+                                        net.minecraft.world.damagesource.DamageSource src, long n) {
+        java.util.Set<java.util.UUID> done = new java.util.HashSet<>();
+        if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer k) { grantHonTinh(k, n); done.add(k.getUUID()); }
+        for (net.minecraft.server.level.ServerPlayer p : sl.players()) {
+            if (p.isSpectator() || done.contains(p.getUUID()) || p.position().distanceToSqr(at) > SHARE_RADIUS * SHARE_RADIUS) continue;
+            grantHonTinh(p, n);
+            done.add(p.getUUID());
+        }
+        if (done.isEmpty()) sl.addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(sl, at.x, at.y + 0.5, at.z,
+                new ItemStack(com.hukhong.item.ModItems.HON_TINH.get(), (int) Math.min(n, 99))));
+    }
+
+    /** Doi moi vat pham Hon Tinh trong tui (ca tay phu) vao vi. Tra ve so vien da chuyen. */
+    public static long convertHonTinhInventory(Player p) {
+        Inventory inv = p.getInventory();
+        long n = 0;
+        Item it = com.hukhong.item.ModItems.HON_TINH.get();
+        List<ItemStack> all = new ArrayList<>(inv.items);
+        all.addAll(inv.offhand);
+        for (ItemStack s : all) if (s.is(it)) { n += s.getCount(); s.setCount(0); }
+        if (n > 0 && p instanceof net.minecraft.server.level.ServerPlayer sp) grantHonTinh(sp, n);
+        else if (n > 0) setHonTinh(p, WalletMath.credit(honTinh(p), n));
+        return n;
+    }
+
     /** Doi moi dong Tu Tinh trong tui (Ha/Trung/Thuong, ca tay phu) thanh gia tri vi. Tra ve so Ha da chuyen. */
     public static long convertInventory(Player p) {
         Inventory inv = p.getInventory();

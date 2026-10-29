@@ -351,7 +351,7 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
 
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recentlyHit) {
         super.dropCustomDeathLoot(sl, src, recentlyHit);
-        drop(sl, new ItemStack(ModItems.HON_TINH.get(), 6 + random.nextInt(5)));
+        com.hukhong.currency.Wallet.grantHonTinhBoss(sl, position(), src, 6 + random.nextInt(5));
         if (random.nextDouble() < com.hukhong.skillbook.SkillBookRewards.HU_VUONG_CHANCE)
             drop(sl, com.hukhong.skillbook.SkillBookRewards.stack(new java.util.Random(random.nextLong()),
                     com.hukhong.skillbook.SkillBookRewards.huVuongGrade(random.nextDouble()), com.hukhong.skillbook.SkillBookRewards.killerPaths(src)));

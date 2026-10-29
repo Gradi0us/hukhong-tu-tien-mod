@@ -76,7 +76,8 @@ public final class ShopService {
             if (rank(sp) < e.minRank()) { sp.displayClientMessage(Component.translatable("hukhong.shop.locked", rankName(e.minRank())), true); return false; }
             if (!Wallet.pay(sp, e.price())) { sp.displayClientMessage(Component.translatable("hukhong.shop.no_money"), true); return false; }
             ItemStack give = e.stack().copy();
-            if (!sp.getInventory().add(give)) sp.drop(give, false);
+            if (give.is(com.hukhong.item.ModItems.HON_TINH.get())) Wallet.grantHonTinh(sp, give.getCount()); // Hon Tinh = tien trong vi
+            else if (!sp.getInventory().add(give)) sp.drop(give, false);
             sp.displayClientMessage(Component.translatable("hukhong.shop.bought", e.stack().getHoverName(), TuTinhText.of(e.price())), true);
             return true;
         }

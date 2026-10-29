@@ -185,9 +185,7 @@ public final class HuHoa {
         long exp = Math.round(exp(h.huWeight(), h.huLevel(), CultivationService.get(p).level()) * mult * com.hukhong.endgame.WorldTier.rewardMul() * com.hukhong.bicanh.BiCanhRewards.expMult(v));
         if (exp > 0) CultivationService.addExp(p, exp);
         if (v.getRandom().nextFloat() < h.honTinhChance() * mult) {
-            var item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "hon_tinh"));
-            if (item != net.minecraft.world.item.Items.AIR)
-                v.level().addFreshEntity(new ItemEntity(v.level(), v.getX(), v.getY(), v.getZ(), new ItemStack(item)));
+            com.hukhong.currency.Wallet.grantHonTinh(p, 1);
         }
     }
 }

@@ -298,7 +298,7 @@ public final class VoidRaid {
             if (q.isSpectator() || q.distanceToSqr(p) > 64 * 64) continue;
             long exp = HuHoa.exp(12.0, lvl, CultivationService.get(q).level());
             if (exp > 0) CultivationService.addExp(q, exp);
-            sl.addFreshEntity(new ItemEntity(sl, q.getX(), q.getY() + 0.5, q.getZ(), new ItemStack(ModItems.HON_TINH.get(), 5 + sl.random.nextInt(6))));
+            com.hukhong.currency.Wallet.grantHonTinh(q, 5 + sl.random.nextInt(6));
             q.sendSystemMessage(Component.translatable("hukhong.raid.win", exp));
         }
         if (r.corrupted) CorruptionData.get(sl).cleanseNear(p.blockPosition().getX(), p.blockPosition().getZ(), 2);

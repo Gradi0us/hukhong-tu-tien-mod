@@ -2,6 +2,7 @@
   "providers": [
     {"type": "bitmap", "file": "hukhong:item/ha_pham_tu_tinh.png", "ascent": 8, "height": 9, "chars": ["\uE000"]},
     {"type": "bitmap", "file": "hukhong:item/trung_pham_tu_tinh.png", "ascent": 8, "height": 9, "chars": ["\uE001"]},
-    {"type": "bitmap", "file": "hukhong:item/thuong_pham_tu_tinh.png", "ascent": 8, "height": 9, "chars": ["\uE002"]}
+    {"type": "bitmap", "file": "hukhong:item/thuong_pham_tu_tinh.png", "ascent": 8, "height": 9, "chars": ["\uE002"]},
+    {"type": "bitmap", "file": "hukhong:item/hon_tinh_icon.png", "ascent": 8, "height": 9, "chars": ["\uE003"]}
   ]
 }

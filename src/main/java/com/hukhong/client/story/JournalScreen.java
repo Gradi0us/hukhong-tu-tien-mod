@@ -84,7 +84,9 @@ public class JournalScreen extends Screen {
                 x0 + 8, y0 + 30, GREY, false);
 
         int listW = 110, y = y0 + 46;
-        for (StoryDocs.Doc doc : StoryDocs.ALL) {
+        scroll = Math.max(0, Math.min(scroll, StoryDocs.ALL.size() - visibleRows()));
+        for (int i = scroll; i < Math.min(StoryDocs.ALL.size(), scroll + visibleRows()); i++) {
+            StoryDocs.Doc doc = StoryDocs.ALL.get(i);
             boolean has = d.has(doc.id());
             boolean sel = doc.id().equals(selected);
             if (sel) g.fill(x0 + 6, y - 1, x0 + 6 + listW, y + ROW - 2, 0x806A4C9C);
@@ -118,11 +120,23 @@ public class JournalScreen extends Screen {
         npcBtn.render(g, mx, my, pt);
     }
 
+    private int scroll;
+
+    /** Số hàng Văn Kiện hiển thị được (danh sách 30 mục cuộn bằng chuột). */
+    private int visibleRows() { return Math.max(3, (ph - 46 - 32) / ROW); }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double sx, double sy) {
+        if (mx >= x0 + 6 && mx < x0 + 116) { scroll -= (int) Math.signum(sy) * 2; return true; }
+        return super.mouseScrolled(mx, my, sx, sy);
+    }
+
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         StoryData d = StoryClient.data();
         int y = y0 + 46;
-        for (StoryDocs.Doc doc : StoryDocs.ALL) {
+        for (int i = scroll; i < Math.min(StoryDocs.ALL.size(), scroll + visibleRows()); i++) {
+            StoryDocs.Doc doc = StoryDocs.ALL.get(i);
             if (mx >= x0 + 6 && mx < x0 + 116 && my >= y - 1 && my < y + ROW - 2) {
                 if (d.has(doc.id())) selected = doc.id();
                 return true;

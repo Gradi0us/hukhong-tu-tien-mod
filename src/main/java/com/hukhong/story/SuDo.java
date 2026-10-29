@@ -212,6 +212,7 @@ public class SuDo extends Monster implements GeoEntity {
 
     @Override public void die(DamageSource src) {
         super.die(src);
+        if (level() instanceof ServerLevel sl0) com.hukhong.story.world.HuAnh.addNear(sl0, blockPosition(), -2);
         if (level() instanceof ServerLevel && src.getEntity() instanceof ServerPlayer p)
             CultivationService.addExp(p, 8L * suLevel());
     }

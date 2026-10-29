@@ -8,7 +8,6 @@ public final class BanMenhMath {
     /** Cấp tối thiểu cho từng giai đoạn: Phàm, Linh, Huyền, Địa, Thiên, Tiên, Thần. */
     public static final int[] STAGE_LEVELS = {1, 20, 40, 60, 80, 90, 100};
     /** Hồn Tinh cần để tiến lên giai đoạn s (Hồn Tinh trong mod chưa chia phẩm -> tính theo số lượng). */
-    private static final int[] TINH_COST = {0, 2, 4, 8, 12, 20, 32};
 
     public static final int OK = 0, MAXED = 1, REALM_CAP = 2, NEED_TINH = 3;
 
@@ -36,7 +35,10 @@ public final class BanMenhMath {
         return s;
     }
 
-    public static int tinhCost(int targetStage) { return TINH_COST[Math.max(0, Math.min(MAX_STAGE, targetStage))]; }
+    public static int tinhCost(int targetStage) {
+        int s = Math.max(0, Math.min(MAX_STAGE, targetStage));
+        return s == 0 ? 0 : (int) com.hukhong.currency.UpgradeCost.honTinh(s, com.hukhong.currency.UpgradeCost.STAGE_BASE);
+    }
 
     /** Kiểm tra tiến hóa từ giai đoạn cur: trần theo cảnh giới (level), cần đủ Hồn Tinh. */
     public static int check(int cur, int level, int tinh) {

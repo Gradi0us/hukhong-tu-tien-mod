@@ -21,5 +21,10 @@ public final class WalletAttachment {
             () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).copyOnDeath()
                     .sync(ByteBufCodecs.VAR_LONG).build());
 
+    /** Vi Hon Tinh: so du (long), tach rieng khoi Tu Tinh nen save cu mac dinh = 0. */
+    public static final Supplier<AttachmentType<Long>> HON_TINH = ATTACHMENTS.register("hon_tinh_wallet",
+            () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).copyOnDeath()
+                    .sync(ByteBufCodecs.VAR_LONG).build());
+
     public static void register(IEventBus bus) { ATTACHMENTS.register(bus); }
 }

@@ -35,12 +35,23 @@ public final class StoryNet {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    /** Hư Ảnh theo thành (10 số 0..100) -> client (ClientHuAnh). */
+    public record HuAnhSync(int[] values) implements CustomPacketPayload {
+        public static final Type<HuAnhSync> TYPE = new Type<>(id("huanh_sync"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, HuAnhSync> CODEC = StreamCodec.of(
+                (b, p) -> { b.writeVarInt(p.values.length); for (int v : p.values) b.writeVarInt(v); },
+                b -> { int[] a = new int[Math.min(64, b.readVarInt())]; for (int i = 0; i < a.length; i++) a[i] = b.readVarInt(); return new HuAnhSync(a); });
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     public static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(OpenMode.TYPE, OpenMode.CODEC,
                 (p, ctx) -> ctx.enqueueWork(com.hukhong.client.story.StoryClient::openModeScreen));
         r.playToClient(Sync.TYPE, Sync.CODEC,
                 (p, ctx) -> ctx.enqueueWork(() -> com.hukhong.client.story.StoryClient.update(p.data())));
+        r.playToClient(HuAnhSync.TYPE, HuAnhSync.CODEC,
+                (p, ctx) -> ctx.enqueueWork(() -> com.hukhong.client.story.ClientHuAnh.update(p.values())));
         r.playToServer(ChooseMode.TYPE, ChooseMode.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
             if (ctx.player() instanceof ServerPlayer sp) StoryService.chooseMode(sp, p.mode());
         }));

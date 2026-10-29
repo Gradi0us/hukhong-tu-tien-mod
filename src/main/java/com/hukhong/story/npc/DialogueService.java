@@ -46,6 +46,15 @@ public final class DialogueService {
     public static void start(ServerPlayer p, StoryNpc npc) {
         Dialogue d = DialogueManager.get(npc.npcId());
         if (d == null) return;
+        if (npc.npcId().equals("mo_dao")) { // Lore thế giới: Mộ Dao bình luận 1 lần (StoryHooks.complete)
+            String line = com.hukhong.story.world.StoryHooks.pendingModaoLine(p);
+            if (line != null) {
+                com.hukhong.story.world.StoryHooks.markTold(p, line);
+                SESSIONS.put(p.getUUID(), new Session(d.npc(), List.of()));
+                PacketDistributor.sendToPlayer(p, new NpcNet.View(d.nameKey(), List.of(line), List.of()));
+                return;
+            }
+        }
         String node = d.firstNode(p);
         if (node == null) return;
         open(p, d, node);

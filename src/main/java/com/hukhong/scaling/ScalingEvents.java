@@ -154,11 +154,9 @@ public final class ScalingEvents {
         roll(e, m, elite ? ScalingConfig.DROP_HEART_ELITE.get() : ScalingConfig.DROP_HEART.get(), new ItemStack(ScalingMod.TAM_TINH.get()));
         roll(e, m, elite ? ScalingConfig.DROP_POWER_ELITE.get() : ScalingConfig.DROP_POWER.get(), new ItemStack(ScalingMod.LINH_TINH.get()));
         if (elite) {
-            var hon = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "hon_tinh"));
-            if (hon != net.minecraft.world.item.Items.AIR) {
-                ItemStack s = new ItemStack(hon, 2 + m.getRandom().nextInt(3));
-                e.getDrops().add(new ItemEntity(m.level(), m.getX(), m.getY(), m.getZ(), s));
-            }
+            int n = 2 + m.getRandom().nextInt(3);
+            if (e.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer sp) com.hukhong.currency.Wallet.grantHonTinh(sp, n);
+            else e.getDrops().add(new ItemEntity(m.level(), m.getX(), m.getY(), m.getZ(), new ItemStack(com.hukhong.item.ModItems.HON_TINH.get(), n)));
         }
     }
 

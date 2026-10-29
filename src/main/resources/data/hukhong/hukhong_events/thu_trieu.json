@@ -1,0 +1,6 @@
+{
+  "type": "thu_trieu", "lane": "world",
+  "recurrence": {"type": "every", "days": 2}, "start_offset": 70000, "duration": 6000,
+  "location": "random_city", "level": [20, 50], "rewards": "hukhong.cal.reward.thu_trieu",
+  "lore": {"faction": "YEU_TOC"}
+}

@@ -22,6 +22,8 @@ public class CorruptionData extends SavedData {
     private final Set<Long> reverting = new HashSet<>();
     private long nextInvasionAt = -1;
     private boolean seeded;
+    /** Hư Ảnh 0..100 theo chỉ số thành (CityDef.ALL). */
+    private final int[] huAnh = new int[10];
 
     public static CorruptionData get(ServerLevel ow) {
         return ow.getDataStorage().computeIfAbsent(new SavedData.Factory<>(CorruptionData::new, CorruptionData::load, null), NAME);
@@ -35,6 +37,8 @@ public class CorruptionData extends SavedData {
         for (long l : tag.getLongArray("reverting")) d.reverting.add(l);
         d.nextInvasionAt = tag.contains("nextInv") ? tag.getLong("nextInv") : -1;
         d.seeded = tag.getBoolean("seeded");
+        int[] ha = tag.getIntArray("huAnh");
+        for (int i = 0; i < ha.length && i < d.huAnh.length; i++) d.huAnh[i] = Math.max(0, Math.min(100, ha[i]));
         return d;
     }
 
@@ -47,6 +51,7 @@ public class CorruptionData extends SavedData {
         tag.putLongArray("reverting", reverting.stream().mapToLong(Long::longValue).toArray());
         tag.putLong("nextInv", nextInvasionAt);
         tag.putBoolean("seeded", seeded);
+        tag.putIntArray("huAnh", huAnh);
         return tag;
     }
 
@@ -58,6 +63,16 @@ public class CorruptionData extends SavedData {
     /** Chunk đã tẩy nhưng còn khối Hư Không cần hoàn nguyên. */
     public Set<Long> reverting() { return reverting; }
     public void finishRevert(long l) { if (reverting.remove(l)) setDirty(); }
+    public int huAnh(int city) { return city < 0 || city >= huAnh.length ? 0 : huAnh[city]; }
+    /** Đặt Hư Ảnh (kẹp 0..100); trả true nếu giá trị đổi. */
+    public boolean setHuAnh(int city, int v) {
+        if (city < 0 || city >= huAnh.length) return false;
+        v = Math.max(0, Math.min(100, v));
+        if (huAnh[city] == v) return false;
+        huAnh[city] = v; setDirty();
+        return true;
+    }
+    public int[] huAnhAll() { return huAnh.clone(); }
     public boolean seeded() { return seeded; }
     public void markSeeded() { seeded = true; setDirty(); }
     public long nextInvasionAt() { return nextInvasionAt; }

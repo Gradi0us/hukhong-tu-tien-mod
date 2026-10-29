@@ -165,7 +165,7 @@ public class DaKhuyet extends Monster implements GeoEntity {
 
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recentlyHit) {
         super.dropCustomDeathLoot(sl, src, recentlyHit);
-        sl.addFreshEntity(new ItemEntity(sl, getX(), getY() + 0.5, getZ(), new ItemStack(ModItems.HON_TINH.get(), 20 + random.nextInt(8))));
+        com.hukhong.currency.Wallet.grantHonTinhBoss(sl, position(), src, 20 + random.nextInt(8));
     }
 
     @Override public void registerControllers(AnimatableManager.ControllerRegistrar c) {
