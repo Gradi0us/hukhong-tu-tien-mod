@@ -118,6 +118,7 @@ public class AmbientNpc extends PathfinderMob {
         goalSelector.addGoal(0, new Hidden(this));
         goalSelector.addGoal(0, new Shelter(this));
         goalSelector.addGoal(0, new SiegeCombat(this));
+        goalSelector.addGoal(0, new Defend(this));
         goalSelector.addGoal(0, new Cheer(this));
         goalSelector.addGoal(1, new Practice(this));
         goalSelector.addGoal(2, new Shuttle(this));
@@ -428,6 +429,50 @@ public class AmbientNpc extends PathfinderMob {
     }
 
     /** Linh/cung thu/truong lao: ve vi tri, khoa muc tieu Hu Hoa gan nhat, can chien hoac ban phu quang. */
+    /**
+     * Tự vệ ngoài công thành: lính canh + đệ tử tự đánh quái Hư Không lọt vào khu (đột kích đêm, quái lạc vào),
+     * không cần SiegeDirector ra lệnh. Không đuổi quá xa nhà (bán kính khu + 24).
+     */
+    private static final class Defend extends Goal {
+        private final AmbientNpc m;
+        private int cd, t, scan;
+        Defend(AmbientNpc m) { this.m = m; setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        private boolean fighter() { return m.role() == GUARD || m.role() == DISCIPLE; }
+        private boolean nearHome(LivingEntity e) {
+            double lim = m.radius + 24.0;
+            return e.distanceToSqr(Vec3.atCenterOf(m.home)) < lim * lim;
+        }
+        @Override public boolean canUse() {
+            if (m.siegeMode != SIEGE_NONE || m.downed > 0 || !fighter() || m.hidden) return false;
+            if (++scan % 10 != 0) return false;
+            m.acquire();
+            LivingEntity tg = m.getTarget();
+            return tg != null && tg.isAlive() && m.distanceToSqr(tg) < 18 * 18 && nearHome(tg);
+        }
+        @Override public boolean canContinueToUse() {
+            LivingEntity tg = m.getTarget();
+            return m.siegeMode == SIEGE_NONE && m.downed <= 0 && tg != null && tg.isAlive() && nearHome(tg) && m.distanceToSqr(tg) < 28 * 28;
+        }
+        @Override public void stop() { m.setTarget(null); m.getNavigation().stop(); }
+        @Override public void tick() {
+            t++;
+            if (cd > 0) cd--;
+            if (t % 20 == 0) m.acquire();
+            LivingEntity tg = m.getTarget();
+            if (tg == null) return;
+            m.getLookControl().setLookAt(tg, 40f, 40f);
+            double d2 = m.distanceToSqr(tg);
+            if (d2 > 3.2 * 3.2) { if (t % 5 == 0 || m.getNavigation().isDone()) m.getNavigation().moveTo(tg, 1.2); }
+            else if (cd <= 0) { cd = 18; m.swing(InteractionHand.MAIN_HAND); guardHit(m, tg); }
+        }
+    }
+
+    /** Đòn của lính/đệ tử: 5 + 6% máu tối đa mục tiêu (để còn ý nghĩa với quái cấp cao; boss chỉ 1/3). */
+    static void guardHit(AmbientNpc m, LivingEntity tg) {
+        double pct = com.hukhong.events.BossBuff.isBoss(tg) ? 0.02 : 0.06;
+        tg.hurt(m.damageSources().mobAttack(m), (float) (5 + tg.getMaxHealth() * pct));
+    }
+
     private static final class SiegeCombat extends Goal {
         private final AmbientNpc m;
         private int cd, t;
@@ -453,7 +498,7 @@ public class AmbientNpc extends PathfinderMob {
                     }
                 } else {
                     if (d2 > 3.2 * 3.2) { if (t % 5 == 0 || m.getNavigation().isDone()) m.getNavigation().moveTo(tg, 1.15); }
-                    else if (cd <= 0) { cd = 18; m.swing(InteractionHand.MAIN_HAND); m.doHurtTarget(tg); }
+                    else if (cd <= 0) { cd = 18; m.swing(InteractionHand.MAIN_HAND); guardHit(m, tg); }
                 }
                 return;
             }
