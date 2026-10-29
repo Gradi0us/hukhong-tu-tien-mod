@@ -313,17 +313,6 @@ public final class BiCanhManager {
     /** He so sat thuong boss Bi Canh (truoc 1.8 - qua manh voi cap thap). BossBuff con nhan them 1.3. */
     public static final double BOSS_DMG_MUL = 1.8;
 
-    /** Cap quai trong run = cap trung binh nguoi choi trong Bi Canh (ban kinh 200 quanh goc), kep trong khoang cua bac. */
-    static int runLevel(ServerLevel dim, Run run) {
-        int n = 0, sum = 0;
-        for (ServerPlayer p : dim.players()) {
-            if (p.blockPosition().distSqr(run.origin) > 200 * 200) continue;
-            sum += com.hukhong.core.CultivationService.get(p).level(); n++;
-        }
-        int avg = n == 0 ? run.tier.mobLevel : Math.round((float) sum / n);
-        return Math.max(run.tier.minLevel, Math.min(run.tier.maxLevel, avg));
-    }
-
     private static void spawn(ServerLevel dim, Run run, EntityType<? extends Mob> type, Room r, int lx, int lz,
                               double hpMul, double dmgMul, boolean boss) {
         Mob m = type.create(dim);
@@ -331,7 +320,7 @@ public final class BiCanhManager {
         BlockPos o = run.origin;
         m.moveTo(o.getX() + r.x0() + lx + 0.5, o.getY() + (boss ? 1 : 0), o.getZ() + lz + 0.5, dim.random.nextFloat() * 360f, 0f);
         m.finalizeSpawn(dim, dim.getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.EVENT, null);
-        int lv = runLevel(dim, run);
+        int lv = run.tier.mobLevel; // cap quai = cap cua bac Bi Canh (hien thi va chi so khop nhau)
         HuHoa.applyStats(m, lv, hpMul, dmgMul);
         m.setPersistenceRequired();
         if (boss) {
