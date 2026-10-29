@@ -53,6 +53,7 @@ public final class CastAnimClient {
             if (layer == null) return;
             layer.replaceAnimationWithFade(AbstractFadeModifier.standardFadeIn(2, Ease.INOUTSINE),
                     new KeyframeAnimationPlayer(CastAnimLibrary.get(a)));
+            LOG.debug("[hukhong] cast anim {} -> {} (active={})", a, ap.getName().getString(), layer.isActive());
         } catch (RuntimeException ex) {
             if (!warned) { // chỉ log 1 lần, không làm hỏng gameplay vì một tư thế
                 warned = true;

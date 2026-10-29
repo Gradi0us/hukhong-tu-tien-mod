@@ -8,6 +8,14 @@ import java.util.Random;
 public final class BiCanhRewards {
     private BiCanhRewards() {}
 
+    /** Hệ số EXP của MỌI nguồn EXP trong Bí Cảnh (giết quái/boss trong run). Chỉnh một chỗ này. */
+    public static final double EXP_MULT = 2.0;
+
+    /** EXP nhân thêm nếu nạn nhân đang ở chiều Bí Cảnh, ngược lại 1. */
+    public static double expMult(net.minecraft.world.entity.Entity victim) {
+        return victim.level().dimension() == BiCanhRegistry.DIM ? EXP_MULT : 1.0;
+    }
+
     public enum Kind { HON_TINH, LINH_THAO, HUYET_THAM, HOA_LIEN, THANH_DIEP, HOI_XUAN_DAN, PHA_CANH_DAN, HON_COT, SKILL_SCROLL }
 
     /** sub: PHA_CANH_DAN = chỉ số đan (0..5); HON_COT = bậc Hồn Cốt (HonCotMath.TIER_*); SKILL_SCROLL = phẩm bí tịch (SkillGrade ordinal). */

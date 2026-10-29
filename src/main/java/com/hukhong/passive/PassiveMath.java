@@ -17,6 +17,9 @@ public final class PassiveMath {
     // Thể
     public static final double THE_ARMOR_MAX = 3.0, THE_HP_MAX = 6.0; // x2 (29/10)
     public static final int THE_PER_TIER = 3, THE_STACK_CAP = 15, THE_HOLD_TICKS = 300;
+    // Thể: Trọng Thương (đòn thường cộng tầng lên kẻ địch; tăng sát thương nhận + xử tử dưới ngưỡng máu)
+    public static final double TT_AMP_MAX = 0.15, TT_EXEC_MAX = 0.20;
+    public static final int TT_MAX_STACKS = 3, TT_TICKS = 120;
     // Ma
     public static final double MA_PCT_MAX = 0.20, MA_SLOW_MAX = 0.80, MA_RANGE = 16;
     public static final int MA_EVERY = 5, MA_COOLDOWN_TICKS = 10, MA_MARK_TICKS = 160;
@@ -41,4 +44,17 @@ public final class PassiveMath {
 
     /** Làm chậm theo tầng nổ: tối đa 80% ở 5 tầng. */
     public static double maSlow(int stacks) { return MA_SLOW_MAX * Math.min(Math.max(0, stacks), MA_EVERY) / MA_EVERY; }
+
+    // ---- Trọng Thương
+    public static double ttAmpPerStack(Aptitude a) { return scale(a, TT_AMP_MAX); }
+    public static double ttExecPct(Aptitude a) { return scale(a, TT_EXEC_MAX); }
+    public static int ttClamp(int stacks) { return Math.min(Math.max(0, stacks), TT_MAX_STACKS); }
+    /** Hệ số sát thương nhận: 1 + amp x tầng; boss bị chặn 1/3 (BOSS_CAP). */
+    public static double ttDamageMult(double ampPerStack, int stacks, boolean boss) {
+        return 1.0 + pctOfMaxHp(ampPerStack, boss) * ttClamp(stacks);
+    }
+    /** Xử tử: có >=1 tầng, không phải boss/người chơi, máu còn lại < ngưỡng % máu tối đa. */
+    public static boolean ttExecutes(int stacks, double health, double maxHealth, double execPct, boolean boss, boolean player) {
+        return stacks >= 1 && !boss && !player && maxHealth > 0 && health > 0 && health < maxHealth * execPct;
+    }
 }

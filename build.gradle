@@ -61,6 +61,11 @@ neoForge {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             gameDirectory = project.file('run')
+            // Dev-only: ./gradlew runClient -Pautotest=<world folder in run/saves> -> vao the gioi + tu kiem tra HUD chien dau
+            if (project.hasProperty('autotest')) {
+                programArguments.addAll '--quickPlaySingleplayer', project.property('autotest').toString()
+                systemProperty 'hukhong.autotest', '1'
+            }
         }
 
         server {

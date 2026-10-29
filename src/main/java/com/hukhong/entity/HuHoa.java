@@ -181,7 +181,7 @@ public final class HuHoa {
         if (!(e.getSource().getEntity() instanceof ServerPlayer p)) return;
         float mult = RewardGate.reward(v);
         if (mult <= 0f) return;
-        long exp = Math.round(exp(h.huWeight(), h.huLevel(), CultivationService.get(p).level()) * mult * com.hukhong.endgame.WorldTier.rewardMul());
+        long exp = Math.round(exp(h.huWeight(), h.huLevel(), CultivationService.get(p).level()) * mult * com.hukhong.endgame.WorldTier.rewardMul() * com.hukhong.bicanh.BiCanhRewards.expMult(v));
         if (exp > 0) CultivationService.addExp(p, exp);
         if (v.getRandom().nextFloat() < h.honTinhChance() * mult) {
             var item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "hon_tinh"));

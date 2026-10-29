@@ -33,7 +33,7 @@ public class ProfileScreen extends Screen {
     private static final int GOLD = 0xFFFFD34F, GREEN = 0xFF55FF55, GREY = 0xFF888888;
     private static final int ROW = 14, TAB_H = 14;
 
-    private static final int TABS = 4;
+    private static final int TABS = 5;
     private final List<int[]> boneRows = new ArrayList<>(); // {y, slot}
     private int tab = 0;
     private double scroll = 0;
@@ -70,6 +70,7 @@ public class ProfileScreen extends Screen {
             case 0 -> t("hukhong.profile.tab.stats", "Chỉ số");
             case 1 -> t("hukhong.profile.tab.cores", "Lõi");
             case 3 -> t("hukhong.profile.tab.bones", "Hồn Cốt");
+            case 4 -> t("hukhong.profile.tab.passives", "Nội Tại");
             default -> t("hukhong.profile.tab.systems", "Hệ");
         };
     }
@@ -116,6 +117,7 @@ public class ProfileScreen extends Screen {
             case 0 -> renderStats(g);
             case 1 -> renderCores(g, mx, my);
             case 3 -> renderBones(g, mx, my);
+            case 4 -> renderPassives(g);
             default -> renderSystems(g);
         };
         g.disableScissor();
@@ -310,6 +312,78 @@ public class ProfileScreen extends Screen {
         y += 4;
         g.drawString(font, t("hukhong.honcot.hint_r", "Phím R: Kỹ năng Bản Mệnh (cấp 40) · Shift+R: Vạn Cốt Cộng Minh"), cx + 4, y, 0xFFBBBBBB);
         return y + ROW - top;
+    }
+
+    // ------------------------------------------------------------------ tab 4 (Nội Tại)
+    private static String pc(double v) { return fmt(v * 100) + "%"; }
+
+    /** Mô tả toàn bộ nội tại của các đạo người chơi đang có, với số liệu theo tư chất. */
+    private int renderPassives(GuiGraphics g) {
+        int top = cy - (int) scroll;
+        CultivationData d = ClientCache.cultivation();
+        int y = top;
+        for (Path p : d.paths().stream().sorted().toList()) {
+            Aptitude a = d.aptitude().getOrDefault(p, Aptitude.D);
+            g.drawString(font, Component.translatable(pathLang(p)).append(" - ")
+                    .append(Component.translatable("hukhong.aptitude." + a.name().toLowerCase(Locale.ROOT))), cx, y, p.argb);
+            y += 12;
+            for (Component[] e : passiveEntries(p, a, d.level())) {
+                g.drawString(font, e[0], cx + 4, y, GOLD);
+                y += 10;
+                for (var line : font.split(e[1], cw - 12)) {
+                    g.drawString(font, line, cx + 10, y, 0xFFCCCCCC);
+                    y += 10;
+                }
+                y += 3;
+            }
+            y += 4;
+        }
+        return Math.max(y - top, ROW);
+    }
+
+    private static List<Component[]> passiveEntries(Path p, Aptitude a, int lv) {
+        List<Component[]> l = new ArrayList<>();
+        switch (p) {
+            case THE -> {
+                l.add(new Component[]{t("hukhong.passive.kg.name", "Kiên Giáp"),
+                        t("hukhong.passive.kg.desc", "Mỗi %s đòn trúng cộng 1 bậc: +%s Giáp, +%s Sinh Lực tối đa mỗi bậc; tối đa %s bậc (%s Giáp, %s Sinh Lực). Mất sau %ss không đánh.",
+                                com.hukhong.passive.PassiveMath.THE_PER_TIER, fmt(com.hukhong.passive.PassiveMath.theArmor(a, 3)),
+                                fmt(com.hukhong.passive.PassiveMath.theMaxHp(a, 3)), com.hukhong.passive.PassiveMath.theTiers(com.hukhong.passive.PassiveMath.THE_STACK_CAP),
+                                fmt(com.hukhong.passive.PassiveMath.theArmor(a, com.hukhong.passive.PassiveMath.THE_STACK_CAP)),
+                                fmt(com.hukhong.passive.PassiveMath.theMaxHp(a, com.hukhong.passive.PassiveMath.THE_STACK_CAP)),
+                                com.hukhong.passive.PassiveMath.THE_HOLD_TICKS / 20)});
+                l.add(new Component[]{t("hukhong.passive.tt.name", "Trọng Thương"),
+                        t("hukhong.passive.tt.desc", "Mỗi đòn đánh thường (không phải kỹ năng) cộng 1 tầng lên kẻ địch, tối đa %s tầng, %ss. Mỗi tầng: kẻ địch nhận thêm %s sát thương từ mọi nguồn. Kẻ địch có tầng mà còn dưới %s máu tối đa bị xử tử ngay. Boss không bị xử tử, bonus sát thương chỉ còn 1/3. Không tác dụng lên người chơi.",
+                                com.hukhong.passive.PassiveMath.TT_MAX_STACKS, com.hukhong.passive.PassiveMath.TT_TICKS / 20,
+                                pc(com.hukhong.passive.PassiveMath.ttAmpPerStack(a)), pc(com.hukhong.passive.PassiveMath.ttExecPct(a)))});
+                l.add(new Component[]{t("hukhong.passive.body.name", "Thân Thể Thể Tu"),
+                        t("hukhong.passive.body.desc", "Đi trên mặt nước (giữ Shift để lặn). Nín thở lâu gấp %s lần. Chạy nhanh +%s, nhảy cao +%s (theo cấp %s). Chịu độ cao rơi thêm %s khối.",
+                                com.hukhong.pathrules.TheBody.BREATH_MULT, pc(com.hukhong.pathrules.TheBody.speedBonus(lv)),
+                                pc(com.hukhong.pathrules.TheBody.jumpBonus(lv)), lv, fmt(com.hukhong.pathrules.TheBody.SAFE_FALL))});
+            }
+            case KIEM -> {
+                l.add(new Component[]{t("hukhong.passive.kiem.name", "Bản Mệnh Kiếm"),
+                        t("hukhong.passive.kiem.desc", "Mỗi %s đòn trúng, kiếm giáng từ trời gây sát thương bạo kích chắc chắn và hồi %s sát thương gây ra.",
+                                com.hukhong.passive.PassiveMath.KIEM_EVERY, pc(com.hukhong.passive.PassiveMath.kiemHealPct(a)))});
+                l.add(new Component[]{t("hukhong.passive.kiem2.name", "Kiếm Quét"),
+                        t("hukhong.passive.kiem2.desc", "Tầm quét của Bản Mệnh Kiếm +%s. Mỗi đòn trúng hồi %s Linh Lực tối đa (tối đa 1 lần / 2s).",
+                                pc(com.hukhong.passive.PassiveMath.kiemSweepBonus(a)), pc(com.hukhong.pathrules.PathRules.KIEM_HIT_MANA_PCT))});
+            }
+            case DAO -> {
+                l.add(new Component[]{t("hukhong.passive.dao.name", "Đạo Vận"),
+                        t("hukhong.passive.dao.desc", "Mỗi %s đòn: hồi %s Sinh Lực tối đa và gây thêm %s máu tối đa của mục tiêu (boss chỉ 1/3). Kỹ năng gây sát thương x%s.",
+                                com.hukhong.passive.PassiveMath.DAO_EVERY, pc(com.hukhong.passive.PassiveMath.daoPct(a)),
+                                pc(com.hukhong.passive.PassiveMath.daoPct(a)), fmt(com.hukhong.passive.PassiveMath.DAO_SKILL_MULT))});
+            }
+            case MA -> {
+                l.add(new Component[]{t("hukhong.passive.ma.name", "Tia Ma"),
+                        t("hukhong.passive.ma.desc", "Tay không bắn tia ma, nổ hình quạt: làm chậm và cộng 1 tầng. Đủ %s tầng kích nổ %s máu tối đa (boss chỉ 1/3). Làm chậm tối đa %s.",
+                                com.hukhong.passive.PassiveMath.MA_EVERY, pc(com.hukhong.passive.PassiveMath.maPct(a)),
+                                pc(com.hukhong.passive.PassiveMath.MA_SLOW_MAX))});
+            }
+            default -> { }
+        }
+        return l;
     }
 
     // ------------------------------------------------------------------ tab 2

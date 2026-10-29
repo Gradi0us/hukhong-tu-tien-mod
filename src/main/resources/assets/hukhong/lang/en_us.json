@@ -1447,5 +1447,7 @@
   "hukhong.liberation.enter": "You have entered a Voidborn-corrupted region. Defeat the Guardian at the Void Heart to liberate the land.",
   "hukhong.liberation.tracker": "Liberate the land: Void Heart is %s blocks away, direction %s",
   "hukhong.liberation.done": "The land is liberated! The corruption fades and the sky clears. +%s EXP, +%s Soul Essence",
-  "hukhong.qc.dying.moved": "The old cave location is underwater — the map fragment now points to a new cave on land nearby."
+  "hukhong.qc.dying.moved": "The old cave location is underwater — the map fragment now points to a new cave on land nearby.",
+  "effect.hukhong.trong_thuong": "Grievous Wound",
+  "hukhong.profile.tab.passives": "Passives"
 }

@@ -39,4 +39,23 @@ class PassiveMathTest {
         assertEquals(0.80, PassiveMath.maSlow(5), 1e-9);
         assertEquals(0.80, PassiveMath.maSlow(9), 1e-9);
     }
+
+    @Test void trongThuongScalesAndCaps() {
+        assertEquals(0.15, PassiveMath.ttAmpPerStack(Aptitude.SSS), 1e-9);
+        assertEquals(0.20, PassiveMath.ttExecPct(Aptitude.SSS), 1e-9);
+        assertEquals(0.15 / 7, PassiveMath.ttAmpPerStack(Aptitude.D), 1e-9);
+        assertEquals(3, PassiveMath.ttClamp(99));
+        assertEquals(0, PassiveMath.ttClamp(-2));
+        assertEquals(1.45, PassiveMath.ttDamageMult(0.15, 3, false), 1e-9);
+        assertEquals(1.15, PassiveMath.ttDamageMult(0.15, 9, true), 1e-9); // boss: 0.05 x 3
+        assertEquals(1.0, PassiveMath.ttDamageMult(0.15, 0, false), 1e-9);
+    }
+
+    @Test void trongThuongExecuteRules() {
+        assertTrue(PassiveMath.ttExecutes(1, 19, 100, 0.20, false, false));
+        assertFalse(PassiveMath.ttExecutes(1, 20, 100, 0.20, false, false));
+        assertFalse(PassiveMath.ttExecutes(0, 5, 100, 0.20, false, false));
+        assertFalse(PassiveMath.ttExecutes(2, 5, 100, 0.20, true, false));
+        assertFalse(PassiveMath.ttExecutes(2, 5, 100, 0.20, false, true));
+    }
 }

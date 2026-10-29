@@ -108,6 +108,16 @@ public final class CastAnimLibrary {
                     .at(9, SNAP, R, -2.7f, 0f, 0.1f).at(9, SNAP, L, -1.1f, 0.7f, 0f).at(9, SNAP, BODY, -0.2f, -0.3f, 0f)
                     .at(9, SNAP, RL, 0.1f, 0f, 0f).at(9, SNAP, LL, -0.1f, 0f, 0f)
                     .at(13, IO, R, -2.7f, 0f, 0.1f).at(13, IO, L, -1.1f, 0.7f, 0f).at(13, IO, BODY, -0.2f, -0.3f, 0f);
+            case FIST_JAB -> x
+                    .at(3, SNAP, R, -HALF, 0f, 0f).at(3, SNAP, L, -1.1f, 0.7f, 0f).at(3, SNAP, BODY, 0.05f, -0.3f, 0f)
+                    .at(6, IO, R, -HALF, 0f, 0f).at(6, IO, L, -1.1f, 0.7f, 0f).at(6, IO, BODY, 0.05f, -0.3f, 0f);
+            case FIST_CROSS -> x
+                    .at(3, SNAP, L, -HALF, 0f, 0f).at(3, SNAP, R, -1.1f, -0.7f, 0f).at(3, SNAP, BODY, 0.05f, 0.45f, 0f)
+                    .at(6, IO, L, -HALF, 0f, 0f).at(6, IO, R, -1.1f, -0.7f, 0f).at(6, IO, BODY, 0.05f, 0.45f, 0f);
+            case FIST_HOOK -> x
+                    .at(3, IO, R, -1.3f, 0.9f, 0.9f).at(3, IO, L, -1.1f, 0.7f, 0f).at(3, IO, BODY, 0.05f, 0.5f, 0f)
+                    .at(6, SNAP, R, -1.3f, -1.0f, 0.2f).at(6, SNAP, L, -1.1f, 0.7f, 0f).at(6, SNAP, BODY, 0.1f, -0.6f, 0f)
+                    .at(8, IO, R, -1.3f, -1.0f, 0.2f).at(8, IO, L, -1.1f, 0.7f, 0f).at(8, IO, BODY, 0.1f, -0.6f, 0f);
             case CLAW_SWIPE -> x
                     .at(4, OUT, R, -2.0f, 0f, 0.9f).at(4, OUT, L, -0.6f, 0f, -0.4f).at(4, OUT, BODY, 0.1f, 0.3f, 0f)
                     .at(8, SNAP, R, -1.4f, -1.0f, 0f).at(8, SNAP, L, -0.6f, 0f, -0.4f).at(8, SNAP, BODY, 0.2f, -0.2f, 0f)

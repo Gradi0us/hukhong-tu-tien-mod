@@ -36,7 +36,8 @@ public final class GateEvents {
         }
         if (e.getSource().getEntity() instanceof ServerPlayer p) {
             float rg = RewardGate.reward(e.getEntity()); // ghi KillRateGate đúng 1 lần
-            long exp = Math.round(e.getEntity().getMaxHealth() * rg * com.hukhong.pathrules.MaRules.expMultiplier(p, e.getEntity()));
+            long exp = Math.round(e.getEntity().getMaxHealth() * rg * com.hukhong.pathrules.MaRules.expMultiplier(p, e.getEntity())
+                    * com.hukhong.bicanh.BiCanhRewards.expMult(e.getEntity()));
             if (exp > 0) CultivationService.addExp(p, exp);
             com.hukhong.pathrules.MaRules.onKill(p, e.getEntity(), rg);
         }

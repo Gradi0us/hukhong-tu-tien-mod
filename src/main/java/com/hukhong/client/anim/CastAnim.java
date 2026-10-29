@@ -18,7 +18,10 @@ public enum CastAnim {
     ULT_RAISE(24),      // giơ hai tay quá đầu
     DASH_LUNGE(12),     // ngả người lao tới
     GUARD(16),          // khoanh tay phòng thủ
-    OPEN_PALMS(24);     // mở lòng bàn tay (hồi phục)
+    OPEN_PALMS(24),     // mở lòng bàn tay (hồi phục)
+    FIST_JAB(10),       // Thể Tu tay không: đấm thẳng tay phải
+    FIST_CROSS(10),     // đấm thẳng tay trái xoay hông
+    FIST_HOOK(12);      // móc ngang
 
     public final int ticks;
 

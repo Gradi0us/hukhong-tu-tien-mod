@@ -52,6 +52,11 @@ public final class CombatUiClient {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         long now = mc.level.getGameTime();
+        if (!RECV_LOGGED) {
+            RECV_LOGGED = true;
+            LOG.info("CombatUi first combat-text packet: kind={} amount={} at=({},{},{}) entity={} numbersOn={} barsOn={}",
+                    pl.kind(), pl.amount(), pl.x(), pl.y(), pl.z(), pl.entityId(), ClientConfig.damageNumbers(), ClientConfig.mobBars());
+        }
         if (ClientConfig.damageNumbers()) {
             while (NUMS.size() >= MAX_NUMBERS) NUMS.pollFirst();
             NUMS.addLast(new Num(pl.x(), pl.y(), pl.z(), pl.amount(), pl.kind(), pl.color(), now,
@@ -94,6 +99,10 @@ public final class CombatUiClient {
         Font font = mc.font;
         if (bars) renderBars(mc, ps, buf, font, cam, cp, now, pt);
         if (nums) renderNumbers(ps, buf, font, cam, cp, now);
+        if (!NUM_LOGGED && (!NUMS.isEmpty() || LAST_DRAWN > 0)) {
+            NUM_LOGGED = true;
+            LOG.info("CombatUi first draw with content: numbers={} bars={} cam={}", NUMS.size(), LAST_DRAWN, cp);
+        }
         buf.endBatch(RenderType.guiOverlay());
         buf.endBatch();
         if (!LOGGED) {
@@ -104,7 +113,7 @@ public final class CombatUiClient {
     }
 
     private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
-    private static boolean LOGGED;
+    private static boolean LOGGED, RECV_LOGGED, NUM_LOGGED;
     private static int LAST_DRAWN;
 
     // ------------------------------------------------------------------ thanh máu
@@ -143,7 +152,7 @@ public final class CombatUiClient {
         ps.pushPose();
         ps.translate(p.x - cp.x, p.y + le.getBbHeight() + 0.55 - cp.y, p.z - cp.z);
         ps.mulPose(cam.rotation());
-        ps.scale(-s, -s, s);
+        ps.scale(s, -s, s); // 1.21: nhu ten nguoi (EntityRenderer.renderNameTag) - KHONG lat truc x, neu lat se bi cull + guong
         Matrix4f m = ps.last().pose();
         float max = Math.max(1f, le.getMaxHealth()), hp = Mth.clamp(le.getHealth(), 0f, max);
         float ratio = hp / max;
@@ -204,7 +213,7 @@ public final class CombatUiClient {
             ps.pushPose();
             ps.translate(x - cp.x, y - cp.y, z - cp.z);
             ps.mulPose(cam.rotation());
-            ps.scale(-s, -s, s);
+            ps.scale(s, -s, s); // 1.21: nhu ten nguoi (EntityRenderer.renderNameTag) - KHONG lat truc x, neu lat se bi cull + guong
             font.drawInBatch(txt, -font.width(txt) / 2f, 0f, a << 24 | rgb, true, ps.last().pose(), buf,
                     Font.DisplayMode.SEE_THROUGH, 0, 0xF000F0);
             ps.popPose();
