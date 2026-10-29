@@ -5,7 +5,7 @@
 **Research Target**: Kế hoạch mở rộng thế giới + liên kết cốt truyện (mod Hư Không Tu Tiên Lục)
 **Mode**: Planning · **Level**: L3-Analyze · **Language**: vi
 **Context**: PLAN-v1-world-enrichment, DESIGN-v1-story-flow, DESIGN-v2-quest-chains, PLAN-v2-tu-tien-mod-canon; code `story/`, `city/`, `events/`, `chg/`, `endgame/`, `liberation/`
-**Status**: Draft — chờ người chơi chốt §9
+**Status**: Đã chốt 5/6 câu (§11); chờ xác nhận thứ tự làm
 **Researcher**: Claude Agent (deep-research skill)
 
 ---
@@ -335,3 +335,56 @@ External:       0 MCP + 0 web
 Output:         ~6k tokens
 Budget status:  OK
 ```
+
+---
+
+## 11. Quyết định đã chốt (2026-10-29)
+
+| # | Câu hỏi | Chốt | Ảnh hưởng tới kế hoạch |
+|---|---|---|---|
+| 1 | Đơn vị lịch | **1 ngày Lịch = 4 ngày Minecraft** (80 phút thực) | Tuần Lịch = 7 ngày Lịch ≈ 9,3 giờ thực. Sự kiện lặp "mỗi ngày" ≈ mỗi 80 phút. Mùa = 7 ngày Lịch |
+| 2 | PvP | **Có: Đấu Trường Sinh Tử ở Thiên Khải Hoàng Đô** (thành bậc Thiên, lớn nhất) | Mục mới **B19**, xem §11.1. Ngoài đấu trường vẫn chỉ PvE |
+| 3 | Thú cưỡi | **Bỏ toàn bộ thú cưỡi** (C7 Tuyết Lang, C8 Hỏa Kỳ Lân, C9 Phong Điêu) | Sau này di chuyển bằng **ngự vũ khí bản mệnh** (dùng lại `flight/`). Tiên Đảo (A17) vào bằng ngự kiếm. Linh thú chỉ còn linh sủng và thú chiến đấu |
+| 4 | Thứ tự | Đề xuất S0 + W0 trước; chờ người chơi xác nhận | — |
+| 5 | Kết thúc thứ ba | **Có**, thiết kế ở §11.2 | — |
+| 6 | Thành bị tập kích | **Trộn: 60% theo chương, 40% ngẫu nhiên** | Ngẫu nhiên chỉ chọn trong các thành đã mở khóa dịch chuyển, để người chơi tới được |
+
+### 11.1 B19 — Đấu Trường Sinh Tử (PvP)
+
+- **Nơi:** võ đài trong Thiên Khải Hoàng Đô. Nếu Hoàng Đô đang RUIN thì đấu trường đóng cho tới khi tái chiếm.
+- **Thách đấu:** người chơi A thách B tại võ đài, chọn mức cược. Hai bên cùng đặt **số Tử Tinh bằng nhau**, tiền bị giữ trong ví cho tới khi xong trận.
+- **Phí:** đốt 5% tổng cược (chống lạm phát). Người thắng nhận phần còn lại.
+- **Khán giả:** được cược cho một bên, tỷ lệ chia theo tổng tiền mỗi bên (pari-mutuel), cũng đốt 5%.
+- **Luật trận:**
+  - Không chết thật: còn 1 máu thì thua, không rơi đồ, không mất EXP.
+  - Đánh 3 hiệp, mỗi hiệp tối đa 3 phút; hết giờ thì ai còn % máu cao hơn thắng.
+  - Cấm đan hồi phục.
+  - Cân bằng cảnh giới: chênh trên 10 cấp thì bên thấp được buff tỉ lệ, hoặc người thách chọn "không cân bằng".
+- **Chống gian lận:** không tự cược cho trận của mình ở phía đối thủ, mỗi cặp tối đa 3 trận/ngày Lịch, mức cược tối thiểu theo cảnh giới.
+- **Lịch K:** "Giải Sinh Tử" mỗi tuần Lịch (bracket 8 người), có NPC tán tu điền chỗ trống khi ít người.
+- **Gắn truyện:** chương 8, Hạng Chiêu bị mê hoặc có thể xuất hiện làm "nhà vô địch" thách người chơi (PvE).
+
+### 11.2 Kết thúc thứ ba — "Siêu Độ" (`ending_truth`)
+
+**Sự thật (lộ dần qua 10 Di thư bộ C):**
+- Dạ Khuyết vốn là **Thủ Hộ Giả** của Tiền Nhân. Ngàn năm trước, ông tự làm "bình chứa" để phong ấn Hư Không.
+- 4 Chấp Hành Giả là 4 đệ tử của ông, được giao canh 4 Mảnh.
+- Ông muốn mở Hư Không không phải để hủy diệt. Ông đã kiệt sức, và nếu không có người thay thì Hư Không sẽ tự vỡ.
+
+**Hai kết thúc hiện có** chỉ chọn giữa "phong lại" (kéo dài nỗi khổ) hoặc "hút lấy" (người chơi thành bình chứa mới).
+
+**Kết thúc thứ ba: chuyển hóa Hư Không thành Linh Khí, giải thoát Dạ Khuyết.**
+
+| Phần | Nội dung |
+|---|---|
+| Điều kiện | Đủ 10 Di thư C, Hư Ảnh trung bình dưới 30%, đã hạ đủ 4 CHG. Thiếu điều kiện thì lựa chọn hiện mờ kèm gợi ý thiếu gì |
+| Trận cuối | Phase 1 như cũ. Phase 2 đổi thành **Tâm Chiến**: đánh 4 tàn ảnh CHG trong ký ức Dạ Khuyết, mỗi tàn ảnh nói một câu về quá khứ. Phase 3: không đánh, đứng giữ 4 Mảnh trong 60 giây giữa sóng Hư Không (né đòn) để chuyển hóa |
+| Cảnh kết | Hư Không tan thành mưa linh quang. Dạ Khuyết nói lời cuối và trao **Ấn Thủ Hộ** |
+| Nhân vật | Mộ Dao: nếu đã rời đi thì quay về; nếu đã hy sinh thì tàn hồn hiện ra chào. Hạng Chiêu: nếu `rival_lost` thì tỉnh lại, xin lỗi |
+| Thế giới sau đó | **Thế Giới Tầng 2 "Linh Khí Phục Hưng"**: vùng Hư Hóa cũ thành vùng linh khí (tu luyện nhanh hơn), quái Hư Không yếu dần. Thay vào đó, **Yêu Tộc** trỗi dậy làm mối đe dọa mới (mở đường cho nội dung sau) |
+| Thưởng | Danh hiệu "Siêu Độ Giả". Vũ khí bản mệnh lên dạng **Thủ Hộ**, mở khả năng ngự vũ khí bay đường dài (khớp quyết định #3) |
+
+**Vì sao chọn hướng này:**
+- Biến việc nhặt Di thư (khám phá thế giới) thành phần thưởng truyện lớn nhất.
+- Cho Hư Ảnh (phòng thủ thành) ý nghĩa ở kết thúc.
+- Đồng thời mở hướng nội dung sau kết thúc.
