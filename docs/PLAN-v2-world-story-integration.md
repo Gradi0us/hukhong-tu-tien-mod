@@ -493,3 +493,9 @@ Thứ tự làm đã chốt: **S0 + W0 trước** (phần nối cốt truyện +
 - **Hiệu ứng riêng mỗi dạng** (dùng lại `FxElem`): màu và hạt riêng, để không lặp lại lỗi "VFX na ná nhau" như Pháp.
 - **Kiểm tra (DoD):** GameTest cho mỗi dạng chạy đủ các chiêu (giống `MobBuffGameTests.bossRunsAllSkills`), cộng ảnh chụp trong game của cả 8 dạng.
 - **Fermi:** 4 khung model + 8 texture + 8 bộ chiêu ≈ 2 lượt agent (1 lượt model / texture, 1 lượt AI chiêu) ≈ 0,5M token. Làm trong đợt **T3**.
+- **Rơi Hồn Cốt 100%:** mỗi Hư Vương khi chết **chắc chắn rơi 1 Hồn Cốt** (vật phẩm, không vào ví), dùng hệ `honcot/` có sẵn (`HonCotItem`, `HonCotService`).
+  - **Loại / khe** hợp với dạng: Cốt Long → xương sống / chân; Băng Phách → đầu; Huyết Ma → tay; …
+  - **Phẩm** theo kích thước vùng: vùng nhỏ → phẩm thấp; Tinh Anh → trung; Cổ → cao; **Thiên Diện chắc chắn phẩm cao nhất**, thêm 30% ra Hồn Cốt thứ hai.
+  - **Chỉ số** tăng theo cấp vùng (20–85).
+  - **Nhiều người đánh:** mỗi người gây ≥10% sát thương nhận 1 Hồn Cốt riêng (không tranh nhau). Vùng đã giải phóng thì không rơi lại.
+  - **GameTest:** hạ mỗi dạng → kiểm tra có đúng 1 Hồn Cốt đúng khe và phẩm.
