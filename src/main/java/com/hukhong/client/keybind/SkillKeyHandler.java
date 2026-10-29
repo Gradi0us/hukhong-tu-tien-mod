@@ -53,8 +53,12 @@ public final class SkillKeyHandler {
             }
         }
         boolean beamT = on && com.hukhong.client.fx.PhapBeamClient.lockedT(mc) && Skill.skillPath(com.hukhong.client.ClientCache.cultivation(), ClientSkillState.page()) == com.hukhong.core.Path.PHAP;
+        boolean thiemBo = on && Skill.skillPath(com.hukhong.client.ClientCache.cultivation(), ClientSkillState.page()) == com.hukhong.core.Path.PHAP
+                && com.hukhong.phaptu.PhapTu.rawElement(mc.player) == com.hukhong.phaptu.PhapElement.QUANG;
+        com.hukhong.client.fx.ThiemBoClient.tickKeys(mc, thiemBo);
         for (int i = 0; i < 4; i++) {
             while (SkillKeys.SKILL[i].consumeClick()) {
+                if (i == 1 && thiemBo) continue; // Quang E: giữ/bấm nhanh do ThiemBoClient + server phân biệt
                 if (on && !(i == 3 && beamT)) PacketDistributor.sendToServer(new CastSkillPayload(i)); // T của Quang/Lôi/Hỏa/Thủy: giữ để nạp (PhapBeamClient)
             }
         }

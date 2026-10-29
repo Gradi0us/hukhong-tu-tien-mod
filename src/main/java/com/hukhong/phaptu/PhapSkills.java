@@ -175,19 +175,7 @@ public final class PhapSkills {
                 FxSfx.cast(lv, from, 0.5f, 1.8f, SoundEvents.TRIDENT_THROW.value(), SoundEvents.AMETHYST_BLOCK_CHIME, null);
                 sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9f, 1.6f);
             }
-            case 1 -> { // Thiểm Bộ: lao xuyên, chém mọi thứ trên đường
-                Vec3 f = flat(p), o = p.position().add(0, 0.9, 0);
-                for (LivingEntity t : line(lv, p, o, f, 7, 1.1)) hit(p, t, c);
-                p.setDeltaMovement(f.x * 1.9, 0.12, f.z * 1.9);
-                p.hurtMarked = true;
-                p.fallDistance = 0;
-                p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 50, 1, false, false));
-                Fx.qi(lv, o, f.scale(7), 1.2f, col, 0, 9);
-                streak(lv, o, f, 7, ParticleTypes.END_ROD, 0.35);
-                Fx.ribbon(lv, p, o.add(0, 0.4, 0), o.add(f.scale(7)).add(0, 0.4, 0), 0, 4, 0, 0.33f, col);
-                Fx.ribbon(lv, p, o.add(0, 1.3, 0), o.add(f.scale(7)).add(0, 1.3, 0), 0, 3, 1, 0.14f, 0xFFFFFF);
-                sound(lv, o, SoundEvents.PLAYER_ATTACK_SWEEP, 1f, 1.7f);
-            }
+            case 1 -> ThiemBoService.dash(lv, p); // Thiểm Bộ (bấm nhanh E): lùi + Bá Thể; giữ E = chạy tia sáng (ThiemBoService)
             case 2 -> { // Quang Vũ: 5 tia quạt, mỗi mục tiêu trúng một lần
                 Set<LivingEntity> hit = new LinkedHashSet<>();
                 for (int i = -2; i <= 2; i++) {

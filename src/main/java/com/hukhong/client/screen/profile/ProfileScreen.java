@@ -33,15 +33,25 @@ public class ProfileScreen extends Screen {
     private static final int GOLD = 0xFFFFD34F, GREEN = 0xFF55FF55, GREY = 0xFF888888;
     private static final int ROW = 14, TAB_H = 14;
 
-    private static final int TABS = 5;
+    private static final int TABS = 6, TAB_GAP = 3;
     private final List<int[]> boneRows = new ArrayList<>(); // {y, slot}
     private int tab = 0;
     private double scroll = 0;
     private int x0, y0, pw, ph, cx, cy, cw, ch; // khung + vùng nội dung
     private final List<Component> tooltip = new ArrayList<>();
     private int contentH = 0;
+    // header (tính trong layout(); render và click dùng chung)
+    private int cpX, cpW, loX, loW, titleX, tabY, tabW;
+    private Component titleShown = Component.empty();
+    private final List<int[]> artRects = new ArrayList<>(); // {x, y, w, pathOrdinal}
+    private int ticks = 0, skillsBuiltAt = -1000;
+    private List<SkillEntries.Page> skillPages = List.of();
+    private List<SkillEntries.Entry> skillLoose = List.of();
 
     public ProfileScreen() { super(Component.translatable("hukhong.profile.title")); }
+
+    /** Mở thẳng một tab (0 Chỉ số, 1 Lõi, 2 Hệ, 3 Hồn Cốt, 4 Nội Tại, 5 Kỹ Năng). */
+    public ProfileScreen withTab(int t) { tab = Math.max(0, Math.min(TABS - 1, t)); return this; }
 
     @Override
     public boolean isPauseScreen() { return false; }
@@ -50,13 +60,45 @@ public class ProfileScreen extends Screen {
     public void renderBackground(GuiGraphics g, int mx, int my, float partial) {
     }
 
+    private static final int HDR_Y = 4, HDR_H = 12, ART_Y = 18, ART_H = 11;
+
     private void layout() {
         pw = Math.min(width - 16, 420);
         ph = Math.min(height - 16, 260);
         x0 = (width - pw) / 2;
         y0 = (height - ph) / 2;
+        int left = x0 + 8, right = x0 + pw - 8;
+        // hàng 1: [Công Pháp] trái, tiêu đề giữa (kẹp giữa hai nút), [Lộ Ma] phải
+        cpX = left;
+        cpW = font.width(t("hukhong.skillbook.button", "[Công Pháp]"));
+        loW = ClientCache.cultivation().paths().contains(Path.MA) ? font.width(t("hukhong.ma.lo.button", "[Lộ Ma]")) : 0;
+        loX = right - loW;
+        int tl = cpX + cpW + 8, tr = (loW > 0 ? loX : right) - 8;
+        int avail = Math.max(0, tr - tl);
+        String ts = title.getString();
+        if (font.width(ts) > avail) ts = font.plainSubstrByWidth(ts, avail);
+        titleShown = Component.literal(ts);
+        int tw = font.width(ts);
+        titleX = Math.max(tl, Math.min(width / 2 - tw / 2, tr - tw));
+        // hàng 2 (chỉ khi có pháp khí): các nút tiến hóa, co lại nếu không đủ chỗ
+        artRects.clear();
+        List<Path> arts = artifactPaths();
+        int rowW = right - left;
+        if (!arts.isEmpty()) {
+            int total = -6;
+            for (Path ap : arts) total += font.width(artifactLabel(ap)) + 6;
+            int ax = left;
+            int each = total > rowW ? (rowW - 6 * (arts.size() - 1)) / arts.size() : -1;
+            for (Path ap : arts) {
+                int aw = each > 0 ? each : font.width(artifactLabel(ap));
+                artRects.add(new int[]{ax, y0 + ART_Y, aw, ap.ordinal()});
+                ax += aw + 6;
+            }
+        }
+        tabY = y0 + ART_Y + (arts.isEmpty() ? 0 : ART_H + 3);
+        tabW = (pw - 16 - TAB_GAP * (TABS - 1)) / TABS;
         cx = x0 + 8;
-        cy = y0 + 22 + TAB_H + 6;
+        cy = tabY + TAB_H + 6;
         cw = pw - 16;
         ch = y0 + ph - 18 - cy;
     }
@@ -71,6 +113,7 @@ public class ProfileScreen extends Screen {
             case 1 -> t("hukhong.profile.tab.cores", "Lõi");
             case 3 -> t("hukhong.profile.tab.bones", "Hồn Cốt");
             case 4 -> t("hukhong.profile.tab.passives", "Nội Tại");
+            case 5 -> t("hukhong.profile.tab.skills", "Kỹ Năng");
             default -> t("hukhong.profile.tab.systems", "Hệ");
         };
     }
@@ -81,33 +124,31 @@ public class ProfileScreen extends Screen {
         tooltip.clear();
         g.fill(x0 - 1, y0 - 1, x0 + pw + 1, y0 + ph + 1, 0xFF555555);
         g.fill(x0, y0, x0 + pw, y0 + ph, 0xEE111119);
-        g.drawCenteredString(font, title, width / 2, y0 + 6, GOLD);
-        if (ClientCache.cultivation().paths().contains(Path.MA)) {
-            Component lo = t("hukhong.ma.lo.button", "[Lộ Ma]");
-            int bx = x0 + pw - font.width(lo) - 8;
-            g.drawString(font, lo, bx, y0 + 6, (mx >= bx && mx < bx + font.width(lo) && my >= y0 + 4 && my < y0 + 16) ? 0xFFFFFFFF : 0xFFFF5555);
-        }
-
-        int ax = x0 + 8; // nút tiến hóa pháp khí (Đạo/Thể/Ma) bằng Hồn Tinh
-        for (Path ap : artifactPaths()) {
-            Component lab = artifactLabel(ap);
-            int aw = font.width(lab);
-            boolean ah = mx >= ax && mx < ax + aw && my >= y0 + 4 && my < y0 + 16;
-            g.drawString(font, lab, ax, y0 + 6, ah ? 0xFFFFFFFF : ap.argb);
-            if (ah) artifactTooltip(ap);
-            ax += aw + 8;
-        }
-
+        int hy = y0 + HDR_Y;
+        g.drawString(font, titleShown, titleX, y0 + 6, GOLD);
         Component cp = t("hukhong.skillbook.button", "[Công Pháp]");
-        g.drawString(font, cp, x0 + 8, y0 + 6, (mx >= x0 + 8 && mx < x0 + 8 + font.width(cp) && my >= y0 + 4 && my < y0 + 16) ? 0xFFFFFFFF : 0xFF7FD4FF);
+        g.drawString(font, cp, cpX, y0 + 6, inRect(mx, my, cpX, hy, cpW, HDR_H) ? 0xFFFFFFFF : 0xFF7FD4FF);
+        if (loW > 0) {
+            Component lo = t("hukhong.ma.lo.button", "[Lộ Ma]");
+            g.drawString(font, lo, loX, y0 + 6, inRect(mx, my, loX, hy, loW, HDR_H) ? 0xFFFFFFFF : 0xFFFF5555);
+        }
+        for (int[] r : artRects) { // nút tiến hóa pháp khí (Đạo/Thể/Ma/Pháp) bằng Hồn Tinh
+            Path ap = Path.values()[r[3]];
+            boolean ah = inRect(mx, my, r[0], r[1], r[2], ART_H);
+            Component lab = artifactLabel(ap);
+            if (font.width(lab) > r[2]) g.drawString(font, font.plainSubstrByWidth(lab.getString(), r[2]), r[0], r[1] + 1, ah ? 0xFFFFFFFF : ap.argb);
+            else g.drawString(font, lab, r[0], r[1] + 1, ah ? 0xFFFFFFFF : ap.argb);
+            if (ah) artifactTooltip(ap);
+        }
 
-        int tw = pw / TABS - 6;
         for (int i = 0; i < TABS; i++) {
-            int tx = x0 + 8 + i * (tw + 6), ty = y0 + 20;
-            boolean sel = i == tab, hov = mx >= tx && mx < tx + tw && my >= ty && my < ty + TAB_H;
-            g.fill(tx, ty, tx + tw, ty + TAB_H, sel ? 0xFF3A3A55 : hov ? 0xFF2A2A3A : 0xFF1C1C28);
-            if (sel) g.fill(tx, ty + TAB_H - 1, tx + tw, ty + TAB_H, GOLD);
-            g.drawCenteredString(font, tabName(i), tx + tw / 2, ty + 3, sel ? 0xFFFFFFFF : 0xFFAAAAAA);
+            int tx = x0 + 8 + i * (tabW + TAB_GAP), ty = tabY;
+            boolean sel = i == tab, hov = inRect(mx, my, tx, ty, tabW, TAB_H);
+            g.fill(tx, ty, tx + tabW, ty + TAB_H, sel ? 0xFF3A3A55 : hov ? 0xFF2A2A3A : 0xFF1C1C28);
+            if (sel) g.fill(tx, ty + TAB_H - 1, tx + tabW, ty + TAB_H, GOLD);
+            String tn = tabName(i).getString();
+            if (font.width(tn) > tabW - 2) tn = font.plainSubstrByWidth(tn, tabW - 2);
+            g.drawString(font, tn, tx + (tabW - font.width(tn)) / 2, ty + 3, sel ? 0xFFFFFFFF : 0xFFAAAAAA);
         }
 
         g.fill(cx - 2, cy - 2, cx + cw + 2, cy + ch + 2, 0x66000000);
@@ -118,6 +159,7 @@ public class ProfileScreen extends Screen {
             case 1 -> renderCores(g, mx, my);
             case 3 -> renderBones(g, mx, my);
             case 4 -> renderPassives(g);
+            case 5 -> renderSkills(g);
             default -> renderSystems(g);
         };
         g.disableScissor();
@@ -375,36 +417,95 @@ public class ProfileScreen extends Screen {
         return y - top;
     }
 
+    private static boolean inRect(double mx, double my, int x, int y, int w, int h) {
+        return mx >= x && mx < x + w && my >= y && my < y + h;
+    }
+
+    @Override
+    public void tick() { ticks++; }
+
+    // ------------------------------------------------------------------ tab 5 (Kỹ Năng)
+    private void rebuildSkills() {
+        skillsBuiltAt = ticks;
+        var pl = Minecraft.getInstance().player;
+        if (pl == null) { skillPages = List.of(); skillLoose = List.of(); return; }
+        CultivationData d = ClientCache.cultivation();
+        int[] stage = new int[Path.values().length];
+        var ad = pl.getData(com.hukhong.artifact.ArtifactAttachments.ARTIFACT.get());
+        for (Path p : Path.values()) stage[p.ordinal()] = com.hukhong.banmenh.BanMenhMath.effectiveStage(ad.get(p), d.level());
+        double ap = pl.getAttributeValue(com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.ATTACK_POWER));
+        double sp = pl.getAttributeValue(com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.SPELL_POWER));
+        var el = d.paths().contains(Path.PHAP) ? com.hukhong.phaptu.PhapTu.rawElement(pl) : null; // CULTIVATION không đồng bộ: không dùng PhapTu.element()
+        var x = new SkillEntries.Ctx(d.level(), d.paths(), d.aptitude(), com.hukhong.skillbook.ClientSkillBook.get(), el, ap, sp,
+                pl.getMaxHealth(), d.resourceMax(), com.hukhong.gates.Resources.costFor(d, 1), stage,
+                com.hukhong.honcot.ClientBones.get().count());
+        skillPages = SkillEntries.build(x);
+        skillLoose = SkillEntries.unassigned(x);
+    }
+
+    private int renderSkills(GuiGraphics g) {
+        if (skillsBuiltAt < 0 || ticks - skillsBuiltAt > 10) rebuildSkills();
+        int top = cy - (int) scroll, y = top, tw = cw - 24;
+        if (skillPages.isEmpty()) {
+            g.drawString(font, t("hukhong.skills.none", "Chưa nhập đạo nên chưa có kỹ năng."), cx, y, GREY);
+            return ROW;
+        }
+        for (SkillEntries.Page pg : skillPages) {
+            g.drawString(font, pg.header(), cx, y, pg.path().argb);
+            y += 11;
+            g.fill(cx, y - 1, cx + cw, y, 0xFF333344);
+            y += 3;
+            for (SkillEntries.Entry e : pg.basic()) y = drawSkill(g, e, y, tw);
+            for (SkillEntries.Entry e : pg.keys()) y = drawSkill(g, e, y, tw);
+            y += 5;
+        }
+        if (!skillLoose.isEmpty()) {
+            g.drawString(font, t("hukhong.skills.unassigned", "Bí tịch đã học (chưa gán phím)"), cx, y, 0xFF7FD4FF);
+            y += 11;
+            g.fill(cx, y - 1, cx + cw, y, 0xFF333344);
+            y += 3;
+            for (SkillEntries.Entry e : skillLoose) y = drawSkill(g, e, y, tw);
+        }
+        return Math.max(y - top, ROW);
+    }
+
+    private int drawSkill(GuiGraphics g, SkillEntries.Entry e, int y, int tw) {
+        if (!e.key().isEmpty()) {
+            g.fill(cx + 1, y - 1, cx + 15, y + 9, 0xFF2A2A3A);
+            g.drawCenteredString(font, e.key().length() > 2 ? e.key().substring(0, 1) : e.key(), cx + 8, y, GOLD);
+        }
+        g.drawString(font, e.name(), cx + 20, y, SkillEntries.NAME);
+        y += 10;
+        for (SkillEntries.Line ln : e.lines()) {
+            for (var seq : font.split(ln.text(), tw)) {
+                g.drawString(font, seq, cx + 20, y, ln.argb());
+                y += 10;
+            }
+        }
+        return y + 4;
+    }
+
     // ------------------------------------------------------------------ input
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
         layout();
-        if (ClientCache.cultivation().paths().contains(Path.MA)) {
-            int bw = font.width(t("hukhong.ma.lo.button", "[Lộ Ma]"));
-            int bx = x0 + pw - bw - 8;
-            if (mx >= bx && mx < bx + bw && my >= y0 + 4 && my < y0 + 16) {
-                Minecraft.getInstance().setScreen(new com.hukhong.client.screen.ma.MaLoScreen());
+        int hy = y0 + HDR_Y;
+        if (loW > 0 && inRect(mx, my, loX, hy, loW, HDR_H)) {
+            Minecraft.getInstance().setScreen(new com.hukhong.client.screen.ma.MaLoScreen());
+            return true;
+        }
+        for (int[] r : artRects) {
+            if (inRect(mx, my, r[0], r[1], r[2], ART_H)) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.hukhong.artifact.ArtifactUpgradePayload(r[3]));
                 return true;
             }
         }
-        int ax = x0 + 8;
-        for (Path ap : artifactPaths()) {
-            int aw = font.width(artifactLabel(ap));
-            if (mx >= ax && mx < ax + aw && my >= y0 + 4 && my < y0 + 16) {
-                net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.hukhong.artifact.ArtifactUpgradePayload(ap.ordinal()));
-                return true;
-            }
-            ax += aw + 8;
-        }
-        int cpw = font.width(t("hukhong.skillbook.button", "[Công Pháp]"));
-        if (mx >= x0 + 8 && mx < x0 + 8 + cpw && my >= y0 + 4 && my < y0 + 16) {
+        if (inRect(mx, my, cpX, hy, cpW, HDR_H)) {
             Minecraft.getInstance().setScreen(new com.hukhong.skillbook.client.CongPhapScreen());
             return true;
         }
-        int tw = pw / TABS - 6;
         for (int i = 0; i < TABS; i++) {
-            int tx = x0 + 8 + i * (tw + 6), ty = y0 + 20;
-            if (mx >= tx && mx < tx + tw && my >= ty && my < ty + TAB_H) {
+            if (inRect(mx, my, x0 + 8 + i * (tabW + TAB_GAP), tabY, tabW, TAB_H)) {
                 if (tab != i) { tab = i; scroll = 0; }
                 return true;
             }

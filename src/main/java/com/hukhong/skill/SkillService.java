@@ -37,7 +37,7 @@ public final class SkillService {
             return;
         }
         st.stance = !st.stance;
-        if (!st.stance) { SkillEffects.kiemVucStop(p, st, true); com.hukhong.phaptu.beam.PhapBeamService.cancel(p); }
+        if (!st.stance) { SkillEffects.kiemVucStop(p, st, true); com.hukhong.phaptu.beam.PhapBeamService.cancel(p); com.hukhong.phaptu.ThiemBoService.cancel(p); }
         else StanceHands.equip(p, Skill.skillPath(d, st.page));
         p.displayClientMessage(Component.translatable(st.stance ? "hukhong.stance.on" : "hukhong.stance.off"), true);
         sync(p);
@@ -54,6 +54,7 @@ public final class SkillService {
         st.page = SkillPages.next(st.page, n);
         SkillEffects.kiemVucStop(p, st, true);
         com.hukhong.phaptu.beam.PhapBeamService.cancel(p);
+        com.hukhong.phaptu.ThiemBoService.cancel(p);
         st.lastSwitch = now;
         for (int i = 0; i < 4; i++) st.cooldownEnd[i] = Math.max(st.cooldownEnd[i], now + SkillPages.SWITCH_COOLDOWN_TICKS);
         p.displayClientMessage(Component.translatable("hukhong.msg.page_switched",
@@ -113,7 +114,8 @@ public final class SkillService {
         } else {
             BookSkillEffects.run(r.book(), p, lvl);
         }
-        st.cooldownEnd[slot] = now + Math.round(SkillBookMath.cooldown(r.baseCooldown(), lvl) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page));
+        int tbCd = r.base() == Skill.PHAP_2 ? com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, slot) : -1;
+        st.cooldownEnd[slot] = now + (tbCd >= 0 ? tbCd : Math.round(SkillBookMath.cooldown(r.baseCooldown(), lvl) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)));
         st.lastCombat = now;
         sync(p);
     }
@@ -131,6 +133,7 @@ public final class SkillService {
             rem.add((int) Math.max(0, st.cooldownEnd[i] - now));
             tot.add(i == 2 && r == null ? Math.max(1, st.rTotal) : r == null ? 1
                     : r.base() == Skill.KIEM_ULT ? SkillEffects.DOMAIN_LOCK_TICKS
+                    : r.base() == Skill.PHAP_2 && com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, i) >= 0 ? com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, i)
                     : (int) Math.round(SkillBookMath.cooldown(r.baseCooldown(), bd.level(r.id())) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)));
         }
         PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot, st.page, st.domainOn));

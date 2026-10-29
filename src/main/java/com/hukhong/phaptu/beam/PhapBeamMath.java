@@ -26,7 +26,7 @@ public final class PhapBeamMath {
     // ---- chi phí / hồi chiêu
     public static final double UPFRONT_PCT = 0.40;      // % Pháp Lực tối đa trả khi bắt đầu bắn
     public static final double DRAIN_PCT_PER_SEC = 0.14; // % Pháp Lực tối đa mỗi giây khi kênh
-    public static final int COOLDOWN_TICKS = 1500;      // 75s = bằng T cũ (PHAP_ULT)
+    public static final int COOLDOWN_TICKS = 900;       // 45s (29/10: giảm từ 75s theo phản hồi)
 
     // ---- làm chậm di chuyển (ADD_MULTIPLIED_TOTAL)
     public static final double CHARGE_SLOW = -0.60, FIRE_SLOW = -0.85;
@@ -34,7 +34,7 @@ public final class PhapBeamMath {
     // ---- sát thương
     public static final double APT_MIN = 0.70, APT_MAX = 1.30;
     /** Hệ số nhịp = coef T cũ x PULSE_RATIO: 20 nhịp x 1,30 (SSS) x 0,105 ~ 2,73 lần T cũ. */
-    public static final double PULSE_RATIO = 0.105;
+    public static final double PULSE_RATIO = 0.17;   // 29/10: x1.62 (0.105 -> 0.17) theo phản hồi "sát thương hơi thấp"
 
     public static boolean locksT(PhapElement e) {
         return e == PhapElement.QUANG || e == PhapElement.LOI || e == PhapElement.HOA || e == PhapElement.THUY;

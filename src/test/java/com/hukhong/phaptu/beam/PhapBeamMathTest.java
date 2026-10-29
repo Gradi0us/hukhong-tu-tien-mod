@@ -48,17 +48,16 @@ class PhapBeamMathTest {
         assertEquals(7.0, PhapBeamMath.drainPerTick(max, 1.0), 1e-9);
         double total = PhapBeamMath.totalCost(max, 1.0, PhapBeamMath.FIRE_MAX_TICKS) / max;
         assertTrue(total >= 0.9 && total <= 1.0, "toan bo kenh ton " + total);
-        assertTrue(PhapBeamMath.COOLDOWN_TICKS >= Skill.PHAP_ULT.cooldownTicks);
-        assertTrue(PhapBeamMath.COOLDOWN_TICKS / 20 >= 60 && PhapBeamMath.COOLDOWN_TICKS / 20 <= 75);
+        assertEquals(45, PhapBeamMath.COOLDOWN_TICKS / 20);
         assertEquals(40.0, PhapBeamMath.RANGE);
         assertEquals(1.6, PhapBeamMath.RADIUS);
     }
 
     @Test
-    void fullChannelAtSssIsAbout27To3TimesOldUlt() {
+    void fullChannelAtSssIsAbout44TimesOldUlt() {
         for (PhapElement e : BEAM) {
             double ratio = PhapBeamMath.fullChannelDamage(e, Aptitude.SSS, 100) / PhapBeamMath.oldUltDamage(e, 100);
-            assertTrue(ratio >= 2.5 && ratio <= 3.0, e + " ratio " + ratio);
+            assertTrue(ratio >= 4.2 && ratio <= 4.7, e + " ratio " + ratio); // 29/10: PULSE_RATIO 0.17
         }
     }
 

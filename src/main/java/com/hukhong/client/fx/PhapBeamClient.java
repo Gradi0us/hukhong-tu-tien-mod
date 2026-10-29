@@ -131,7 +131,7 @@ public final class PhapBeamClient {
 
     // ------------------------------------------------------------------ phím
 
-    private static boolean physicalDown(Minecraft mc, KeyMapping k) {
+    public static boolean physicalDown(Minecraft mc, KeyMapping k) {
         long w = mc.getWindow().getWindow();
         InputConstants.Key key = k.getKey();
         if (key.getType() == InputConstants.Type.MOUSE) return GLFW.glfwGetMouseButton(w, key.getValue()) == GLFW.GLFW_PRESS;
