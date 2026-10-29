@@ -388,3 +388,85 @@ Budget status:  OK
 - Biến việc nhặt Di thư (khám phá thế giới) thành phần thưởng truyện lớn nhất.
 - Cho Hư Ảnh (phòng thủ thành) ý nghĩa ở kết thúc.
 - Đồng thời mở hướng nội dung sau kết thúc.
+
+---
+
+## 12. Bổ sung theo yêu cầu người chơi (2026-10-29, lượt 2)
+
+Thứ tự làm đã chốt: **S0 + W0 trước** (phần nối cốt truyện + Lịch K).
+
+### 12.1 Tách Ấn Hồn Đài khỏi khu thương nhân
+- **Hiện trạng:** `CityMarket` đặt thương nhân quanh quảng trường / bàn thờ (`city/CityMarket.java:20-22`), nên thương nhân đứng chen với Ấn Hồn Đài (`city/AltarShrine.java:18-20`).
+- **Mới:**
+  - Ấn Hồn Đài thành **Quảng Trường Ấn Hồn** riêng:
+    - Đài lớn gấp khoảng 2 lần (bán kính 9 → khoảng 18), 3 bậc thềm.
+    - 8 trụ lửa hồn, vòng sáng xoay trên cao, hồ nước bao quanh có cầu.
+    - Không có thương nhân nào trong bán kính 32 block.
+  - Thương nhân chuyển hết sang **Khu Chợ** (§12.2).
+- **Lưu ý:** việc này đảo lại quyết định cũ (đã bỏ khu chợ riêng, `city/TradeDistrict.java:5-7`). Cần sửa `CityProtection` và thêm marker vị trí chợ.
+
+### 12.2 Khu Chợ (Thương Hội) + Uy Danh Chợ
+- Mỗi thành có một khu chợ riêng, cách tâm thành 40–70 block, nằm trên đất khô (`DrySites`). Có cổng chào và các sạp hàng, và có điểm dịch chuyển riêng trên Lịch / bản đồ.
+- **Hàng bán:** chỉ vật phẩm mod, gồm đan, nguyên liệu, **vật phẩm tiến hóa** (vũ khí bản mệnh / Linh Bảo / Linh Trượng) và sách kỹ năng phẩm thấp.
+- **Uy Danh Chợ:** tính theo tổng Tử Tinh đã tiêu ở chợ, chung toàn server (mỗi người chơi một mức). Có 5 bậc:
+
+| Bậc | Tên | Mở khóa |
+|---|---|---|
+| 1 | Khách Lạ | Hàng cơ bản |
+| 2 | Khách Quen | Giảm 5%, thêm nguyên liệu tiến hóa |
+| 3 | Khách Quý | Giảm 10%, đan phẩm cao |
+| 4 | Thượng Khách | **Quầy Đặc Biệt:** Hồn Cốt (hàng xoay vòng mỗi ngày Lịch), **Trục Nâng Cấp Kỹ Năng** |
+| 5 | Tôn Khách | Hồn Cốt phẩm cao, trục bậc cao, đặt hàng theo yêu cầu |
+
+- Khi mở bậc mới thì có thông báo kèm âm thanh; tab K hiện thanh Uy Danh.
+- **Trục Nâng Cấp Kỹ Năng** là vật phẩm mới: dùng để nâng 1 cấp cho một kỹ năng. Mua được ở bậc 4–5, và rơi hiếm ở Bí Cảnh cấp cao.
+
+### 12.3 Hồn Tinh thành tiền trong ví (giống Tử Tinh)
+- **Hiện trạng:** Hồn Tinh vẫn rơi ra thành vật phẩm ở khoảng 8 nơi, ví dụ `chg/ChapHanhGia.java:479`, `entity/HuVuong.java:312`, `entity/WorldBoss.java:354`, `events/VoidRaid.java:301`, `endgame/DaKhuyet.java:168`. Hồn Tinh còn là hàng bán trong `currency/ShopCatalog.java:83-86`.
+- **Mới:**
+  - Thêm số dư Hồn Tinh vào ví (`currency/Wallet`).
+  - Mọi chỗ rơi Hồn Tinh gọi một hàm chung `Wallet.grantHonTinh(p, n)`, hiện popup icon và cộng vào số dư.
+  - Nếu nhặt hoặc còn vật phẩm Hồn Tinh trong túi thì tự đổi vào ví (giống `CurrencyEvents` của Tử Tinh). Save cũ cũng được đổi như vậy.
+  - Tab K hiện số Hồn Tinh.
+- **Giá nâng cấp tăng dần theo cấp:**
+  - Công thức: `cost(n) = base × n^1.6`, cộng thêm ×1.5 ở mỗi mốc 10.
+  - Ví dụ với base 5:
+
+    | Cấp | 1 | 5 | 10 | 20 | 30 |
+    |---|---|---|---|---|---|
+    | Hồn Tinh | 5 | ~66 | ~199 + mốc | ~600 | ~1150 |
+
+  - Áp dụng cho bản mệnh, Linh Bảo, Linh Trượng, Hồn Cốt. Hằng số đặt trong một file `UpgradeCost` dùng chung (DRY).
+
+### 12.4 Vùng Hư Không Xâm Thực có sẵn khi tạo map
+- **Hiện trạng:**
+  - Tâm Hư Hóa sinh và lan dần theo thời gian (`events/CorruptionManager.java:61, 85, 169`).
+  - Đã có giải phóng vùng (`liberation/LiberationManager.java:53`).
+  - Nhưng chưa có vùng lớn đặt sẵn từ đầu.
+- **Mới:**
+  - **Khi tạo thế giới**, đặt sẵn khoảng 8–14 vùng xâm thực. Bán kính ngẫu nhiên 120–700 block, không đè lên thành, không ở quá gần điểm xuất phát.
+  - Vùng càng xa điểm xuất phát thì càng to.
+  - Cấp quái và độ mạnh boss trung tâm theo bán kính:
+
+| Bán kính | Cấp quái | Boss trung tâm |
+|---|---|---|
+| 120–250 | 20–40 | Hư Vương thường |
+| 250–450 | 40–65 | Hư Vương tinh anh + 1 phase |
+| 450–700 | 65–**85** | Hư Vương cổ, 3 phase, scale theo số người |
+
+  - **Vào vùng:** tự nhận nhiệm vụ "Giải Phóng [tên vùng]". Mục tiêu trỏ tới tâm vùng, kèm khoảng cách và cấp gợi ý. Vùng xuất hiện trên bản đồ và Lịch.
+  - **Hạ boss:** vùng sạch dần từ tâm ra ngoài (dùng lại Liberation). Hư Ảnh của thành gần nhất giảm mạnh; thưởng Hồn Tinh vào ví và Văn Kiện / Di thư.
+  - **Nối truyện:** mỗi vùng thuộc phe Dạ Khuyết (S0 `lore`). Vùng lớn nhất là nơi Sứ Đồ cầm quân. Giải phóng đủ số vùng là một điều kiện của kết thúc Siêu Độ (§11.2).
+  - **Hiệu năng:** đánh dấu chunk ngay khi tạo thế giới (chỉ lưu dữ liệu), còn biến đổi địa hình / màu và sinh quái chỉ làm khi chunk được nạp.
+
+### 12.5 Lộ trình cập nhật
+
+| Đợt | Nội dung |
+|---|---|
+| **S0 + W0** | Phần nối cốt truyện (`StoryHooks`, `lore`, Di thư C) + Lịch K có làn Dự Ngôn |
+| **T1** | Tách Ấn Hồn Đài / Khu Chợ, Uy Danh Chợ, Quầy Đặc Biệt, Trục Nâng Cấp Kỹ Năng |
+| **T2** | Hồn Tinh vào ví + công thức giá nâng cấp |
+| **T3** | Vùng xâm thực đặt sẵn khi tạo map + nhiệm vụ tự nhận + boss theo kích thước |
+| Sau đó | W1 → … theo §7.2 |
+
+**Fermi:** T1 + T2 + T3 cần khoảng 3–4 lượt agent ≈ 0,8–1M token.
