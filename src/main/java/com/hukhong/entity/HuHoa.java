@@ -85,6 +85,10 @@ public final class HuHoa {
     }
 
     public static void applyStats(Mob m, int level, double hpMul, double dmgMul) {
+        if (m.level() instanceof net.minecraft.server.level.ServerLevel sl) { // Kiếp Số (scaling)
+            double k = com.hukhong.scaling.Difficulty.mult(sl, m.blockPosition());
+            hpMul *= k; dmgMul *= com.hukhong.scaling.Difficulty.dmgPart(k);
+        }
         var mul = net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE;
         var add = net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE;
         mod(m, Attributes.MAX_HEALTH, "hu_lv_hp", hpMul * com.hukhong.endgame.WorldTier.hpMul() * hpScale(level) - 1, mul);

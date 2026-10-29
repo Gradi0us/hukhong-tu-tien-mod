@@ -28,6 +28,16 @@ public record QuestData(int chapter, List<String> flags) {
 
     public boolean has(String f) { return flags.contains(f); }
 
+    public QuestData withoutFlag(String f) {
+        if (!has(f)) return this;
+        List<String> l = new ArrayList<>(flags);
+        l.remove(f);
+        return new QuestData(chapter, List.copyOf(l));
+    }
+
+    /** Gia tri sau tien to trong cac co dang "prefix...:value" (dung cho chuoi nhiem vu phu), "" neu khong co. */
+    public String valueOf(String prefix) { return flagValue(prefix); }
+
     public QuestData withFlag(String f) {
         if (has(f)) return this;
         List<String> l = new ArrayList<>(flags);

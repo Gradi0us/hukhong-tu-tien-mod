@@ -102,6 +102,9 @@ public final class StructurePlacer {
         while (!QUEUE.isEmpty()) run(Long.MAX_VALUE);
     }
 
+    /** Dat toi da {@code ns} nano giay (dung luc tao the gioi: de nguoi goi giu watchdog song giua cac lan). */
+    public static void drainFor(long ns) { run(System.nanoTime() + ns); }
+
     @SubscribeEvent
     public static void onTick(ServerTickEvent.Post e) {
         run(System.nanoTime() + BUDGET_NS);

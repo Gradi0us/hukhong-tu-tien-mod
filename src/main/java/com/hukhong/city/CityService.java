@@ -47,6 +47,8 @@ public final class CityService {
         BlockPos sp = ow.getSharedSpawnPos();
         int[] ps = WorldBuildData.get(ow).portSite(d.id());
         if (ps != null) return new BlockPos(ps[0], 64, ps[1]);
+        int[] dry = WorldBuildData.get(ow).drySite(d.id());
+        if (dry != null) return new BlockPos(dry[0], 64, dry[1]);
         if (d.index() == 0) return CityBuilder.chooseSite(ow);
         int[] xz = Placement.site(sp.getX(), sp.getZ(), d.ax(), d.az(), ow.getSeed(), d.id());
         return new BlockPos(xz[0], 64, xz[1]);
@@ -68,7 +70,7 @@ public final class CityService {
                 if (d.index() == 0 || reg.isBuilt(d.id())) continue;
                 BlockPos s = site(ow, d);
                 if (Math.abs(p.getX() - s.getX()) > GEN_RADIUS || Math.abs(p.getZ() - s.getZ()) > GEN_RADIUS) continue;
-                BlockPos c = CityBuilder.build(ow, CityBuilder.adjustSite(ow, s), d);
+                BlockPos c = CityBuilder.build(ow, d.category().equals("port") ? CityBuilder.adjustSite(ow, s) : CityBuilder.adjustSite(ow, d.id(), s, CityBuilder.HALF + 4, d.category()), d);
                 reg.markBuilt(d.id(), c);
                 com.mojang.logging.LogUtils.getLogger().info("City {} built at {}", d.id(), c);
                 return; // tối đa 1 thành mỗi lần kiểm để tránh giật

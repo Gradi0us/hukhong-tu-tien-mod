@@ -79,16 +79,20 @@ public final class BanMenhService {
         var inv = p.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++)
             if (isSword(inv.getItem(i), p.getUUID())) return true;
-        return isSword(p.containerMenu.getCarried(), p.getUUID());
+        if (isSword(p.containerMenu.getCarried(), p.getUUID())) return true;
+        for (var slot : p.containerMenu.slots) // kiếm đang tạm nằm ở ô menu khác (đe, bàn chế tạo...)
+            if (isSword(slot.getItem(), p.getUUID())) return true;
+        return false;
     }
 
     static boolean isSword(ItemStack s, UUID owner) {
         return s.is(ModItems.BAN_MENH_KIEM.get()) && owner.equals(s.get(ModItems.BOUND_TO.get()));
     }
 
-    private static void give(ServerPlayer p, BanMenhData d) {
+    /** Không bao giờ vứt ra thế giới: túi đầy thì chờ (vòng kiểm tra định kỳ thử lại). */
+    private static boolean give(ServerPlayer p, BanMenhData d) {
         ItemStack s = create(d.withStage(BanMenhMath.effectiveStage(d.stage(), cultivationLevel(p))));
-        if (!p.getInventory().add(s)) p.drop(s, false);
+        return p.getInventory().add(s);
     }
 
     public static void forget(UUID id) { SUMMON_CD.remove(id); }
@@ -115,7 +119,11 @@ public final class BanMenhService {
         // dọn bản đã vứt trong thế giới để không nhân đôi
         for (ItemEntity ie : p.serverLevel().getEntitiesOfClass(ItemEntity.class, p.getBoundingBox().inflate(128),
                 e -> isSword(e.getItem(), p.getUUID()))) ie.discard();
-        give(p, d);
+        if (!give(p, d)) {
+            SUMMON_CD.remove(p.getUUID());
+            p.sendSystemMessage(Component.translatableWithFallback("hukhong.banmenh.msg.full", "Túi đầy, hãy chừa một ô trống."));
+            return false;
+        }
         p.sendSystemMessage(Component.translatable("hukhong.banmenh.msg.summoned"));
         return true;
     }

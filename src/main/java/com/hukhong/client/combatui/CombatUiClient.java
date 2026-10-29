@@ -57,7 +57,10 @@ public final class CombatUiClient {
             NUMS.addLast(new Num(pl.x(), pl.y(), pl.z(), pl.amount(), pl.kind(), pl.color(), now,
                     (mc.level.random.nextFloat() - 0.5f) * 0.02f));
         }
-        if (pl.kind() != CombatTextPayload.HEAL) touchBar(pl.entityId(), now);
+        if (pl.kind() != CombatTextPayload.HEAL) {
+            touchBar(pl.entityId(), now);
+            com.hukhong.client.fx.FxHit.onHit(pl.entityId(), pl.amount(), pl.kind(), pl.x(), pl.y(), pl.z());
+        }
     }
 
     private static void touchBar(int id, long now) {
@@ -84,13 +87,25 @@ public final class CombatUiClient {
         Camera cam = e.getCamera();
         Vec3 cp = cam.getPosition();
         MultiBufferSource.BufferSource buf = mc.renderBuffers().bufferSource();
+        // ROOT CAUSE "khong thay thanh mau": 1.21.1 da nhan frustum/modelView matrix vao RenderSystem model-view stack
+        // truoc khi ban su kien nay; mulPose(e.getModelViewMatrix()) nua = xoay camera 2 lan -> moi thu bi ve lech ra ngoai
+        // man hinh. Dung PoseStack rong + toa do tuong doi camera (giong FxClient/ObjectiveBeam).
         PoseStack ps = new PoseStack();
-        ps.mulPose(e.getModelViewMatrix());
         Font font = mc.font;
         if (bars) renderBars(mc, ps, buf, font, cam, cp, now, pt);
         if (nums) renderNumbers(ps, buf, font, cam, cp, now);
+        buf.endBatch(RenderType.guiOverlay());
         buf.endBatch();
+        if (!LOGGED) {
+            LOGGED = true;
+            LOG.info("CombatUi first render: bars=" + bars + " nums=" + nums + " cam=" + cp
+                    + " entities=" + LAST_DRAWN + " range=" + ClientConfig.mobBarRange());
+        }
     }
+
+    private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
+    private static boolean LOGGED;
+    private static int LAST_DRAWN;
 
     // ------------------------------------------------------------------ thanh máu
 
@@ -117,6 +132,7 @@ public final class CombatUiClient {
             if (++drawn > 24) break;
             drawBar(ps, buf, font, cam, cp, le, alpha, pt);
         }
+        LAST_DRAWN = drawn;
     }
 
     private static void drawBar(PoseStack ps, MultiBufferSource.BufferSource buf, Font font, Camera cam, Vec3 cp,
@@ -172,8 +188,9 @@ public final class CombatUiClient {
             float alpha = t < 0.65f ? 1f : 1f - (t - 0.65f) / 0.35f;
             double x = n.x + n.drift * age, y = n.y + rise, z = n.z;
             double dist = Math.sqrt((x - cp.x) * (x - cp.x) + (y - cp.y) * (y - cp.y) + (z - cp.z) * (z - cp.z));
-            float base = switch (n.kind) { case CombatTextPayload.CRIT -> 0.042f; case CombatTextPayload.SKILL -> 0.032f; default -> 0.026f; };
-            float pop = t < 0.12f ? 1f + (0.12f - t) * 4f : 1f;               // nảy to lúc đầu
+            float big = 1f + Math.min(0.45f, (float) Math.log10(1.0 + n.amount) / 9f);   // đòn càng nặng số càng to
+            float base = big * switch (n.kind) { case CombatTextPayload.CRIT -> 0.060f; case CombatTextPayload.SKILL -> 0.036f; default -> 0.026f; };
+            float pop = t < 0.12f ? 1f + (0.12f - t) * (n.kind == CombatTextPayload.CRIT ? 9f : 4f) : 1f;   // nảy to lúc đầu (bạo kích nảy mạnh hơn)
             float s = base * pop * (float) Math.max(1.0, dist / 9.0);
             int rgb = switch (n.kind) {
                 case CombatTextPayload.CRIT -> 0xFFD23C;
@@ -182,6 +199,7 @@ public final class CombatUiClient {
                 default -> 0xFFFFFF;
             };
             String txt = (n.kind == CombatTextPayload.HEAL ? "+" : "") + fmt(n.amount) + (n.kind == CombatTextPayload.CRIT ? "!" : "");
+            if (n.kind == CombatTextPayload.CRIT && t < 0.5f) x += Math.sin(age * 2.6) * 0.04 * (1 - t * 2); // bạo kích rung nhẹ lúc đầu
             int a = Math.max(4, (int) (alpha * 255));
             ps.pushPose();
             ps.translate(x - cp.x, y - cp.y, z - cp.z);

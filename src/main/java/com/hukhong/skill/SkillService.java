@@ -70,7 +70,10 @@ public final class SkillService {
         // phím R: Bản Mệnh / Vạn Cốt Cộng Minh, trừ khi có kỹ năng gán thủ công và chưa mở Bản Mệnh
         if (slot == 2 && r == null) {
             SkillBookRuntime.clear(p);
+            BanMenhSkill animSig = BanMenhSkillEffects.useResonance(p, st) ? null : BanMenhSkillEffects.signature(p, st);
+            long rBefore = st.cooldownEnd[2];
             BanMenhSkillEffects.castR(p, st);
+            if (st.cooldownEnd[2] != rBefore) com.hukhong.client.anim.CastAnimHook.playBanMenh(p, animSig); // cast thành công -> tư thế
             sync(p);
             return;
         }
@@ -87,7 +90,7 @@ public final class SkillService {
             SkillBookRuntime.clear(p);
             boolean ok;
             if (st.domainOn) { SkillEffects.kiemVucStop(p, st, false); ok = true; }
-            else { ok = SkillEffects.kiemVucStart(p, st, slot); if (ok) SkillEffects.kiemVucTick(p, st); } // nhịp đầu ngay lập tức
+            else { ok = SkillEffects.kiemVucStart(p, st, slot); if (ok) { com.hukhong.client.anim.CastAnimHook.play(p, r.base(), null, slot); SkillEffects.kiemVucTick(p, st); } } // nhịp đầu ngay lập tức
             if (ok) { st.cooldownEnd[slot] = now + SkillEffects.DOMAIN_LOCK_TICKS; st.lastCombat = now; }
             sync(p);
             return;
@@ -97,6 +100,7 @@ public final class SkillService {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
             return;
         }
+        com.hukhong.client.anim.CastAnimHook.play(p, r.base(), r.book(), slot); // tư thế thi triển (client)
         if (r.base() != null) {
             SkillBookRuntime.begin(p, SkillBookMath.dmgMult(lvl), SkillBookRuntime.windowTicks(r.base()));
             SkillEffects.run(r.base(), p);

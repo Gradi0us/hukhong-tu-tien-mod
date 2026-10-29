@@ -5,6 +5,7 @@ import com.hukhong.city.CityDef;
 import com.hukhong.city.CityService;
 import com.hukhong.story.npc.Dialogue;
 import com.hukhong.story.npc.DialogueManager;
+import com.hukhong.story.npc.NpcPlacement;
 import com.hukhong.story.npc.StoryNpc;
 import com.hukhong.story.npc.StoryNpcRegistry;
 import net.minecraft.core.BlockPos;
@@ -94,7 +95,7 @@ public final class RequiredNpcs {
 
     // ------------------------------------------------------------------ sinh / dedupe
     private static BlockPos homePos(ServerLevel sl, BlockPos center) {
-        return sl.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, center.offset(3, 0, 3));
+        return NpcPlacement.plazaStand(sl, center, 2, 9, 0);
     }
 
     public static StoryNpc create(ServerLevel sl, String npcId, BlockPos pos) {
@@ -126,10 +127,12 @@ public final class RequiredNpcs {
         Entity far = known == null ? null : sl.getEntity(known);
         if (far instanceof StoryNpc n && n.isAlive()) {
             n.teleportTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+            n.setHome(center);
             return Result.MOVED;
         }
         StoryNpc n = create(sl, npcId, pos);
         if (n == null) return Result.SKIPPED;
+        n.setHome(center);
         led.put(npcId, n.getUUID());
         return Result.SPAWNED;
     }

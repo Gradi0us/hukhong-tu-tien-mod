@@ -173,8 +173,8 @@ public class CongPhapScreen extends Screen {
             if (sel) g.fill(lx, y, lx + lw, y + ROW - 1, 0xFF33334D);
             else if (hov) g.fill(lx, y, lx + lw, y + ROW - 1, 0xFF222233);
             int col = r.owned() ? r.grade().argb : 0xFF555555;
-            g.fill(lx + 2, y + 3, lx + 8, y + 9, col);
-            g.drawString(font, r.name(), lx + 12, y + 3, r.owned() ? 0xFFFFFFFF : 0xFF666666, false);
+            if (!blitIcon(g, r.id(), lx + 2, y + 2, 12, r.owned())) g.fill(lx + 2, y + 3, lx + 8, y + 9, col);
+            g.drawString(font, r.name(), lx + 17, y + 3, r.owned() ? 0xFFFFFFFF : 0xFF666666, false);
             String tag = r.owned() ? "Lv" + r.level() : "-";
             g.drawString(font, tag, lx + lw - font.width(tag) - 4, y + 3, r.owned() ? GOLD : 0xFF555555, false);
             if (sp != null && r.owned()) {
@@ -205,6 +205,18 @@ public class CongPhapScreen extends Screen {
         if (!tooltip.isEmpty()) g.renderComponentTooltip(font, tooltip, mx, my);
     }
 
+    private static final java.util.Map<net.minecraft.resources.ResourceLocation, Boolean> ICON_OK = new java.util.HashMap<>();
+
+    /** Vẽ icon kỹ năng (textures/gui/skill/<id>.png, kỹ năng nền Pháp theo nguyên tố). false nếu thiếu texture. */
+    private static boolean blitIcon(GuiGraphics g, String id, int x, int y, int size, boolean owned) {
+        var rl = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.hukhong.HuKhong.MODID,
+                "textures/gui/skill/" + com.hukhong.client.phaptu.PhapClient.icon(id) + ".png");
+        if (!ICON_OK.computeIfAbsent(rl, k -> Minecraft.getInstance().getResourceManager().getResource(k).isPresent())) return false;
+        g.blit(rl, x, y, size, size, 0, 0, 16, 16, 16, 16);
+        if (!owned) g.fill(x, y, x + size, y + size, 0xAA000000);
+        return true;
+    }
+
     private void renderDetail(GuiGraphics g, int mx, int my, CultivationData cd, SkillBookData d) {
         String id = selected;
         boolean have = owned(d, id);
@@ -213,8 +225,9 @@ public class CongPhapScreen extends Screen {
         SkillGrade grade = SkillBook.gradeOf(id);
         int lv = d.level(id);
         int y = ly;
-        g.drawString(font, nameOf(id), rx, y, grade.argb, false);
-        y += 11;
+        boolean ic = blitIcon(g, id, rx, y - 1, 16, have);
+        g.drawString(font, nameOf(id), ic ? rx + 20 : rx, y + (ic ? 4 : 0), grade.argb, false);
+        y += ic ? 18 : 11;
         Component pathN = b != null && b.path == null ? t("hukhong.skillbook.universal", "Chung (mọi đạo)")
                 : Component.translatable(SkillPages.pathLangKey(b != null ? b.path : base.path));
         Component line = pathN.copy().append(" - ").append(t(grade.langKey(), grade.viName));
@@ -314,6 +327,7 @@ public class CongPhapScreen extends Screen {
             }
             String s = font.plainSubstrByWidth(nm.getString(), bw - 6);
             g.drawString(font, s, bx + 3, sy + 13, col, false);
+            if (rs != null) blitIcon(g, rs.id(), bx + bw - 13, sy + 2, 10, true);
             if (hov) {
                 tooltip.add(t("hukhong.skillbook.tip.slot", "Phím %s", k).withStyle(net.minecraft.ChatFormatting.GOLD));
                 if (rs != null) {

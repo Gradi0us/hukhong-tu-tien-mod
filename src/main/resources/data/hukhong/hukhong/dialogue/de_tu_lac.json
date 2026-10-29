@@ -1,0 +1,16 @@
+{"npc":"de_tu_lac","city":"","name_key":"hukhong.npc.de_tu_lac",
+ "entry":[
+  {"if":{"flags":["qc.disciple.5"]},"node":"thanks"},
+  {"if":{"flags":["qc.disciple.4"]},"node":"guard"},
+  {"if":{"flags":["qc.disciple.3"]},"node":"choice"},
+  {"node":"fight"}],
+ "nodes":{
+  "fight":{"text":["hukhong.dlg.de_tu_lac.fight.p1"]},
+  "guard":{"text":["hukhong.dlg.de_tu_lac.guard.p1"]},
+  "choice":{"text":["hukhong.dlg.de_tu_lac.choice.p1","hukhong.dlg.de_tu_lac.choice.p2","hukhong.dlg.de_tu_lac.choice.p3"],
+   "choices":[
+    {"text":"hukhong.dlg.de_tu_lac.choice.c1","actions":[{"type":"set_flag","flag":"qc.disciple.c.saved"},{"type":"qc","chain":"disciple","stage":4}]},
+    {"text":"hukhong.dlg.de_tu_lac.choice.c2","actions":[{"type":"set_flag","flag":"qc.disciple.c.abandon"},{"type":"doc","id":"b2"},{"type":"exp","amount":300},{"type":"qc","chain":"disciple","stage":9}]}]},
+  "thanks":{"text":["hukhong.dlg.de_tu_lac.thanks.p1","hukhong.dlg.de_tu_lac.thanks.p2"],
+   "choices":[
+    {"text":"hukhong.dlg.de_tu_lac.thanks.c1","actions":[{"type":"doc","id":"b3"},{"type":"exp","amount":600},{"type":"give_item","item":"hukhong:khai_mach_dan","count":1},{"type":"qc","chain":"disciple","stage":9}]}]}}}

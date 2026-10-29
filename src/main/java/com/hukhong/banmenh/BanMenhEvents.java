@@ -193,8 +193,51 @@ public final class BanMenhEvents {
             if (p.containerMenu.getCarried().isEmpty()) p.containerMenu.setCarried(copy);
             else e.setCanceled(false); // hết chỗ hoàn toàn: để rơi, /banmenh summon dọn bản rơi
         }
+        p.containerMenu.sendAllDataToRemote();
         p.displayClientMessage(Component.translatableWithFallback("hukhong.banmenh.msg.no_drop",
                 "Bản Mệnh Kiếm gắn liền với chủ nhân, không thể vứt bỏ."), true);
+    }
+
+    /**
+     * Lưới cuối cùng: mọi ItemEntity chứa Bản Mệnh Kiếm (mọi nguồn: Q, GUI, chết, mod khác, save cũ) bị hủy ngay khi xuất hiện
+     * và kiếm trả cho chủ (nếu online; offline thì đăng nhập sẽ tái tạo từ BanMenhData).
+     */
+    @SubscribeEvent
+    public static void onItemEntityJoin(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent e) {
+        if (e.getLevel().isClientSide || !(e.getEntity() instanceof net.minecraft.world.entity.item.ItemEntity ie)) return;
+        ItemStack s = ie.getItem();
+        if (!isSword(s)) return;
+        java.util.UUID owner = s.get(ModItems.BOUND_TO.get());
+        if (owner == null) return;
+        e.setCanceled(true);
+        var server = e.getLevel().getServer();
+        ServerPlayer p = server == null ? null : server.getPlayerList().getPlayer(owner);
+        if (p != null && p.isAlive() && !BanMenhService.hasSword(p)) {
+            ItemStack back = s.copy();
+            BanMenhKiemItem.stripDamage(back);
+            if (!p.getInventory().add(back)) {
+                if (p.containerMenu.getCarried().isEmpty()) p.containerMenu.setCarried(back);
+            }
+            p.containerMenu.sendAllDataToRemote();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
+        if (e.getEntity() instanceof ServerPlayer p) {
+            for (ItemStack s : p.getInventory().items) if (isSword(s)) BanMenhKiemItem.stripDamage(s);
+            BanMenhService.restore(p);
+        }
+    }
+
+    /** Định kỳ: người chơi sống mà không có kiếm nào trong túi/menu -> tái tạo từ BanMenhData (loại + giai đoạn đã lưu). */
+    @SubscribeEvent
+    public static void onRecoveryTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || p.tickCount % 40 != 7 || !p.isAlive() || p.isSpectator()) return;
+        BanMenhService.restore(p);
+        // quét ItemEntity sót quanh người chơi (phòng hờ nguồn không qua sự kiện join)
+        for (var ie : p.level().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, p.getBoundingBox().inflate(16),
+                x -> isSword(x.getItem()) && BanMenhService.isSword(x.getItem(), p.getUUID()))) ie.discard();
     }
 
     /** Khung vật phẩm / giá giáp / Allay không nhận Bản Mệnh Kiếm. */

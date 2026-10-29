@@ -23,6 +23,7 @@ public class WorldBuildData extends SavedData {
 
     private boolean done;
     private final Map<String, int[]> portSites = new LinkedHashMap<>();
+    private final Map<String, int[]> drySites = new LinkedHashMap<>();
     private final Map<String, Settlement> settlements = new LinkedHashMap<>();
 
     public static WorldBuildData get(ServerLevel ow) {
@@ -34,6 +35,8 @@ public class WorldBuildData extends SavedData {
         d.done = tag.getBoolean("done");
         CompoundTag p = tag.getCompound("ports");
         for (String k : p.getAllKeys()) { int[] a = p.getIntArray(k); if (a.length == 2) d.portSites.put(k, a); }
+        CompoundTag ds = tag.getCompound("drysites");
+        for (String k : ds.getAllKeys()) { int[] a = ds.getIntArray(k); if (a.length == 2) d.drySites.put(k, a); }
         CompoundTag s = tag.getCompound("settlements");
         for (String k : s.getAllKeys()) {
             CompoundTag c = s.getCompound(k);
@@ -49,6 +52,9 @@ public class WorldBuildData extends SavedData {
         CompoundTag p = new CompoundTag();
         portSites.forEach(p::putIntArray);
         tag.put("ports", p);
+        CompoundTag ds = new CompoundTag();
+        drySites.forEach(ds::putIntArray);
+        tag.put("drysites", ds);
         CompoundTag s = new CompoundTag();
         settlements.forEach((k, v) -> {
             CompoundTag c = new CompoundTag();
@@ -65,6 +71,9 @@ public class WorldBuildData extends SavedData {
     public void setDone() { done = true; setDirty(); }
     public int[] portSite(String id) { return portSites.get(id); }
     public void setPortSite(String id, int x, int z) { portSites.put(id, new int[]{x, z}); setDirty(); }
+    /** Vi tri kho rao da chon (khong nuoc) cho thanh/tong; null neu chua tim. Khoa: id thanh hoac "sect:"+id. */
+    public int[] drySite(String key) { return drySites.get(key); }
+    public void setDrySite(String key, int x, int z) { drySites.put(key, new int[]{x, z}); setDirty(); }
     public Map<String, Settlement> settlements() { return settlements; }
     public void put(Settlement s) { settlements.put(s.id(), s); setDirty(); }
 }

@@ -396,6 +396,8 @@ def main():
         path = os.path.join(OUT_DIR, name)
         img.save(path, "PNG")
         print(f"wrote {path} {img.size} {img.mode}")
+    import gen_book_skill_icons
+    gen_book_skill_icons.main()
 
 
 if __name__ == "__main__":

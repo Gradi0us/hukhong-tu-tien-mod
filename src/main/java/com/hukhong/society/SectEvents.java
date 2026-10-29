@@ -47,6 +47,8 @@ public final class SectEvents {
     public static BlockPos site(ServerLevel ow, SectDef d) {
         BlockPos c = SectSavedData.get(ow).center(d.id());
         if (c != null) return c;
+        int[] dry = com.hukhong.city.WorldBuildData.get(ow).drySite("sect:" + d.id());
+        if (dry != null) return new BlockPos(dry[0], 64, dry[1]);
         BlockPos sp = ow.getSharedSpawnPos();
         int[] xz = Placement.site(sp.getX(), sp.getZ(), d.ax(), d.az(), ow.getSeed(), "sect:" + d.id());
         return new BlockPos(xz[0], 64, xz[1]);
@@ -67,7 +69,7 @@ public final class SectEvents {
                 if (!d.buildable() || reg.isBuilt(d.id())) continue;
                 BlockPos s = site(ow, d);
                 if (Math.abs(p.getX() - s.getX()) > GEN_RADIUS || Math.abs(p.getZ() - s.getZ()) > GEN_RADIUS) continue;
-                BlockPos c = SectBuilder.build(ow, CityBuilder.adjustSite(ow, s), d);
+                BlockPos c = SectBuilder.build(ow, CityBuilder.adjustSite(ow, "sect:" + d.id(), s, SectBuilder.HALF + 6, "sect"), d);
                 reg.markBuilt(d.id(), c);
                 com.mojang.logging.LogUtils.getLogger().info("Sect {} built at {}", d.id(), c);
                 return;

@@ -143,7 +143,7 @@ public final class StoryFlow {
         save(p, q);
         if (newChapter) beat(p, "hukhong.flow.ch." + s.chapter(), 3);
         switch (s.kind()) {
-            case KILL -> spawnHuThi(p, s.n() + 2);
+            case KILL -> WaveCountdown.start(p, s.id()); // 30s chuan bi roi quai moi toi
             case TALK -> { if (s.arg().equals("su_phu")) spawnNpc(p, "su_phu", 4); }
             case DUEL -> spawnNpc(p, s.arg(), 7);
             default -> { }
@@ -224,7 +224,7 @@ public final class StoryFlow {
                 case "hua_co" -> cityPos(p, "co_tien_thanh");
                 default -> null; // NPC đi theo người chơi (su_phu)
             };
-            case BICANH -> { BlockPos c = cityPos(p, s.arg()); BlockPos pt = c == null || ow == null ? null : storyPortal(ow, c); yield pt != null ? pt : c; }
+            case BICANH -> { BlockPos c = cityPos(p, s.arg()); BlockPos pt = c == null ? null : storyPortal(ow, c, CultivationService.get(p).level()); yield pt != null ? pt : c; }
             case LINH_KHI, SECT -> sectPos(p, ow);
             case CHG -> lair(ow, s.n());
             case GATE -> WorldTierData.get(ow).gateway();
@@ -284,12 +284,26 @@ public final class StoryFlow {
         for (int i = 1; i <= lines; i++) p.sendSystemMessage(Component.translatable(prefix + ".l" + i));
     }
 
+    static void title(ServerPlayer p, Component title, Component sub) {
+        p.connection.send(new ClientboundSetTitlesAnimationPacket(5, 60, 15));
+        p.connection.send(new ClientboundSetSubtitleTextPacket(sub));
+        p.connection.send(new ClientboundSetTitleTextPacket(title));
+    }
+
     // ------------------------------------------------------------------ thực thể
     static BlockPos groundNear(ServerPlayer p, double minR, double maxR) {
         ServerLevel sl = p.serverLevel();
         double a = p.getRandom().nextDouble() * Math.PI * 2, r = minR + p.getRandom().nextDouble() * (maxR - minR);
         BlockPos xz = BlockPos.containing(p.getX() + Math.cos(a) * r, 0, p.getZ() + Math.sin(a) * r);
         return sl.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, xz);
+    }
+
+    /** Cho dung an toan cach nguoi choi ~dist block (nen dac, 2 o trong, khong mai nha); fallback heightmap. */
+    static BlockPos standNear(ServerPlayer p, double dist) {
+        ServerLevel sl = p.serverLevel();
+        BlockPos floor = p.blockPosition().below();
+        BlockPos s = com.hukhong.story.npc.NpcPlacement.findStand(sl, floor, (int) Math.max(2, dist - 1), (int) Math.ceil(dist) + 3, p.getRandom().nextInt(1 << 16));
+        return s != null ? s : groundNear(p, dist, dist + 1);
     }
 
     static void spawnHuThi(ServerPlayer p, int n) {
@@ -310,7 +324,7 @@ public final class StoryFlow {
 
     public static StoryNpc spawnNpc(ServerPlayer p, String id, double dist) {
         ServerLevel sl = p.serverLevel();
-        BlockPos pos = groundNear(p, dist, dist + 1);
+        BlockPos pos = standNear(p, dist);
         StoryNpc n = StoryNpcRegistry.STORY_NPC.get().create(sl);
         if (n == null) return null;
         n.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, sl.random.nextFloat() * 360f, 0f);
@@ -425,6 +439,7 @@ public final class StoryFlow {
         onProgress(p);
         FlowSteps.Step s = current(p);
         if (s == null) return;
+        WaveCountdown.tick(p, s);
         maintain(p, s);
         s = current(p);
         if (s != null && !s.id().equals(Objectives.currentId(p))) setObjective(p, s);
@@ -433,10 +448,11 @@ public final class StoryFlow {
     private static void maintain(ServerPlayer p, FlowSteps.Step s) {
         switch (s.kind()) {
             case KILL -> {
-                if (p.tickCount % 100 != 7) return;
+                if (p.tickCount % 100 != 7 || WaveCountdown.pending(p)) return;
                 int alive = (int) flowEntities(p, 96).stream().filter(x -> x instanceof Mob m && m.isAlive() && !(x instanceof StoryNpc)).count();
                 int need = s.n() - quest(p).prog();
-                if (alive < need) spawnHuThi(p, need - alive);
+                if (alive == 0 && quest(p).prog() == 0) WaveCountdown.start(p, s.id()); // vao lai game: dem nguoc lai tu dau
+                else if (alive < need) spawnHuThi(p, need - alive);
             }
             case DUEL -> {
                 if (p.tickCount % 100 != 7) return;
@@ -459,20 +475,40 @@ public final class StoryFlow {
                 ServerLevel ow = ow(p);
                 BlockPos city = cityPos(p, s.arg());
                 if (ow == null || city == null || dist2(p, city) > 300.0 * 300.0) return;
-                if (storyPortal(ow, city) == null) {
-                    com.hukhong.bicanh.BiCanhEvents.spawnPortalAround(ow, p, city.getX(), city.getZ(), 90, 150,
-                            com.hukhong.bicanh.BiCanhTier.BACH, 16);
-                }
-                setObjective(p, s); // cập nhật đích chỉ tới cổng thật
+                int lv = CultivationService.get(p).level();
+                var tier = storyTier(lv);
+                if (storyPortal(ow, city, lv) != null) { NO_PORTAL_SINCE.remove(p.getUUID()); setObjective(p, s); return; }
+                var spawned = com.hukhong.bicanh.BiCanhEvents.spawnPortalAround(ow, p, city.getX(), city.getZ(), 90, 150, tier, 16);
+                if (spawned != null) { NO_PORTAL_SINCE.remove(p.getUUID()); setObjective(p, s); return; }
+                long now = ow.getGameTime();
+                long since = NO_PORTAL_SINCE.computeIfAbsent(p.getUUID(), k -> now);
+                if (now - since < PORTAL_FALLBACK_TICKS) { setObjective(p, s); return; }
+                // du 60s van khong dat duoc cong quanh thanh: cong tam canh nguoi choi, khong duoc nua thi mo thang Bi Canh
+                NO_PORTAL_SINCE.remove(p.getUUID());
+                var near = com.hukhong.bicanh.BiCanhEvents.spawnPortalAround(ow, p, p.getX(), p.getZ(), 5, 16, tier, 24);
+                if (near != null) { p.sendSystemMessage(Component.translatable("hukhong.flow.bicanh.fallback_portal")); setObjective(p, s); return; }
+                String err = com.hukhong.bicanh.BiCanhManager.enter(p.server, p, tier, List.of(p), true);
+                p.sendSystemMessage(Component.translatable(err == null ? "hukhong.flow.bicanh.fallback_direct" : err, tier.minLevel, tier.maxLevel));
             }
             default -> { }
         }
     }
 
-    /** Cổng Bí Cảnh đang mở gần thành (≤220 block), hoặc null. */
-    static BlockPos storyPortal(ServerLevel ow, BlockPos city) {
+    static final java.util.Map<UUID, Long> NO_PORTAL_SINCE = new java.util.HashMap<>();
+    static final long PORTAL_FALLBACK_TICKS = 60 * 20L;
+
+    /** Cấp Bí Cảnh thấp nhất mà cảnh giới này được vào (BACH tối đa cấp 25, chương 3 kéo đến 29 -> HOANG). */
+    public static com.hukhong.bicanh.BiCanhTier storyTier(int level) {
+        for (var t : com.hukhong.bicanh.BiCanhTier.values()) if (t.allows(level)) return t;
+        return com.hukhong.bicanh.BiCanhTier.BACH;
+    }
+
+    /** Cổng Bí Cảnh còn hạn gần thành (≤220 block) mà người chơi cấp {@code level} vào được, hoặc null. */
+    static BlockPos storyPortal(ServerLevel ow, BlockPos city, int level) {
         BlockPos best = null; double bd = 220.0 * 220.0;
+        long now = ow.getGameTime();
         for (var pt : com.hukhong.bicanh.BiCanhSaved.get(ow).portals) {
+            if (pt.expire() <= now || !com.hukhong.bicanh.BiCanhTier.byIndex(pt.tier()).allows(level)) continue;
             double d = pt.pos().distSqr(city);
             if (d < bd) { bd = d; best = pt.pos(); }
         }

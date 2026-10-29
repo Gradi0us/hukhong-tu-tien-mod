@@ -106,12 +106,13 @@ public final class DialogueService {
             AABB box = new AABB(c).inflate(64, 40, 64);
             boolean present = sl.getEntitiesOfClass(StoryNpc.class, box).stream().anyMatch(n -> n.npcId().equals(d.npc()));
             if (present) continue;
-            BlockPos pos = sl.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.offset(3, 0, 3));
+            BlockPos pos = NpcPlacement.plazaStand(sl, c, 2, 9, d.npc().hashCode());
             StoryNpc n = StoryNpcRegistry.STORY_NPC.get().create(sl);
             if (n == null) continue;
             n.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, sl.random.nextFloat() * 360f, 0f);
             n.finalizeSpawn(sl, sl.getCurrentDifficultyAt(pos), MobSpawnType.EVENT, null);
             n.setNpcId(d.npc());
+            n.setHome(c);
             sl.addFreshEntity(n);
         }
     }

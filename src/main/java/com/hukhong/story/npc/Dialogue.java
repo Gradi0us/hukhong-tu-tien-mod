@@ -54,6 +54,8 @@ public record Dialogue(String npc, String city, String nameKey, List<Entry> entr
                 case "chapter" -> new Action(t, "", o.get("value").getAsInt());
                 case "step_done" -> new Action(t, o.get("step").getAsString(), 0);
                 case "duel" -> new Action(t, "", 0);
+                case "qc" -> new Action(t, o.get("chain").getAsString(), o.get("stage").getAsInt());
+                case "doc" -> new Action(t, o.get("id").getAsString(), 0);
                 case "message" -> new Action(t, o.get("key").getAsString(), 0);
                 default -> throw new IllegalArgumentException("unknown action " + t);
             };
@@ -65,6 +67,8 @@ public record Dialogue(String npc, String city, String nameKey, List<Entry> entr
                 case "chapter" -> { } // cũ: chương nay theo cảnh giới (StoryFlow), giữ để tương thích dữ liệu
                 case "step_done" -> com.hukhong.story.flow.StoryFlow.complete(p, str);
                 case "duel" -> com.hukhong.story.flow.StoryFlow.startDuel(p);
+                case "qc" -> com.hukhong.story.chain.QuestChains.setStage(p, str, (int) num);
+                case "doc" -> com.hukhong.story.StoryService.collect(p, str);
                 case "exp" -> CultivationService.addExp(p, num);
                 case "message" -> p.displayClientMessage(Component.translatable(str), false);
                 case "give_skill" -> com.hukhong.skillbook.SkillBookRewards.giveStory(p, str);

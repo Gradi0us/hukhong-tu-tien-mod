@@ -73,6 +73,7 @@ public final class SkillEffects {
         Vec3 from = eye.add(look.scale(0.8)).subtract(0, 0.2, 0);
         beam(lv, from, end);
         Fx.play(lv, FxType.BEAM, from, end.subtract(from), (float) from.distanceTo(end), Fx.GOLD);
+        Fx.ribbon(lv, p, from, end, 0, 3, 0, 0.12f, Fx.GOLD);
         helixBeam(lv, from, end, 0.35, Math.max(2, from.distanceTo(end) / 2.5), 28, GOLD);
         lv.sendParticles(ParticleTypes.END_ROD, end.x, end.y, end.z, 10, 0.2, 0.2, 0.2, 0.15);
         ring(lv, end, 0.7, 12, ParticleTypes.END_ROD);
@@ -129,6 +130,9 @@ public final class SkillEffects {
         Fx.play(lv, FxType.TALISMAN_CIRCLE, p.position(), Vec3.ZERO, 11f, Fx.GOLD, 70);
         Fx.play(lv, FxType.LIGHT_PILLAR, p.position(), Vec3.ZERO, 1.8f, Fx.GOLD, 50);
         Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, 12f, Fx.WHITE, 22);
+        Fx.rune(lv, p, p.position().add(0, 0.06, 0), 12f, Fx.GOLD, 96, 8);
+        Fx.groundRing(lv, p, p.position().add(0, 0.06, 0), 12.5f, 0xFFF2C0, 24);
+        Fx.shake(lv, p.position(), 0.6f, 8, 24f);
         pillar(lv, p.position(), 9, 0.3, 12, 2, com.hukhong.vfx.ModParticles.THANH_QUANG.get());
         com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_THANH_QUANG, 1.5f, 0.7f);
         layer(lv, p.position(), SoundEvents.BEACON_POWER_SELECT, 1f, 1.2f);
@@ -149,6 +153,9 @@ public final class SkillEffects {
         }
         ring(lv, p.position().add(0, 0.2, 0), 4, 28, com.hukhong.vfx.ModParticles.BA_KHI.get());
         Fx.play(lv, FxType.GROUND_CRACK, p.position(), Vec3.ZERO, 5f, Fx.ORANGE);
+        Fx.groundCrack(lv, p, p.position(), 4.5f, Fx.ORANGE, 8, 54);
+        Fx.groundRing(lv, p, p.position().add(0, 0.06, 0), 4.5f, 0xD9A441, 18);
+        Fx.shake(lv, p.position(), 0.8f, 8, 20f);
         Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, 5f, Fx.ORANGE);
         Fx.play(lv, FxType.SCREEN_TINT, p.position(), Vec3.ZERO, 0.18f, 0xFFB060, 8);
         lv.sendParticles(ParticleTypes.EXPLOSION, p.getX(), p.getY() + 0.3, p.getZ(), 1, 0, 0, 0, 0);
@@ -171,6 +178,7 @@ public final class SkillEffects {
         spiral(lv, p.position(), 0.9, 0.9, 2, 2, 30, com.hukhong.vfx.ModParticles.BA_KHI.get());
         Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, 2.4f, Fx.ORANGE);
         Fx.play(lv, FxType.TALISMAN_CIRCLE, p.position(), Vec3.ZERO, 1.6f, 0xFFB050, 30);
+        Fx.shell(lv, p, p, 1.25f, 0xFFB050, 120);
         com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_BA_KHI, 1f, 1.5f);
         layer(lv, p.position(), SoundEvents.IRON_GOLEM_REPAIR, 0.8f, 1.2f);
     }
@@ -188,6 +196,8 @@ public final class SkillEffects {
         Fx.play(lv, FxType.SHOCKWAVE, p.position(), Vec3.ZERO, 7f, 0xFFC040, 20);
         Fx.play(lv, FxType.GROUND_CRACK, p.position(), Vec3.ZERO, 4f, 0xFFC040);
         Fx.play(lv, FxType.TALISMAN_CIRCLE, p.position(), Vec3.ZERO, 3f, 0xFFC040, 60);
+        Fx.shell(lv, p, p, 1.5f, 0xFFC040, 160);
+        Fx.shake(lv, p.position(), 0.7f, 8, 20f);
         ringLater(lv, p.position().add(0, 1.0, 0), 1.5, 20, 3, GOLD);
         ringLater(lv, p.position().add(0, 2.0, 0), 1.0, 14, 6, GOLD);
         com.hukhong.vfx.ModSounds.play(lv, p, com.hukhong.vfx.ModSounds.SKILL_BA_KHI, 1.5f, 0.5f);
@@ -275,6 +285,7 @@ public final class SkillEffects {
             if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
             Vec3 look = p.getLookAngle(), from = p.getEyePosition().subtract(0, 0.5, 0).add(look.scale(1.2));
             Fx.qi(l2, from, look.scale(range - 1.2), 1.9f, 0, 35, 11);
+            Fx.ribbon(l2, p, from, from.add(look.scale(range - 1.2)), 0, 4, 0, 0.16f, 0xBFE4FF);
             l2.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.6f);
             layer(l2, p.position(), SoundEvents.TRIDENT_THROW.value(), 0.6f, 1.8f);
             layer(l2, p.position(), SoundEvents.AMETHYST_BLOCK_CHIME, 0.6f, 1.5f);
@@ -419,6 +430,15 @@ public final class SkillEffects {
             Fx.play(lv, FxType.SWORD_CRESCENT, p.getEyePosition().subtract(0, 0.5, 0).add(p.getLookAngle().scale(0.4)), p.getLookAngle(), 0.9f, Fx.RED, 9);
         for (int i = -1; i <= 1; i++) arc(lv, p, 2.2 + 0.1 * i, 0.9, 10, BLOOD, i * 0.45);
         arc(lv, p, 2.0, 0.9, 8, com.hukhong.vfx.ModParticles.MA_KHI.get(), 0);
+        {   // ba vệt móng đỏ thẫm
+            Vec3 lk = p.getLookAngle(), rt = lk.cross(new Vec3(0, 1, 0));
+            rt = rt.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : rt.normalize();
+            Vec3 b0 = p.getEyePosition().subtract(0, 0.5, 0).add(lk.scale(0.6));
+            for (int i = -1; i <= 1; i++) {
+                Vec3 a = b0.add(rt.scale(i * 0.55)).add(0, 0.7, 0), b = b0.add(lk.scale(2.8)).add(rt.scale(i * 0.3)).add(0, -0.6, 0);
+                Fx.ribbon(lv, p, a, b, 0.25, 4, i + 1, 0.1f, 0xB01030);
+            }
+        }
         if (total > 0) lv.sendParticles(BLOOD, p.getX(), p.getY() + 1.2, p.getZ(), 8, 0.3, 0.3, 0.3, 0.05);
         lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
         layer(lv, p.position(), SoundEvents.RAVAGER_ATTACK, 0.5f, 1.4f);
@@ -435,6 +455,7 @@ public final class SkillEffects {
                 com.hukhong.vfx.ModParticles.MA_KHI.get());
         spiral(lv, p.position(), 1.0, 1.0, 2.2, 2.5, 32, BLOOD);
         Fx.play(lv, FxType.BLOOD_VORTEX, p.position(), Vec3.ZERO, 1.6f, Fx.RED, 34);
+        Fx.shell(lv, p, p, 1.3f, 0xB01030, 120);
         Fx.play(lv, FxType.TALISMAN_CIRCLE, p.position(), Vec3.ZERO, 1.8f, 0xB01030, 34);
         lv.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.9f, 0.5f);
         layer(lv, p.position(), SoundEvents.SOUL_ESCAPE.value(), 0.8f, 0.8f);
@@ -450,6 +471,9 @@ public final class SkillEffects {
         Fx.play(lv, FxType.DEMON_SILHOUETTE, p.position().add(0, 0.2, 0), Vec3.ZERO, 2.4f, 0xA00C20, 60);
         Fx.play(lv, FxType.GROUND_CRACK, p.position(), Vec3.ZERO, 6f, 0xC01028);
         Fx.play(lv, FxType.SCREEN_TINT, p.position(), Vec3.ZERO, 0.22f, 0x700010, 16);
+        Fx.rune(lv, p, p.position().add(0, 0.06, 0), 5f, 0xB01030, 72, 5);
+        Fx.pool(lv, p, p.position().add(0, 0.04, 0), 5.5f, 0x7A0A28, 72);
+        Fx.shake(lv, p.position(), 1.0f, 10, 24f);
         pillar(lv, p.position(), 6, 0.35, 10, 2, BLOOD);
         ringLater(lv, p.position().add(0, 0.1, 0), 5.5, 32, 4, BLOOD);
         lv.playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.8f, 0.6f);

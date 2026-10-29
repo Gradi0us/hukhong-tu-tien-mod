@@ -3,6 +3,13 @@
  "city": "luu_ly_cang",
  "name_key": "hukhong.npc.mo_dao",
  "entry": [
+  {"if":{"flags":["qc.merchant.c.truth"],"not_flags":["qc.told.merchant"]},"node":"qc_merchant"},
+  {"if":{"flags":["qc.disciple.c.saved"],"not_flags":["qc.told.disciple_s"]},"node":"qc_disciple_saved"},
+  {"if":{"flags":["qc.disciple.c.abandon"],"not_flags":["qc.told.disciple_a"]},"node":"qc_disciple_abandon"},
+  {"if":{"flags":["qc.noi_gian.c.expose"],"not_flags":["qc.told.expose"]},"node":"qc_expose"},
+  {"if":{"flags":["qc.noi_gian.c.blackmail"],"not_flags":["qc.told.blackmail"]},"node":"qc_blackmail"},
+  {"if":{"flags":["qc.dying.c.keep"],"not_flags":["qc.told.keep"]},"node":"qc_keep"},
+  {"if":{"flags":["qc.dying.c.deliver"],"not_flags":["qc.told.deliver"]},"node":"qc_deliver"},
   {
    "if": {
     "steps": [
@@ -110,6 +117,13 @@
   }
  ],
  "nodes": {
+  "qc_merchant":{"text":["hukhong.dlg.mo_dao.qc_merchant.p1"],"actions":[{"type":"set_flag","flag":"qc.told.merchant"}]},
+  "qc_disciple_saved":{"text":["hukhong.dlg.mo_dao.qc_disciple_saved.p1"],"actions":[{"type":"set_flag","flag":"qc.told.disciple_s"}]},
+  "qc_disciple_abandon":{"text":["hukhong.dlg.mo_dao.qc_disciple_abandon.p1"],"actions":[{"type":"set_flag","flag":"qc.told.disciple_a"}]},
+  "qc_expose":{"text":["hukhong.dlg.mo_dao.qc_expose.p1"],"actions":[{"type":"set_flag","flag":"qc.told.expose"}]},
+  "qc_blackmail":{"text":["hukhong.dlg.mo_dao.qc_blackmail.p1"],"actions":[{"type":"set_flag","flag":"qc.told.blackmail"}]},
+  "qc_keep":{"text":["hukhong.dlg.mo_dao.qc_keep.p1"],"actions":[{"type":"set_flag","flag":"qc.told.keep"}]},
+  "qc_deliver":{"text":["hukhong.dlg.mo_dao.qc_deliver.p1"],"actions":[{"type":"set_flag","flag":"qc.told.deliver"}]},
   "idle": {
    "text": [
     "hukhong.dlg.mo_dao.idle.p1"

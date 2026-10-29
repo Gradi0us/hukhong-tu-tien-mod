@@ -124,3 +124,10 @@ Bảng ánh xạ chương cũ → mới:
 | Version | Document | Status |
 |---------|----------|--------|
 | v1 | DESIGN-v1-story-flow.md (this file) | ✅ Current |
+
+## Audit 2026-10-29 (REACH -> BICANH, NPC, countdown)
+
+- **c3_bicanh**: cổng truyện giờ chọn cấp Bí Cảnh theo cảnh giới (`StoryFlow.storyTier`: BACH tối đa cấp 25, chương 3 kéo tới 29 nên cấp 26+ dùng HOANG; trước đây cổng BACH cố định bị từ chối "err.level"). `storyPortal` bỏ cổng hết hạn / không đủ cấp. Mục tiêu chuyển từ thành sang cổng thật khi cổng sinh ra. Nếu 60s không đặt được cổng quanh thành (SafeZones / địa hình) thì thử cổng 5-16 block quanh người chơi, rồi mở thẳng Bí Cảnh (`ignoreGate`).
+- **NPC thành**: vị trí sinh dùng `NpcPlacement.findStand` (nền đặc, 2 ô trống, ưu tiên ngoài trời, vành quảng trường 2-9 block quanh tâm) thay vì heightmap (dính mái nhà). `StoryNpc` có `home`, tự kéo xuống đất nếu lơ lửng / kẹt tường / lên mái, kiểm tra mỗi 2s.
+- **KILL (mở đầu)**: đếm ngược 30s (bossbar + title, tiếng tick 5s cuối) rồi mới sinh quái (`WaveCountdown`).
+- Test: `FlowStepsWalkTest` (JUnit đi bộ cả 3 nhóm tới `c10_end`, nguồn hoàn thành của TALK/DUEL, text mục tiêu), `StoryFlowGameTests.everyStepSetsObjectiveWithTarget`.

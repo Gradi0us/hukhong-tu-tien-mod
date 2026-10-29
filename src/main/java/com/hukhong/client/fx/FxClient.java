@@ -26,7 +26,10 @@ import java.util.Random;
 public final class FxClient {
     private FxClient() {}
 
-    private static final int MAX_ACTIVE = 160;
+    /** Bit cờ trong FxPayload.life: hiệu ứng của người chơi khác (vẽ 50% độ đậm). */
+    public static final int DIM_BIT = 1 << 30;
+    /** Hệ số độ đậm của hiệu ứng đang start/tick (dùng trong puffA). */
+    static float GAIN = 1f;
     static final List<Inst> ACTIVE = new ArrayList<>();
 
     /** Một hiệu ứng đang chạy. */
@@ -38,13 +41,17 @@ public final class FxClient {
         int owner = -1;          // >=0: bám theo thực thể (Kiếm Vực đi cùng chủ)
         int stop = -1;           // tick bắt đầu tắt dần (Kiếm Vực khi tắt kỹ năng)
         float roll;              // SWORD_QI: góc nghiêng của dải kiếm khí (độ)
+        boolean dim;             // hiệu ứng của người chơi khác
+        int kind, mode, flight;  // RIBBON/DECAL: biến thể
+        float amp, arc;
+        Object data;             // trạng thái riêng (vệt, hình học dựng sẵn)
         Inst(FxType t, Vec3 p, Vec3 d, float s, int rgb, int life) {
             type = t; pos = p; dir = d; scale = s <= 0 ? 1f : s; this.rgb = rgb; this.life = life;
         }
     }
 
     static float q() {
-        return switch (ClientConfig.fxQuality()) { case LOW -> 0.4f; case MED -> 0.7f; default -> 1f; };
+        return ClientConfig.fxDensity();
     }
 
     static int defColor(FxType t) {
@@ -71,6 +78,8 @@ public final class FxClient {
     public static void receive(FxPayload p) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
+        boolean dim = (p.life() & DIM_BIT) != 0;
+        if (dim) p = new FxPayload(p.fx(), p.x(), p.y(), p.z(), p.dx(), p.dy(), p.dz(), p.scale(), p.color(), p.life() & ~DIM_BIT);
         FxType t = FxType.of(p.fx());
         Vec3 pos = new Vec3(p.x(), p.y(), p.z()), dir = new Vec3(p.dx(), p.dy(), p.dz());
         if (t == FxType.SWORD_FLY) {
@@ -87,7 +96,14 @@ public final class FxClient {
         float sc = p.scale() <= 0 ? 1f : p.scale();
         if (t == FxType.BREAKTHROUGH) { breakthrough(pos, sc, rgb); return; }
         if (t == FxType.UPGRADE_BURST) { upgrade(pos, sc, rgb); return; }
+        if (t == FxType.CAMERA_SHAKE) { FxHit.shake(pos, sc, p.life() > 0 ? p.life() : 10, p.dx() > 0 ? p.dx() : 24f); return; }
+        if (t == FxType.RIBBON) { FxTrail.receive(p, pos, dir, sc, rgb, dim); return; }
+        if (t == FxType.DECAL) { FxDecal.receive(p, pos, dir, sc, rgb, dim); return; }
+        if (t == FxType.GIANT_SWORD) { FxGiantSword.receive(p, pos, dir, sc, rgb, dim); return; }
+        if (t == FxType.RIFT) { FxDecal.receiveRift(p, pos, dir, sc, rgb, dim); return; }
+        if (t == FxType.SHELL) { FxDecal.receiveShell(p, pos, dir, sc, rgb, dim); return; }
         Inst in = add(t, pos, dir, sc, rgb, p.life() > 0 ? p.life() : defLife(t), 0);
+        in.dim = dim;
         if (t == FxType.SWORD_QI) in.roll = (p.color() >>> 24) / 1.4167f - 90f;
     }
 
@@ -128,7 +144,7 @@ public final class FxClient {
     static Inst add(FxType t, Vec3 pos, Vec3 dir, float sc, int rgb, int life, int delay) {
         Inst i = new Inst(t, pos, dir, sc, rgb, life);
         i.delay = delay;
-        if (ACTIVE.size() >= MAX_ACTIVE) ACTIVE.remove(0);
+        if (ACTIVE.size() >= ClientConfig.fxMaxActive()) ACTIVE.remove(0);
         ACTIVE.add(i);
         return i;
     }
@@ -163,7 +179,7 @@ public final class FxClient {
 
     // ---------------------------------------------------------------- hạt
 
-    static int cap() { return (int) (700 * q()); }
+    static int cap() { return ClientConfig.fxParticleBudget(); }
 
     static void puff(SpriteSet set, double x, double y, double z, double vx, double vy, double vz, int rgb, float size, int life, float grav, boolean shrink) {
         puffA(set, x, y, z, vx, vy, vz, rgb, size, life, grav, shrink, 1f);
@@ -173,6 +189,11 @@ public final class FxClient {
         Minecraft mc = Minecraft.getInstance();
         if (set == null || mc.level == null || ClientConfig.particles() == ClientConfig.ParticleLevel.OFF) return;
         if (FxParticle.COUNT.get() >= cap()) return;
+        if (GAIN < 0.99f) { // hiệu ứng người khác: bỏ ~nửa hạt, phần còn lại mờ hơn
+            if (mc.level.random.nextFloat() > GAIN) return;
+            a *= GAIN + 0.2f;
+        }
+        if (mc.gameRenderer.getMainCamera().getPosition().distanceToSqr(x, y, z) > (double) ClientConfig.fxLod() * ClientConfig.fxLod() * 1.5) return;
         mc.particleEngine.add(new FxParticle(mc.level, x, y, z, vx, vy, vz, set, rgb, size, life, grav, shrink).a(a));
     }
 
@@ -181,14 +202,16 @@ public final class FxClient {
     @SubscribeEvent
     public static void onTick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) { ACTIVE.clear(); return; }
+        if (mc.level == null) { ACTIVE.clear(); FxHit.clear(); FxGiantSword.clear(); return; }
         if (mc.isPaused()) return;
         for (int i = ACTIVE.size() - 1; i >= 0; i--) {
             Inst f = ACTIVE.get(i);
             if (f.delay > 0) { f.delay--; continue; }
             if (f.owner >= 0) follow(mc, f, 1f);
+            GAIN = f.dim ? 0.5f : 1f;
             if (!f.started) { f.started = true; FxEffects.start(f); }
             FxEffects.tick(f);
+            GAIN = 1f;
             if (++f.age >= f.life || (f.stop >= 0 && f.age >= f.stop + 8)) ACTIVE.remove(i);
         }
     }
@@ -203,19 +226,27 @@ public final class FxClient {
 
     @SubscribeEvent
     public static void onRender(RenderLevelStageEvent e) {
-        if (e.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || ACTIVE.isEmpty()) return;
+        if (e.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
+        if (ACTIVE.isEmpty() && !FxHit.hasFlash() && !FxGiantSword.any()) return;
         Minecraft mc = Minecraft.getInstance();
         float pt = e.getPartialTick().getGameTimeDeltaPartialTick(false);
         MultiBufferSource.BufferSource bs = mc.renderBuffers().bufferSource();
         VertexConsumer vc = bs.getBuffer(RenderType.lightning());
         FxDraw g = new FxDraw(vc, e.getPoseStack().last().pose(), e.getCamera().getPosition());
+        double lod = ClientConfig.fxLod();
         for (Inst f : ACTIVE) {
             if (f.delay > 0 || !f.started) continue;
             if (f.owner >= 0) follow(mc, f, pt);
-            if (f.pos.distanceToSqr(g.cam) > 200 * 200) continue;
+            double dsq = f.pos.distanceToSqr(g.cam);
+            if (dsq > 200 * 200) continue;
+            if (dsq > lod * lod && f.scale < 4f) continue; // LOD: hiệu ứng nhỏ ở xa không vẽ
+            g.gain = f.dim ? 0.5f : 1f;
             FxEffects.render(f, g, pt);
         }
+        g.gain = 1f;
+        FxHit.renderFlash(g, pt);
         bs.endBatch(RenderType.lightning());
+        FxGiantSword.renderItems(e, mc, bs, pt);
     }
 
     /** Phủ màu toàn màn (chớp sét, đột phá). Tôn trọng R26. */

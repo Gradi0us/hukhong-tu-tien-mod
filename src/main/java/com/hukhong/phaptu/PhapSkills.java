@@ -1,5 +1,6 @@
 package com.hukhong.phaptu;
 
+import com.hukhong.vfx.FxSfx;
 import com.hukhong.gates.DamageRules;
 import com.hukhong.skill.SkillEffects;
 import com.hukhong.skill.SkillScheduler;
@@ -159,6 +160,8 @@ public final class PhapSkills {
                 for (LivingEntity t : line(lv, p, from, look, 16, 0.6)) hit(p, t, c);
                 beam(lv, from, look, 16, col, 9);
                 streak(lv, from, look, 16, ParticleTypes.END_ROD, 0.8);
+                Fx.ribbon(lv, p, from, from.add(look.scale(16)), 0, 3, 0, 0.1f, col);
+                FxSfx.cast(lv, from, 0.5f, 1.8f, SoundEvents.TRIDENT_THROW.value(), SoundEvents.AMETHYST_BLOCK_CHIME, null);
                 sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9f, 1.6f);
             }
             case 1 -> { // Thiểm Bộ: lao xuyên, chém mọi thứ trên đường
@@ -170,6 +173,8 @@ public final class PhapSkills {
                 p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 50, 1, false, false));
                 Fx.qi(lv, o, f.scale(7), 1.2f, col, 0, 9);
                 streak(lv, o, f, 7, ParticleTypes.END_ROD, 0.35);
+                Fx.ribbon(lv, p, o.add(0, 0.4, 0), o.add(f.scale(7)).add(0, 0.4, 0), 0, 4, 0, 0.33f, col);
+                Fx.ribbon(lv, p, o.add(0, 1.3, 0), o.add(f.scale(7)).add(0, 1.3, 0), 0, 3, 1, 0.14f, 0xFFFFFF);
                 sound(lv, o, SoundEvents.PLAYER_ATTACK_SWEEP, 1f, 1.7f);
             }
             case 2 -> { // Quang Vũ: 5 tia quạt, mỗi mục tiêu trúng một lần
@@ -179,13 +184,15 @@ public final class PhapSkills {
                     hit.addAll(line(lv, p, from, d, 14, 0.55));
                     beam(lv, from, d, 14, col, 8);
                     streak(lv, from, d, 14, GOLD, 1.0);
+                    Fx.ribbon(lv, p, from, from.add(d.scale(14)), 0, 3, Math.abs(i), 0.07f, col);
                 }
                 for (LivingEntity t : hit) hit(p, t, c);
                 sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 1f, 1.2f);
             }
             default -> { // Thánh Quang Trụ: dồn lực 0,4s rồi bắn tia khổng lồ
                 Fx.play(lv, FxType.TALISMAN_CIRCLE, p.position(), Vec3.ZERO, 2.2f, col, 16);
-                SkillEffects.spiral(lv, p.position(), 1.8, 0.2, 2.2, 3, 40, ParticleTypes.END_ROD);
+                Fx.rune(lv, p, p.position().add(0, 0.06, 0), 3.2f, col, 24, 8);   // tụ lực
+                SkillEffects.spiral(lv, p.position(), 1.8, 0.2, 2.2, 3, 24, ParticleTypes.END_ROD);
                 SkillScheduler.later(8, () -> {
                     if (!p.isAlive()) return;
                     Vec3 f2 = eye(p), l2 = p.getLookAngle();
@@ -194,6 +201,11 @@ public final class PhapSkills {
                     Vec3 end = f2.add(l2.scale(24));
                     Fx.play(lv, FxType.LIGHT_PILLAR, ground(lv, end), Vec3.ZERO, 0.9f, col, 28);
                     Fx.play(lv, FxType.SCREEN_TINT, p.position(), Vec3.ZERO, 0.25f, col, 8);
+                    Fx.ribbon(lv, p, f2, end, 0, 4, 0, 0.55f, col);
+                    Fx.ribbon(lv, p, f2, end, 0, 5, 0, 0.2f, 0xFFFFFF);
+                    Fx.groundRing(lv, p, ground(lv, end).add(0, 0.06, 0), 4f, col, 22);
+                    Fx.shake(lv, p.position(), 0.8f, 8, 24f);
+                    FxSfx.cast(lv, f2, 0.7f, 1.4f, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundEvents.BEACON_DEACTIVATE);
                     streak(lv, f2, l2, 24, ParticleTypes.END_ROD, 0.5);
                     sound(lv, f2, SoundEvents.BEACON_ACTIVATE, 1.2f, 1.8f);
                 });

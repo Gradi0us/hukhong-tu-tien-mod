@@ -133,13 +133,7 @@ public final class CorruptionManager {
             if (near == null) continue;
             if (ow.random.nextInt(8) == 0)
                 ow.sendParticles(ModParticles.HU_KHONG.get(), h.getX() + 0.5, near.getY() + 1, h.getZ() + 0.5, 30, 1.5, 3, 1.5, 0.05);
-            if (bossCooldown.getOrDefault(h, -BOSS_COOLDOWN * 2L) + BOSS_COOLDOWN > t) continue;
-            if (ow.random.nextDouble() > BOSS_CHANCE) continue;
-            AABB box = new AABB(h).inflate(96, 256, 96);
-            if (!ow.getEntitiesOfClass(HuVuong.class, box).isEmpty()) continue;
-            bossCooldown.put(h, t);
-            int y = ow.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, h.getX(), h.getZ());
-            spawnBoss(ow, new BlockPos(h.getX(), y, h.getZ()));
+            // Boss gac Tam do com.hukhong.liberation.LiberationManager sinh theo dau truong (xac dinh, khong ngau nhien)
         }
     }
 
@@ -167,6 +161,7 @@ public final class CorruptionManager {
             if (dx * dx + dz * dz < best) { best = dx * dx + dz * dz; heart = h; }
         }
         if (heart == null) return;
+        com.hukhong.liberation.LiberationManager.onLiberated(ow, heart);
         d.removeHeart(heart);
         d.cleanseRadius(heart, 8);
         BlockPos sp = ow.getSharedSpawnPos();

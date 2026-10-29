@@ -20,7 +20,27 @@ import java.util.UUID;
 public class BanMenhKiemItem extends SwordItem {
     public BanMenhKiemItem() {
         super(Tiers.IRON, new Item.Properties().stacksTo(1).fireResistant().rarity(Rarity.RARE)
-                .attributes(SwordItem.createAttributes(Tiers.IRON, 2, -2.4F)));
+                .attributes(SwordItem.createAttributes(Tiers.IRON, 2, -2.4F))
+                .component(net.minecraft.core.component.DataComponents.UNBREAKABLE,
+                        new net.minecraft.world.item.component.Unbreakable(false)));
+        // SwordItem/TieredItem tự thêm MAX_DAMAGE theo Tier; UNBREAKABLE (+ getMaxDamage = 0 bên dưới) vô hiệu hóa hoàn toàn.
+    }
+
+    /** Không có độ bền: không thanh độ bền, không vỡ. */
+    @Override
+    public int getMaxDamage(ItemStack stack) { return 0; }
+
+    @Override
+    public boolean isBarVisible(ItemStack stack) { return false; }
+
+    @Override
+    public boolean isDamageable(ItemStack stack) { return false; }
+
+    /** Gỡ DAMAGE sót lại từ save cũ (kiếm từng có độ bền). */
+    public static void stripDamage(ItemStack stack) {
+        if (stack.has(net.minecraft.core.component.DataComponents.DAMAGE)) stack.remove(net.minecraft.core.component.DataComponents.DAMAGE);
+        if (!stack.has(net.minecraft.core.component.DataComponents.UNBREAKABLE))
+            stack.set(net.minecraft.core.component.DataComponents.UNBREAKABLE, new net.minecraft.world.item.component.Unbreakable(false));
     }
 
     public static BanMenhType typeOf(ItemStack s) {
@@ -50,7 +70,9 @@ public class BanMenhKiemItem extends SwordItem {
     /** Giai đoạn do Hồn Tinh quyết định (attachment); cảnh giới chỉ là trần. Đồng bộ item theo attachment. */
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        if (level.isClientSide || !(entity instanceof ServerPlayer p) || !isOwner(stack, p)) return;
+        if (level.isClientSide || !(entity instanceof ServerPlayer p)) return;
+        stripDamage(stack);
+        if (!isOwner(stack, p)) return;
         if (entity.tickCount % 20 != 0) return;
         BanMenhData d = p.getData(BanMenhAttachments.BAN_MENH.get());
         int st = BanMenhMath.effectiveStage(d.stage(), p.getData(ModAttachments.CULTIVATION).level());
@@ -62,6 +84,12 @@ public class BanMenhKiemItem extends SwordItem {
     @Override
     public boolean onDroppedByPlayer(ItemStack item, net.minecraft.world.entity.player.Player player) {
         if (!player.isAlive()) return true; // đang chết: để cơ chế chết xử lý (không rơi, hồi sinh trả lại)
+        // Client dự đoán Q bằng cách xóa kiếm khỏi ô ngay (LocalPlayer#drop không gọi onDroppedByPlayer); server từ chối mà
+        // không đồng bộ lại => kiếm "biến mất" khỏi túi phía client. Gửi lại toàn bộ container để khôi phục.
+        if (!player.level().isClientSide && player instanceof ServerPlayer sp) {
+            sp.containerMenu.sendAllDataToRemote();
+            sp.inventoryMenu.sendAllDataToRemote();
+        }
         if (!player.level().isClientSide)
             player.displayClientMessage(Component.translatableWithFallback("hukhong.banmenh.msg.no_drop",
                     "Bản Mệnh Kiếm gắn liền với chủ nhân, không thể vứt bỏ hay cất vào vật chứa."), true);

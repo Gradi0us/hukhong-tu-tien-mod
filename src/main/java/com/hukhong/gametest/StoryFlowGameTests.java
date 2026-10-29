@@ -91,4 +91,24 @@ public final class StoryFlowGameTests {
         if (Objectives.currentId(p) == null) h.fail("khong co objective sau migrate");
         h.succeed();
     }
+
+    /** Di bo moi buoc: dat buoc -> restore -> co muc tieu dung id + vi tri dich voi cac buoc can dich; storyTier cho moi cap duoc vao. */
+    @GameTest(template = "empty")
+    public static void everyStepSetsObjectiveWithTarget(GameTestHelper h) {
+        for (String origin : new String[]{"city", "sect", "village"}) {
+            ServerPlayer p = player(h, 1, origin, StoryData.MODE_STORY);
+            for (com.hukhong.story.flow.FlowSteps.Step s : com.hukhong.story.flow.FlowSteps.ALL) {
+                if (!s.group().equals("all") && !s.group().equals(com.hukhong.story.flow.FlowSteps.groupOf(origin))) continue;
+                DialogueService.setQuest(p, QuestData.DEFAULT.withChapter(Math.max(1, s.chapter())).withFlag(StoryFlow.F_V2).withStep(s.id()));
+                StoryFlow.restore(p);
+                if (!s.id().equals(Objectives.currentId(p))) h.fail(origin + " " + s.id() + " objective=" + Objectives.currentId(p));
+            }
+        }
+        for (int lv = 1; lv <= 100; lv++) {
+            var t = StoryFlow.storyTier(lv);
+            if (lv <= 100 && !t.allows(lv) && lv <= 100 && t != com.hukhong.bicanh.BiCanhTier.BACH) h.fail("tier khong cho level " + lv);
+        }
+        if (!StoryFlow.storyTier(28).allows(28)) h.fail("level 28 phai vao duoc Bi Canh truyen");
+        h.succeed();
+    }
 }

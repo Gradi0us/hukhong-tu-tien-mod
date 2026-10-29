@@ -132,13 +132,13 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
-    // Better Combat (OPTIONAL at runtime; mod.toml declares it optional). Modrinth maven: maven.modrinth:<slug>:<version id>
+    // Better Combat + Cloth Config stay OPTIONAL (mod.toml declares them optional). Modrinth maven: maven.modrinth:<slug>:<version id>
     //   better-combat VhIOvcXP = 2.4.0+1.21.1-neoforge ; playeranimator HJZB6bmA = 2.0.4+1.21.1 ; cloth-config izKINKFg = 15.0.140+neoforge
     compileOnly "maven.modrinth:better-combat:VhIOvcXP"
-    compileOnly "maven.modrinth:playeranimator:HJZB6bmA"
+    // Player Animator (REQUIRED: every player skill has a casting pose; code references it directly)
+    implementation "maven.modrinth:playeranimator:HJZB6bmA"
     compileOnly "maven.modrinth:cloth-config:izKINKFg"
     localRuntime "maven.modrinth:better-combat:VhIOvcXP"
-    localRuntime "maven.modrinth:playeranimator:HJZB6bmA"
     localRuntime "maven.modrinth:cloth-config:izKINKFg"
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime

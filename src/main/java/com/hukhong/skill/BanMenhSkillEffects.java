@@ -160,15 +160,25 @@ final class BanMenhSkillEffects {
         double r = s.range(level);
         Vec3 c = p.position();
         float dmg = (float) (s.coef(level) * StatService.attackPower(p));
+        Fx.rune(lv, p, c.add(0, 0.06, 0), (float) r, 0xB01030, 125, 5);          // pháp trận máu suốt 6 nhịp
+        Fx.pool(lv, p, c.add(0, 0.04, 0), (float) r * 0.85f, 0x7A0A28, 125);     // vùng máu loang
+        SkillEffects.layer(lv, c, net.minecraft.sounds.SoundEvents.SOUL_ESCAPE.value(), 0.9f, 0.6f);
         for (int i = 0; i < 6; i++) {
             SkillScheduler.later(i * 20 + 1, () -> {
                 if (!p.isAlive() || p.hasDisconnected()) return;
                 float healed = 0;
-                for (LivingEntity t : around(lv, p, c, r)) {
+                java.util.List<LivingEntity> ts = around(lv, p, c, r);
+                for (LivingEntity t : ts) {
                     DamageRules.hurtBySkill(p, t, dmg);
                     healed += dmg * 0.5f;
                 }
                 if (healed > 0) p.heal(Math.min(healed, p.getMaxHealth() * 0.05f));
+                int kk = 0;
+                if (healed > 0) for (LivingEntity t : ts) { // máu bị rút thành dòng về chủ
+                    if (kk++ >= 3) break;
+                    Fx.ribbonWave(lv, p, t.position().add(0, t.getBbHeight() * 0.6, 0), p.position().add(0, 1.2, 0), 0.6, 0.3, 8, kk * 2, 0.07f, 0xB01030);
+                }
+                Fx.groundRing(lv, p, c.add(0, 0.06, 0), (float) r, 0xB01030, 14);
                 Fx.play(lv, FxType.BLOOD_VORTEX, c, Vec3.ZERO, (float) r, Fx.RED, 24);
                 Fx.play(lv, FxType.SHOCKWAVE, c, Vec3.ZERO, (float) r, Fx.RED, 14);
                 SkillEffects.ring(lv, c.add(0, 0.2, 0), r, 36, ParticleTypes.CRIMSON_SPORE);

@@ -1,0 +1,8 @@
+{"npc":"lam_thu","city":"","name_key":"hukhong.npc.lam_thu",
+ "entry":[{"if":{"flags":["qc.disciple.1"]},"node":"again"},{"node":"offer"}],
+ "nodes":{
+  "again":{"text":["hukhong.dlg.lam_thu.again.p1"]},
+  "offer":{"text":["hukhong.dlg.lam_thu.offer.p1","hukhong.dlg.lam_thu.offer.p2"],
+   "choices":[
+    {"text":"hukhong.dlg.lam_thu.offer.c1","actions":[{"type":"qc","chain":"disciple","stage":1}]},
+    {"text":"hukhong.dlg.lam_thu.offer.c2"}]}}}

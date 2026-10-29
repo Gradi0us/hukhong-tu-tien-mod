@@ -10,7 +10,19 @@ public enum FxType {
     /** Kiếm của chủ vung cung chém trước mặt (dx=ownerId, dy=roll độ (dấu = chiều), dz=bán kính, scale=cỡ kiếm, color=delay<<24, life=nhịp quét). */
     SWORD_SLASH,
     /** Kiếm rơi mũi chúc xuống rồi cắm đất một lúc, bụi + vết nứt nhỏ khi chạm (như SWORD_FLY). */
-    SWORD_STAB;
+    SWORD_STAB,
+    /** Dải vệt sáng (ribbon) bay from->to, xem client/fx/FxTrail. */
+    RIBBON,
+    /** Decal mặt đất: rune, vòng, nứt chữ thập, vũng, telegraph tròn/nón/đường (kind trong byte cao của color). */
+    DECAL,
+    /** Cự kiếm (model item phóng to) giáng xuống kèm viền sáng, xem client/fx/FxGiantSword. */
+    GIANT_SWORD,
+    /** Vết rách không gian: thấu kính mở rồi khép. */
+    RIFT,
+    /** Rung camera theo khoảng cách tới pos. */
+    CAMERA_SHAKE,
+    /** Vỏ lục giác bao quanh thực thể (Hộ Thân Cương Khí). */
+    SHELL;
 
     private static final FxType[] V = values();
     public static FxType of(int i) { return V[Math.floorMod(i, V.length)]; }

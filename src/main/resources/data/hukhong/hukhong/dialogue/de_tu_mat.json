@@ -1,0 +1,8 @@
+{"npc":"de_tu_mat","city":"","name_key":"hukhong.npc.de_tu_mat",
+ "entry":[{"if":{"flags":["qc.noi_gian.1"]},"node":"again"},{"node":"offer"}],
+ "nodes":{
+  "again":{"text":["hukhong.dlg.de_tu_mat.again.p1"]},
+  "offer":{"text":["hukhong.dlg.de_tu_mat.offer.p1","hukhong.dlg.de_tu_mat.offer.p2","hukhong.dlg.de_tu_mat.offer.p3"],
+   "choices":[
+    {"text":"hukhong.dlg.de_tu_mat.offer.c1","actions":[{"type":"doc","id":"b4"},{"type":"qc","chain":"noi_gian","stage":1}]},
+    {"text":"hukhong.dlg.de_tu_mat.offer.c2"}]}}}

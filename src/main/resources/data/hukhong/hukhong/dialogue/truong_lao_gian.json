@@ -1,0 +1,9 @@
+{"npc":"truong_lao_gian","city":"","name_key":"hukhong.npc.truong_lao_gian",
+ "entry":[{"node":"confront"}],
+ "nodes":{
+  "confront":{"text":["hukhong.dlg.truong_lao_gian.confront.p1","hukhong.dlg.truong_lao_gian.confront.p2","hukhong.dlg.truong_lao_gian.confront.p3"],
+   "choices":[
+    {"text":"hukhong.dlg.truong_lao_gian.confront.c1","actions":[{"type":"set_flag","flag":"qc.noi_gian.c.expose"},{"type":"exp","amount":800},{"type":"doc","id":"a5"},{"type":"qc","chain":"noi_gian","stage":9}]},
+    {"text":"hukhong.dlg.truong_lao_gian.confront.c2","if":{"flags":["qc.merchant.c.truth"]},"actions":[{"type":"set_flag","flag":"qc.noi_gian.c.expose"},{"type":"set_flag","flag":"qc.noi_gian.c.proof"},{"type":"exp","amount":1200},{"type":"doc","id":"a5"},{"type":"give_item","item":"hukhong:khai_mach_dan","count":2},{"type":"qc","chain":"noi_gian","stage":9}]},
+    {"text":"hukhong.dlg.truong_lao_gian.confront.c3","actions":[{"type":"set_flag","flag":"qc.noi_gian.c.blackmail"},{"type":"exp","amount":400},{"type":"give_item","item":"hukhong:khai_mach_dan","count":3},{"type":"qc","chain":"noi_gian","stage":8}]},
+    {"text":"hukhong.dlg.truong_lao_gian.confront.c4"}]}}}

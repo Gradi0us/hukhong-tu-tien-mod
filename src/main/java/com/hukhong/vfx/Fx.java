@@ -69,4 +69,112 @@ public final class Fx {
     public static void upgradeBurst(ServerPlayer p, int color) {
         play(p.serverLevel(), FxType.UPGRADE_BURST, p.position(), new Vec3(0, 1, 0), 1f, color);
     }
+
+    // ================================================================ Bộ công cụ VFX mới (ribbon / decal / cự kiếm / rung camera)
+    // owner != null: người nhận khác owner thấy hiệu ứng ở 50% độ đậm (giao tranh nhiều người vẫn đọc được).
+
+    /** Cờ trong life: hiệu ứng của người chơi khác. */
+    public static final int DIM = 1 << 30;
+
+    /** Gửi cho mọi người chơi trong 96 block; người không phải owner nhận bản 50%. */
+    public static void playOwned(ServerLevel lv, ServerPlayer owner, FxType type, Vec3 pos, Vec3 dir, float scale, int color, int lifeTicks) {
+        Vec3 d = dir == null ? Vec3.ZERO : dir;
+        double r2 = 96.0 * 96.0;
+        for (ServerPlayer sp : lv.players()) {
+            if (sp.distanceToSqr(pos) > r2) continue;
+            int life = lifeTicks | (owner != null && sp != owner ? DIM : 0);
+            PacketDistributor.sendToPlayer(sp, new FxPayload(type.ordinal(), pos.x, pos.y, pos.z, (float) d.x, (float) d.y, (float) d.z, scale, color, life));
+        }
+    }
+
+    private static int arcByte(double arc) { return arc == 0 ? 0 : (int) Math.max(1, Math.min(255, Math.round(arc * 8) + 128)); }
+
+    /** Vệt sáng bay from->to theo cung (arc block, dấu = lên/xuống), sau delay tick, bay flight tick; width = nửa rộng dải. */
+    public static void ribbon(ServerLevel lv, ServerPlayer owner, Vec3 from, Vec3 to, double arc, int flight, int delay, float width, int rgb) {
+        ribbonWave(lv, owner, from, to, arc, 0, flight, delay, width, rgb);
+    }
+
+    /** Như ribbon nhưng thêm uốn lượn ngang biên độ wave block (rồng, dây máu). */
+    public static void ribbonWave(ServerLevel lv, ServerPlayer owner, Vec3 from, Vec3 to, double arc, double wave, int flight, int delay, float width, int rgb) {
+        int life = Math.max(2, Math.min(1023, flight)) | (Math.min(255, Math.max(0, delay)) << 10) | (Math.min(31, (int) Math.round(wave * 10)) << 18);
+        playOwned(lv, owner, FxType.RIBBON, from, to.subtract(from), width, (rgb & 0xFFFFFF) | (arcByte(arc) << 24), life);
+    }
+
+    /** Vệt xoắn ốc quanh trục from->to (bán kính radius, pha phaseRad): dây leo, rồng cuốn. */
+    public static void ribbonHelix(ServerLevel lv, ServerPlayer owner, Vec3 from, Vec3 to, double radius, double phaseRad, int flight, int delay, float width, int rgb) {
+        int life = Math.max(2, Math.min(1023, flight)) | (Math.min(255, Math.max(0, delay)) << 10) | (Math.min(31, (int) Math.round(radius * 10)) << 18) | (1 << 23);
+        int ph = (int) Math.round(((phaseRad % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * 255);
+        playOwned(lv, owner, FxType.RIBBON, from, to.subtract(from), width, (rgb & 0xFFFFFF) | (ph << 24), life);
+    }
+
+    private static void decal(ServerLevel lv, ServerPlayer owner, int kind, Vec3 pos, Vec3 dir, float scale, int rgb, int life) {
+        playOwned(lv, owner, FxType.DECAL, pos, dir, scale, (rgb & 0xFFFFFF) | (kind << 24), life);
+    }
+
+    /** Pháp trận nhiều vòng xoay ngược chiều + sao n cánh. pos.y = độ cao (đặt trên trời cho "mắt trận"). */
+    public static void rune(ServerLevel lv, ServerPlayer owner, Vec3 pos, float radius, int rgb, int life, int points) {
+        decal(lv, owner, 0, pos, new Vec3(points, 0, 0), radius, rgb, life);
+    }
+
+    /** Vòng nở phẳng để lại dư quang trên đất. */
+    public static void groundRing(ServerLevel lv, ServerPlayer owner, Vec3 pos, float radius, int rgb, int life) {
+        decal(lv, owner, 1, pos, Vec3.ZERO, radius, rgb, life);
+    }
+
+    /** Nứt đất toả tia (4 = chữ thập), đá bay lên rồi rơi. */
+    public static void groundCrack(ServerLevel lv, ServerPlayer owner, Vec3 pos, float radius, int rgb, int spokes, int life) {
+        decal(lv, owner, 2, pos, new Vec3(spokes, 0, 0), radius, rgb, life);
+    }
+
+    /** Vũng (máu, độc...) loang ra rồi co lại. */
+    public static void pool(ServerLevel lv, ServerPlayer owner, Vec3 pos, float radius, int rgb, int life) {
+        decal(lv, owner, 3, pos, Vec3.ZERO, radius, rgb, life);
+    }
+
+    /** Telegraph tròn: viền + vùng đỏ lấp đầy từ tâm, tick cuối chớp trắng. ticks = thời gian tới lúc nổ. */
+    public static void telegraphCircle(ServerLevel lv, ServerPlayer owner, Vec3 pos, float radius, int ticks) {
+        decal(lv, owner, 4, pos, Vec3.ZERO, radius, 0, ticks);
+    }
+
+    /** Telegraph tròn có màu riêng (kỹ năng người chơi dùng màu đạo thay vì đỏ nguy hiểm). */
+    public static void telegraphCircle(ServerLevel lv, ServerPlayer owner, Vec3 pos, float radius, int ticks, int rgb) {
+        decal(lv, owner, 4, pos, Vec3.ZERO, radius, rgb, ticks);
+    }
+
+    /** Telegraph băng có màu riêng. */
+    public static void telegraphLine(ServerLevel lv, ServerPlayer owner, Vec3 pos, Vec3 vec, float width, int ticks, int rgb) {
+        decal(lv, owner, 6, pos, vec, width, rgb, ticks);
+    }
+
+    /** Telegraph hình quạt từ pos hướng facing (ngang), nửa góc halfAngleDeg, bán kính radius. */
+    public static void telegraphCone(ServerLevel lv, ServerPlayer owner, Vec3 pos, Vec3 facing, float radius, float halfAngleDeg, int ticks) {
+        Vec3 f = new Vec3(facing.x, 0, facing.z);
+        f = f.lengthSqr() < 1e-6 ? new Vec3(0, 0, 1) : f.normalize();
+        decal(lv, owner, 5, pos, new Vec3(f.x, halfAngleDeg, f.z), radius, 0, ticks);
+    }
+
+    /** Telegraph hình băng từ pos theo vector vec (độ dài = tầm), bề rộng width. */
+    public static void telegraphLine(ServerLevel lv, ServerPlayer owner, Vec3 pos, Vec3 vec, float width, int ticks) {
+        decal(lv, owner, 6, pos, vec, width, 0, ticks);
+    }
+
+    /** Cự kiếm giáng xuống mũi tại tip (size 1 = thân ~1.3 block); đập đất ở tick impactTick; life tổng (0 = mặc định). */
+    public static void giantSword(ServerLevel lv, ServerPlayer owner, Vec3 tip, float size, int rgb, int impactTick, int life) {
+        playOwned(lv, owner, FxType.GIANT_SWORD, tip, Vec3.ZERO, size, (rgb & 0xFFFFFF) | (Math.min(255, Math.max(1, impactTick)) << 24), life);
+    }
+
+    /** Vết rách không gian từ pos theo vec, nửa cao halfHeight; mở rồi khép trong life tick. */
+    public static void rift(ServerLevel lv, ServerPlayer owner, Vec3 pos, Vec3 vec, float halfHeight, int rgb, int life) {
+        playOwned(lv, owner, FxType.RIFT, pos, vec, halfHeight, rgb, life);
+    }
+
+    /** Rung camera quanh pos: strength ~ độ, ticks, radius block. */
+    public static void shake(ServerLevel lv, Vec3 pos, float strength, int ticks, float radius) {
+        play(lv, FxType.CAMERA_SHAKE, pos, new Vec3(radius, 0, 0), strength, 0xFFFFFF, ticks);
+    }
+
+    /** Vỏ lục giác bám thực thể trong life tick, vỡ vụn khi hết. */
+    public static void shell(ServerLevel lv, ServerPlayer owner, net.minecraft.world.entity.Entity e, float radius, int rgb, int life) {
+        playOwned(lv, owner, FxType.SHELL, e.position(), new Vec3(e.getId(), 0, 0), radius, rgb, life);
+    }
 }

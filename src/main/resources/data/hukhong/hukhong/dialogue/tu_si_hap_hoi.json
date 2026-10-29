@@ -1,0 +1,9 @@
+{"npc":"tu_si_hap_hoi","city":"","name_key":"hukhong.npc.tu_si_hap_hoi",
+ "entry":[{"if":{"flags":["qc.dying.1"]},"node":"again"},{"if":{"flags":["qc.dying.2"]},"node":"again"},{"node":"offer"}],
+ "nodes":{
+  "again":{"text":["hukhong.dlg.tu_si_hap_hoi.again.p1"]},
+  "offer":{"text":["hukhong.dlg.tu_si_hap_hoi.offer.p1","hukhong.dlg.tu_si_hap_hoi.offer.p2"],
+   "choices":[
+    {"text":"hukhong.dlg.tu_si_hap_hoi.offer.c1","actions":[{"type":"set_flag","flag":"qc.dying.c.deliver"},{"type":"qc","chain":"dying","stage":1}]},
+    {"text":"hukhong.dlg.tu_si_hap_hoi.offer.c2","actions":[{"type":"set_flag","flag":"qc.dying.c.keep"},{"type":"qc","chain":"dying","stage":1}]},
+    {"text":"hukhong.dlg.tu_si_hap_hoi.offer.c3"}]}}}

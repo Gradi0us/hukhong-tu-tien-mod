@@ -9,6 +9,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /** Tin su giao hang: NPC di bo toi diem den, nguoi choi phai bao ve. Trang thai chi o bo nho (mat khi tat server -> nhiem vu huy). */
+@EventBusSubscriber(modid = com.hukhong.HuKhong.MODID)
 public final class GuildCourier {
     private GuildCourier() {}
 
@@ -28,7 +32,23 @@ public final class GuildCourier {
 
     public static boolean active(UUID player) { return RUNS.containsKey(player); }
 
-    public static void reset() { RUNS.clear(); }
+    public static void reset() { RUNS.clear(); WALKERS.clear(); }
+
+    private static final Map<UUID, EscortMover.Walker> WALKERS = new HashMap<>();
+
+    /** Moi tick: tin su di theo tuyen da tinh (xem EscortMover), dung doi khi nguoi choi tut >12 block. */
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post e) {
+        if (WALKERS.isEmpty()) return;
+        for (var en : WALKERS.entrySet()) {
+            Run r = RUNS.get(en.getKey());
+            ServerPlayer p = e.getServer().getPlayerList().getPlayer(en.getKey());
+            if (r == null || p == null) continue;
+            Entity ent = p.serverLevel().getEntity(r.entity());
+            if (ent instanceof Villager v && v.isAlive()) en.getValue().tick(v, p);
+        }
+        WALKERS.keySet().removeIf(k -> !RUNS.containsKey(k));
+    }
 
     /** Sinh tin su canh nguoi choi, diem den cach dist block (huong ngau nhien tat dinh theo thoi gian). */
     public static boolean start(ServerPlayer p, int slot, int dist) {
@@ -48,6 +68,7 @@ public final class GuildCourier {
         v.setGlowingTag(true);
         if (!l.addFreshEntity(v)) return false;
         RUNS.put(p.getUUID(), new Run(v.getUUID(), new BlockPos(dx, dy, dz), slot, l.getGameTime() + TIMEOUT_TICKS));
+        WALKERS.put(p.getUUID(), new EscortMover.Walker(l, v.position(), new BlockPos(dx, dy, dz)));
         return true;
     }
 
@@ -91,10 +112,8 @@ public final class GuildCourier {
                 GuildService.onCourierArrived(p, r.slot());
                 continue;
             }
-            if (e instanceof Villager v) {
-                if (p.distanceToSqr(e) > 48 * 48) { p.displayClientMessage(Component.translatable("hukhong.guild.courier_wait"), true); v.getNavigation().stop(); }
-                else v.getNavigation().moveTo(r.dest().getX() + 0.5, r.dest().getY(), r.dest().getZ() + 0.5, 0.6);
-            }
+            EscortMover.Walker w = WALKERS.get(en.getKey());
+            if (w != null && w.waiting() && l.getGameTime() % 100 < 20) p.displayClientMessage(Component.translatable("hukhong.guild.courier_wait"), true);
         }
     }
 

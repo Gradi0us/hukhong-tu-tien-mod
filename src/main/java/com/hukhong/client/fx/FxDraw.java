@@ -8,6 +8,8 @@ import org.joml.Matrix4f;
 final class FxDraw {
     static final Vec3 UP = new Vec3(0, 1, 0);
     final VertexConsumer vc; final Matrix4f m; final Vec3 cam;
+    /** Hệ số độ đậm chung (hiệu ứng của người chơi khác = 0.5). */
+    float gain = 1f;
 
     FxDraw(VertexConsumer vc, Matrix4f m, Vec3 cam) { this.vc = vc; this.m = m; this.cam = cam; }
 
@@ -24,7 +26,7 @@ final class FxDraw {
 
     void v(Vec3 p, int c) {
         vc.addVertex(m, (float) (p.x - cam.x), (float) (p.y - cam.y), (float) (p.z - cam.z))
-                .setColor(c >> 16 & 255, c >> 8 & 255, c & 255, c >>> 24);
+                .setColor(c >> 16 & 255, c >> 8 & 255, c & 255, gain >= 0.999f ? c >>> 24 : (int) ((c >>> 24) * gain));
     }
 
     void quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, int ca, int cb, int cc, int cd) { v(a, ca); v(b, cb); v(c, cc); v(d, cd); }

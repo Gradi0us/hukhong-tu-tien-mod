@@ -49,7 +49,12 @@ public final class CityBuilder {
             var b = level.getBiome(best);
             if (!b.is(BiomeTags.IS_OCEAN) && !b.is(BiomeTags.IS_RIVER)) break;
         }
-        return best;
+        return DrySites.resolve(level, CityDef.ALL.get(0).id(), best, HALF + 4, 48);
+    }
+
+    /** Vi tri kho rao da luu (khong nuoc) cho thanh/tong; tim moi quanh anchor neu chua co. key: id thanh hoac "sect:"+id. */
+    public static BlockPos adjustSite(ServerLevel l, String key, BlockPos anchor, int half, String category) {
+        return DrySites.resolve(l, key, anchor, half, category.equals("city_mountain") ? 90 : 48);
     }
 
     /** Tim mat nen tai (cx,cz), nap chunk, san phang o (2*half+1)^2 (co, dat dem, don trong phia tren 14 block). Tra y0. */

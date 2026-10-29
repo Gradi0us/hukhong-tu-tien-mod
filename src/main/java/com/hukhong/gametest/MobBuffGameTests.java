@@ -177,9 +177,9 @@ public final class MobBuffGameTests {
 
     @GameTest(template = "empty", timeoutTicks = 100, batch = B)
     public static void raidRulesPure(GameTestHelper h) {
-        if (VoidRaid.chance(false, false) != 0.30) h.fail("co ban 30%");
-        if (VoidRaid.chance(false, true) != 0.10) h.fail("rung 10%");
-        if (VoidRaid.chance(true, true) != 0.50 || VoidRaid.chance(true, false) != 0.50) h.fail("vung nhiem 50%");
+        if (VoidRaid.chance(false, false) != 0.45) h.fail("co ban 45%");
+        if (VoidRaid.chance(false, true) != 0.20) h.fail("rung 20%");
+        if (VoidRaid.chance(true, true) != 0.70 || VoidRaid.chance(true, false) != 0.70) h.fail("vung nhiem 70%");
         if (!VoidRaid.isNight(14000) || VoidRaid.isNight(1000) || VoidRaid.isNight(12000)) h.fail("isNight");
         if (WorldBossManager.kindOf("desert") != 0 || WorldBossManager.kindOf("eroded_badlands") != 0) h.fail("kind sa mac");
         if (WorldBossManager.kindOf("snowy_slopes") != 1 || WorldBossManager.kindOf("frozen_peaks") != 1) h.fail("kind tuyet");

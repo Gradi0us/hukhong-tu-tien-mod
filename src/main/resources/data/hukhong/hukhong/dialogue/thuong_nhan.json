@@ -1,0 +1,8 @@
+{"npc":"thuong_nhan","city":"","name_key":"hukhong.npc.thuong_nhan",
+ "entry":[{"node":"offer"}],
+ "nodes":{
+  "offer":{"text":["hukhong.dlg.thuong_nhan.offer.p1","hukhong.dlg.thuong_nhan.offer.p2"],
+   "choices":[
+    {"text":"hukhong.dlg.thuong_nhan.offer.c1","actions":[{"type":"set_flag","flag":"qc.merchant.c.fee"},{"type":"qc","chain":"merchant","stage":2}]},
+    {"text":"hukhong.dlg.thuong_nhan.offer.c2","actions":[{"type":"set_flag","flag":"qc.merchant.c.free"},{"type":"qc","chain":"merchant","stage":2}]},
+    {"text":"hukhong.dlg.thuong_nhan.offer.c3"}]}}}

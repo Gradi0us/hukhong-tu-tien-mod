@@ -8,7 +8,14 @@ public final class ClientConfig {
 
     public enum ParticleLevel { ALL, LOW, OFF }
 
-    public enum FxQuality { LOW, MED, HIGH }
+    public enum FxQuality {
+        LOW(0.4f, 24), MED(0.7f, 40), HIGH(1f, 64), ULTRA(1.35f, 110);
+        /** Hệ số mật độ hạt/đoạn hình học. */
+        public final float density;
+        /** Khoảng cách (block) tối đa vẽ hiệu ứng nhỏ; hiệu ứng lớn/boss luôn vẽ xa hơn. */
+        public final int lod;
+        FxQuality(float d, int l) { density = d; lod = l; }
+    }
 
     private static final ModConfigSpec.Builder B = new ModConfigSpec.Builder();
     public static final ModConfigSpec.BooleanValue DISABLE_SCREEN_EFFECTS = B
@@ -18,7 +25,7 @@ public final class ClientConfig {
             .comment("Lượng particle của mod: ALL / LOW / OFF")
             .translation("hukhong.configuration.particles").defineEnum("particles", ParticleLevel.ALL);
     public static final ModConfigSpec.EnumValue<FxQuality> FX_QUALITY = B
-            .comment("Chất lượng hiệu ứng kỹ năng/Lôi Kiếp: LOW / MED / HIGH")
+            .comment("Chất lượng hiệu ứng kỹ năng/Lôi Kiếp: LOW / MED / HIGH / ULTRA (ngân sách hạt + vệt + khoảng cách LOD tăng theo cấp)")
             .translation("hukhong.configuration.fxQuality").defineEnum("fxQuality", FxQuality.HIGH);
     public static final ModConfigSpec.BooleanValue COLORBLIND = B
             .comment("Bảng màu thân thiện mù màu (Okabe-Ito) cho thanh tài nguyên/kinh nghiệm")
@@ -62,7 +69,7 @@ public final class ClientConfig {
             .translation("hukhong.configuration.mobBarsPlayers").define("mobBarsPlayers", false);
     public static final ModConfigSpec.BooleanValue MOB_BARS_ALWAYS = B
             .comment("Luôn hiện thanh máu của quái đã mất máu (không chỉ khi vừa bị đánh/ngắm)")
-            .translation("hukhong.configuration.mobBarsAlways").define("mobBarsAlways", false);
+            .translation("hukhong.configuration.mobBarsAlways").define("mobBarsAlways", true);
     public static final ModConfigSpec.IntValue MOB_BAR_RANGE = B
             .comment("Tầm hiện thanh máu (block)")
             .translation("hukhong.configuration.mobBarRange").defineInRange("mobBarRange", 24, 4, 64);
@@ -76,7 +83,7 @@ public final class ClientConfig {
 
     public static boolean mobBars() { return !SPEC.isLoaded() || MOB_BARS.get(); }
     public static boolean mobBarsPlayers() { return SPEC.isLoaded() && MOB_BARS_PLAYERS.get(); }
-    public static boolean mobBarsAlways() { return SPEC.isLoaded() && MOB_BARS_ALWAYS.get(); }
+    public static boolean mobBarsAlways() { return !SPEC.isLoaded() || MOB_BARS_ALWAYS.get(); }
     public static int mobBarRange() { return SPEC.isLoaded() ? MOB_BAR_RANGE.get() : 24; }
     public static boolean damageNumbers() { return !SPEC.isLoaded() || DAMAGE_NUMBERS.get(); }
     public static boolean minimapMobs() { return !SPEC.isLoaded() || MINIMAP_MOBS.get(); }
@@ -84,6 +91,14 @@ public final class ClientConfig {
     public static boolean screenEffectsOff() { return SPEC.isLoaded() && DISABLE_SCREEN_EFFECTS.get(); }
     public static ParticleLevel particles() { return SPEC.isLoaded() ? PARTICLES.get() : ParticleLevel.ALL; }
     public static FxQuality fxQuality() { return SPEC.isLoaded() ? FX_QUALITY.get() : FxQuality.HIGH; }
+    public static float fxDensity() { return fxQuality().density; }
+    /** Trần hạt VFX còn sống cùng lúc. */
+    public static int fxParticleBudget() { return (int) (700 * fxQuality().density); }
+    /** Trần số điểm vệt (ribbon) giữ lại mỗi hiệu ứng. */
+    public static int fxTrailPoints() { return switch (fxQuality()) { case LOW -> 14; case MED -> 24; case HIGH -> 40; default -> 64; }; }
+    /** Trần số hiệu ứng VFX hoạt động cùng lúc. */
+    public static int fxMaxActive() { return (int) (160 * Math.max(0.5f, fxQuality().density)); }
+    public static int fxLod() { return fxQuality().lod; }
     public static boolean colorblind() { return SPEC.isLoaded() && COLORBLIND.get(); }
     public static boolean showHud() { return !SPEC.isLoaded() || SHOW_HUD.get(); }
     public static boolean minimapOn() { return !SPEC.isLoaded() || SHOW_MINIMAP.get(); }

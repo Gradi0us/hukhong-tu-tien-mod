@@ -1,0 +1,15 @@
+{"npc":"thuong_nhan_e","city":"","name_key":"hukhong.npc.thuong_nhan",
+ "entry":[
+  {"if":{"flags":["qc.merchant.4"]},"node":"post"},
+  {"if":{"flags":["qc.merchant.6"]},"node":"arrive"},
+  {"node":"walking"}],
+ "nodes":{
+  "walking":{"text":["hukhong.dlg.thuong_nhan_e.walking.p1"]},
+  "post":{"text":["hukhong.dlg.thuong_nhan_e.post.p1","hukhong.dlg.thuong_nhan_e.post.p2"],
+   "choices":[
+    {"text":"hukhong.dlg.thuong_nhan_e.post.c1","actions":[{"type":"set_flag","flag":"qc.merchant.c.truth"},{"type":"doc","id":"a2"},{"type":"qc","chain":"merchant","stage":5}]},
+    {"text":"hukhong.dlg.thuong_nhan_e.post.c2","actions":[{"type":"set_flag","flag":"qc.merchant.c.ignore"},{"type":"qc","chain":"merchant","stage":5}]}]},
+  "arrive":{"text":["hukhong.dlg.thuong_nhan_e.arrive.p1"],
+   "choices":[
+    {"text":"hukhong.dlg.thuong_nhan_e.arrive.c1","if":{"flags":["qc.merchant.c.fee"]},"actions":[{"type":"exp","amount":700},{"type":"give_item","item":"hukhong:khai_mach_dan","count":1},{"type":"qc","chain":"merchant","stage":9}]},
+    {"text":"hukhong.dlg.thuong_nhan_e.arrive.c2","if":{"flags":["qc.merchant.c.free"]},"actions":[{"type":"set_flag","flag":"qc.merchant.c.favor"},{"type":"exp","amount":500},{"type":"give_item","item":"hukhong:khai_mach_dan","count":1},{"type":"qc","chain":"merchant","stage":9}]}]}}}

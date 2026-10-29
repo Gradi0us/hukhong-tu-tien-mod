@@ -42,8 +42,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * "Hu Khong Dot Kich": ban dem, moi 5 phut ngoai khu an toan, moi nguoi choi tung xuc xac suat (30% co ban,
- * 10% rung/rung ram, 50% trong chunk nhiem Hu Hoa). Co canh bao 10s, 3 dot quai quanh nguoi choi, dot cuoi co
+ * "Hu Khong Dot Kich": ban dem, moi 5 phut ngoai khu an toan, moi nguoi choi tung xuc xac suat (45% co ban,
+ * 20% rung/rung ram, 70% trong chunk nhiem Hu Hoa). Co canh bao 10s, 3 dot quai quanh nguoi choi, dot cuoi co
  * mini-boss, bossbar tien do, thuong EXP + Hon Tinh (+ tay chunk nhiem neu xay ra trong vung nhiem).
  * Quai trong vung nhiem tu duoc +30% cap/suc manh qua {@link CorruptBuff} khi finalizeSpawn.
  */
@@ -58,7 +58,7 @@ public final class VoidRaid {
     public static final int TOTAL_TIMEOUT = 14000;
     public static final int MAX_ALIVE = 28;
     private static final int[] BASE_SIZE = {6, 8, 10};
-    public static final double P_BASE = 0.30, P_FOREST = 0.10, P_CORRUPT = 0.50;
+    public static final double P_BASE = 0.45, P_FOREST = 0.20, P_CORRUPT = 0.70;
 
     /** Thuan: xac suat theo vung. Vung nhiem uu tien cao nhat. */
     public static double chance(boolean corrupted, boolean jungleOrForest) {
@@ -81,6 +81,7 @@ public final class VoidRaid {
         int stage;                    // 0 = canh bao, 1..WAVES = dot
         int timer = WARN_TICKS, age, toSpawn, waveTotal, tries;
         int players = 1;
+        net.minecraft.world.phys.Vec3 center;
         Mob boss;
         final List<com.hukhong.siege.Rift> rifts = new ArrayList<>();
         int riftDelay;                // tick con lai cho den khi khe nut san sang cho quai tro ra
@@ -89,6 +90,7 @@ public final class VoidRaid {
             this.player = p.getUUID();
             this.level = (ServerLevel) p.level();
             this.corrupted = corrupted;
+            this.center = p.position();
         }
     }
 
@@ -252,6 +254,7 @@ public final class VoidRaid {
             if (m == null) continue;
             m.moveTo(x + 0.5, y, z + 0.5, sl.random.nextFloat() * 360f, 0f);
             m.finalizeSpawn(sl, sl.getCurrentDifficultyAt(bp), MobSpawnType.EVENT, null);
+            RaidLevel.apply(m, RaidLevel.raidLevel(sl, r.center, p, r.corrupted), r.corrupted && !CorruptBuff.at(sl, bp));
             if (boss) makeMiniBoss(m);
             m.setTarget(p);
             sl.addFreshEntity(m);
