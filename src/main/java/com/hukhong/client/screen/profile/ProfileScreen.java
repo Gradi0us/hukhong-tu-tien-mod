@@ -359,6 +359,10 @@ public class ProfileScreen extends Screen {
                         t("hukhong.passive.tt.desc", "Mỗi đòn đánh thường (không phải kỹ năng) cộng 1 tầng lên kẻ địch, tối đa %s tầng, %ss. Mỗi tầng: kẻ địch nhận thêm %s sát thương từ mọi nguồn. Kẻ địch có tầng mà còn dưới %s máu tối đa bị xử tử ngay. Boss không bị xử tử, bonus sát thương chỉ còn 1/3. Không tác dụng lên người chơi.",
                                 com.hukhong.passive.PassiveMath.TT_MAX_STACKS, com.hukhong.passive.PassiveMath.TT_TICKS / 20,
                                 pc(com.hukhong.passive.PassiveMath.ttAmpPerStack(a)), pc(com.hukhong.passive.PassiveMath.ttExecPct(a)))});
+                l.add(new Component[]{t("hukhong.passive.hk.name", "Huyết Khí"),
+                        t("hukhong.passive.hk.desc", "Đánh thường trúng %s đòn: hồi máu bằng %s tổng sát thương của %s đòn đó. Hồi chiêu %ss.",
+                                com.hukhong.passive.PassiveMath.HK_HITS, pc(com.hukhong.passive.PassiveMath.hkHealPct(a)),
+                                com.hukhong.passive.PassiveMath.HK_HITS, com.hukhong.passive.PassiveMath.hkCooldown(a) / 20)});
                 l.add(new Component[]{t("hukhong.passive.body.name", "Thân Thể Thể Tu"),
                         t("hukhong.passive.body.desc", "Đi trên mặt nước (giữ Shift để lặn). Nín thở lâu gấp %s lần. Chạy nhanh +%s, nhảy cao +%s (theo cấp %s). Chịu độ cao rơi thêm %s khối.",
                                 com.hukhong.pathrules.TheBody.BREATH_MULT, pc(com.hukhong.pathrules.TheBody.speedBonus(lv)),

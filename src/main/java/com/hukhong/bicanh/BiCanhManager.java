@@ -280,7 +280,7 @@ public final class BiCanhManager {
         run.active = idx;
         double scale = BiCanhTier.partyScale(online.size());
         if (r.kind() == Kind.BOSS) {
-            spawn(dim, run, ModEntities.HU_COT.get(), r, BiCanhLayout.ROOM_LEN / 2, 0, 5.0 * scale, 1.8, true);
+            spawn(dim, run, ModEntities.HU_COT.get(), r, BiCanhLayout.ROOM_LEN / 2, 0, 5.0 * scale, BOSS_DMG_MUL, true);
             for (ServerPlayer p : online) com.hukhong.audio.BossMusic.start(p, "bicanh_boss");
             for (int i = 0; i < 2 + run.tier.ordinal() / 2; i++) spawnRandom(dim, run, r);
             for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable("hukhong.bicanh.boss_start"));
@@ -310,6 +310,20 @@ public final class BiCanhManager {
         spawn(dim, run, type, r, lx, lz, 1.0, 1.0, false);
     }
 
+    /** He so sat thuong boss Bi Canh (truoc 1.8 - qua manh voi cap thap). BossBuff con nhan them 1.3. */
+    public static final double BOSS_DMG_MUL = 1.15;
+
+    /** Cap quai trong run = cap trung binh nguoi choi trong Bi Canh (ban kinh 200 quanh goc), kep trong khoang cua bac. */
+    static int runLevel(ServerLevel dim, Run run) {
+        int n = 0, sum = 0;
+        for (ServerPlayer p : dim.players()) {
+            if (p.blockPosition().distSqr(run.origin) > 200 * 200) continue;
+            sum += com.hukhong.core.CultivationService.get(p).level(); n++;
+        }
+        int avg = n == 0 ? run.tier.mobLevel : Math.round((float) sum / n);
+        return Math.max(run.tier.minLevel, Math.min(run.tier.maxLevel, avg));
+    }
+
     private static void spawn(ServerLevel dim, Run run, EntityType<? extends Mob> type, Room r, int lx, int lz,
                               double hpMul, double dmgMul, boolean boss) {
         Mob m = type.create(dim);
@@ -317,11 +331,12 @@ public final class BiCanhManager {
         BlockPos o = run.origin;
         m.moveTo(o.getX() + r.x0() + lx + 0.5, o.getY() + (boss ? 1 : 0), o.getZ() + lz + 0.5, dim.random.nextFloat() * 360f, 0f);
         m.finalizeSpawn(dim, dim.getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.EVENT, null);
-        HuHoa.applyStats(m, run.tier.mobLevel, hpMul, dmgMul);
+        int lv = runLevel(dim, run);
+        HuHoa.applyStats(m, lv, hpMul, dmgMul);
         m.setPersistenceRequired();
         if (boss) {
             com.hukhong.audio.BossMusic.watch(m, "bicanh_boss");
-            m.setCustomName(com.hukhong.entity.BossLevel.tag(Component.translatable("hukhong.bicanh.boss"), run.tier.mobLevel));
+            m.setCustomName(com.hukhong.entity.BossLevel.tag(Component.translatable("hukhong.bicanh.boss"), lv));
             m.setCustomNameVisible(true);
             m.setGlowingTag(true);
         }

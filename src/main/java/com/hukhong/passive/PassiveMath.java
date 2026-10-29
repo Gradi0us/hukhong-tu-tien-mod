@@ -57,4 +57,18 @@ public final class PassiveMath {
     public static boolean ttExecutes(int stacks, double health, double maxHealth, double execPct, boolean boss, boolean player) {
         return stacks >= 1 && !boss && !player && maxHealth > 0 && health > 0 && health < maxHealth * execPct;
     }
+
+    // ---- Thể: Huyết Khí (hút máu sau 3 đòn thường) ------------------------------------------
+    public static final int HK_HITS = 3;
+    public static final double HK_PCT_MIN = 0.08, HK_PCT_MAX = 0.20;     // D .. SSS
+    public static final int HK_CD_MAX_TICKS = 600, HK_CD_MIN_TICKS = 300; // D 30s .. SSS 15s
+
+    static double aptT(Aptitude a) {
+        Aptitude ap = a == null ? Aptitude.D : a;
+        return ap.ordinal() / (double) (Aptitude.values().length - 1);
+    }
+    /** % sát thương của 3 đòn được hồi lại thành máu. */
+    public static double hkHealPct(Aptitude a) { return HK_PCT_MIN + (HK_PCT_MAX - HK_PCT_MIN) * aptT(a); }
+    /** Hồi chiêu (tick). */
+    public static int hkCooldown(Aptitude a) { return (int) Math.round(HK_CD_MAX_TICKS - (HK_CD_MAX_TICKS - HK_CD_MIN_TICKS) * aptT(a)); }
 }

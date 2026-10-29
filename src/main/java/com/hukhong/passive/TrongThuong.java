@@ -69,7 +69,27 @@ public final class TrongThuong {
         CultivationData d = atk.getData(ModAttachments.CULTIVATION);
         if (!d.paths().contains(Path.THE)) return;
         Aptitude a = d.aptitude().getOrDefault(Path.THE, Aptitude.D);
+        huyetKhi(atk, a, e.getNewDamage());
         apply(atk, t, PassiveMath.ttAmpPerStack(a), PassiveMath.ttExecPct(a));
+    }
+
+    /** Huyết Khí: đủ 3 đòn thường trúng -> hồi % tổng sát thương 3 đòn đó; hồi chiêu theo tư chất. */
+    private static final java.util.Map<java.util.UUID, double[]> HK = new java.util.concurrent.ConcurrentHashMap<>(); // {hits, dmg, readyTick}
+
+    static void huyetKhi(ServerPlayer p, Aptitude a, float dmg) {
+        long now = p.serverLevel().getGameTime();
+        double[] st = HK.computeIfAbsent(p.getUUID(), k -> new double[3]);
+        if (now < st[2]) return;
+        st[0]++; st[1] += dmg;
+        if (st[0] < PassiveMath.HK_HITS) return;
+        float heal = (float) (st[1] * PassiveMath.hkHealPct(a));
+        st[0] = 0; st[1] = 0; st[2] = now + PassiveMath.hkCooldown(a);
+        if (heal <= 0) return;
+        p.heal(heal);
+        Vec3 c = p.position().add(0, p.getBbHeight() * 0.6, 0);
+        p.serverLevel().sendParticles(BLOOD, c.x, c.y, c.z, 14, 0.35, 0.5, 0.35, 0.02);
+        p.serverLevel().sendParticles(ParticleTypes.HEART, c.x, c.y + 0.5, c.z, 2, 0.3, 0.2, 0.3, 0.0);
+        p.serverLevel().playSound(null, c.x, c.y, c.z, SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 0.5f, 0.6f);
     }
 
     /** Công khai để GameTest gọi: cộng 1 tầng + kiểm tra xử tử (đã gồm hiệu ứng). */
