@@ -47,6 +47,7 @@ public final class BossBuff {
         if (src == null || !isBoss(src)) return;
         LivingEntity victim = e.getEntity();
         if (isBoss(victim) || victim instanceof HuMob) return;
+        if (src.level().dimension() == com.hukhong.bicanh.BiCanhRegistry.DIM) return; // Bi Canh co he so boss rieng (BiCanhManager.BOSS_DMG_MUL), khong cong don
         e.setAmount((float) (e.getAmount() * DMG_MUL));
     }
 }
