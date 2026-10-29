@@ -3,6 +3,7 @@ package com.hukhong.client.keybind;
 import com.hukhong.HuKhong;
 import com.hukhong.network.CastSkillPayload;
 import com.hukhong.network.ToggleStancePayload;
+import com.hukhong.skill.Skill;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -51,10 +52,12 @@ public final class SkillKeyHandler {
                 for (var sk : SkillKeys.SKILL) if (vk.same(sk)) { while (vk.consumeClick()) { } break; }
             }
         }
+        boolean beamT = on && com.hukhong.client.fx.PhapBeamClient.lockedT(mc) && Skill.skillPath(com.hukhong.client.ClientCache.cultivation(), ClientSkillState.page()) == com.hukhong.core.Path.PHAP;
         for (int i = 0; i < 4; i++) {
             while (SkillKeys.SKILL[i].consumeClick()) {
-                if (on) PacketDistributor.sendToServer(new CastSkillPayload(i));
+                if (on && !(i == 3 && beamT)) PacketDistributor.sendToServer(new CastSkillPayload(i)); // T của Quang/Lôi/Hỏa/Thủy: giữ để nạp (PhapBeamClient)
             }
         }
+        com.hukhong.client.fx.PhapBeamClient.tickKeys(mc, beamT);
     }
 }

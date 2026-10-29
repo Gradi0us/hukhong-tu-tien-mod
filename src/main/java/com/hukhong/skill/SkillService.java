@@ -37,7 +37,7 @@ public final class SkillService {
             return;
         }
         st.stance = !st.stance;
-        if (!st.stance) SkillEffects.kiemVucStop(p, st, true);
+        if (!st.stance) { SkillEffects.kiemVucStop(p, st, true); com.hukhong.phaptu.beam.PhapBeamService.cancel(p); }
         else StanceHands.equip(p, Skill.skillPath(d, st.page));
         p.displayClientMessage(Component.translatable(st.stance ? "hukhong.stance.on" : "hukhong.stance.off"), true);
         sync(p);
@@ -53,6 +53,7 @@ public final class SkillService {
         if (st.lastSwitch + SkillPages.SWITCH_COOLDOWN_TICKS > now) return;
         st.page = SkillPages.next(st.page, n);
         SkillEffects.kiemVucStop(p, st, true);
+        com.hukhong.phaptu.beam.PhapBeamService.cancel(p);
         st.lastSwitch = now;
         for (int i = 0; i < 4; i++) st.cooldownEnd[i] = Math.max(st.cooldownEnd[i], now + SkillPages.SWITCH_COOLDOWN_TICKS);
         p.displayClientMessage(Component.translatable("hukhong.msg.page_switched",
@@ -65,10 +66,13 @@ public final class SkillService {
         if (slot < 0 || slot > 3 || !p.isAlive() || p.isSpectator()) return;
         SkillState st = state(p);
         if (!st.stance) return; // server chỉ nhận cast khi thế bật
+        if (com.hukhong.phaptu.beam.PhapBeamService.busy(p)) return; // đang nạp / sẵn sàng / bắn Tinh Hà Quang Trụ
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         Path page = Skill.skillPath(d, st.page);
         SkillBookData bd = SkillBookService.data(p);
-        SkillBook.Resolved r = SkillBook.resolve(bd, page, slot, d.level());
+        boolean lockT = page == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamService.locksT(p);
+        if (lockT && slot == 3) return; // phím T của Quang/Lôi/Hỏa/Thủy đi qua PhapBeamService (nạp -> bắn), không cast tức thời
+        SkillBook.Resolved r = SkillBook.resolve(bd, page, slot, d.level(), lockT);
         // phím R: Bản Mệnh / Vạn Cốt Cộng Minh, trừ khi có kỹ năng gán thủ công và chưa mở Bản Mệnh
         if (slot == 2 && r == null) {
             SkillBookRuntime.clear(p);
@@ -121,8 +125,9 @@ public final class SkillService {
         SkillBookData bd = SkillBookService.data(p);
         int plv = p.getData(ModAttachments.CULTIVATION).level();
         List<Integer> rem = new ArrayList<>(4), tot = new ArrayList<>(4);
+        boolean lockT = page == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamService.locksT(p);
         for (int i = 0; i < 4; i++) {
-            SkillBook.Resolved r = SkillBook.resolve(bd, page, i, plv);
+            SkillBook.Resolved r = SkillBook.resolve(bd, page, i, plv, lockT);
             rem.add((int) Math.max(0, st.cooldownEnd[i] - now));
             tot.add(i == 2 && r == null ? Math.max(1, st.rTotal) : r == null ? 1
                     : r.base() == Skill.KIEM_ULT ? SkillEffects.DOMAIN_LOCK_TICKS

@@ -17,6 +17,7 @@ public final class SkillNet {
         com.hukhong.artifact.ArtifactNet.register(r);
         com.hukhong.passive.PassiveNet.register(r);
         com.hukhong.phaptu.linhtruong.LinhTruongBoltPayload.register(r);
+        com.hukhong.phaptu.beam.PhapBeamNet.register(r);
         com.hukhong.client.ambient.AmbientSyncPayload.register(r);
         com.hukhong.client.anim.CastAnimPayload.register(r);
         r.playToClient(SkillSyncPayload.TYPE, SkillSyncPayload.STREAM_CODEC,

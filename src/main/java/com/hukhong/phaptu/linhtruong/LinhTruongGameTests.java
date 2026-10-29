@@ -105,6 +105,10 @@ public final class LinhTruongGameTests {
         cow.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1024);
         cow.setHealth(1024);
         h.getLevel().addFreshEntity(cow);
+        var crit = p.getAttribute(com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.CRIT_CHANCE));
+        if (crit != null) crit.addOrUpdateTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("hukhong", "test_no_crit"), -10,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE)); // tat bao kich: test on dinh
         LinhTruongService.forget(p.getUUID());
         if (!LinhTruongService.fire(p)) h.fail("fire tra false");
         double dealt = 1024 - cow.getHealth();

@@ -1482,5 +1482,14 @@
   "hukhong.linhbao.tip.linh_the.hit": "Mỗi đòn tay cộng %s sát thương.",
   "hukhong.linhbao.tip.ma_cong.hit": "Mỗi đòn thường cộng %s sát thương.",
   "hukhong.linhbao.tip.ma_cong.ls": "Hút máu %s%% sát thương cộng thêm (tắt khi Mất Kiểm Soát).",
-  "hukhong.linhbao.none": "Đạo của bạn dùng Bản Mệnh riêng (Kiếm: Bản Mệnh Kiếm, Pháp: Linh Trượng)."
+  "hukhong.linhbao.none": "Đạo của bạn dùng Bản Mệnh riêng (Kiếm: Bản Mệnh Kiếm, Pháp: Linh Trượng).",
+  "hukhong.phap.beam.charging": "Tụ Tinh Hà... giữ phím T",
+  "hukhong.phap.beam.ready": "Tinh Hà đã sẵn sàng! Giữ chuột phải để bắn",
+  "hukhong.phap.beam.cancelled": "Tinh Hà tan biến (nhả phím quá sớm)",
+  "hukhong.phap.beam.expired": "Tinh Hà tan biến vì không bắn kịp",
+  "hukhong.phap.beam.out_of_mana": "Cạn Pháp Lực, tia tắt",
+  "hukhong.phap.beam.locked": "Tuyệt kỹ của nguyên tố này cố định ở phím T, không thể thay bằng kỹ năng khác.",
+  "hukhong.phap.beam.hud.ready": "SẴN",
+  "hukhong.phap.beam.hud.fire": "BẮN",
+  "hukhong.phap.beam.hint": "Giữ chuột phải để bắn Tinh Hà (%s s)"
 }

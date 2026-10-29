@@ -73,9 +73,10 @@ public final class SkillHud {
             }
         }
 
+        boolean lockT = sp == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamMath.locksT(com.hukhong.phaptu.PhapTu.element(mc.player));
         for (int i = 0; i < 4; i++) {
             int x = x0 + i * (SIZE + GAP);
-            com.hukhong.skillbook.SkillBook.Resolved rs = com.hukhong.skillbook.SkillBook.resolve(com.hukhong.skillbook.ClientSkillBook.get(), sp, i, d.level());
+            com.hukhong.skillbook.SkillBook.Resolved rs = com.hukhong.skillbook.SkillBook.resolve(com.hukhong.skillbook.ClientSkillBook.get(), sp, i, d.level(), lockT);
             Skill s = rs != null ? rs.base() : null;
             g.fill(x, y, x + SIZE, y + SIZE, stance ? 0xCC000000 : 0x88000000);
             com.hukhong.skill.BanMenhSkill bm = i == 2 && rs == null ? com.hukhong.skill.BanMenhSkill.of(sp, d.level()) : null;
@@ -94,7 +95,8 @@ public final class SkillHud {
                     g.fill(x + 2, y + 2, x + 18, y + 2 + h, 0xBB000000);
                     String sec = String.valueOf((rem + 19) / 20);
                     g.drawString(mc.font, sec, x + (SIZE - mc.font.width(sec)) / 2, y + 6, 0xFFFFFFFF, true);
-                } else if (dome ? d.resource() < Math.max(1, Math.round(d.resourceMax() * com.hukhong.skill.SkillEffects.DOMAIN_DRAIN_PCT))
+                } else if (lockT && i == 3 ? d.resource() < com.hukhong.phaptu.beam.PhapBeamMath.upfrontCost(d.resourceMax(), 1.0)
+                        : dome ? d.resource() < Math.max(1, Math.round(d.resourceMax() * com.hukhong.skill.SkillEffects.DOMAIN_DRAIN_PCT))
                         : d.resource() < Resources.costFor(d, baseCost)) {
                     g.fill(x + 2, y + 2, x + 18, y + 18, 0x66FF0000);
                 }
@@ -106,6 +108,7 @@ public final class SkillHud {
                 g.fill(x + 2, y + 2, x + 18, y + 18, 0x337FD8FF);
                 g.drawString(mc.font, "ON", x + (SIZE - mc.font.width("ON")) / 2, y + 2, 0xFFBFEFFF, true);
             }
+            if (lockT && i == 3) com.hukhong.client.fx.PhapBeamClient.drawHud(g, mc, x, y, SIZE);
             if (!stance) g.fill(x, y, x + SIZE, y + SIZE, 0x66000000);
             String key = SkillKeys.SKILL[i].getTranslatedKeyMessage().getString();
             g.drawString(mc.font, key, x + 2, y + 11, 0xFFE0E0E0, true);

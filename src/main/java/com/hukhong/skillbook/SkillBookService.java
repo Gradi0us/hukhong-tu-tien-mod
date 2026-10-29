@@ -79,6 +79,10 @@ public final class SkillBookService {
             set(p, d.withSlot(page, slot, null));
             return;
         }
+        if (page == Path.PHAP && (slot == 3 || Skill.PHAP_ULT.icon.equals(id)) && com.hukhong.phaptu.beam.PhapBeamService.locksT(p)) {
+            msg(p, "hukhong.phap.beam.locked", "Tuyệt kỹ của nguyên tố này cố định ở phím T, không thể thay bằng kỹ năng khác.");
+            return;
+        }
         if (!SkillBook.assignable(d, page, id)) {
             msg(p, "hukhong.skillbook.msg.cant_assign", "Không gán được kỹ năng này vào đạo này.");
             return;

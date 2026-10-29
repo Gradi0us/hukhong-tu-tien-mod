@@ -81,6 +81,8 @@ public final class PhapRuntime {
     private static final Map<UUID, Burn> BURN = new HashMap<>();
     private static final Map<UUID, Stun> STUN = new HashMap<>();
     private static boolean busy = false;
+    /** Tinh Hà Quang Trụ: nhịp tia này không cộng tầng bị động (giới hạn 1 tầng / 0,5s / mục tiêu). */
+    public static boolean noStack = false;
 
     private static final ResourceLocation KIM_BASE = ModAttributes.id("phap/kim_speed_base"), KIM_TOTAL = ModAttributes.id("phap/kim_speed_total");
     private static final ResourceLocation SPRINT = ResourceLocation.withDefaultNamespace("sprinting");
@@ -155,7 +157,7 @@ public final class PhapRuntime {
 
     @SubscribeEvent
     public static void onDamage(LivingDamageEvent.Post e) {
-        if (busy || !(e.getSource().getEntity() instanceof ServerPlayer p) || e.getEntity() == p) return;
+        if (busy || noStack || !(e.getSource().getEntity() instanceof ServerPlayer p) || e.getEntity() == p) return;
         PhapElement el = PhapTu.element(p);
         if (el == null || e.getNewDamage() <= 0f || !(p.level() instanceof ServerLevel sl)) return;
         LivingEntity t = e.getEntity();

@@ -46,6 +46,27 @@ public final class SkillBook {
         return resolve(d, page, slot);
     }
 
+    /**
+     * Như {@link #resolve(SkillBookData, Path, int, int)}, thêm cờ lockT: Pháp Tu Quang/Lôi/Hỏa/Thủy có phím T cố định là
+     * Tinh Hà Quang Trụ (Skill.PHAP_ULT) - mọi gán thủ công trên phím T bị bỏ qua, và phap_ult gán sang phím khác cũng không có hiệu lực.
+     */
+    public static Resolved resolve(SkillBookData d, Path page, int slot, int playerLevel, boolean lockT) {
+        if (!lockT || page != Path.PHAP) return resolve(d, page, slot, playerLevel);
+        if (slot == 3) return new Resolved(Skill.PHAP_ULT, null);
+        if (slot < 0 || slot > 2) return null;
+        if (slot == 2 && com.hukhong.skill.BanMenhSkill.of(page, playerLevel) != null) return null;
+        String id = d.slot(page, slot);
+        if (id != null && !Skill.PHAP_ULT.icon.equals(id) && assignable(d, page, id)) return of(id);
+        Skill def = Skill.of(page, slot);
+        if (def == null) return null;
+        for (int i = 0; i < 3; i++) { // phím T bị bỏ qua khi tìm "đã bị chuyển sang phím khác"
+            if (i == slot) continue;
+            String o = d.slot(page, i);
+            if (def.icon.equals(o) && assignable(d, page, o)) return null;
+        }
+        return new Resolved(def, null);
+    }
+
     /** Phím có gán thủ công hợp lệ không (R cần biết để nhường cho Bản Mệnh). */
     public static boolean hasAssignment(SkillBookData d, Path page, int slot) {
         String id = d.slot(page, slot);

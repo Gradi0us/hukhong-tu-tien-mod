@@ -1482,5 +1482,14 @@
   "hukhong.linhbao.tip.linh_the.hit": "Each fist hit deals %s bonus damage.",
   "hukhong.linhbao.tip.ma_cong.hit": "Each basic hit deals %s bonus damage.",
   "hukhong.linhbao.tip.ma_cong.ls": "Lifesteal %s%% of the bonus damage (disabled while Out of Control).",
-  "hukhong.linhbao.none": "Your path uses its own bound artifact (Sword: Bound Sword, Mage: Spirit Staff)."
+  "hukhong.linhbao.none": "Your path uses its own bound artifact (Sword: Bound Sword, Mage: Spirit Staff).",
+  "hukhong.phap.beam.charging": "Gathering starlight... hold T",
+  "hukhong.phap.beam.ready": "Starlight ready! Hold right mouse to fire",
+  "hukhong.phap.beam.cancelled": "Starlight dispersed (released too early)",
+  "hukhong.phap.beam.expired": "Starlight faded before you fired",
+  "hukhong.phap.beam.out_of_mana": "Out of Mana, the beam dies",
+  "hukhong.phap.beam.locked": "This element's ultimate is fixed to the T key and cannot be replaced.",
+  "hukhong.phap.beam.hud.ready": "RDY",
+  "hukhong.phap.beam.hud.fire": "FIRE",
+  "hukhong.phap.beam.hint": "Hold right mouse to fire the beam (%s s)"
 }

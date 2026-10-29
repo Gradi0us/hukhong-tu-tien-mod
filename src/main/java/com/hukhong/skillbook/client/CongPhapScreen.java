@@ -179,7 +179,7 @@ public class CongPhapScreen extends Screen {
             g.drawString(font, tag, lx + lw - font.width(tag) - 4, y + 3, r.owned() ? GOLD : 0xFF555555, false);
             if (sp != null && r.owned()) {
                 for (int i = 0; i < 4; i++) {
-                    SkillBook.Resolved rs = SkillBook.resolve(d, sp, i, cd.level());
+                    SkillBook.Resolved rs = SkillBook.resolve(d, sp, i, cd.level(), lockT(sp));
                     if (rs != null && rs.id().equals(r.id())) {
                         String k = SkillKeys.SKILL[i].getTranslatedKeyMessage().getString();
                         g.drawString(font, k, lx + lw - font.width(tag) - font.width(k) - 10, y + 3, 0xFF7FD4FF, false);
@@ -314,7 +314,7 @@ public class CongPhapScreen extends Screen {
             g.fill(bx, sy, bx + bw, sy + bh, 0xFF1A1A28);
             String k = SkillKeys.SKILL[i].getTranslatedKeyMessage().getString();
             g.drawString(font, k, bx + 3, sy + 3, GOLD, false);
-            SkillBook.Resolved rs = SkillBook.resolve(d, p, i, cd.level());
+            SkillBook.Resolved rs = SkillBook.resolve(d, p, i, cd.level(), lockT(p));
             Component nm;
             int col = 0xFFFFFFFF;
             if (rs != null) nm = nameOf(rs.id());
@@ -388,5 +388,11 @@ public class CongPhapScreen extends Screen {
     public boolean mouseScrolled(double mx, double my, double sx, double sy2) {
         scroll = Math.max(0, Math.min(scroll - sy2 * ROW, Math.max(0, totalHeight() - lh)));
         return true;
+    }
+
+    /** Phím T của Pháp Tu Quang/Lôi/Hỏa/Thủy cố định (Tinh Hà Quang Trụ). */
+    private static boolean lockT(Path page) {
+        var pl = net.minecraft.client.Minecraft.getInstance().player;
+        return page == Path.PHAP && pl != null && com.hukhong.phaptu.beam.PhapBeamMath.locksT(com.hukhong.phaptu.PhapTu.element(pl));
     }
 }

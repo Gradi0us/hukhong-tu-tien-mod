@@ -69,6 +69,26 @@ public final class DevAutoTest {
             sp.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
         });
         if (t == 292) bcCheck();
+        String beam = System.getenv("HUKHONG_BEAM"); // dev: HUKHONG_BEAM=QUANG|LOI|HOA|THUY -> nạp, bắn Tinh Hà Quang Trụ và chụp ảnh
+        if (beam != null && !beam.isEmpty()) {
+            if (t == 400) server.execute(() -> {
+                var d = sp.getData(com.hukhong.core.ModAttachments.CULTIVATION);
+                sp.setData(com.hukhong.core.ModAttachments.CULTIVATION, new com.hukhong.core.CultivationData(60, 0, 1000, 1000,
+                        java.util.Set.of(com.hukhong.core.Path.PHAP), java.util.Map.of(com.hukhong.core.Path.PHAP, com.hukhong.core.Aptitude.SSS), false, d.origin(), d.roll(), d.milestoneUnlocked()));
+                com.hukhong.phaptu.PhapTu.setElement(sp, com.hukhong.phaptu.PhapElement.valueOf(beam));
+                com.hukhong.stats.StatService.refresh(sp);
+                sp.setData(com.hukhong.core.ModAttachments.CULTIVATION, sp.getData(com.hukhong.core.ModAttachments.CULTIVATION).withResource(sp.getData(com.hukhong.core.ModAttachments.CULTIVATION).resourceMax()));
+                com.hukhong.skill.SkillService.state(sp).stance = true;
+                com.hukhong.skill.SkillService.state(sp).cooldownEnd[3] = 0;
+                LOG.info("AUTOTEST beam chargeStart={}", com.hukhong.phaptu.beam.PhapBeamService.chargeStart(sp));
+            });
+            if (t == 415) shot("beam_charge_" + beam);
+            if (t == 440) shot("beam_ready_" + beam);
+            if (t == 445) server.execute(() -> LOG.info("AUTOTEST beam fireStart={}", com.hukhong.phaptu.beam.PhapBeamService.fireStart(sp)));
+            if (t == 455 || t == 480) shot("beam_fire_" + beam + t);
+            if (t == 540) { LOG.info("AUTOTEST done"); mc.stop(); }
+            return;
+        }
         if (t == 340) { LOG.info("AUTOTEST done"); mc.stop(); }
     }
 
