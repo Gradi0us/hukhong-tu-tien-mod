@@ -196,7 +196,7 @@ class Params:
         for m in re.finditer(r"/\* (\w+)\s*\*/\s*\{([^}]*)\}", ph):
             P.phap_coef[m.group(1)] = [num(x) for x in m.group(2).split(",")]
         for nm in ("QUANG_EXPLODE_MAX", "HOA_BURN_COEF", "THO_SHOT_COEF", "KIM_BONUS_MAX", "KIM_COOLDOWN_MULT", "THO_DMG_MAX",
-                   "LOI_HP_PCT_MAX", "LOI_DMG_CAP_MULT", "THUY_IMMUNE_MAX"):
+                   "LOI_HP_PCT_MAX", "LOI_DMG_CAP_MULT", "THUY_IMMUNE_MAX", "THO_DMG_FLOOR", "THO_UPTIME", "THO_CROWD_TICKS"):
             setattr(P, "PH_" + nm, const("phaptu/PhapMath.java", nm))
         P.PH_HOA_STACKS = int(const("phaptu/PhapMath.java", "HOA_STACKS"))
         P.PH_THO_MAXT = int(const("phaptu/PhapMath.java", "THO_MAX_TURRETS"))
@@ -442,8 +442,8 @@ def phap_passive_dps(P, e, a, sp):
         return P.PH_HOA_BURN_COEF * (0.35 + 0.65 * P.frac(a)) * P.PH_HOA_STACKS * sp * 0.7
     if e == "THO":
         turrets = 1 + int(math.floor((P.PH_THO_MAXT - 1) * P.t(a) + 0.5))
-        shot = P.PH_THO_DMG_MAX * P.frac(a) * P.PH_THO_SHOT_COEF * sp
-        return turrets * shot * (20.0 / P.PH_THO_SHOT) * 0.75
+        shot = P.PH_THO_DMG_MAX * (P.PH_THO_DMG_FLOOR + (1 - P.PH_THO_DMG_FLOOR) * P.frac(a)) * P.PH_THO_SHOT_COEF * sp
+        return turrets * shot * (20.0 / (P.PH_THO_SHOT + P.PH_THO_CROWD_TICKS * (turrets - 1))) * P.PH_THO_UPTIME
     if e == "LOI":
         return min(P.PH_LOI_HP_PCT_MAX * P.frac(a) * 400, P.PH_LOI_DMG_CAP_MULT * sp) / 3.0
     if e == "THUY":

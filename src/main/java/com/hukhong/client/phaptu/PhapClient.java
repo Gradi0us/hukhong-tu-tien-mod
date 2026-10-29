@@ -47,24 +47,40 @@ public final class PhapClient {
         e.registerEntityRenderer(PhapTuRegistry.TURRET.get(), TurretRenderer::new);
     }
 
-    /** Tháp Thổ: khối "bệ phóng" xoay chậm, bay nhẹ, phát sáng đủ cho dễ thấy. */
+    /** Tháp Thổ: trụ đá 3 tầng (đế gạch đá, thân chạm khắc, lõi hổ phách xoay) nhấp nhô nhẹ; lõi sáng khi vừa bắn. */
     static final class TurretRenderer extends EntityRenderer<PhapTurret> {
-        private final ItemStack stack = new ItemStack(Items.DISPENSER);
+        private static final net.minecraft.world.level.block.state.BlockState BASE = net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState();
+        private static final net.minecraft.world.level.block.state.BlockState MID = net.minecraft.world.level.block.Blocks.CHISELED_STONE_BRICKS.defaultBlockState();
+        private static final net.minecraft.world.level.block.state.BlockState CORE = net.minecraft.world.level.block.Blocks.RAW_GOLD_BLOCK.defaultBlockState();
+        private static final net.minecraft.world.level.block.state.BlockState SPIKE = net.minecraft.world.level.block.Blocks.POINTED_DRIPSTONE.defaultBlockState();
 
         TurretRenderer(EntityRendererProvider.Context ctx) {
             super(ctx);
-            shadowRadius = 0.5f;
+            shadowRadius = 0.6f;
+        }
+
+        private void block(PoseStack ps, MultiBufferSource buf, net.minecraft.world.level.block.state.BlockState st, double x, double y, double z, float s, float rot, int light) {
+            ps.pushPose();
+            ps.translate(x, y, z);
+            ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(rot));
+            ps.scale(s, s, s);
+            ps.translate(-0.5, 0, -0.5);
+            Minecraft.getInstance().getBlockRenderer().renderSingleBlock(st, ps, buf, light, OverlayTexture.NO_OVERLAY);
+            ps.popPose();
         }
 
         @Override
         public void render(PhapTurret t, float yaw, float pt, PoseStack ps, MultiBufferSource buf, int light) {
-            ps.pushPose();
             float age = t.tickCount + pt;
-            ps.translate(0, 0.75 + Math.sin(age * 0.1) * 0.04, 0);
-            ps.mulPose(com.mojang.math.Axis.YP.rotationDegrees(age * 4f));
-            ps.scale(1.5f, 1.5f, 1.5f);
-            Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.FIXED,
-                    LightTexture.pack(12, 12), OverlayTexture.NO_OVERLAY, ps, buf, t.level(), t.getId());
+            ps.pushPose();
+            block(ps, buf, BASE, 0, 0, 0, 1.0f, 0, light);
+            block(ps, buf, MID, 0, 0.95, 0, 0.72f, 45, light);
+            for (int i = 0; i < 4; i++) { // 4 gai đá quanh chân trụ
+                double a = Math.PI / 2 * i + 0.4;
+                block(ps, buf, SPIKE, Math.cos(a) * 0.62, 0, Math.sin(a) * 0.62, 0.7f, 0, light);
+            }
+            double bob = Math.sin(age * 0.1) * 0.06;
+            block(ps, buf, CORE, 0, 1.55 + bob, 0, 0.42f, age * 5f, LightTexture.pack(15, 15));
             ps.popPose();
             super.render(t, yaw, pt, ps, buf, light);
         }

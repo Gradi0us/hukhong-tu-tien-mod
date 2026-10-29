@@ -32,7 +32,7 @@ public final class PhapTuRegistry {
             () -> AttachmentType.builder(() -> "").serialize(Codec.STRING).copyOnDeath().sync(ByteBufCodecs.STRING_UTF8).build());
 
     public static final DeferredHolder<EntityType<?>, EntityType<PhapTurret>> TURRET = ENTITIES.register("phap_turret",
-            () -> EntityType.Builder.of(PhapTurret::new, MobCategory.MISC).sized(0.8f, 1.3f).clientTrackingRange(8)
+            () -> EntityType.Builder.of(PhapTurret::new, MobCategory.MISC).sized(0.9f, 1.9f).clientTrackingRange(8)
                     .fireImmune().build("phap_turret"));
 
     public static void register(IEventBus bus) {

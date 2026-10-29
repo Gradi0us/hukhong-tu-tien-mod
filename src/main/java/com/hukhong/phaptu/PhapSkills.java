@@ -59,6 +59,7 @@ public final class PhapSkills {
             Fx.rune(lv, p, staffTip, 0.8f + 0.12f * slot, el.rgb, 10, 6);
             lv.sendParticles(ParticleTypes.END_ROD, staffTip.x, staffTip.y, staffTip.z, 6, 0.1, 0.1, 0.1, 0.05);
         }
+        elementSfx(lv, p, el, slot);
         switch (el) {
             case QUANG -> quang(lv, p, slot, c);
             case LOI -> loi(lv, p, slot, c);
@@ -70,6 +71,20 @@ public final class PhapSkills {
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /** Âm thanh nhiều lớp riêng từng nguyên tố (đầu sắc - thân - đuôi trầm), pitch hạ dần theo phím để Q/E/R/T nghe khác nhau. */
+    private static void elementSfx(ServerLevel lv, ServerPlayer p, PhapElement el, int slot) {
+        Vec3 at = p.position().add(0, 1, 0);
+        float pitch = 1.5f - slot * 0.18f, vol = 0.45f + slot * 0.12f;
+        switch (el) {
+            case QUANG -> FxSfx.cast(lv, at, vol, pitch + 0.2f, SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.AMETHYST_CLUSTER_BREAK, slot == 3 ? SoundEvents.BEACON_POWER_SELECT : null);
+            case LOI -> FxSfx.cast(lv, at, vol, pitch, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundEvents.TRIDENT_THUNDER.value(), slot >= 2 ? SoundEvents.LIGHTNING_BOLT_THUNDER : null);
+            case HOA -> FxSfx.cast(lv, at, vol, pitch - 0.2f, SoundEvents.BLAZE_SHOOT, SoundEvents.FIRECHARGE_USE, slot >= 2 ? SoundEvents.GENERIC_EXPLODE.value() : null);
+            case THUY -> FxSfx.cast(lv, at, vol, pitch, SoundEvents.PLAYER_SPLASH, SoundEvents.BUBBLE_COLUMN_BUBBLE_POP, slot >= 2 ? SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT : null);
+            case THO -> FxSfx.cast(lv, at, vol, pitch - 0.5f, SoundEvents.GRAVEL_BREAK, SoundEvents.STONE_BREAK, slot >= 1 ? SoundEvents.ANVIL_LAND : null);
+            case KIM -> FxSfx.cast(lv, at, vol, pitch + 0.1f, SoundEvents.IRON_GOLEM_ATTACK, SoundEvents.CHAIN_HIT, slot >= 2 ? SoundEvents.ANVIL_PLACE : null);
+        }
+    }
 
     private static void hit(ServerPlayer p, LivingEntity t, double amount) {
         if (amount <= 0) return;
@@ -133,7 +148,8 @@ public final class PhapSkills {
     }
 
     private static Vec3 ground(ServerLevel lv, Vec3 v) {
-        var r = lv.clip(new ClipContext(v, v.add(0, -24, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, (net.minecraft.world.entity.Entity) null));
+        var r = lv.clip(new ClipContext(v, v.add(0, -24, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
+                net.minecraft.world.phys.shapes.CollisionContext.empty())); // KHÔNG truyền Entity null: CollisionContext.of(null) ném NPE -> E Thổ/nhiều chiêu không bao giờ ra
         return r.getType() == HitResult.Type.MISS ? v : r.getLocation();
     }
 
@@ -172,6 +188,7 @@ public final class PhapSkills {
                 beam(lv, vf, look, 16, col, 9);
                 streak(lv, vf, look, 16, ParticleTypes.END_ROD, 0.8);
                 Fx.ribbon(lv, p, vf, vf.add(look.scale(16)), 0, 3, 0, 0.1f, col);
+                Fx.elem(lv, p, Fx.E_HALOS, vf, look.scale(16), 0.9f, col, 14); // vòng hào quang lăng kính dọc tia
                 FxSfx.cast(lv, from, 0.5f, 1.8f, SoundEvents.TRIDENT_THROW.value(), SoundEvents.AMETHYST_BLOCK_CHIME, null);
                 sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9f, 1.6f);
             }
@@ -184,6 +201,7 @@ public final class PhapSkills {
                     beam(lv, vf, d, 14, col, 8);
                     streak(lv, vf, d, 14, GOLD, 1.0);
                     Fx.ribbon(lv, p, vf, vf.add(d.scale(14)), 0, 3, Math.abs(i), 0.07f, col);
+                    if (i % 2 == 0) Fx.elem(lv, p, Fx.E_HALOS, vf, d.scale(14), 0.55f, col, 12);
                 }
                 for (LivingEntity t : hit) hit(p, t, c);
                 sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 1f, 1.2f);
@@ -203,6 +221,8 @@ public final class PhapSkills {
                     Fx.ribbon(lv, p, vf2, end, 0, 4, 0, 0.55f, col);
                     Fx.ribbon(lv, p, vf2, end, 0, 5, 0, 0.2f, 0xFFFFFF);
                     Fx.groundRing(lv, p, ground(lv, end).add(0, 0.06, 0), 4f, col, 22);
+                    Fx.elem(lv, p, Fx.E_HALOS, ground(lv, end), Vec3.ZERO, 3.2f, col, 26);
+                    Fx.elem(lv, p, Fx.E_HALOS, vf2, l2.scale(24), 1.8f, 0xFFFFFF, 18);
                     Fx.shake(lv, p.position(), 0.8f, 8, 24f);
                     FxSfx.cast(lv, f2, 0.7f, 1.4f, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundEvents.BEACON_DEACTIVATE);
                     streak(lv, vf2, l2, 24, ParticleTypes.END_ROD, 0.5);
@@ -222,6 +242,7 @@ public final class PhapSkills {
                 List<LivingEntity> near = around(lv, p, pos, 1.6);
                 LivingEntity first = near.stream().min(Comparator.comparingDouble(e -> e.position().distanceToSqr(pos))).orElse(null);
                 Fx.play(lv, FxType.LIGHTNING_BOLT, pos, Vec3.ZERO, 0.8f, col);
+                Fx.elem(lv, p, Fx.E_ARC, vfx(p), pos.add(0, 0.9, 0).subtract(vfx(p)), 1.1f, col, 8);
                 if (first != null) {
                     hit(p, first, c);
                     int n = 0;
@@ -229,7 +250,7 @@ public final class PhapSkills {
                         if (e == first || n++ >= 2) continue;
                         hit(p, e, c * 0.5);
                         Vec3 a = first.getBoundingBox().getCenter(), b = e.getBoundingBox().getCenter();
-                        beam(lv, a, b.subtract(a), a.distanceTo(b), col, 6);
+                        Fx.elem(lv, p, Fx.E_ARC, a, b.subtract(a), 0.9f, col, 8);
                     }
                 }
                 sound(lv, pos, SoundEvents.LIGHTNING_BOLT_IMPACT, 0.8f, 1.5f);
@@ -246,6 +267,7 @@ public final class PhapSkills {
                         }
                         Vec3 off = pos.add((lv.random.nextDouble() - 0.5) * 6, 0, (lv.random.nextDouble() - 0.5) * 6);
                         Fx.play(lv, FxType.LIGHTNING_BOLT, ground(lv, off.add(0, 4, 0)), Vec3.ZERO, 0.9f, col);
+                        Fx.elem(lv, p, Fx.E_ARC, ground(lv, off.add(0, 4, 0)), Vec3.ZERO, 1.6f, col, 8); // sét toả quanh điểm đánh
                         sound(lv, pos, SoundEvents.LIGHTNING_BOLT_IMPACT, 0.7f, 1.3f);
                     });
                 }
@@ -254,7 +276,7 @@ public final class PhapSkills {
                 List<LivingEntity> first = line(lv, p, p.getEyePosition(), p.getLookAngle(), 16, 1.6);
                 if (first.isEmpty()) first = cone(lv, p, 12, 0.6);
                 if (first.isEmpty()) {
-                    beam(lv, vfx(p), p.getLookAngle(), 10, col, 6);
+                    Fx.elem(lv, p, Fx.E_ARC, vfx(p), p.getLookAngle().scale(10), 1.3f, col, 9);
                     return;
                 }
                 LivingEntity cur = first.get(0);
@@ -266,7 +288,7 @@ public final class PhapSkills {
                     hit(p, cur, c * mul);
                     PhapRuntime.stun(cur, 0.4);
                     Vec3 b = cur.getBoundingBox().getCenter();
-                    beam(lv, prev, b.subtract(prev), prev.distanceTo(b), col, 7);
+                    Fx.elem(lv, p, Fx.E_ARC, prev, b.subtract(prev), 1.3f, col, 9);
                     lv.sendParticles(ParticleTypes.ELECTRIC_SPARK, b.x, b.y, b.z, 8, 0.3, 0.3, 0.3, 0.2);
                     prev = b;
                     mul *= 0.85;
@@ -289,6 +311,7 @@ public final class PhapSkills {
                             if (kk == 3) PhapRuntime.stun(e, 1.2);
                             if (bolts++ < 4) Fx.play(lv, FxType.LIGHTNING_BOLT, e.position(), Vec3.ZERO, 0.8f, col);
                         }
+                        if (bolts > 0) Fx.elem(lv, p, Fx.E_ARC, pos.add((lv.random.nextDouble() - 0.5) * 8, 0.3, (lv.random.nextDouble() - 0.5) * 8), Vec3.ZERO, 2.5f, col, 9);
                         if (bolts == 0) Fx.play(lv, FxType.LIGHTNING_BOLT, pos.add((lv.random.nextDouble() - 0.5) * 12, 0, (lv.random.nextDouble() - 0.5) * 12), Vec3.ZERO, 0.8f, col);
                         sound(lv, pos, SoundEvents.LIGHTNING_BOLT_THUNDER, 1f, 1.0f + kk * 0.1f);
                     });
@@ -313,7 +336,7 @@ public final class PhapSkills {
                     hit(p, e, e == prim ? c : c * 0.6);
                     e.igniteForSeconds(3);
                 }
-                Fx.play(lv, FxType.SHOCKWAVE, pos, Vec3.ZERO, 2.6f, col, 12);
+                Fx.elem(lv, p, Fx.E_TONGUES, pos, Vec3.ZERO, 2.2f, col, 26);
                 lv.sendParticles(ParticleTypes.LAVA, pos.x, pos.y + 0.5, pos.z, 8, 0.6, 0.3, 0.6, 0.1);
                 sound(lv, pos, SoundEvents.FIRECHARGE_USE, 1f, 0.9f);
             }
@@ -324,8 +347,8 @@ public final class PhapSkills {
                     e.igniteForSeconds(4);
                     knock(e, o, 0.7, 0.2);
                 }
-                Fx.play(lv, FxType.SHOCKWAVE, o, Vec3.ZERO, 6f, col, 16);
-                Fx.play(lv, FxType.SHOCKWAVE, o, Vec3.ZERO, 3.5f, 0xFFD040, 12);
+                Fx.elem(lv, p, Fx.E_TONGUES, o, Vec3.ZERO, 5.5f, col, 44);   // vành đất cháy
+                Fx.elem(lv, p, Fx.E_TONGUES, o, Vec3.ZERO, 2.8f, 0xFFD040, 34);
                 for (int k = 1; k <= 3; k++) SkillEffects.ringLater(lv, o.add(0, 0.2, 0), 2.0 * k, 30 + 12 * k, k * 2, ParticleTypes.FLAME);
                 sound(lv, o, SoundEvents.BLAZE_SHOOT, 1f, 0.7f);
             }
@@ -339,6 +362,7 @@ public final class PhapSkills {
                 SkillEffects.helixBeam(lv, vf, end, 1.3, -3, 70, ParticleTypes.SMALL_FLAME);
                 beam(lv, vf, look, 14, col, 10);
                 beam(lv, vf, look, 14, 0xFFE070, 8);
+                Fx.elem(lv, p, Fx.E_TONGUES, p.position().add(flat(p).scale(1.5)), flat(p).scale(13), 1.4f, col, 40); // tường lửa dọc đường rồng
                 lv.sendParticles(ParticleTypes.LAVA, end.x, end.y, end.z, 10, 0.5, 0.5, 0.5, 0.2);
                 sound(lv, from, SoundEvents.BLAZE_SHOOT, 1.2f, 0.6f);
             }
@@ -355,7 +379,7 @@ public final class PhapSkills {
                         }
                         Fx.play(lv, FxType.LIGHT_PILLAR, off, Vec3.ZERO, 0.8f, col, 20);
                         Fx.play(lv, FxType.GROUND_CRACK, off, Vec3.ZERO, 3f, col, 40);
-                        Fx.play(lv, FxType.SHOCKWAVE, off, Vec3.ZERO, 6f, 0xFFB040, 14);
+                        Fx.elem(lv, p, Fx.E_TONGUES, off, Vec3.ZERO, 5f, 0xFFB040, 50);
                         sound(lv, off, SoundEvents.FIRECHARGE_USE, 1.2f, 0.5f);
                     });
                 }
@@ -392,7 +416,8 @@ public final class PhapSkills {
                 }
                 for (LivingEntity e : around(lv, p, o, 6)) hit(p, e, c);
                 Fx.play(lv, FxType.TALISMAN_CIRCLE, o, Vec3.ZERO, 8f, col, 50);
-                Fx.play(lv, FxType.SHOCKWAVE, o, Vec3.ZERO, 8f, 0xBFE8FF, 16);
+                Fx.groundRing(lv, p, o.add(0, 0.06, 0), 8f, 0xBFE8FF, 24);
+                Fx.groundRing(lv, p, o.add(0, 0.06, 0), 5f, col, 20);
                 SkillEffects.spiral(lv, o, 1.5, 0.3, 3.0, 3, 60, ParticleTypes.FALLING_WATER);
                 sound(lv, o, SoundEvents.AMETHYST_BLOCK_CHIME, 1f, 1.2f);
             }
@@ -405,8 +430,9 @@ public final class PhapSkills {
                     hit(p, e, c);
                     knock(e, o, 1.2, 0.25);
                 }
-                Fx.play(lv, FxType.SHOCKWAVE, o, Vec3.ZERO, 5f, col, 14);
-                Fx.play(lv, FxType.SHOCKWAVE, o, Vec3.ZERO, 3f, 0xFFFFFF, 10);
+                Fx.groundRing(lv, p, o.add(0, 0.06, 0), 5f, col, 20);
+                Fx.groundRing(lv, p, o.add(0, 0.06, 0), 3f, 0xFFFFFF, 14);
+                Fx.shell(lv, p, p, 1.5f, col, 100);
                 SkillEffects.spiral(lv, o, 2.6, 0.4, 2.8, 4, 90, ParticleTypes.BUBBLE_POP);
                 SkillEffects.ring(lv, o.add(0, 0.2, 0), 5, 50, ParticleTypes.SPLASH);
                 sound(lv, o, SoundEvents.PLAYER_SPLASH_HIGH_SPEED, 1f, 0.9f);
@@ -422,11 +448,12 @@ public final class PhapSkills {
                     a.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 300, 0, false, true));
                 }
                 Vec3 f = flat(p);
+                Fx.elem(lv, p, Fx.E_TIDE, o.add(f.scale(1.5)), f.scale(14), 5.5f, col, 22); // bức sóng thật
                 for (int k = 1; k <= 5; k++) {
                     final int kk = k;
                     SkillScheduler.later(k * 2, () -> {
                         Vec3 at = o.add(f.scale(kk * 2.6));
-                        Fx.play(lv, FxType.SHOCKWAVE, at, Vec3.ZERO, 3.2f + kk * 0.5f, col, 12);
+                        Fx.groundRing(lv, p, at.add(0, 0.06, 0), 3.2f + kk * 0.5f, col, 14);
                         lv.sendParticles(ParticleTypes.SPLASH, at.x, at.y + 0.6, at.z, 40, 1.8, 0.5, 1.8, 0.3);
                         lv.sendParticles(ParticleTypes.BUBBLE_POP, at.x, at.y + 1.0, at.z, 12, 1.5, 0.6, 1.5, 0.05);
                     });
@@ -437,61 +464,77 @@ public final class PhapSkills {
         }
     }
 
-    // ------------------------------------------------------------------ THỔ: tháp + địa chấn
+    // ------------------------------------------------------------------ THỔ: tank + khống chế + triệu hồi
 
     private static void tho(ServerLevel lv, ServerPlayer p, int slot, double c) {
         int col = PhapElement.THO.rgb;
         Vec3 o = p.position(), f = flat(p);
         switch (slot) {
-            case 0 -> { // Thạch Mâu: gai đá dọc đường
+            case 0 -> { // Địa Thích (Thạch Mâu): chuỗi gai đá trồi dọc đường, hất tung nhẹ
                 Vec3 from = o.add(0, 0.9, 0);
-                for (LivingEntity e : line(lv, p, from, f, 10, 0.9)) hit(p, e, c);
-                for (int i = 1; i <= 10; i++) {
-                    final int ii = i;
-                    SkillScheduler.later(ii / 2, () -> {
-                        Vec3 at = o.add(f.scale(ii));
-                        lv.sendParticles(STONE, at.x, at.y + 0.4, at.z, 10, 0.25, 0.5, 0.25, 0.15);
-                        lv.sendParticles(DIRT, at.x, at.y + 0.1, at.z, 6, 0.3, 0.1, 0.3, 0.05);
-                    });
-                }
-                Fx.play(lv, FxType.GROUND_CRACK, o.add(f.scale(5)), f, 1.6f, col, 40);
-                sound(lv, o, SoundEvents.GRAVEL_BREAK, 1f, 0.7f);
-            }
-            case 1 -> { // Thổ Tháp: dựng 1 tháp
-                Vec3 pos = ground(lv, o.add(f.scale(2.5)).add(0, 1, 0));
-                PhapRuntime.summonTurret(lv, p, pos);
-                sound(lv, pos, SoundEvents.ANVIL_LAND, 0.7f, 0.6f);
-            }
-            case 2 -> { // Địa Chấn
-                for (LivingEntity e : around(lv, p, o, 7)) {
+                for (LivingEntity e : line(lv, p, from, f, 11, 1.0)) {
                     hit(p, e, c);
-                    e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2, false, false));
-                    e.push(0, 0.5, 0);
+                    e.push(0, 0.38, 0);
                     e.hurtMarked = true;
                 }
-                Fx.play(lv, FxType.GROUND_CRACK, o, Vec3.ZERO, 7f, col, 60);
-                Fx.play(lv, FxType.SHOCKWAVE, o, Vec3.ZERO, 7f, col, 16);
-                SkillEffects.ring(lv, o.add(0, 0.2, 0), 3.5, 40, DIRT);
-                SkillEffects.ring(lv, o.add(0, 0.2, 0), 6.5, 70, STONE);
+                Fx.elem(lv, p, Fx.E_SPIKES, o.add(f.scale(1.2)), f.scale(10.5), 1.0f, col, 36);
+                Fx.groundCrack(lv, p, o.add(f.scale(5.5)).add(0, 0.06, 0), 2.2f, col, 2, 40);
+                sound(lv, o, SoundEvents.GRAVEL_BREAK, 1f, 0.7f);
+            }
+            case 1 -> { // Thạch Giáp: khiên hấp thụ theo Phép lực + miễn đẩy lùi + dựng một Thổ Tháp bên cạnh
+                float sh = PhapMath.thoShield(StatService.spellPower(p), p.getMaxHealth());
+                PhapRuntime.thoArmor(p, sh, PhapMath.THO_SHIELD_TICKS);
+                for (LivingEntity e : around(lv, p, o, 3.2)) {
+                    hit(p, e, c);
+                    knock(e, o, 0.8, 0.25);
+                }
+                Vec3 pos = ground(lv, o.add(f.scale(2.5)).add(0, 1, 0));
+                PhapRuntime.summonTurret(lv, p, pos);
+                Fx.shell(lv, p, p, 1.35f, col, PhapMath.THO_SHIELD_TICKS);
+                Fx.elem(lv, p, Fx.E_SPIKES, o, Vec3.ZERO, 1.5f, col, 30);
+                Fx.rune(lv, p, o.add(0, 0.06, 0), 2.6f, col, 26, 6);
+                lv.sendParticles(STONE, o.x, o.y + 1, o.z, 24, 0.6, 0.8, 0.6, 0.08);
+                sound(lv, pos, SoundEvents.ANVIL_LAND, 0.7f, 0.6f);
+            }
+            case 2 -> { // Địa Liệt: khe nứt dài phía trước, gai đá, choáng + chậm
+                Vec3 from = o.add(0, 0.9, 0);
+                for (LivingEntity e : line(lv, p, from, f, 12, 1.5)) {
+                    hit(p, e, c);
+                    PhapRuntime.stun(e, 1.0);
+                    e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2, false, false));
+                }
+                for (int k = 1; k <= 3; k++) Fx.groundCrack(lv, p, o.add(f.scale(k * 3.6)).add(0, 0.06, 0), 3.4f, col, 2, 50 + k * 4);
+                Fx.elem(lv, p, Fx.E_SPIKES, o.add(f.scale(1.5)), f.scale(11), 1.5f, 0xC49A5C, 44);
+                Fx.shake(lv, o, 0.5f, 8, 16f);
+                SkillEffects.ring(lv, o.add(0, 0.2, 0), 3.0, 36, DIRT);
                 sound(lv, o, SoundEvents.ANVIL_LAND, 1.2f, 0.5f);
             }
-            default -> { // Thiên Địa Phong Tháp: lấp đầy tháp + khuếch đại
-                int max = PhapMath.thoMaxTurrets(PhapTu.aptitude(p));
-                int have = PhapRuntime.turretCount(lv, p);
-                for (int i = have; i < max; i++) {
-                    double a = 2 * Math.PI * i / Math.max(1, max) + p.getYRot() * 0.0174;
-                    PhapRuntime.summonTurret(lv, p, ground(lv, o.add(Math.cos(a) * 3.2, 1, Math.sin(a) * 3.2)));
-                }
-                PhapRuntime.empowerTurrets(lv, p, 200);
-                for (LivingEntity e : around(lv, p, o, 8)) {
-                    hit(p, e, c);
-                    knock(e, o, 0.6, 0.3);
-                }
-                Fx.play(lv, FxType.GROUND_CRACK, o, Vec3.ZERO, 8f, col, 70);
-                Fx.play(lv, FxType.SHOCKWAVE, o, Vec3.ZERO, 8f, col, 18);
-                Fx.play(lv, FxType.LIGHT_PILLAR, o, Vec3.ZERO, 0.7f, col, 30);
-                Fx.play(lv, FxType.SCREEN_TINT, o, Vec3.ZERO, 0.2f, col, 8);
-                sound(lv, o, SoundEvents.ANVIL_LAND, 1.4f, 0.4f);
+            default -> { // Thiên Sơn Áp Đỉnh: núi đá rơi từ trời, báo trước 1s, choáng + nứt đất + rung camera
+                Vec3 pos = aim(lv, p, 16);
+                double R = PhapMath.THO_MOUNTAIN_RADIUS;
+                Fx.telegraphCircle(lv, p, pos.add(0, 0.05, 0), (float) R, 20, col);
+                Fx.rune(lv, p, pos.add(0, 0.08, 0), (float) R * 0.7f, col, 26, 8);
+                Fx.elem(lv, p, Fx.E_BOULDER, pos, Vec3.ZERO, 3.6f, col, 30);
+                SkillScheduler.later(20, () -> {
+                    for (LivingEntity e : around(lv, p, pos, R)) {
+                        hit(p, e, c);
+                        PhapRuntime.stun(e, PhapMath.THO_MOUNTAIN_STUN);
+                        knock(e, pos, 0.5, 0.35);
+                    }
+                    int max = PhapMath.thoMaxTurrets(PhapTu.aptitude(p));
+                    for (int i = PhapRuntime.turretCount(lv, p); i < max; i++) {
+                        double a = 2 * Math.PI * i / Math.max(1, max) + p.getYRot() * 0.0174;
+                        PhapRuntime.summonTurret(lv, p, ground(lv, p.position().add(Math.cos(a) * 3.2, 1, Math.sin(a) * 3.2)));
+                    }
+                    PhapRuntime.empowerTurrets(lv, p, 200);
+                    Fx.groundCrack(lv, p, pos.add(0, 0.06, 0), (float) R + 1.5f, col, 9, 70);
+                    Fx.groundRing(lv, p, pos.add(0, 0.06, 0), (float) R, 0xC49A5C, 22);
+                    Fx.elem(lv, p, Fx.E_SPIKES, pos, Vec3.ZERO, (float) R * 0.9f, col, 36);
+                    Fx.shake(lv, pos, 1.4f, 14, 40f);
+                    Fx.play(lv, FxType.SCREEN_TINT, pos, Vec3.ZERO, 0.18f, 0x7A5A30, 8);
+                    lv.sendParticles(STONE, pos.x, pos.y + 0.6, pos.z, 60, 2.5, 0.6, 2.5, 0.25);
+                    FxSfx.cast(lv, pos, 1.4f, 0.5f, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.ANVIL_LAND, SoundEvents.DEEPSLATE_BREAK);
+                });
             }
         }
     }
@@ -505,6 +548,7 @@ public final class PhapSkills {
             case 0 -> { // Kim Nhận: 3 lưỡi kim bay
                 for (LivingEntity e : line(lv, p, from, look, 14, 0.8)) hit(p, e, c);
                 for (int i = -1; i <= 1; i++) Fx.qi(lv, vf.add(0, i * 0.2, 0), look.scale(14), 0.7f, col, i * 35, 9);
+                Fx.elem(lv, p, Fx.E_NEEDLES, vf, look.scale(14), 0.9f, col, 10); // loạt phi kim bạc
                 streak(lv, vf, look, 14, SILVER, 0.7);
                 streak(lv, vf, look, 14, ParticleTypes.CRIT, 1.2);
                 sound(lv, from, SoundEvents.IRON_GOLEM_ATTACK, 0.8f, 1.6f);
@@ -521,7 +565,8 @@ public final class PhapSkills {
                     Vec3 to = o.add(Math.cos(a) * 2.6, 0, Math.sin(a) * 2.6);
                     Fx.swordStab(lv, to.add(0, 5, 0), to, 5, i, 0.9f);
                 }
-                Fx.play(lv, FxType.SHOCKWAVE, o, Vec3.ZERO, 4f, col, 14);
+                Fx.elem(lv, p, Fx.E_NEEDLES, o.add(0, 1.0, 0), Vec3.ZERO, 2.4f, col, 12);
+                Fx.shell(lv, p, p, 1.3f, col, 120);
                 lv.sendParticles(IRON, o.x, o.y + 1, o.z, 30, 0.6, 0.8, 0.6, 0.1);
                 sound(lv, o, SoundEvents.ANVIL_LAND, 0.9f, 1.2f);
             }
@@ -545,7 +590,7 @@ public final class PhapSkills {
                         hit(p, e, c);
                         knock(e, pos, 0.8, 0.3);
                     }
-                    Fx.play(lv, FxType.SHOCKWAVE, pos, Vec3.ZERO, 6f, col, 16);
+                    Fx.elem(lv, p, Fx.E_NEEDLES, pos.add(0, 0.5, 0), Vec3.ZERO, 5.5f, 0xFFFFFF, 14);
                     Fx.play(lv, FxType.GROUND_CRACK, pos, Vec3.ZERO, 6f, 0xDDE6F0, 60);
                     Fx.play(lv, FxType.SCREEN_TINT, pos, Vec3.ZERO, 0.3f, 0xFFFFFF, 8);
                     lv.sendParticles(IRON, pos.x, pos.y + 0.5, pos.z, 40, 1.5, 0.5, 1.5, 0.2);

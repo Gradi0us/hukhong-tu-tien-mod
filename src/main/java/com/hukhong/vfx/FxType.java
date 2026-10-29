@@ -22,7 +22,9 @@ public enum FxType {
     /** Rung camera theo khoảng cách tới pos. */
     CAMERA_SHAKE,
     /** Vỏ lục giác bao quanh thực thể (Hộ Thân Cương Khí). */
-    SHELL;
+    SHELL,
+    /** VFX riêng từng nguyên tố Pháp Tu (kind ở byte cao color), xem client/fx/FxElem. */
+    ELEM;
 
     private static final FxType[] V = values();
     public static FxType of(int i) { return V[Math.floorMod(i, V.length)]; }

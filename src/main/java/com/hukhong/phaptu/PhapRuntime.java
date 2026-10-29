@@ -61,6 +61,9 @@ public final class PhapRuntime {
         long lastQuang, lastLoi, lastThuyGain, lastThuyDecay, nextPulse;
         int freeMask;
         long freeUntil;
+        long lastKimFx, shieldEnd, lastMove;
+        float shieldAbs;
+        Vec3 lastPos = Vec3.ZERO;
         final List<UUID> turrets = new ArrayList<>();
     }
 
@@ -186,10 +189,17 @@ public final class PhapRuntime {
                         DamageRules.hurtBySkill(p, t, d);
                         stun(t, PhapMath.loiStunSec(apt));
                         Fx.play(sl, FxType.LIGHTNING_BOLT, t.position(), Vec3.ZERO, 1.2f, PhapElement.LOI.rgb);
+                        Fx.elem(sl, p, Fx.E_ARC, t.position().add(0, t.getBbHeight() * 0.5, 0), Vec3.ZERO, 2.4f, PhapElement.LOI.rgb, 9); // Lôi Ấn nổ: sét toả tròn
                     } else bar(p, "hukhong.phap.stack.loi", s.loi, PhapMath.LOI_STACKS);
                 }
                 case HOA -> addBurn(sl, p, t, 1);
                 case THUY -> gainThuy(p, s, now, 1, 4);
+                case KIM -> {
+                    if (now - s.lastKimFx >= 12) { // Kim Cương: chớp phi kim bạc ở mục tiêu khi được cộng sức mạnh
+                        s.lastKimFx = now;
+                        Fx.elem(sl, p, Fx.E_NEEDLES, t.position().add(0, t.getBbHeight() * 0.6, 0), Vec3.ZERO, 0.7f, PhapElement.KIM.rgb, 8);
+                    }
+                }
                 default -> { }
             }
         } finally {
@@ -212,7 +222,7 @@ public final class PhapRuntime {
             v.invulnerableTime = 0;
             DamageRules.hurtBySkill(p, v, dmg);
         }
-        Fx.play(sl, FxType.SHOCKWAVE, c, Vec3.ZERO, 4f, PhapElement.QUANG.rgb, 16);
+        Fx.elem(sl, p, Fx.E_HALOS, c, Vec3.ZERO, 3.6f, PhapElement.QUANG.rgb, 22); // Quang Mang nổ: vòng hào quang + sao lăng kính
         Fx.play(sl, FxType.LIGHT_PILLAR, c, Vec3.ZERO, 0.9f, PhapElement.QUANG.rgb, 24);
         p.displayClientMessage(Component.translatable("hukhong.phap.quang.free"), true);
     }
@@ -254,6 +264,7 @@ public final class PhapRuntime {
             busy = true;
             try { DamageRules.hurtBySkill(o, t, dmg); } finally { busy = was; }
             sl.sendParticles(ParticleTypes.FLAME, t.getX(), t.getY() + t.getBbHeight() * 0.5, t.getZ(), 2 + b.stacks, 0.25, 0.4, 0.25, 0.02);
+            if (now % 20 == 0) Fx.elem(sl, o, Fx.E_TONGUES, t.position(), Vec3.ZERO, 0.5f + 0.12f * b.stacks, PhapElement.HOA.rgb, 16); // lưỡi lửa bốc quanh kẻ đang cháy
             if (b.stacks >= PhapMath.HOA_STACKS && now % 20 == 0)
                 sl.sendParticles(ParticleTypes.LAVA, t.getX(), t.getY() + 1, t.getZ(), 3, 0.6, 0.4, 0.6, 0.1);
         }
@@ -353,9 +364,17 @@ public final class PhapRuntime {
     /** Thủy: miễn thương % theo 3 tầng (5/10/15 tầng). */
     @SubscribeEvent
     public static void onIncoming(LivingIncomingDamageEvent e) {
-        if (!(e.getEntity() instanceof ServerPlayer p) || PhapTu.element(p) != PhapElement.THUY) return;
-        double imm = PhapMath.thuyImmunity(PhapTu.aptitude(p), st(p).thuy);
-        if (imm > 0) e.setAmount((float) (e.getAmount() * (1 - imm)));
+        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        PhapElement el = PhapTu.element(p);
+        if (el == PhapElement.THUY) {
+            double imm = PhapMath.thuyImmunity(PhapTu.aptitude(p), st(p).thuy);
+            if (imm > 0) e.setAmount((float) (e.getAmount() * (1 - imm)));
+        } else if (el == PhapElement.THO && p.level() instanceof ServerLevel sl) { // Kiên Cố
+            St s = st(p);
+            boolean still = sl.getGameTime() - s.lastMove >= PhapMath.THO_STILL_TICKS;
+            double dr = PhapMath.thoReduction(PhapTu.aptitude(p), still, turretCount(sl, p));
+            if (dr > 0) e.setAmount((float) (e.getAmount() * (1 - dr)));
+        }
     }
 
     private static void thuyPulse(ServerLevel sl, ServerPlayer p, St s, long now) {
@@ -368,7 +387,7 @@ public final class PhapRuntime {
         }
         double r = 2.0 + s.thuy * 0.25;
         Vec3 c = p.position().add(0, 0.2, 0);
-        Fx.play(sl, FxType.SHOCKWAVE, c, Vec3.ZERO, (float) r, PhapElement.THUY.rgb, 12);
+        Fx.groundRing(sl, p, c, (float) r, PhapElement.THUY.rgb, 14); // xung Thủy: vòng nước nở trên đất
         sl.sendParticles(ParticleTypes.SPLASH, c.x, c.y + 0.5, c.z, 10 + s.thuy, r * 0.5, 0.3, r * 0.5, 0.1);
         if (s.thuy >= PhapMath.THUY_MAX_STACKS) {
             float dmg = PhapMath.thuyBurstDamage(apt, p.getMaxHealth(), StatService.spellPower(p));
@@ -381,8 +400,9 @@ public final class PhapRuntime {
                     DamageRules.hurtBySkill(p, v, dmg);
                 }
             } finally { busy = was; }
-            Fx.play(sl, FxType.SHOCKWAVE, c, Vec3.ZERO, (float) PhapMath.THUY_RADIUS, 0xFFFFFF, 18);
-            Fx.play(sl, FxType.TALISMAN_CIRCLE, c, Vec3.ZERO, (float) PhapMath.THUY_RADIUS * 0.8f, PhapElement.THUY.rgb, 30);
+            Fx.groundRing(sl, p, c, (float) PhapMath.THUY_RADIUS, 0xFFFFFF, 20);
+            Fx.groundRing(sl, p, c, (float) PhapMath.THUY_RADIUS * 0.6f, PhapElement.THUY.rgb, 22);
+            Fx.rune(sl, p, c, (float) PhapMath.THUY_RADIUS * 0.8f, PhapElement.THUY.rgb, 30, 6);
             s.thuy = 5;
             return;
         }
@@ -407,13 +427,48 @@ public final class PhapRuntime {
         PhapTurret t = PhapTuRegistry.TURRET.get().create(sl);
         if (t == null) return null;
         t.moveTo(pos.x, pos.y, pos.z, p.getYRot(), 0);
-        t.setup(p, PhapMath.thoTurretHp(apt, p.getMaxHealth()), PhapMath.thoShotDamage(apt, StatService.spellPower(p)));
+        t.setup(p, PhapMath.thoTurretHp(apt, p.getMaxHealth()), PhapMath.thoShotDamage(apt, StatService.spellPower(p)), PhapMath.thoShotTicks(max));
         sl.addFreshEntity(t);
         s.turrets.add(t.getUUID());
-        Fx.play(sl, FxType.GROUND_CRACK, pos, Vec3.ZERO, 1.6f, PhapElement.THO.rgb, 30);
+        Fx.elem(sl, p, Fx.E_SPIKES, pos, Vec3.ZERO, 0.9f, PhapElement.THO.rgb, 28); // gai đá trồi quanh chân trụ
+        Fx.groundCrack(sl, p, pos.add(0, 0.06, 0), 1.8f, PhapElement.THO.rgb, 6, 30);
         sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState()),
                 pos.x, pos.y + 0.3, pos.z, 20, 0.4, 0.3, 0.4, 0.1);
         return t;
+    }
+
+    /** Thạch Giáp: khiên hấp thụ shield trong ticks + miễn đẩy lùi. */
+    public static void thoArmor(ServerPlayer p, float shield, int ticks) {
+        St s = st(p);
+        long now = p.level().getGameTime();
+        s.shieldAbs = Math.max(s.shieldAbs, shield);
+        s.shieldEnd = now + ticks;
+        // 1.21: setAbsorptionAmount bị kẹp bởi thuộc tính MAX_ABSORPTION (mặc định 0) -> phải nâng trần trước, nếu không khiên = 0
+        AttributeInstance mx = p.getAttribute(Attributes.MAX_ABSORPTION);
+        if (mx != null) mx.addOrUpdateTransientModifier(new AttributeModifier(THO_ABS, s.shieldAbs, AttributeModifier.Operation.ADD_VALUE));
+        p.setAbsorptionAmount(Math.max(p.getAbsorptionAmount(), shield));
+        AttributeInstance kb = p.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+        if (kb != null) kb.addOrUpdateTransientModifier(new AttributeModifier(THO_KB, 1.0, AttributeModifier.Operation.ADD_VALUE));
+    }
+
+    /** GameTest: người chơi giả không nhận PlayerTickEvent, gọi tay phần hết hạn khiên. */
+    public static void tickThoForTest(ServerPlayer p) { tickThoArmor(p, st(p), p.level().getGameTime()); }
+
+    public static boolean thoArmored(ServerPlayer p) { return st(p).shieldEnd > p.level().getGameTime(); }
+
+    private static final ResourceLocation THO_KB = ModAttributes.id("phap/tho_kb"), THO_ABS = ModAttributes.id("phap/tho_abs");
+
+    private static void tickThoArmor(ServerPlayer p, St s, long now) {
+        if (s.shieldEnd != 0 && now >= s.shieldEnd) {
+            s.shieldEnd = 0;
+            if (p.getAbsorptionAmount() <= s.shieldAbs) p.setAbsorptionAmount(0);
+            s.shieldAbs = 0;
+            AttributeInstance mx = p.getAttribute(Attributes.MAX_ABSORPTION);
+            if (mx != null) mx.removeModifier(THO_ABS);
+            AttributeInstance kb = p.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+            if (kb != null) kb.removeModifier(THO_KB);
+        }
+        if (p.position().distanceToSqr(s.lastPos) > 0.0016) { s.lastPos = p.position(); s.lastMove = now; }
     }
 
     public static int turretCount(ServerLevel sl, ServerPlayer p) {
@@ -454,7 +509,10 @@ public final class PhapRuntime {
                 if (now % 4 == 0 && s.quang > 0)
                     sl.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0, p.getZ(), 1, 0.4, 0.6, 0.4, 0.01);
             }
-            case THO -> { if (now % 20 == 0) turretCount(sl, p); }
+            case THO -> {
+                tickThoArmor(p, s, now);
+                if (now % 20 == 0) turretCount(sl, p);
+            }
             default -> { }
         }
     }
@@ -463,6 +521,13 @@ public final class PhapRuntime {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
         STATE.remove(e.getEntity().getUUID());
     }
+
+    // ---- đọc trạng thái bị động (GameTest / HUD debug)
+    public static int burnStacks(LivingEntity e) { Burn b = BURN.get(e.getUUID()); return b == null ? 0 : b.stacks; }
+    public static int quangFreeMask(Player p) { return st(p).freeMask; }
+    public static int quangStacks(Player p) { return st(p).quang; }
+    public static int thuyStacks(Player p) { return st(p).thuy; }
+    public static float thoShieldLeft(Player p) { return st(p).shieldAbs; }
 
     /** Test GameTest/lệnh: xóa mọi trạng thái runtime. */
     public static void reset(Player p) { STATE.remove(p.getUUID()); }

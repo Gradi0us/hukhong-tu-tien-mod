@@ -37,8 +37,10 @@ public class PhapTurret extends PathfinderMob {
     private static final double RANGE = 14;
 
     private UUID owner;
+    /** Tham chiếu chủ (không lưu) để tháp vẫn sống khi chủ không nằm trong PlayerList (người chơi giả / chuyển chiều). */
+    private ServerPlayer ownerRef;
     private float shotDamage;
-    private int life = PhapMath.THO_LIFE_TICKS, empowered;
+    private int life = PhapMath.THO_LIFE_TICKS, empowered, shotTicks = PhapMath.THO_SHOT_TICKS;
 
     public PhapTurret(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -61,9 +63,13 @@ public class PhapTurret extends PathfinderMob {
 
     public UUID ownerId() { return owner; }
 
+    public boolean isEmpowered() { return empowered > 0; }
+
     /** Cấu hình lúc triệu hồi. */
-    public void setup(ServerPlayer owner, float hp, float shot) {
+    public void setup(ServerPlayer owner, float hp, float shot, int shotTicks) {
+        this.shotTicks = Math.max(4, shotTicks);
         this.owner = owner.getUUID();
+        this.ownerRef = owner;
         this.shotDamage = shot;
         var inst = getAttribute(Attributes.MAX_HEALTH);
         if (inst != null) inst.setBaseValue(hp);
@@ -96,6 +102,7 @@ public class PhapTurret extends PathfinderMob {
             return;
         }
         ServerPlayer o = owner == null ? null : sl.getServer().getPlayerList().getPlayer(owner);
+        if (o == null && ownerRef != null && ownerRef.isAlive() && !ownerRef.hasDisconnected()) o = ownerRef;
         if (o == null || !o.isAlive() || !o.getData(com.hukhong.core.ModAttachments.CULTIVATION).paths().contains(Path.PHAP)
                 || --life <= 0) {
             sl.sendParticles(ParticleTypes.POOF, getX(), getY() + 0.6, getZ(), 12, 0.3, 0.4, 0.3, 0.02);
@@ -103,8 +110,11 @@ public class PhapTurret extends PathfinderMob {
             return;
         }
         if (empowered > 0) empowered--;
-        if (tickCount % 20 == 0) taunt(sl);
-        if (tickCount % PhapMath.THO_SHOT_TICKS == 0) shoot(sl, o);
+        if (tickCount % 20 == 0) {
+            taunt(sl);
+            if (getHealth() < getMaxHealth() && o.distanceToSqr(this) < 16 * 16) heal(getMaxHealth() * 0.02f); // chủ ở gần thì tháp tự phục hồi 2%/s
+        }
+        if (tickCount % shotTicks == 0) shoot(sl, o);
     }
 
     private boolean enemy(LivingEntity e) {
@@ -113,10 +123,15 @@ public class PhapTurret extends PathfinderMob {
     }
 
     private void taunt(ServerLevel sl) {
+        int taunted = 0;
         for (Mob m : sl.getEntitiesOfClass(Mob.class, getBoundingBox().inflate(PhapMath.THO_TAUNT_RANGE, 4, PhapMath.THO_TAUNT_RANGE),
                 e -> enemy(e) && !(e instanceof NguyenThuyTichDiet))) {
             LivingEntity t = m.getTarget();
-            if (t == null || t instanceof Player) m.setTarget(this);
+            if (t == null || t instanceof Player) { m.setTarget(this); taunted++; }
+        }
+        if (taunted > 0 && tickCount % 40 == 0) { // xung khiêu khích: vòng đá nở quanh trụ
+            Fx.groundRing(sl, null, position().add(0, 0.06, 0), 3.5f, PhapElement.THO.rgb, 14);
+            sl.sendParticles(ParticleTypes.POOF, getX(), getY() + 0.2, getZ(), 8, 1.2, 0.1, 1.2, 0.01);
         }
     }
 
@@ -129,8 +144,9 @@ public class PhapTurret extends PathfinderMob {
         float dmg = shotDamage * (empowered > 0 ? 2f : 1f);
         best.invulnerableTime = 0;
         DamageRules.hurtBySkill(o, best, dmg);
-        Fx.play(sl, FxType.BEAM, from, to.subtract(from), (float) from.distanceTo(to), element().rgb, 6);
-        sl.sendParticles(ParticleTypes.CRIT, to.x, to.y, to.z, 4, 0.2, 0.2, 0.2, 0.1);
+        Fx.ribbon(sl, o, from.add(0, 0.5, 0), to, 0.8, 4, 0, 0.16f, 0xB08A4F); // tảng đá bắn theo cung, không phải tia sáng
+        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState()),
+                to.x, to.y, to.z, 8, 0.25, 0.25, 0.25, 0.12);
     }
 
     @Override

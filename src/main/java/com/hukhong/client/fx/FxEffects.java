@@ -34,6 +34,7 @@ final class FxEffects {
         switch (f.type) {
             case RIBBON -> {}
             case DECAL, SHELL -> FxDecal.start(f);
+            case ELEM -> FxElem.start(f);
             case GIANT_SWORD -> FxGiantSword.start(f);
             case SWORD_CRESCENT -> {
                 f.tilt = (float) (f.rnd.nextDouble() * 1.8 - 0.9);
@@ -94,6 +95,7 @@ final class FxEffects {
         switch (f.type) {
             case RIBBON -> FxTrail.tick(f);
             case DECAL, SHELL -> FxDecal.tick(f);
+            case ELEM -> FxElem.tick(f);
             case GIANT_SWORD -> FxGiantSword.tick(f);
             case STORM_CLOUD -> {
                 int n = Math.max(1, (int) (3 * q));
@@ -242,6 +244,7 @@ final class FxEffects {
         switch (f.type) {
             case RIBBON -> FxTrail.render(f, g, pt);
             case DECAL, RIFT, SHELL -> FxDecal.render(f, g, pt);
+            case ELEM -> FxElem.render(f, g, pt);
             case GIANT_SWORD -> FxGiantSword.render(f, g, pt);
             case SWORD_CRESCENT -> crescent(f, g, k, q);
             case SWORD_QI -> qi(f, g, k, q);

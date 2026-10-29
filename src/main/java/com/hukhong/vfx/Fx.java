@@ -177,4 +177,12 @@ public final class Fx {
     public static void shell(ServerLevel lv, ServerPlayer owner, net.minecraft.world.entity.Entity e, float radius, int rgb, int life) {
         playOwned(lv, owner, FxType.SHELL, e.position(), new Vec3(e.getId(), 0, 0), radius, rgb, life);
     }
+
+    // ---- VFX riêng nguyên tố (xem client/fx/FxElem). dir ~ 0 => toả tròn quanh pos bán kính scale.
+    public static final int E_SPIKES = 0, E_HALOS = 1, E_ARC = 2, E_TONGUES = 3, E_TIDE = 4, E_NEEDLES = 5, E_BOULDER = 6;
+
+    /** Gai đá, vòng hào quang, sét gấp khúc, lưỡi lửa, bức sóng, phi kim, tảng đá (kind = E_*). */
+    public static void elem(ServerLevel lv, ServerPlayer owner, int kind, Vec3 pos, Vec3 dir, float scale, int rgb, int life) {
+        playOwned(lv, owner, FxType.ELEM, pos, dir, scale, (rgb & 0xFFFFFF) | (kind << 24), life);
+    }
 }

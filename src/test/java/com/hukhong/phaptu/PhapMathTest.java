@@ -109,4 +109,63 @@ class PhapMathTest {
         assertEquals(PhapElement.values().length, seen.size(), "mọi nguyên tố đều có thể roll ra");
         for (PhapElement e : PhapElement.values()) assertEquals(e, PhapElement.byId(e.id()));
     }
+
+    // ---------------------------------------------------------------- Thổ rework
+
+    @Test
+    void thoSustainedDpsIsWithinBandOfOtherElements() {
+        for (Aptitude a : Aptitude.values()) {
+            double mean = 0;
+            int n = 0;
+            for (PhapElement e : PhapElement.values()) {
+                if (e == PhapElement.THO) continue;
+                mean += PhapMath.sustainedSp(e, a, 150);
+                n++;
+            }
+            mean /= n;
+            double r = PhapMath.sustainedSp(PhapElement.THO, a, 150) / mean;
+            assertTrue(r >= 0.88 && r <= 1.08, "Tho ratio " + a + " = " + r);
+        }
+    }
+
+    @Test
+    void thoLowAptitudeNoLongerCollapses() {
+        // trước rework: tháp D chỉ 1/7 sát thương SSS; giờ sàn 40%
+        assertEquals(0.40 * (0.40 + 0.60 / 7), PhapMath.thoDamagePct(Aptitude.D), EPS);
+        assertTrue(PhapMath.thoDamagePct(Aptitude.D) > 0.15);
+        assertEquals(0.40, PhapMath.thoDamagePct(Aptitude.SSS), EPS);
+        assertEquals(0.80, PhapMath.thoHpPct(Aptitude.SSS), EPS);
+        assertTrue(PhapMath.thoHpPct(Aptitude.D) >= 0.40);
+    }
+
+    @Test
+    void thoTurretsFireSlowerWhenCrowded() {
+        assertEquals(PhapMath.THO_SHOT_TICKS, PhapMath.thoShotTicks(1));
+        for (int n = 2; n <= 4; n++) assertTrue(PhapMath.thoShotTicks(n) > PhapMath.thoShotTicks(n - 1));
+    }
+
+    @Test
+    void thoShieldScalesWithSpellPowerAndIsCappedByHp() {
+        assertEquals(PhapMath.THO_SHIELD_COEF * 50, PhapMath.thoShield(50, 1000), 1e-3);
+        assertEquals(PhapMath.THO_SHIELD_HP_CAP * 100, PhapMath.thoShield(1e6, 100), 1e-3);
+        assertTrue(PhapMath.thoShield(100, 1000) > PhapMath.thoShield(50, 1000));
+    }
+
+    @Test
+    void thoFortitudeReductionRisesWithTurretsAndStillness() {
+        Aptitude a = Aptitude.SSS;
+        assertEquals(0.0, PhapMath.thoReduction(a, false, 0), EPS);
+        assertEquals(PhapMath.THO_DR_STILL, PhapMath.thoReduction(a, true, 0), EPS);
+        assertTrue(PhapMath.thoReduction(a, false, 3) > PhapMath.thoReduction(a, false, 1));
+        assertTrue(PhapMath.thoReduction(a, true, 4) > PhapMath.thoReduction(a, false, 4));
+        assertEquals(PhapMath.thoReduction(a, true, 4), PhapMath.thoReduction(a, true, 99), EPS); // tối đa 4 tháp
+        assertTrue(PhapMath.thoReduction(a, true, 4) < 0.35, "giảm sát thương không quá 35%");
+        assertTrue(PhapMath.thoReduction(Aptitude.D, true, 1) < PhapMath.thoReduction(a, true, 1));
+    }
+
+    @Test
+    void thoUltimateAndEHaveRealDamage() {
+        assertTrue(PhapMath.coef(PhapElement.THO, 3) >= 6.0);
+        assertTrue(PhapMath.coef(PhapElement.THO, 1) > 0, "E không còn 0 sát thương");
+    }
 }

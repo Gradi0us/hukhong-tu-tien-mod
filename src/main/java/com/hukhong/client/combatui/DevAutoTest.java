@@ -69,6 +69,11 @@ public final class DevAutoTest {
             sp.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
         });
         if (t == 292) bcCheck();
+        String skills = System.getenv("HUKHONG_SKILLS"); // dev: HUKHONG_SKILLS=QUANG|LOI|HOA|THUY|THO|KIM -> thi triển Q,E,R,T lần lượt lên bù nhìn và chụp ảnh từng chiêu
+        if (skills != null && !skills.isEmpty()) {
+            skillsHarness(mc, server, sp, skills);
+            return;
+        }
         String beam = System.getenv("HUKHONG_BEAM"); // dev: HUKHONG_BEAM=QUANG|LOI|HOA|THUY -> nạp, bắn Tinh Hà Quang Trụ và chụp ảnh
         if (beam != null && !beam.isEmpty()) {
             if (t == 400) server.execute(() -> {
@@ -90,6 +95,45 @@ public final class DevAutoTest {
             return;
         }
         if (t == 340) { LOG.info("AUTOTEST done"); mc.stop(); }
+    }
+
+    /** Mỗi phím cách 70 tick: cast ở t0, chụp ảnh ở t0+3 / +8 / +16. Phím T của Quang/Lôi/Hỏa/Thủy là tia kênh (dùng HUKHONG_BEAM). */
+    private static void skillsHarness(Minecraft mc, net.minecraft.server.MinecraftServer server, net.minecraft.server.level.ServerPlayer sp, String el) {
+        final int start = 400, gap = 70;
+        if (t == start) server.execute(() -> {
+            var d = sp.getData(com.hukhong.core.ModAttachments.CULTIVATION);
+            sp.setData(com.hukhong.core.ModAttachments.CULTIVATION, new com.hukhong.core.CultivationData(60, 0, 1000, 1000,
+                    java.util.Set.of(com.hukhong.core.Path.PHAP), java.util.Map.of(com.hukhong.core.Path.PHAP, com.hukhong.core.Aptitude.SSS), false, d.origin(), d.roll(), d.milestoneUnlocked()));
+            com.hukhong.phaptu.PhapTu.setElement(sp, com.hukhong.phaptu.PhapElement.valueOf(el));
+            com.hukhong.stats.StatService.refresh(sp);
+            sp.setData(com.hukhong.core.ModAttachments.CULTIVATION, sp.getData(com.hukhong.core.ModAttachments.CULTIVATION).withResource(sp.getData(com.hukhong.core.ModAttachments.CULTIVATION).resourceMax()));
+            sp.setInvulnerable(true); // dev: không chết giữa chừng khi chụp
+            com.hukhong.skill.SkillService.state(sp).stance = true;
+            com.hukhong.skill.SkillService.state(sp).page = 0;
+            LOG.info("AUTOTEST skills element={} beamT={}", el, com.hukhong.phaptu.beam.PhapBeamService.locksT(sp));
+        });
+        for (int slot = 0; slot < 4; slot++) {
+            final int sl = slot, t0 = start + 40 + slot * gap;
+            if (t == t0 - 2) server.execute(() -> { // dựng lại bù nhìn + hồi đầy, đặt người nhìn thẳng vào nó
+                if (dummy != null) { dummy.setHealth(200); dummy.setDeltaMovement(Vec3.ZERO); }
+                Vec3 look = sp.getLookAngle();
+                Vec3 at = sp.getEyePosition().add(look.scale(5)).add(0, -1.6, 0);
+                if (dummy != null) dummy.moveTo(at.x, at.y, at.z);
+                var cd = sp.getData(com.hukhong.core.ModAttachments.CULTIVATION);
+                sp.setData(com.hukhong.core.ModAttachments.CULTIVATION, cd.withResource(cd.resourceMax()));
+                java.util.Arrays.fill(com.hukhong.skill.SkillService.state(sp).cooldownEnd, 0L);
+            });
+            if (t == t0) server.execute(() -> {
+                if (sl == 3 && com.hukhong.phaptu.beam.PhapBeamService.locksT(sp)) { LOG.info("AUTOTEST skip T (beam) for {}", el); return; }
+                com.hukhong.skill.SkillService.cast(sp, sl);
+                LOG.info("AUTOTEST cast slot {} cd={}", sl, com.hukhong.skill.SkillService.state(sp).cooldownEnd[sl]);
+            });
+            if (t == t0 + 3 || t == t0 + 8 || t == t0 + 16 || (sl == 3 && (t == t0 + 12 || t == t0 + 18 || t == t0 + 24))) shot("skill_" + el + "_" + sl + "_" + (t - t0));
+        }
+        if (t == start + 40 + 4 * gap + 10) {
+            server.execute(() -> LOG.info("AUTOTEST turrets alive near player = {}", sp.serverLevel().getEntitiesOfClass(com.hukhong.phaptu.PhapTurret.class, sp.getBoundingBox().inflate(40)).size()));
+        }
+        if (t == start + 40 + 4 * gap + 30) { LOG.info("AUTOTEST done"); mc.stop(); }
     }
 
     private static void bcCheck() {

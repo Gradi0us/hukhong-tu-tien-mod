@@ -65,8 +65,28 @@ public final class PhapMath {
     public static final int THO_MAX_TURRETS = 4, THO_SHOT_TICKS = 16, THO_LIFE_TICKS = 1200, THO_TAUNT_RANGE = 12;
     /** Một phát bắn của tháp = THO_SHOT_COEF x Phép lực x % (tháp gây % sát thương của chủ). */
     public static final double THO_SHOT_COEF = 1.25;
-    public static double thoDamagePct(Aptitude a) { return THO_DMG_MAX * frac(a); }
-    public static double thoHpPct(Aptitude a) { return THO_HP_MAX * frac(a); }
+    /** Sàn tư chất: tháp D vẫn có 40% / 50% giá trị SSS (trước đây D chỉ 1/7 -> Thổ tư chất thấp quá yếu). */
+    public static final double THO_DMG_FLOOR = 0.40, THO_HP_FLOOR = 0.50;
+    /** Tỉ lệ thời gian tháp thật sự bắn trúng (mô hình DPS) và giãn nhịp bắn khi nhiều tháp (tránh SSS x4 vượt trội). */
+    public static final double THO_UPTIME = 0.5;
+    public static final int THO_CROWD_TICKS = 8;
+    public static double thoDamagePct(Aptitude a) { return THO_DMG_MAX * (THO_DMG_FLOOR + (1 - THO_DMG_FLOOR) * frac(a)); }
+    public static double thoHpPct(Aptitude a) { return THO_HP_MAX * (THO_HP_FLOOR + (1 - THO_HP_FLOOR) * frac(a)); }
+    /** Nhịp bắn (tick) của mỗi tháp khi chủ có n tháp tối đa: càng nhiều tháp càng chậm. */
+    public static int thoShotTicks(int n) { return THO_SHOT_TICKS + THO_CROWD_TICKS * Math.max(0, n - 1); }
+
+    // ---- Thổ: Thạch Giáp (E) - khiên hấp thụ + miễn đẩy lùi; nội tại Kiên Cố (giảm sát thương khi đứng yên / theo số tháp)
+    public static final double THO_SHIELD_COEF = 2.4, THO_SHIELD_HP_CAP = 0.6;
+    public static final int THO_SHIELD_TICKS = 140, THO_STILL_TICKS = 40;
+    public static final double THO_DR_STILL = 0.10, THO_DR_PER_TURRET = 0.04;
+    public static float thoShield(double spellPower, double maxHp) { return (float) Math.min(THO_SHIELD_COEF * spellPower, THO_SHIELD_HP_CAP * maxHp); }
+    /** Kiên Cố: giảm sát thương = (đứng yên >=2s ? 10% : 0) + 4%/tháp (tối đa 4), co giãn (0,5 + 0,5 x tư chất). */
+    public static double thoReduction(Aptitude a, boolean still, int turrets) {
+        double raw = (still ? THO_DR_STILL : 0) + THO_DR_PER_TURRET * Math.max(0, Math.min(THO_MAX_TURRETS, turrets));
+        return raw * (0.5 + 0.5 * frac(a));
+    }
+    /** Thiên Sơn Áp Đỉnh (T): choáng (giây) và bán kính. */
+    public static final double THO_MOUNTAIN_STUN = 1.5, THO_MOUNTAIN_RADIUS = 7.5;
     public static int thoMaxTurrets(Aptitude a) { return 1 + (int) Math.round((THO_MAX_TURRETS - 1) * t(a)); }
     public static float thoShotDamage(Aptitude a, double spellPower) { return (float) (thoDamagePct(a) * THO_SHOT_COEF * spellPower); }
     public static float thoTurretHp(Aptitude a, double ownMaxHp) { return (float) Math.max(4, thoHpPct(a) * ownMaxHp); }
@@ -84,7 +104,7 @@ public final class PhapMath {
             /* LOI   */ {0.57, 1.26, 2.84, 8.1},
             /* HOA   */ {0.43, 0.92, 2.05, 6.2},
             /* THUY  */ {0.59, 0.86, 2.28, 7.6},
-            /* THO   */ {0.48, 0.00, 1.95, 4.6},
+            /* THO   */ {0.50, 0.50, 2.10, 6.40},
             /* KIM   */ {0.63, 1.44, 3.32, 9.8},
     };
 
@@ -103,10 +123,21 @@ public final class PhapMath {
     public static double passiveDps(PhapElement e, Aptitude a, double spellPower) {
         return switch (e) {
             case HOA -> hoaBurnPerSecond(a, HOA_STACKS, spellPower) * 0.7;
-            case THO -> thoMaxTurrets(a) * thoShotDamage(a, spellPower) * (20.0 / THO_SHOT_TICKS) * 0.75;
+            case THO -> thoMaxTurrets(a) * thoShotDamage(a, spellPower) * (20.0 / thoShotTicks(thoMaxTurrets(a))) * THO_UPTIME;
             case LOI -> Math.min(loiHpPct(a) * 400, LOI_DMG_CAP_MULT * spellPower) / 3.0;
             case THUY -> 0.30 * spellPower * frac(a);
             default -> 0;
         };
+    }
+
+    /**
+     * DPS bền vững lên MỘT mục tiêu tính theo Phép lực (spellPower = 1): tổng hệ số 4 phím / hồi chiêu gốc (Q liên tục, E/R/T theo chu kỳ)
+     * x hệ số bị động sát thương, chia hồi chiêu Kim, + bị động. Dùng để so các nguyên tố với nhau (không gồm đòn đánh thường).
+     */
+    public static double sustainedSp(PhapElement e, Aptitude a, double spellPower) {
+        com.hukhong.skill.Skill[] ks = {com.hukhong.skill.Skill.PHAP_1, com.hukhong.skill.Skill.PHAP_2, com.hukhong.skill.Skill.PHAP_3, com.hukhong.skill.Skill.PHAP_ULT};
+        double sum = 0;
+        for (int i = 0; i < 4; i++) sum += coef(e, i) / (ks[i].cooldownTicks / 20.0 * cooldownMult(e));
+        return sum * damageMult(e, a) + passiveDps(e, a, spellPower) / spellPower;
     }
 }

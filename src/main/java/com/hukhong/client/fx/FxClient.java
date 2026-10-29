@@ -98,6 +98,7 @@ public final class FxClient {
         if (t == FxType.UPGRADE_BURST) { upgrade(pos, sc, rgb); return; }
         if (t == FxType.CAMERA_SHAKE) { FxHit.shake(pos, sc, p.life() > 0 ? p.life() : 10, p.dx() > 0 ? p.dx() : 24f); return; }
         if (t == FxType.RIBBON) { FxTrail.receive(p, pos, dir, sc, rgb, dim); return; }
+        if (t == FxType.ELEM) { FxElem.receive(p, pos, dir, sc, rgb, dim); return; }
         if (t == FxType.DECAL) { FxDecal.receive(p, pos, dir, sc, rgb, dim); return; }
         if (t == FxType.GIANT_SWORD) { FxGiantSword.receive(p, pos, dir, sc, rgb, dim); return; }
         if (t == FxType.RIFT) { FxDecal.receiveRift(p, pos, dir, sc, rgb, dim); return; }
