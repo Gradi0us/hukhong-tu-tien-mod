@@ -35,7 +35,7 @@ public final class CombatUiClient {
 
     private static final int MAX_NUMBERS = 48, NUM_LIFE = 30, BAR_SHOW = 100, BAR_FADE_IN = 6, BAR_FADE_OUT = 14;
 
-    private static final class Num {
+    static final class Num {
         final float x, y, z, amount; final byte kind; final int color; final long born; final float drift;
         Num(float x, float y, float z, float amount, byte kind, int color, long born, float drift) {
             this.x = x; this.y = y; this.z = z; this.amount = amount; this.kind = kind; this.color = color;
@@ -82,8 +82,14 @@ public final class CombatUiClient {
 
     @SubscribeEvent
     public static void onRender(RenderLevelStageEvent e) {
-        if (e.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
         Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) { // ghi ma tran o moi giai doan (phong khi Iris bo qua mot so giai doan)
+            float pt0 = e.getPartialTick().getGameTimeDeltaPartialTick(true);
+            HUD_PROJ.set(e.getProjectionMatrix());
+            HUD_ROT.set(e.getCamera().rotation()).conjugate();
+            HUD_CAM = e.getCamera().getPosition(); HUD_NOW = mc.level.getGameTime() + pt0; HUD_PT = pt0;
+        }
+        if (e.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
         if (mc.level == null || mc.player == null || mc.options.hideGui) return;
         boolean bars = ClientConfig.mobBars(), nums = ClientConfig.damageNumbers();
         if (!bars && !nums) { BARS.clear(); NUMS.clear(); return; }
@@ -95,6 +101,8 @@ public final class CombatUiClient {
         // ROOT CAUSE "khong thay thanh mau": 1.21.1 da nhan frustum/modelView matrix vao RenderSystem model-view stack
         // truoc khi ban su kien nay; mulPose(e.getModelViewMatrix()) nua = xoay camera 2 lan -> moi thu bi ve lech ra ngoai
         // man hinh. Dung PoseStack rong + toa do tuong doi camera (giong FxClient/ObjectiveBeam).
+        // Iris + shaderpack: ve trong the gioi bi pipeline shader bo qua -> ghi lai ma tran, ve o HUD (CombatUiHud)
+        if (com.hukhong.client.compat.ShaderCompat.shadersActive()) return;
         PoseStack ps = new PoseStack();
         Font font = mc.font;
         if (bars) renderBars(mc, ps, buf, font, cam, cp, now, pt);
@@ -112,14 +120,15 @@ public final class CombatUiClient {
         }
     }
 
-    private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
-    private static boolean LOGGED, RECV_LOGGED, NUM_LOGGED;
-    private static int LAST_DRAWN;
+    // ---- du lieu cho duong ve HUD (khi co shader)
+    static final org.joml.Matrix4f HUD_PROJ = new org.joml.Matrix4f();
+    static final org.joml.Quaternionf HUD_ROT = new org.joml.Quaternionf();
+    static Vec3 HUD_CAM = Vec3.ZERO;
+    static double HUD_NOW;
+    static float HUD_PT;
 
-    // ------------------------------------------------------------------ thanh máu
-
-    private static void renderBars(Minecraft mc, PoseStack ps, MultiBufferSource.BufferSource buf, Font font,
-                                   Camera cam, Vec3 cp, double now, float pt) {
+    /** Cac thanh mau can ve (dung chung cho ca hai duong ve): goi f(entity, alpha). */
+    static void forEachBar(Minecraft mc, double now, java.util.function.BiConsumer<LivingEntity, Float> f) {
         double range = ClientConfig.mobBarRange(), r2 = range * range;
         boolean players = ClientConfig.mobBarsPlayers(), always = ClientConfig.mobBarsAlways();
         long tick = mc.level.getGameTime();
@@ -139,9 +148,23 @@ public final class CombatUiClient {
             } else if (always && le.getHealth() < le.getMaxHealth()) alpha = 1f;
             if (alpha <= 0.02f) continue;
             if (++drawn > 24) break;
-            drawBar(ps, buf, font, cam, cp, le, alpha, pt);
+            f.accept(le, alpha);
         }
         LAST_DRAWN = drawn;
+    }
+
+    static ArrayDeque<Num> nums() { return NUMS; }
+    static int numLife() { return NUM_LIFE; }
+
+    private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
+    private static boolean LOGGED, RECV_LOGGED, NUM_LOGGED;
+    private static int LAST_DRAWN;
+
+    // ------------------------------------------------------------------ thanh máu
+
+    private static void renderBars(Minecraft mc, PoseStack ps, MultiBufferSource.BufferSource buf, Font font,
+                                   Camera cam, Vec3 cp, double now, float pt) {
+        forEachBar(mc, now, (le, alpha) -> drawBar(ps, buf, font, cam, cp, le, alpha, pt));
     }
 
     private static void drawBar(PoseStack ps, MultiBufferSource.BufferSource buf, Font font, Camera cam, Vec3 cp,
