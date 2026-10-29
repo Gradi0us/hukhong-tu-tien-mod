@@ -113,7 +113,10 @@ public final class PhapBeamClient {
 
     /** Người chơi cục bộ có phím T bị thay bằng tia không. */
     public static boolean lockedT(Minecraft mc) {
-        return mc.player != null && PhapBeamMath.locksT(PhapTu.element(mc.player));
+        // client: CULTIVATION khong dong bo -> dung ClientCache + nguyen to (ELEMENT co dong bo)
+        return mc.player != null && com.hukhong.client.ClientCache.cultivation() != null
+                && com.hukhong.client.ClientCache.cultivation().paths().contains(com.hukhong.core.Path.PHAP)
+                && PhapBeamMath.locksT(PhapTu.rawElement(mc.player));
     }
 
     /** Đầu Linh Trượng nếu đang cầm, không thì vị trí bàn tay (xấp xỉ). */
@@ -143,7 +146,7 @@ public final class PhapBeamClient {
      * Giữ T = nạp; nhả = huỷ. Sẵn sàng/đang bắn: nuốt chuột phải của vanilla (không đặt khối / dùng đồ) và dùng nó làm nút bắn.
      */
     public static void tickKeys(Minecraft mc, boolean active) {
-        boolean t = active && SkillKeys.SKILL[3].isDown();
+        boolean t = active && mc.screen == null && physicalDown(mc, SkillKeys.SKILL[3]); // doc phim that: T trung phim chat vanilla
         if (t && !prevT) send(PhapBeamActionPayload.CHARGE_START);
         if (!t && prevT) send(PhapBeamActionPayload.CHARGE_STOP);
         prevT = t;

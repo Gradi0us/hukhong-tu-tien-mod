@@ -97,7 +97,7 @@ public final class GuildScreens {
             int ty = topPos + ROW0 + qs.size() * ROWH + 14;
             GuildMath.Trial t = GuildMath.trial(d.rank() + 1);
             if (d.rank() < GuildMath.RANKS - 1) {
-                boolean can = GuildMath.canTrial(d.rank(), d.points(), Minecraft.getInstance().player.getData(com.hukhong.core.ModAttachments.CULTIVATION).level());
+                boolean can = GuildMath.canTrial(d.rank(), d.points(), com.hukhong.client.ClientCache.cultivation().level());
                 String key = d.trial() == GuildData.NONE ? "hukhong.guild.btn.trial_start" : d.trial() >= t.amount() ? "hukhong.guild.btn.trial_finish" : "hukhong.guild.btn.working";
                 Button b = Button.builder(Component.translatable(key), x -> press(menu.containerId, GuildMenu.B_TRIAL)).bounds(leftPos + 168, ty, 79, 18).build();
                 b.active = d.trial() == GuildData.NONE ? can : d.trial() >= t.amount();
@@ -117,7 +117,7 @@ public final class GuildScreens {
         protected void renderBg(GuiGraphics g, float pt, int mx, int my) {
             panel(g, leftPos, topPos, imageWidth, imageHeight);
             GuildData d = data();
-            int lv = Minecraft.getInstance().player.getData(com.hukhong.core.ModAttachments.CULTIVATION).level();
+            int lv = com.hukhong.client.ClientCache.cultivation().level();
             g.drawString(font, Component.translatable("hukhong.guild.title"), leftPos + 12, topPos + 8, GOLD, false);
             g.blit(badge(d.rank()), leftPos + 12, topPos + 22, 0, 0, 40, 40, 40, 40);
             g.drawString(font, Component.translatable("hukhong.guild.card", Component.translatable("hukhong.guild.rank." + d.rank())), leftPos + 60, topPos + 24, TEXT, false);

@@ -73,7 +73,7 @@ public final class SkillHud {
             }
         }
 
-        boolean lockT = sp == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamMath.locksT(com.hukhong.phaptu.PhapTu.element(mc.player));
+        boolean lockT = sp == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamMath.locksT(com.hukhong.phaptu.PhapTu.rawElement(mc.player));
         for (int i = 0; i < 4; i++) {
             int x = x0 + i * (SIZE + GAP);
             com.hukhong.skillbook.SkillBook.Resolved rs = com.hukhong.skillbook.SkillBook.resolve(com.hukhong.skillbook.ClientSkillBook.get(), sp, i, d.level(), lockT);
