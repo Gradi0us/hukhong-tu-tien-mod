@@ -6,9 +6,9 @@
 **Luật mỗi đợt**: agent không commit; controller build + GameTest + ảnh chụp + merge_lang + commit/push; đủ DoD 5 mục (PLAN-v2 §8) mới ✅
 
 ```
-ĐỢT 1  S0+W0  Nối cốt truyện + Lịch K        ⬜  (người chơi đã đồng ý làm trước)
+ĐỢT 1  S0+W0  Nối cốt truyện + Lịch K        ✅ (chưa thử trong game)
 ĐỢT 2  T1     Ấn Hồn Đài / Khu Chợ / Uy Danh  ⬜
-ĐỢT 3  T2     Hồn Tinh vào ví + giá nâng cấp  ⬜
+ĐỢT 3  T2     Hồn Tinh vào ví + giá nâng cấp  ✅
 ĐỢT 4  T3     Vùng xâm thực + 8 Hư Vương      ⬜
 ĐỢT 4b B      Cutscene + biến hình + chiêu mới ⬜
 ĐỢT 5  S1+W1  Sự kiện có phe, tập kích, PvP   ⬜
