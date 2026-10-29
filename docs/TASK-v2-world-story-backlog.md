@@ -1,7 +1,7 @@
 # TASK-v2-world-story-backlog
 
 **Last Updated**: 2026-10-29 — Gom toàn bộ việc đã chốt, làm khi người chơi nói "bắt đầu"
-**Status**: ⬜ Chưa bắt đầu (0/7 đợt)
+**Status**: ⬜ Chưa bắt đầu (0/8 đợt)
 **Nguồn**: PLAN-v2-world-story-integration.md (§2–§12), PLAN-v1-world-enrichment.md, REVIEW-v1 (gap còn mở)
 **Luật mỗi đợt**: agent không commit; controller build + GameTest + ảnh chụp + merge_lang + commit/push; đủ DoD 5 mục (PLAN-v2 §8) mới ✅
 
@@ -10,6 +10,7 @@
 ĐỢT 2  T1     Ấn Hồn Đài / Khu Chợ / Uy Danh  ⬜
 ĐỢT 3  T2     Hồn Tinh vào ví + giá nâng cấp  ⬜
 ĐỢT 4  T3     Vùng xâm thực + 8 Hư Vương      ⬜
+ĐỢT 4b B      Cutscene + biến hình + chiêu mới ⬜
 ĐỢT 5  S1+W1  Sự kiện có phe, tập kích, PvP   ⬜
 ĐỢT 6  S2/S3  Cung truyện 7 thành + Siêu Độ   ⬜
 ĐỢT 7  W2–W8  Phần còn lại PLAN-v1            ⬜
@@ -50,6 +51,18 @@
 - [ ] Tên riêng ngẫu nhiên theo seed: `[Danh hiệu] Tên dạng — Tên riêng`; hiện bossbar / bản đồ / Lịch
 - [ ] **Rơi Hồn Cốt 100%**: khe hợp dạng, phẩm theo kích thước (Thiên Diện phẩm cao nhất + 30% thêm cái thứ hai), mỗi người ≥10% sát thương nhận riêng, vùng đã giải phóng không rơi lại
 - [ ] GameTest mỗi dạng chạy đủ chiêu + rơi đúng Hồn Cốt; ảnh chụp 8 dạng
+
+## Đợt 4b — Khung boss: cutscene chuyển phase + biến đổi ngoại hình + chiêu mới
+Thiết kế gốc: PLAN-v1-vfx-boss-mob-scaling §5 (B1–B7). Hiện chuyển phase chỉ hiện chữ "Phase 2" + 1 animation (`WorldBoss.enterPhase()`, `HuVuong.enterPhase()`). **Làm khung trước khi làm 8 Hư Vương** (Đợt 4 dùng khung này).
+- [ ] `BossPhaseDirector`: Đánh → Chuyển phase (boss bất tử, khóa AI 3–6s) → Đánh; cấu hình JSON mỗi boss: ngưỡng HP, kịch bản cutscene, bộ chiêu, biến đổi ngoại hình, biến đổi đấu trường
+- [ ] **Cutscene (client)**: camera keyframe (vị trí/góc/FOV, nội suy mượt), thanh đen điện ảnh, **phụ đề** (không lồng tiếng — người chơi đã chốt), bấm phím bỏ qua; người trong 60 block xem, mỗi người tự bỏ qua; server không khóa người chơi
+- [ ] **Biến đổi ngoại hình** mỗi phase: đổi texture + glowmask, bật/tắt xương phụ kiện (sừng, cánh, giáp vỡ, mặt thứ 2/3), to ra (scale 1.0 → 1.25 → 1.5), hào quang / hạt riêng, đổi nhạc lớp
+- [ ] **Chiêu mới mỗi phase**: phase 2 thêm 2 chiêu, phase 3 thêm 1 chiêu tối thượng (có vòng cảnh báo); giữ chiêu cũ nhưng nhanh hơn
+- [ ] Biến đổi đấu trường: trời tím / mưa máu / sàn nứt / cột Hư Không mọc
+- [ ] Áp dụng: **8 Hư Vương** (Thiên Diện đổi "mặt" mỗi phase), **4 Chấp Hành Giả**, **Dạ Khuyết** (+ cutscene Tâm Chiến của kết thúc Siêu Độ), **3 Yêu Vương** (Sa Hạt / Băng Nhân / Độc Mẫu), boss Bí Cảnh
+- [ ] Cutscene giải phóng vùng: trời tím tan, ánh sáng trở lại
+- [ ] GameTest: boss qua đủ phase, đúng chiêu mới từng phase, bất tử trong lúc chuyển; ảnh chụp từng phase
+- Fermi: khung ≈ 1 lượt; áp cho ~17 boss ≈ 3 lượt → ≈ 1M token
 
 ## Đợt 5 — S1 + W1: Sự kiện có phe + tập kích + PvP
 - [ ] Nguyệt Thực (Sứ Đồ chỉ huy từ ch.4), Thú Triều, Lôi Vũ (gần hang CHG), Yêu Vương theo lịch — đều có `lore`
