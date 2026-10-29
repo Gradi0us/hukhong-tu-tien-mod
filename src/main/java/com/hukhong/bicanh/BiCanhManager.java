@@ -172,6 +172,31 @@ public final class BiCanhManager {
         return null;
     }
 
+    /**
+     * Điểm vào nằm dưới đáy hang Bí Cảnh, mà hang tự sập khi vào cổng -> trả về đó sẽ kẹt trong hố.
+     * Nếu mặt đất quanh đó cao hơn chân >= 3 khối, chọn chỗ đứng trên mặt đất gần nhất (bán kính 20).
+     */
+    static Vec3 surfaceExit(ServerLevel l, double x, double y, double z) {
+        int fx = net.minecraft.util.Mth.floor(x), fz = net.minecraft.util.Mth.floor(z), fy = net.minecraft.util.Mth.floor(y);
+        var hm = net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES;
+        int around = Integer.MIN_VALUE;
+        for (int[] d : new int[][]{{6, 0}, {-6, 0}, {0, 6}, {0, -6}}) around = Math.max(around, l.getHeight(hm, fx + d[0], fz + d[1]));
+        boolean inPit = around >= fy + 3 || !l.getBlockState(BlockPos.containing(x, y, z)).isAir() || !l.getBlockState(BlockPos.containing(x, y + 1, z)).isAir();
+        if (!inPit) return new Vec3(x, y, z);
+        for (int r = 2; r <= 20; r++) {
+            for (int dx = -r; dx <= r; dx++) for (int dz = -r; dz <= r; dz++) {
+                if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue; // chỉ viền vòng r
+                int cx = fx + dx, cz = fz + dz, cy = l.getHeight(hm, cx, cz);
+                if (cy < fy + 3) continue;
+                BlockPos at = new BlockPos(cx, cy, cz);
+                var below = l.getBlockState(at.below());
+                if (below.isAir() || !below.getFluidState().isEmpty() || !l.getBlockState(at).isAir() || !l.getBlockState(at.above()).isAir()) continue;
+                return new Vec3(cx + 0.5, cy, cz + 0.5);
+            }
+        }
+        return new Vec3(x, l.getHeight(hm, fx, fz), z); // dự phòng: đỉnh cột
+    }
+
     /** Đưa người chơi về điểm vào (hoặc spawn Overworld nếu mất dữ liệu). */
     static void evacuate(ServerPlayer p, Run run, String msgKey) {
         Ret r = retOf(p, run);
@@ -182,7 +207,8 @@ public final class BiCanhManager {
             BlockPos sp = to.getSharedSpawnPos();
             p.teleportTo(to, sp.getX() + 0.5, to.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, sp.getX(), sp.getZ()), sp.getZ() + 0.5, 0f, 0f);
         } else {
-            p.teleportTo(to, r.x(), r.y(), r.z(), r.yRot(), 0f);
+            Vec3 safe = surfaceExit(to, r.x(), r.y(), r.z());
+            p.teleportTo(to, safe.x, safe.y, safe.z, r.yRot(), 0f);
         }
         com.hukhong.audio.BossMusic.stop(p);
         p.getPersistentData().remove(RET_TAG);

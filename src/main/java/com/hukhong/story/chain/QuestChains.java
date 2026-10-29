@@ -293,6 +293,9 @@ public final class QuestChains {
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || p.tickCount % 20 != 9 || !DialogueService.storyMode(p)) return;
+        // Hoan thanh chuoi ban do NGAY khi dang trong Bi Canh (truoc day bi bo qua vi chi xet o Overworld ->
+        // ra khoi Bi Canh thay cong da mat -> quay lai buoc 1 -> lap vo han).
+        if (BiCanhManager.inRun(p) && stageOf(quest(p).flags(), DYING) == 2) { reward(p, DYING); setStage(p, DYING, 9); }
         if (!(p.level() instanceof ServerLevel sl) || sl.dimension() != Level.OVERWORLD) return;
         QuestData q = quest(p);
         long now = sl.getGameTime();
