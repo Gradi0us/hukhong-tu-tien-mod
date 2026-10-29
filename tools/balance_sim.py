@@ -180,6 +180,11 @@ class Params:
         P.PHANXET_HU = float(re.search(r"t instanceof HuMob \? ([\d.]+)", bme).group(1))
         P.HUYETHAI_N = int(re.search(r"private static void huyetHai\(.*?for \(int i = 0; i < (\d+)", bme, re.S).group(1))
         # ---- Ban Menh kiem (don danh thuong)
+        P.art = False   # Linh Bao (Dao Linh / Linh The / Ma Cong Ba The Quyet); bat bang ov["_art"]
+        lb = "linhbao/LinhBaoMath.java"
+        P.LB_DAO_TICKS = int(const(lb, "DAO_BOLT_INTERVAL_TICKS"))
+        P.LB_COEF = {k: [float(x) for x in re.search(nm + r"\s*=\s*\{([^}]*)\}", rd(lb)).group(1).split(",")]
+                     for k, nm in (("DAO", "DAO_BOLT_COEF"), ("THE", "THE_HIT_COEF"), ("MA", "MA_HIT_COEF"))}
         P.QUALITY = [float(x) for x in re.search(r"QUALITY = \{([^}]*)\}", rd("banmenh/BanMenhService.java")).group(1).replace("f", "").split(",")]
         P.STAGE_LEVELS = [int(x) for x in re.search(r"STAGE_LEVELS = \{([^}]*)\}", rd("banmenh/BanMenhMath.java")).group(1).split(",")]
         ms = re.search(r"createAttributes\(Tiers\.IRON, (\d+), (-?[\d.]+)F\)", rd("banmenh/BanMenhKiemItem.java"))
@@ -585,6 +590,8 @@ def simulate(P, B, kit, tgt, T=60.0, dt=0.05, stop_hp=None, mmode=None, melee=Tr
     kiem_heal = P.KIEM_HEAL_MAX * P.frac(apt.get("KIEM", "B"))
 
     srcs = {"melee": 0.0, "skill": 0.0, "pass": 0.0}
+    art = getattr(P, "art", False)
+    lb_bolt_next = P.LB_DAO_TICKS / 20.0
 
     def add(d, t_, src="melee"):
         nonlocal total, burst5, t_kill
@@ -699,6 +706,10 @@ def simulate(P, B, kit, tgt, T=60.0, dt=0.05, stop_hp=None, mmode=None, melee=Tr
                 heal += B.hp * P.MAHOTHE_PCT
             elif kind == "heal":
                 heal += max(4.0, B.sp * s_["heal_sp"])
+        if art and "DAO" in path_set and t_ >= lb_bolt_next:   # Dao Linh: tia sang tu dong (hurtBySkill -> bao kich, khong tinh SKILL_EFF)
+            lb_bolt_next += P.LB_DAO_TICKS / 20.0 / BOLT_UPTIME
+            hit_skill(B.sp * P.LB_COEF["DAO"][P.stage(B.lv)] * q * B.sd, t_)
+            dao_tick(t_)
         # tay: Ban Menh Kiem (vu khi) / nam dam The Tu / tia ma tay khong cua Ma Tu
         if melee:
             if "THE" in path_set or mmode == "hand":
@@ -709,6 +720,7 @@ def simulate(P, B, kit, tgt, T=60.0, dt=0.05, stop_hp=None, mmode=None, melee=Tr
                         melee_acc -= period
                         aura = mana / B.resmax
                         d = atkv(t_) * (1 + P.FIST_AURA * aura) * cm
+                        if art: d += atkv(t_) * P.LB_COEF["THE"][P.stage(B.lv)] * q   # Linh The: cong sau bao kich
                         add(d * armor_factor(tgt.armor, d * tgt.s), t_)
                         mana = min(B.resmax, mana + P.THE_MELEE_GAIN)
                         melee_side(t_, d)
@@ -717,7 +729,7 @@ def simulate(P, B, kit, tgt, T=60.0, dt=0.05, stop_hp=None, mmode=None, melee=Tr
                     period = P.MA_CD_TICKS / 20.0 / BOLT_UPTIME
                     while bolt_acc >= period:
                         bolt_acc -= period
-                        add(P.UNARMED, t_)
+                        add(P.UNARMED + (atkv(t_) * P.LB_COEF["MA"][P.stage(B.lv)] * q if art else 0.0), t_)
                         if mana_hit_gain_sec < P.MA_HIT_CAP:
                             mana_hit_gain_sec += 1
                             mana = min(B.resmax, mana + P.MA_HIT_GAIN)
@@ -736,6 +748,7 @@ def simulate(P, B, kit, tgt, T=60.0, dt=0.05, stop_hp=None, mmode=None, melee=Tr
                         continue
                     ap = atkv(t_)
                     d = (P.SWORD_DMG + ap + ap * q) * cm
+                    if art and "MA" in path_set: d += ap * P.LB_COEF["MA"][P.stage(B.lv)] * q
                     add(d * armor_factor(tgt.armor, d * tgt.s), t_)
                     melee_side(t_, d)
         if pdps:
@@ -839,6 +852,9 @@ def make_params(ov):
     for k, v in (ov or {}).items():
         if not k.startswith("_"):
             apply_override(P, k, v)
+    P.art = bool((ov or {}).get("_art"))
+    if (ov or {}).get("_lbc"):
+        P.LB_COEF = ov["_lbc"]
     return P
 
 
@@ -1599,8 +1615,52 @@ STRUCT = [
 ]
 
 
+# ============================================================================= Linh Bao (bao cao rieng)
+def linhbao_report(write=False, workers=None):
+    """DPS ben vung (kit toi uu) cua Kiem/Dao/The/Ma truoc/sau Linh Bao, % so voi Kiem. Giai doan = tran theo cap."""
+    lvls, apts = [1, 10, 30, 60, 80, 100], ["B", "SSS"]
+    jobs = []
+    for art in (0, 1):
+        for lv in lvls:
+            for apt in apts:
+                for pth in PATHS4:
+                    jobs.append(({"_art": 1} if art else {}, pth, None, lv, apt, "avg", None))
+    with ProcessPoolExecutor(max_workers=workers) as ex:
+        res = list(ex.map(eval_cell, jobs, chunksize=2))
+    it = iter(res)
+    tab = {}
+    for art in (0, 1):
+        for lv in lvls:
+            for apt in apts:
+                for pth in PATHS4:
+                    tab[(art, lv, apt, pth)] = next(it)["dps_base"]
+    out = []
+    w = out.append
+    w("# REPORT Linh Bao - DPS ben vung truoc/sau (balance_sim.py --linhbao)\n")
+    w("Kiem khong doi (Ban Menh Kiem giu nguyen). Giai doan = tran theo cap. Don gian: nguoi choi tien hoa het co the. % = DPS / DPS Kiem cung cap + tu chat.\n")
+    for apt in apts:
+        w(f"\n## Tu chat {apt}\n")
+        w("| Cap | Kiem | Dao truoc | Dao sau | The truoc | The sau | Ma truoc | Ma sau |")
+        w("|---|---|---|---|---|---|---|---|")
+        for lv in lvls:
+            k = tab[(0, lv, apt, "KIEM")]
+            cells = [f"{k:.0f}"]
+            for pth in ("DAO", "THE", "MA"):
+                b, a = tab[(0, lv, apt, pth)], tab[(1, lv, apt, pth)]
+                cells += [f"{b:.0f} ({b / k * 100:.0f}%)", f"{a:.0f} ({a / k * 100:.0f}%)"]
+            w(f"| {lv} | " + " | ".join(cells) + " |")
+    text = "\n".join(out)
+    print(text)
+    if write:
+        (ROOT / "docs/REPORT-v1-linhbao-balance.md").write_text(text + "\n", encoding="utf-8", newline="\n")
+    return tab
+
+
 if __name__ == "__main__":
     import time
     t0 = time.time()
-    main("--quick" in sys.argv)
+    if "--linhbao" in sys.argv:
+        linhbao_report("--write" in sys.argv)
+    else:
+        main("--quick" in sys.argv)
     print(f"done in {time.time() - t0:.0f}s")

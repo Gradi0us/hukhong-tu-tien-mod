@@ -84,6 +84,7 @@ public final class CharCreateService {
         try { com.hukhong.world.OriginSpawn.apply(p, roll.origin(), set, roll.seed()); }
         catch (RuntimeException ex) { com.mojang.logging.LogUtils.getLogger().warn("OriginSpawn failed", ex); }
         if (set.contains(Path.KIEM)) com.hukhong.banmenh.BanMenhService.grant(p); // Kiếm Tu nhận Bản Mệnh Kiếm
+        if (set.contains(Path.PHAP)) com.hukhong.phaptu.linhtruong.LinhTruongService.grant(p); // Pháp Tu nhận Linh Trượng
         com.hukhong.story.StoryService.promptIfNeeded(p); // Bước 19: chọn Truyện/Tự do
     }
 }

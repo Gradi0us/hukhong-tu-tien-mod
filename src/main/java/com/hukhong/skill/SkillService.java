@@ -38,6 +38,7 @@ public final class SkillService {
         }
         st.stance = !st.stance;
         if (!st.stance) SkillEffects.kiemVucStop(p, st, true);
+        else StanceHands.equip(p, Skill.skillPath(d, st.page));
         p.displayClientMessage(Component.translatable(st.stance ? "hukhong.stance.on" : "hukhong.stance.off"), true);
         sync(p);
     }
@@ -56,6 +57,7 @@ public final class SkillService {
         for (int i = 0; i < 4; i++) st.cooldownEnd[i] = Math.max(st.cooldownEnd[i], now + SkillPages.SWITCH_COOLDOWN_TICKS);
         p.displayClientMessage(Component.translatable("hukhong.msg.page_switched",
                 Component.translatable(SkillPages.pathLangKey(SkillPages.active(d, st.page)))), true);
+        if (st.stance) StanceHands.equip(p, Skill.skillPath(d, st.page));
         sync(p);
     }
 

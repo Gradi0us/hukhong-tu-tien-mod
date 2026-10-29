@@ -215,7 +215,7 @@ public final class PhapRuntime {
         p.displayClientMessage(Component.translatable("hukhong.phap.quang.free"), true);
     }
 
-    static boolean valid(ServerPlayer p, LivingEntity e) {
+    public static boolean valid(ServerPlayer p, LivingEntity e) {
         return e != p && !(e instanceof Player) && e.isAlive() && !e.isSpectator()
                 && !(e instanceof PhapTurret) && !(e instanceof net.minecraft.world.entity.npc.Npc)
                 && !(e instanceof net.minecraft.world.entity.TamableAnimal t && t.isOwnedBy(p));

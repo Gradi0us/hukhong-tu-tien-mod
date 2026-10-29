@@ -21,6 +21,7 @@ public class HuKhong {
         com.hukhong.item.ModItems.register(modBus);
         com.hukhong.entity.ModEntities.register(modBus);
         com.hukhong.phaptu.PhapTuRegistry.register(modBus);
+        com.hukhong.phaptu.linhtruong.LinhTruongRegistry.register(modBus);
         com.hukhong.vfx.ModParticles.register(modBus);
         com.hukhong.story.StoryRegistry.register(modBus);
         com.hukhong.chg.ChgRegistry.register(modBus);

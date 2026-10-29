@@ -52,6 +52,7 @@ public final class PathRules {
             if (!d.paths().isEmpty()) {
                 float before = e.getAmount();
                 float after = DamageRules.resolve(atk, target, src, before);
+                after += com.hukhong.linhbao.LinhBaoCombat.basicBonus(atk, target, src, after); // Linh The / Ma Cong Ba The Quyet
                 if (after != before) e.setAmount(after);
                 SkillState st = atk.getData(SkillAttachments.STATE);
                 st.lastCombat = atk.level().getGameTime();

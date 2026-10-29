@@ -54,6 +54,11 @@ public final class PhapSkills {
         if (el == null) return;
         p.displayClientMessage(Component.translatable("hukhong.phap.cast." + el.id() + "." + slot).withColor(el.rgb), true);
         double c = PhapMath.coef(el, slot) * StatService.spellPower(p);
+        Vec3 staffTip = com.hukhong.phaptu.linhtruong.LinhTruongService.tipIfHeld(p);
+        if (staffTip != null) { // Linh Trượng: chớp sáng nạp lực ở đầu trượng, kỹ năng phát ra từ đây
+            Fx.rune(lv, p, staffTip, 0.8f + 0.12f * slot, el.rgb, 10, 6);
+            lv.sendParticles(ParticleTypes.END_ROD, staffTip.x, staffTip.y, staffTip.z, 6, 0.1, 0.1, 0.1, 0.05);
+        }
         switch (el) {
             case QUANG -> quang(lv, p, slot, c);
             case LOI -> loi(lv, p, slot, c);
@@ -73,6 +78,12 @@ public final class PhapSkills {
     }
 
     private static Vec3 eye(ServerPlayer p) { return p.getEyePosition().subtract(0, 0.25, 0); }
+
+    /** Gốc hiệu ứng nhìn thấy: đầu Linh Trượng nếu đang cầm, không thì ngang ngực như cũ. Sát thương vẫn tính từ eye(p). */
+    private static Vec3 vfx(ServerPlayer p) {
+        Vec3 t = com.hukhong.phaptu.linhtruong.LinhTruongService.tipIfHeld(p);
+        return t != null ? t : eye(p);
+    }
 
     private static Vec3 flat(ServerPlayer p) {
         Vec3 l = p.getLookAngle();
@@ -154,13 +165,13 @@ public final class PhapSkills {
 
     private static void quang(ServerLevel lv, ServerPlayer p, int slot, double c) {
         int col = PhapElement.QUANG.rgb;
-        Vec3 from = eye(p), look = p.getLookAngle();
+        Vec3 from = eye(p), look = p.getLookAngle(), vf = vfx(p);
         switch (slot) {
             case 0 -> { // Quang Tiễn: tia xuyên
                 for (LivingEntity t : line(lv, p, from, look, 16, 0.6)) hit(p, t, c);
-                beam(lv, from, look, 16, col, 9);
-                streak(lv, from, look, 16, ParticleTypes.END_ROD, 0.8);
-                Fx.ribbon(lv, p, from, from.add(look.scale(16)), 0, 3, 0, 0.1f, col);
+                beam(lv, vf, look, 16, col, 9);
+                streak(lv, vf, look, 16, ParticleTypes.END_ROD, 0.8);
+                Fx.ribbon(lv, p, vf, vf.add(look.scale(16)), 0, 3, 0, 0.1f, col);
                 FxSfx.cast(lv, from, 0.5f, 1.8f, SoundEvents.TRIDENT_THROW.value(), SoundEvents.AMETHYST_BLOCK_CHIME, null);
                 sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9f, 1.6f);
             }
@@ -182,9 +193,9 @@ public final class PhapSkills {
                 for (int i = -2; i <= 2; i++) {
                     Vec3 d = look.yRot((float) Math.toRadians(i * 11));
                     hit.addAll(line(lv, p, from, d, 14, 0.55));
-                    beam(lv, from, d, 14, col, 8);
-                    streak(lv, from, d, 14, GOLD, 1.0);
-                    Fx.ribbon(lv, p, from, from.add(d.scale(14)), 0, 3, Math.abs(i), 0.07f, col);
+                    beam(lv, vf, d, 14, col, 8);
+                    streak(lv, vf, d, 14, GOLD, 1.0);
+                    Fx.ribbon(lv, p, vf, vf.add(d.scale(14)), 0, 3, Math.abs(i), 0.07f, col);
                 }
                 for (LivingEntity t : hit) hit(p, t, c);
                 sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 1f, 1.2f);
@@ -195,18 +206,18 @@ public final class PhapSkills {
                 SkillEffects.spiral(lv, p.position(), 1.8, 0.2, 2.2, 3, 24, ParticleTypes.END_ROD);
                 SkillScheduler.later(8, () -> {
                     if (!p.isAlive()) return;
-                    Vec3 f2 = eye(p), l2 = p.getLookAngle();
+                    Vec3 f2 = eye(p), l2 = p.getLookAngle(), vf2 = vfx(p);
                     for (LivingEntity t : line(lv, p, f2, l2, 24, 1.6)) hit(p, t, c);
-                    for (int k = -1; k <= 1; k++) beam(lv, f2.add(0, k * 0.35, 0), l2, 24, k == 0 ? 0xFFFFFF : col, 12);
+                    for (int k = -1; k <= 1; k++) beam(lv, vf2.add(0, k * 0.35, 0), l2, 24, k == 0 ? 0xFFFFFF : col, 12);
                     Vec3 end = f2.add(l2.scale(24));
                     Fx.play(lv, FxType.LIGHT_PILLAR, ground(lv, end), Vec3.ZERO, 0.9f, col, 28);
                     Fx.play(lv, FxType.SCREEN_TINT, p.position(), Vec3.ZERO, 0.25f, col, 8);
-                    Fx.ribbon(lv, p, f2, end, 0, 4, 0, 0.55f, col);
-                    Fx.ribbon(lv, p, f2, end, 0, 5, 0, 0.2f, 0xFFFFFF);
+                    Fx.ribbon(lv, p, vf2, end, 0, 4, 0, 0.55f, col);
+                    Fx.ribbon(lv, p, vf2, end, 0, 5, 0, 0.2f, 0xFFFFFF);
                     Fx.groundRing(lv, p, ground(lv, end).add(0, 0.06, 0), 4f, col, 22);
                     Fx.shake(lv, p.position(), 0.8f, 8, 24f);
                     FxSfx.cast(lv, f2, 0.7f, 1.4f, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundEvents.AMETHYST_CLUSTER_BREAK, SoundEvents.BEACON_DEACTIVATE);
-                    streak(lv, f2, l2, 24, ParticleTypes.END_ROD, 0.5);
+                    streak(lv, vf2, l2, 24, ParticleTypes.END_ROD, 0.5);
                     sound(lv, f2, SoundEvents.BEACON_ACTIVATE, 1.2f, 1.8f);
                 });
             }
@@ -255,12 +266,12 @@ public final class PhapSkills {
                 List<LivingEntity> first = line(lv, p, p.getEyePosition(), p.getLookAngle(), 16, 1.6);
                 if (first.isEmpty()) first = cone(lv, p, 12, 0.6);
                 if (first.isEmpty()) {
-                    beam(lv, eye(p), p.getLookAngle(), 10, col, 6);
+                    beam(lv, vfx(p), p.getLookAngle(), 10, col, 6);
                     return;
                 }
                 LivingEntity cur = first.get(0);
                 Set<LivingEntity> done = new LinkedHashSet<>();
-                Vec3 prev = eye(p);
+                Vec3 prev = vfx(p);
                 double mul = 1.0;
                 for (int i = 0; i < 6 && cur != null; i++) {
                     done.add(cur);
@@ -302,13 +313,13 @@ public final class PhapSkills {
 
     private static void hoa(ServerLevel lv, ServerPlayer p, int slot, double c) {
         int col = PhapElement.HOA.rgb;
-        Vec3 from = eye(p), look = p.getLookAngle();
+        Vec3 from = eye(p), look = p.getLookAngle(), vf = vfx(p);
         switch (slot) {
             case 0 -> { // Hỏa Cầu
                 Vec3 pos = aim(lv, p, 18);
                 Vec3 mid = pos.add(0, 0.8, 0);
-                streak(lv, from, mid.subtract(from), from.distanceTo(mid), ParticleTypes.FLAME, 0.4);
-                beam(lv, from, mid.subtract(from), from.distanceTo(mid), col, 4);
+                streak(lv, vf, mid.subtract(vf), vf.distanceTo(mid), ParticleTypes.FLAME, 0.4);
+                beam(lv, vf, mid.subtract(vf), vf.distanceTo(mid), col, 4);
                 LivingEntity prim = around(lv, p, pos, 1.6).stream().min(Comparator.comparingDouble(e -> e.position().distanceToSqr(pos))).orElse(null);
                 for (LivingEntity e : around(lv, p, pos, 2.6)) {
                     hit(p, e, e == prim ? c : c * 0.6);
@@ -336,10 +347,10 @@ public final class PhapSkills {
                     e.igniteForSeconds(4);
                 }
                 Vec3 end = from.add(look.scale(14));
-                SkillEffects.helixBeam(lv, from, end, 0.8, 4, 90, ParticleTypes.FLAME);
-                SkillEffects.helixBeam(lv, from, end, 1.3, -3, 70, ParticleTypes.SMALL_FLAME);
-                beam(lv, from, look, 14, col, 10);
-                beam(lv, from, look, 14, 0xFFE070, 8);
+                SkillEffects.helixBeam(lv, vf, end, 0.8, 4, 90, ParticleTypes.FLAME);
+                SkillEffects.helixBeam(lv, vf, end, 1.3, -3, 70, ParticleTypes.SMALL_FLAME);
+                beam(lv, vf, look, 14, col, 10);
+                beam(lv, vf, look, 14, 0xFFE070, 8);
                 lv.sendParticles(ParticleTypes.LAVA, end.x, end.y, end.z, 10, 0.5, 0.5, 0.5, 0.2);
                 sound(lv, from, SoundEvents.BLAZE_SHOOT, 1.2f, 0.6f);
             }
@@ -372,7 +383,7 @@ public final class PhapSkills {
 
     private static void thuy(ServerLevel lv, ServerPlayer p, int slot, double c) {
         int col = PhapElement.THUY.rgb;
-        Vec3 from = eye(p), look = p.getLookAngle(), o = p.position();
+        Vec3 from = eye(p), look = p.getLookAngle(), o = p.position(), vf = vfx(p);
         switch (slot) {
             case 0 -> { // Thủy Tiễn: gây sát thương + tự hồi
                 List<LivingEntity> ts = line(lv, p, from, look, 16, 0.7);
@@ -380,9 +391,9 @@ public final class PhapSkills {
                     hit(p, ts.get(0), c);
                     p.heal(p.getMaxHealth() * 0.04f);
                 }
-                beam(lv, from, look, 16, col, 8);
-                streak(lv, from, look, 16, BLUE, 0.6);
-                streak(lv, from, look, 16, ParticleTypes.SPLASH, 1.2);
+                beam(lv, vf, look, 16, col, 8);
+                streak(lv, vf, look, 16, BLUE, 0.6);
+                streak(lv, vf, look, 16, ParticleTypes.SPLASH, 1.2);
                 sound(lv, from, SoundEvents.PLAYER_SPLASH, 0.8f, 1.5f);
             }
             case 1 -> { // Cam Lộ: hồi 25% máu đồng đội + gây nhẹ lên địch
@@ -501,13 +512,13 @@ public final class PhapSkills {
 
     private static void kim(ServerLevel lv, ServerPlayer p, int slot, double c) {
         int col = PhapElement.KIM.rgb;
-        Vec3 from = eye(p), look = p.getLookAngle(), o = p.position();
+        Vec3 from = eye(p), look = p.getLookAngle(), o = p.position(), vf = vfx(p);
         switch (slot) {
             case 0 -> { // Kim Nhận: 3 lưỡi kim bay
                 for (LivingEntity e : line(lv, p, from, look, 14, 0.8)) hit(p, e, c);
-                for (int i = -1; i <= 1; i++) Fx.qi(lv, from.add(0, i * 0.2, 0), look.scale(14), 0.7f, col, i * 35, 9);
-                streak(lv, from, look, 14, SILVER, 0.7);
-                streak(lv, from, look, 14, ParticleTypes.CRIT, 1.2);
+                for (int i = -1; i <= 1; i++) Fx.qi(lv, vf.add(0, i * 0.2, 0), look.scale(14), 0.7f, col, i * 35, 9);
+                streak(lv, vf, look, 14, SILVER, 0.7);
+                streak(lv, vf, look, 14, ParticleTypes.CRIT, 1.2);
                 sound(lv, from, SoundEvents.IRON_GOLEM_ATTACK, 0.8f, 1.6f);
             }
             case 1 -> { // Kim Giáp: giáp + lưỡi phản chấn
