@@ -1,7 +1,7 @@
 {
   "type": "nguyet_thuc", "lane": "story",
   "recurrence": {"type": "weekly", "day": 2}, "start_offset": 60000, "duration": 6000,
-  "location": {"city": 0}, "level": [30, 60], "rewards": "hukhong.cal.reward.nguyet_thuc",
+  "location": "random_city", "level": [30, 60], "rewards": "hukhong.cal.reward.nguyet_thuc",
   "lore": {"faction": "DA_KHUYET", "chapter_min": 4, "chapter_max": 99, "sets_flags": ["wl.nguyet_thuc"],
            "rumor": "hukhong.cal.rumor.nguyet_thuc"}
 }

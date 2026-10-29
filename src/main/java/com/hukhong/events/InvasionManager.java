@@ -2,6 +2,8 @@ package com.hukhong.events;
 
 import com.hukhong.HuKhong;
 import com.hukhong.city.CityBuilder;
+import com.hukhong.city.CityDef;
+import com.hukhong.city.CityService;
 import com.hukhong.city.CitySavedData;
 import com.hukhong.entity.ModEntities;
 import com.hukhong.item.ModItems;
@@ -46,6 +48,7 @@ public final class InvasionManager {
         final ServerLevel level;
         final BlockPos center;
         final BlockPos altar;
+        final CityDef city;
         final ServerBossEvent bar = new ServerBossEvent(Component.translatable("hukhong.invade.bossbar", 1, WAVE_SIZE.length),
                 BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
         final List<Mob> mobs = new ArrayList<>();
@@ -54,8 +57,8 @@ public final class InvasionManager {
         int wave = 1, toSpawn, killedTotal, plannedTotal;
         int age, lossTicks, waveDelay, tries;
 
-        Invasion(ServerLevel l, CitySavedData d) {
-            level = l; center = d.center(); altar = d.altarPos();
+        Invasion(ServerLevel l, CityDef cd, BlockPos c) {
+            level = l; city = cd; center = c; altar = c.above();
             int n = 0;
             for (ServerPlayer p : l.players())
                 if (p.distanceToSqr(altar.getX(), altar.getY(), altar.getZ()) < 160 * 160) n++;
@@ -76,12 +79,31 @@ public final class InvasionManager {
 
     public static boolean warning() { return warnLeft > 0; }
 
-    /** Báo trước {@code ticks} tick rồi tự khởi động tập kích. @return null nếu OK, hoặc key lỗi. */
-    public static String warn(ServerLevel ow, int ticks) {
+    private static int warnCity;
+
+    /** Chỉ số thành đang bị tập kích (hoặc đang báo trước), -1 nếu không có. */
+    public static int targetCity() { return cur != null ? cur.city.index() : warnLeft > 0 ? warnCity : -1; }
+
+    /** Thành hợp lệ: chỉ số đã cho, hoặc (idx &lt; 0) chọn theo {@link InvasionTargets}. @return null nếu OK (và đặt ra), hoặc key lỗi. */
+    private static String resolve(ServerLevel ow, int idx, int[] out) {
+        if (idx < 0) idx = InvasionTargets.choose(ow);
+        if (idx < 0) return CitySavedData.get(ow).isBuilt() ? "hukhong.invade.err_ruin" : "hukhong.city.not_built";
+        CityDef cd = CityDef.ALL.get(idx);
+        if (CityService.builtCenter(ow, cd) == null) return "hukhong.city.not_built";
+        if (CityStates.isRuin(ow, cd)) return "hukhong.invade.err_ruin";
+        out[0] = idx;
+        return null;
+    }
+
+    /** Báo trước {@code ticks} tick rồi tự khởi động tập kích (thành chọn theo chương / ngẫu nhiên). @return null nếu OK, hoặc key lỗi. */
+    public static String warn(ServerLevel ow, int ticks) { return warn(ow, ticks, -1); }
+
+    public static String warn(ServerLevel ow, int ticks, int cityIdx) {
         if (cur != null || warnLeft > 0) return "hukhong.invade.err_active";
-        CitySavedData d = CitySavedData.get(ow);
-        if (!d.isBuilt()) return "hukhong.city.not_built";
-        if (d.state() == CitySavedData.State.RUIN) return "hukhong.invade.err_ruin";
+        int[] t = new int[1];
+        String err = resolve(ow, cityIdx, t);
+        if (err != null) return err;
+        warnCity = t[0];
         warnLeft = Math.max(1, ticks);
         warnLevel = ow;
         title(ow, Component.translatable("hukhong.invade.warn_title"), Component.translatable("hukhong.invade.warn_sub", Math.max(1, ticks / 20)));
@@ -100,22 +122,28 @@ public final class InvasionManager {
         if (warnLeft == 0) {
             WARN_BAR.removeAllPlayers();
             warnLevel = null;
-            start(ow);
+            start(ow, warnCity);
         }
     }
 
     public static boolean active() { return cur != null; }
 
-    /** @return null nếu OK, hoặc translation key lỗi. */
-    public static String start(ServerLevel ow) {
+    /** @return null nếu OK, hoặc translation key lỗi. Thành chọn theo chương / ngẫu nhiên. */
+    public static String start(ServerLevel ow) { return start(ow, -1); }
+
+    public static String start(ServerLevel ow, int cityIdx) {
         if (cur != null) return "hukhong.invade.err_active";
-        CitySavedData d = CitySavedData.get(ow);
-        if (!d.isBuilt()) return "hukhong.city.not_built";
-        if (d.state() == CitySavedData.State.RUIN) return "hukhong.invade.err_ruin";
-        cur = new Invasion(ow, d);
-        com.hukhong.siege.SiegeDirector.begin(ow, d.center());
+        int[] t = new int[1];
+        String err = resolve(ow, cityIdx, t);
+        if (err != null) return err;
+        CityDef cd = CityDef.ALL.get(t[0]);
+        BlockPos c = CityService.builtCenter(ow, cd);
+        cur = new Invasion(ow, cd, c);
+        com.hukhong.siege.SiegeDirector.begin(ow, c);
         cur.waveDelay = com.hukhong.siege.SiegeDirector.ALARM_TICKS + com.hukhong.siege.SiegeDirector.RIFT_OPEN_TICKS;
         title(ow, Component.translatable("hukhong.invade.title"), Component.translatable("hukhong.invade.subtitle"));
+        if (cd.index() != 0) for (ServerPlayer p : ow.players())
+            p.sendSystemMessage(Component.translatable("hukhong.invade.target", Component.translatable(cd.nameKey())));
         return null;
     }
 
@@ -223,7 +251,7 @@ public final class InvasionManager {
 
     private static void win(Invasion inv) {
         CitySavedData cd = CitySavedData.get(inv.level);
-        cd.addWin();
+        if (inv.city.index() == 0) cd.addWin(); // bo dem cua buoc truyen c5_invasion chi tinh thanh goc
         com.hukhong.story.world.HuAnh.addNear(inv.level, inv.center, -10);
         CorruptionData.get(inv.level).cleanseNear(inv.center.getX(), inv.center.getZ(), BossScaling.cleanseCount(cd.invasionsWon()));
         for (ServerPlayer p : inv.level.players()) {
@@ -236,8 +264,7 @@ public final class InvasionManager {
     }
 
     private static void lose(Invasion inv) {
-        CitySavedData d = CitySavedData.get(inv.level);
-        d.setState(CitySavedData.State.RUIN);
+        CityStates.setRuin(inv.level, inv.city, true);
         com.hukhong.story.world.HuAnh.addNear(inv.level, inv.center, 20);
         CityBuilder.ruin(inv.level, inv.center);
         title(inv.level, Component.translatable("hukhong.invade.lose"), Component.translatable("hukhong.invade.lose_sub"));

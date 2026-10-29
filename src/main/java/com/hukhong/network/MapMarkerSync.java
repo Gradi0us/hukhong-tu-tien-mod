@@ -53,6 +53,10 @@ public final class MapMarkerSync {
         }
         for (var h : com.hukhong.guild.GuildHalls.get(ow).all().entrySet()) // Hiep Hoi Mao Hiem Gia
             out.add(new MapMarkersPayload.Marker(MapMarkersPayload.GUILD, h.getKey(), h.getValue().getX(), h.getValue().getZ(), true));
+        for (var m : com.hukhong.city.MarketDistricts.get(ow).allBuilt().entrySet()) // Khu Cho (diem dich chuyen + dau ban do "Cho <thanh>")
+            out.add(new MapMarkersPayload.Marker(MapMarkersPayload.MARKET, m.getKey(), m.getValue().getX(), m.getValue().getZ(), true));
+        for (var z : com.hukhong.zone.ZoneData.get(ow).zones()) // vùng xâm thực (id = tên vùng; built = đã giải phóng)
+            out.add(new MapMarkersPayload.Marker(MapMarkersPayload.ZONE, z.name, z.cx, z.cz, z.liberated));
         return out;
     }
 

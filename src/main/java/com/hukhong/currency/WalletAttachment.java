@@ -26,5 +26,10 @@ public final class WalletAttachment {
             () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).copyOnDeath()
                     .sync(ByteBufCodecs.VAR_LONG).build());
 
+    /** Uy Danh Cho: tong Ha da tieu o cho (xem market.MarketRep). */
+    public static final Supplier<AttachmentType<Long>> MARKET_SPENT = ATTACHMENTS.register("market_spent",
+            () -> AttachmentType.builder(() -> 0L).serialize(Codec.LONG).copyOnDeath()
+                    .sync(ByteBufCodecs.VAR_LONG).build());
+
     public static void register(IEventBus bus) { ATTACHMENTS.register(bus); }
 }

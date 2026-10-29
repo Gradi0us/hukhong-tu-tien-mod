@@ -37,7 +37,7 @@ public final class GuildBuilder {
     /** Ban kinh vet ngoai cua dien dan (T): quet ve phia dong tim vien da/ngoi sam; khong thay thi uoc luong theo loai. */
     static int shrineOuter(ServerLevel l, WorldBuildData.Settlement st, CityDef d) {
         int fy = st.y() - 1;
-        for (int t = 13; t >= 5; t--) {
+        for (int t = AltarShrine.MAX_R + 3; t >= 5; t--) { // vet T toi da = MAX_R + 3 (Quang Truong An Hon lon)
             BlockPos p = new BlockPos(st.ax() + t, fy, st.az());
             if (!l.hasChunkAt(p)) break;
             var b = l.getBlockState(p);

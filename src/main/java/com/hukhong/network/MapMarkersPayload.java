@@ -11,7 +11,7 @@ import java.util.List;
 
 /** Server -> client: vị trí thành/tông (Overworld) cho minimap. Chỉ đọc dữ liệu có sẵn, không đổi trạng thái server. */
 public record MapMarkersPayload(List<Marker> markers) implements CustomPacketPayload {
-    public static final byte CITY = 0, SECT = 1, GUILD = 2;
+    public static final byte CITY = 0, SECT = 1, GUILD = 2, ZONE = 3, MARKET = 4;
 
     /** kind: CITY/SECT; id: id CityDef/SectDef; built=false -> vị trí xấp xỉ (neo + lệch tất định). */
     public record Marker(byte kind, String id, int x, int z, boolean built) {
@@ -23,7 +23,7 @@ public record MapMarkersPayload(List<Marker> markers) implements CustomPacketPay
                 ByteBufCodecs.BOOL, Marker::built,
                 Marker::new);
 
-        public String nameKey() { return kind == GUILD ? "hukhong.guild.hall" : (kind == CITY ? "hukhong.city.n." : "hukhong.sect.n.") + id; }
+        public String nameKey() { if (kind == ZONE) return id; if (kind == MARKET) return "hukhong.market.n." + id; return kind == GUILD ? "hukhong.guild.hall" : (kind == CITY ? "hukhong.city.n." : "hukhong.sect.n.") + id; }
     }
 
     public static final Type<MapMarkersPayload> TYPE =

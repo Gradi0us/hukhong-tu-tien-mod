@@ -1,0 +1,6 @@
+{
+  "type": "pvp_bracket", "lane": "world",
+  "recurrence": {"type": "weekly", "day": 5}, "start_offset": 48000, "duration": 48000,
+  "location": {"city": 9}, "level": [10, 100], "rewards": "hukhong.cal.reward.giai_sinh_tu",
+  "lore": {"faction": "TONG_MON", "rumor": "hukhong.cal.rumor.giai_sinh_tu"}
+}

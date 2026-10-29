@@ -463,12 +463,12 @@ public final class StoryFlow {
                 if (ow == null || p.level().dimension() != Level.OVERWORLD) return;
                 CitySavedData cd = CitySavedData.get(ow);
                 if (!cd.isBuilt()) return;
-                if (cd.state() == CitySavedData.State.RUIN) {
-                    p.sendSystemMessage(Component.translatable("hukhong.flow.invasion.ruin"));
-                    complete(p, s.id());
+                if (cd.state() == CitySavedData.State.RUIN) { // thanh that thu: sinh nhiem vu Tai chiem thay vi bo qua buoc (Dot 5)
+                    if (p.tickCount % 200 == 7) p.sendSystemMessage(Component.translatable("hukhong.flow.invasion.ruin"));
+                    com.hukhong.events.CityRetake.ensure(ow, 0);
                     return;
                 }
-                if (!InvasionManager.active() && !InvasionManager.warning() && dist2(p, cd.center()) < 80.0 * 80.0) InvasionManager.warn(ow, 600);
+                if (!InvasionManager.active() && !InvasionManager.warning() && dist2(p, cd.center()) < 80.0 * 80.0) InvasionManager.warn(ow, 600, 0);
             }
             case BICANH -> {
                 if (p.tickCount % 100 != 7 || p.level().dimension() != Level.OVERWORLD) return;

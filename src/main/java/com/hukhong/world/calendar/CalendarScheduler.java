@@ -3,7 +3,6 @@ package com.hukhong.world.calendar;
 import com.hukhong.HuKhong;
 import com.hukhong.city.CityDef;
 import com.hukhong.city.CityService;
-import com.hukhong.events.InvasionManager;
 import com.hukhong.events.WorldBossManager;
 import com.hukhong.story.world.StoryHooks;
 import com.hukhong.travel.TravelService;
@@ -56,6 +55,7 @@ public final class CalendarScheduler {
     }
 
     public static BlockPos locate(ServerLevel ow, EventDef d, long start) {
+        if ("loi_vu".equals(d.type())) return LoiVuHandler.locate(ow, start); // ngay tai hang CHG
         int c = d.cityOf(start, CityDef.ALL.size());
         if (c < 0) return new BlockPos(d.loc().x(), 64, d.loc().z());
         return CityService.site(ow, CityDef.ALL.get(c));
@@ -129,8 +129,7 @@ public final class CalendarScheduler {
             pl.playNotifySound(SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.MASTER, 1.0f, 0.6f);
         }
         try {
-            switch (d.type()) {
-                case "nguyet_thuc" -> InvasionManager.start(ow);      // dung he tap kich co san (thanh goc)
+            if (CalendarHandlers.begin(ow, d, a)) { /* handler rieng (Dot 5) */ } else switch (d.type()) {
                 case "yeu_vuong" -> {                                  // boss the gioi co san, sinh gan diem su kien
                     BlockPos land = TravelService.findLanding(ow, a.x(), a.z(), null);
                     int kind = WorldBossManager.kindOf(ow.getBiome(land).unwrapKey().map(k -> k.location().getPath()).orElse(""));
@@ -147,6 +146,7 @@ public final class CalendarScheduler {
     /** Ket thuc: lan story-lane, nguoi choi o gan (trong NEAR_RADIUS) va duoc phep thi nhan StoryHooks.complete. */
     private static void finish(ServerLevel ow, CalendarData data, CalendarData.Act a) {
         data.removeActive(a.key());
+        try { CalendarHandlers.end(ow, a); } catch (RuntimeException ex) { com.mojang.logging.LogUtils.getLogger().error("Calendar end {} failed", a.defId(), ex); }
         EventDef d = EventDefs.get(a.defId());
         if (d == null) return;
         for (ServerPlayer pl : ow.players()) {

@@ -103,7 +103,7 @@ public final class CultivationService {
     }
 
     public static void addExp(ServerPlayer p, long amount) {
-        update(p, applyExp(get(p), amount));
+        update(p, applyExp(get(p), com.hukhong.world.calendar.LinhKhiTrieu.boost(p, amount))); // Linh Khi Trieu: x1.5 trong vung
     }
 
     public static void setLevel(ServerPlayer p, int level) {

@@ -25,6 +25,18 @@ final class MapIcons {
     }
 
     /** Tông: thoi ngọc bích (đã dựng) / thoi rỗng (xấp xỉ). */
+    /** Khu Cho: mai sap soc do-trang tren cot go. */
+    static void market(GuiGraphics g, int cx, int cy, boolean hot) {
+        g.fill(cx - 4, cy - 3, cx + 5, cy, INK);
+        g.fill(cx - 3, cy + 0, cx - 1, cy + 4, INK);
+        g.fill(cx + 2, cy + 0, cx + 4, cy + 4, INK);
+        int c = hot ? WHITE : 0xFFE8803A;
+        g.fill(cx - 3, cy - 2, cx + 4, cy - 1, c);
+        g.fill(cx - 3, cy - 1, cx + 4, cy, 0xFFF4EDE0);
+        g.fill(cx - 2, cy + 0, cx - 1, cy + 3, 0xFF8A6A3A);
+        g.fill(cx + 3, cy + 0, cx + 4, cy + 3, 0xFF8A6A3A);
+    }
+
     /** Hiệp Hội Mạo Hiểm Giả: khiên tím viền vàng. */
     static void guild(GuiGraphics g, int cx, int cy, boolean hot) {
         g.fill(cx - 3, cy - 4, cx + 4, cy + 1, INK);
@@ -35,6 +47,14 @@ final class MapIcons {
         g.fill(cx - 1, cy + 1, cx + 2, cy + 3, c);
         g.fill(cx, cy - 3, cx + 1, cy + 2, GOLD);
         g.fill(cx - 2, cy - 1, cx + 3, cy, GOLD);
+    }
+
+    /** Vùng xâm thực: hình thoi đỏ tím có tâm đen (đã giải phóng: xanh lá). */
+    static void zone(GuiGraphics g, int cx, int cy, boolean liberated, boolean hot) {
+        int c = hot ? WHITE : liberated ? 0xFF8CE08C : 0xFFD0405A;
+        for (int i = -4; i <= 4; i++) { int w = 4 - Math.abs(i); g.fill(cx - w - 1, cy + i, cx + w + 2, cy + i + 1, INK); }
+        for (int i = -3; i <= 3; i++) { int w = 3 - Math.abs(i); g.fill(cx - w, cy + i, cx + w + 1, cy + i + 1, c); }
+        g.fill(cx - 1, cy - 1, cx + 2, cy + 2, INK);
     }
 
     /** Cảng: hình thoi xanh dương có neo nhỏ. */

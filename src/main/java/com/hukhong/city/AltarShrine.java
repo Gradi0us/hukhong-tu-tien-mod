@@ -24,7 +24,7 @@ public final class AltarShrine {
     private AltarShrine() {}
 
     /** Thanh thu tuc: R=5 -> vet T=7. */
-    public static final int PROC_R = 6, PROC_T = PROC_R + 3;
+    public static final int PROC_R = 14, PROC_T = PROC_R + 3;
     /** Thanh nui / cang (it cho): ban kinh nho, dien dan phang. */
     public static final int SMALL_R = 5, SMALL_T = SMALL_R + 2;
 
@@ -48,7 +48,7 @@ public final class AltarShrine {
     /** Vung ban kinh r quanh (cx,cz) o mat nen fy khong co cong trinh nhan tao (chi cay / co / khong khi). */
     private static boolean clear(ServerLevel l, int cx, int cz, int fy, int r) {
         int m = r >= 6 ? 3 : 2;
-        if (r >= 6 && !toriiClear(l, cx, cz, fy, r + 3)) return false;
+        if (r >= 6 && r < MIN_GRAND && !toriiClear(l, cx, cz, fy, r + 3)) return false;
         for (int dx = -r - m; dx <= r + m; dx++) for (int dz = -r - m; dz <= r + m; dz++) {
             int o = oct(dx, dz);
             if (o > r + m) continue;
@@ -68,11 +68,18 @@ public final class AltarShrine {
      * Dung dien dan quanh altar (altar = o dat Ấn Hồn Đài, mat nen = altar.y-1). maxR gioi han ban kinh dai.
      * force=true: bo kiem tra cong trinh (thanh thu tuc). Tra ban kinh vet T (0 neu khong du cho: chi lat 3x3).
      */
-    public static int build(ServerLevel l, BlockPos altar, int maxR, boolean force) {
+    public static int build(ServerLevel l, BlockPos altar, int maxR, boolean force) { return build(l, altar, maxR, force, false); }
+
+    /**
+     * carve=true (cong trinh import co marker altar): neu khong du cho cho dai >= MIN_GRAND thi vet sach vung R=MIN_GRAND (don nha/cay trong vet) thay vi thu nho dien dan.
+     */
+    public static int build(ServerLevel l, BlockPos altar, int maxR, boolean force, boolean carve) {
         int cx = altar.getX(), cz = altar.getZ(), fy = altar.getY() - 1;
         int R = 0;
-        int top = Math.min(maxR, 9);
+        int top = Math.min(maxR, MAX_R);
         for (int r = top; r >= 3; r--) if (force ? r == top : clear(l, cx, cz, fy, r)) { R = r; break; }
+        if (carve && R < MIN_GRAND && top >= MIN_GRAND) R = MIN_GRAND;
+        if (R >= MIN_GRAND) return buildPlaza(l, cx, cz, fy, R);
         if (R >= 6) return buildGrand(l, cx, cz, fy, R);
         if (R == 0) {
             for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
@@ -161,6 +168,115 @@ public final class AltarShrine {
     private static Direction inward(int dx, int dz) {
         return Math.abs(dx) >= Math.abs(dz) ? (dx > 0 ? Direction.WEST : Direction.EAST) : (dz > 0 ? Direction.NORTH : Direction.SOUTH);
     }
+    /** Ban kinh dai lon nhat / nho nhat cua Quang Truong An Hon (R); vet T = R + 3. */
+    public static final int MAX_R = 18, MIN_GRAND = 12;
+
+    private static Block pick(boolean odd, Block a, Block b) { return odd ? a : b; }
+
+    /**
+     * Quang Truong An Hon (R >= 12, vet T = R+3, toi da 21): lom xuong 2 o so voi mat thanh de tam dai (o altar, cao = mat thanh)
+     * van o dung vi tri cu. Tu ngoai vao: vien phang (T) -> thanh lan can + 4 loi bac xuong -> hanh lang ngoai -> HO NUOC 3 o (4 cau thang)
+     * -> nen thap (cao fy-2) co 8 TRU LUA HON -> 3 BAC THEM bac (fy-2 / fy-1 / fy) lui vao dai. Vong sang xoay: {@link AltarFx}.
+     * Hinh bat giac (oct) giong dien dan cu. Dat luon cac cot den cao 13 o phia tren.
+     */
+    private static int buildPlaza(ServerLevel l, int cx, int cz, int fy, int R) {
+        final int T = R + 3;
+        final int A = Math.max(2, Math.round(R * 0.2f)), B = Math.max(A + 3, Math.round(R * 0.45f));
+        final int top = fy + 14;
+        for (int dx = -T; dx <= T; dx++) for (int dz = -T; dz <= T; dz++) {
+            int o = oct(dx, dz);
+            if (o > T) continue;
+            int x = cx + dx, z = cz + dz, a = Math.abs(dx), b = Math.abs(dz);
+            boolean path = a <= 1 || b <= 1, odd = ((dx + dz) & 1) == 0, spoke = a == 0 || b == 0 || a == b;
+            Direction in = inward(dx, dz), out = in.getOpposite();
+            Block bl = Blocks.POLISHED_BLACKSTONE_BRICKS;
+            BlockState st = null;
+            int floorY;
+            boolean water = false;
+            if (o >= T) { floorY = fy; bl = pick(odd, Blocks.POLISHED_BLACKSTONE_BRICKS, Blocks.DEEPSLATE_TILES); }
+            else if (o == R + 2) {
+                floorY = fy - 2;
+                if (path) { floorY = fy - 1; st = Blocks.QUARTZ_STAIRS.defaultBlockState().setValue(net.minecraft.world.level.block.StairBlock.FACING, in); bl = Blocks.QUARTZ_BLOCK; }
+                else bl = pick(odd, Blocks.POLISHED_BLACKSTONE_BRICKS, Blocks.POLISHED_DEEPSLATE);
+            } else if (o >= R - 1) { // ho nuoc 3 o
+                if (path) { floorY = fy - 2; bl = o == R ? Blocks.CHISELED_QUARTZ_BLOCK : Blocks.QUARTZ_BLOCK; }
+                else { floorY = fy - 4; bl = Blocks.SEA_LANTERN; water = true; }
+            } else if (o > B) { // nen thap
+                floorY = fy - 2;
+                if (o == R - 2) bl = pick(odd, Blocks.GOLD_BLOCK, Blocks.POLISHED_BLACKSTONE_BRICKS);
+                else if (spoke) bl = Blocks.OCHRE_FROGLIGHT;
+                else bl = pick(odd, Blocks.POLISHED_DEEPSLATE, Blocks.SMOOTH_QUARTZ);
+            } else if (o == B) { floorY = fy - 1; bl = Blocks.QUARTZ_BLOCK; st = Blocks.QUARTZ_STAIRS.defaultBlockState().setValue(net.minecraft.world.level.block.StairBlock.FACING, out); }
+            else if (o > A) { // bac 2
+                floorY = fy - 1;
+                if (o == B - 1) bl = Blocks.VERDANT_FROGLIGHT;
+                else bl = spoke ? Blocks.CHISELED_QUARTZ_BLOCK : pick(odd, Blocks.SMOOTH_QUARTZ, Blocks.POLISHED_BLACKSTONE);
+            } else if (o == A) { floorY = fy; bl = Blocks.QUARTZ_BLOCK; st = Blocks.QUARTZ_STAIRS.defaultBlockState().setValue(net.minecraft.world.level.block.StairBlock.FACING, out); }
+            else { // dai tren cung
+                floorY = fy;
+                if (o == 0) bl = Blocks.CHISELED_POLISHED_BLACKSTONE;
+                else if (o == 1) bl = Blocks.CRYING_OBSIDIAN;
+                else bl = spoke ? Blocks.OCHRE_FROGLIGHT : pick(odd, Blocks.POLISHED_DEEPSLATE, Blocks.SMOOTH_QUARTZ);
+            }
+            // nen dac duoi san (toi fy-5), tru nhung cho da la khoi dac khong chat long
+            for (int y = fy - 5; y < floorY; y++) {
+                BlockPos bp = new BlockPos(x, y, z);
+                BlockState s = l.getBlockState(bp);
+                if (!s.blocksMotion() || !l.getFluidState(bp).isEmpty()) l.setBlock(bp, Blocks.STONE.defaultBlockState(), 18);
+            }
+            set(l, x, floorY, z, bl);
+            if (st != null) l.setBlock(new BlockPos(x, floorY, z), st, 18);
+            if (water) { set(l, x, floorY + 1, z, Blocks.WATER); set(l, x, floorY + 2, z, Blocks.WATER); }
+            int clearFrom = floorY + (water ? 3 : 1);
+            int clearTo = o >= T ? fy + 3 : top;
+            if (!(dx == 0 && dz == 0)) for (int y = clearFrom; y <= clearTo; y++) air(l, x, y, z);
+            // lan can vien phang (tru 4 loi vao) + den linh canh
+            if (o == T && !path) {
+                set(l, x, fy + 1, z, Blocks.POLISHED_BLACKSTONE_BRICK_WALL);
+                if (((a + b) & 3) == 0) { set(l, x, fy + 2, z, Blocks.POLISHED_BLACKSTONE_BRICK_WALL); set(l, x, fy + 3, z, Blocks.SOUL_LANTERN); }
+            }
+        }
+        // 8 tru lua hon tren nen thap + banner
+        Block[] banners = {Blocks.RED_WALL_BANNER, Blocks.PURPLE_WALL_BANNER, Blocks.BLUE_WALL_BANNER, Blocks.WHITE_WALL_BANNER};
+        double pr = R - 3.5;
+        for (int i = 0; i < 8; i++) {
+            double ang = Math.toRadians(22.5 + 45 * i);
+            int px = (int) Math.round(Math.cos(ang) * pr), pz = (int) Math.round(Math.sin(ang) * pr);
+            int x = cx + px, z = cz + pz;
+            set(l, x, fy - 2, z, Blocks.POLISHED_BLACKSTONE_BRICKS);
+            set(l, x, fy - 1, z, Blocks.POLISHED_BLACKSTONE_BRICKS);
+            for (int h = 0; h <= 7; h++) set(l, x, fy + h, z, Blocks.QUARTZ_PILLAR);
+            set(l, x, fy + 8, z, Blocks.CHISELED_QUARTZ_BLOCK);
+            set(l, x, fy + 9, z, Blocks.SOUL_SOIL);
+            set(l, x, fy + 10, z, Blocks.SOUL_FIRE);
+            for (Direction f : new Direction[]{px > 0 ? Direction.EAST : Direction.WEST, pz > 0 ? Direction.SOUTH : Direction.NORTH}) {
+                BlockPos bp = new BlockPos(x + f.getStepX(), fy + 4, z + f.getStepZ());
+                if (l.getBlockState(bp).isAir())
+                    l.setBlock(bp, banners[i & 3].defaultBlockState().setValue(WallBannerBlock.FACING, f), 18);
+            }
+            Direction in = inward(px, pz);
+            set(l, x + in.getStepX(), fy + 8, z + in.getStepZ(), Blocks.POLISHED_BLACKSTONE_BRICK_SLAB);
+            set(l, x + in.getStepX(), fy + 7, z + in.getStepZ(), Blocks.CHAIN);
+            set(l, x + in.getStepX(), fy + 6, z + in.getStepZ(), Blocks.SOUL_LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+        }
+        // 4 lo huong tren dai + vong den treo ngoai tru + may cot end rod noi
+        for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) {
+            set(l, cx + sx * 2, fy, cz + sz * 2, Blocks.GOLD_BLOCK);
+            set(l, cx + sx * 2, fy + 1, cz + sz * 2, Blocks.SOUL_CAMPFIRE);
+        }
+        for (int dx = -R; dx <= R; dx++) for (int dz = -R; dz <= R; dz++) {
+            int o = oct(dx, dz), x = cx + dx, z = cz + dz;
+            if (o == R - 1) {
+                set(l, x, fy + 13, z, Blocks.SMOOTH_QUARTZ_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.BOTTOM));
+                if (dx == 0 || dz == 0 || Math.abs(dx) == Math.abs(dz))
+                    set(l, x, fy + 12, z, Blocks.SOUL_LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+            }
+            if (o == A + 2 && ((dx + dz) & 1) == 0) set(l, x, fy + 8, z, Blocks.END_ROD);
+        }
+        for (int[] c : new int[][]{{3, 0}, {-3, 0}, {0, 3}, {0, -3}}) set(l, cx + c[0], fy + 6, cz + c[1], Blocks.AMETHYST_BLOCK);
+        return T;
+    }
+
 
     /**
      * Dien dan lon (R>=6, vet T=R+3): ban tren (altar) -> bac da vao -> vanh giua (kinh mau lam phat sang) -> ho nuoc co 4 cau

@@ -203,6 +203,7 @@ public final class LiberationManager {
         GEYSERS.removeIf(g -> Math.hypot(g.pos.getX() - heart.getX(), g.pos.getZ() - heart.getZ()) < REGION + 16);
         int zl = zoneLevel(ow, heart);
         BlockPos s = surface(ow, heart);
+        com.hukhong.boss.phase.LiberationCutscene.play(ow, s);
         ow.setWeatherParameters(24000, 0, false, false); // troi quang
         for (ServerPlayer p : ow.players()) {
             double d = Math.hypot(p.getX() - heart.getX(), p.getZ() - heart.getZ());

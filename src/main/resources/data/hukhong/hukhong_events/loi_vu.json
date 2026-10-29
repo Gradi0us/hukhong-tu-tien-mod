@@ -1,0 +1,6 @@
+{
+  "type": "loi_vu", "lane": "world",
+  "recurrence": {"type": "every", "days": 3}, "start_offset": 30000, "duration": 6000,
+  "location": {"xz": [0, 0]}, "level": [40, 80], "rewards": "hukhong.cal.reward.loi_vu",
+  "lore": {"faction": "CHG", "chapter_min": 0, "chapter_max": 99, "rumor": "hukhong.cal.rumor.loi_vu"}
+}

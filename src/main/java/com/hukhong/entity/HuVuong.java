@@ -59,7 +59,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Hu Vuong - boss the gioi (Buoc 15). 3 pha theo mau; cam bay quanh no (tag hukhong_world_boss).
  * Pha 1: Hu Chan (nen dat). Pha 2: + Trieu Hoi. Pha 3: + Hu Trieu (xung dien rong), nhanh hon.
  */
-public class HuVuong extends Monster implements GeoEntity, HuMob {
+public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.boss.phase.PhasedBoss {
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(HuVuong.class, EntityDataSerializers.INT);
     private static final int WINDUP = 30;
     private static final int SLAM = 1, SUMMON = 2, PULSE = 3, BARRAGE = 4;
@@ -71,6 +71,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
     private final ServerBossEvent bar = new ServerBossEvent(BossLevel.tag(Component.translatable("entity.hukhong.hu_vuong"), 30),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10);
     private int skillCd = 80, windup, pending, appliedPlayers = 1;
+    private final com.hukhong.boss.phase.BossPhaseDirector director = new com.hukhong.boss.phase.BossPhaseDirector(this);
 
     public HuVuong(EntityType<? extends Monster> t, Level l) {
         super(t, l);
@@ -106,6 +107,29 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
 
     public int phase() { return entityData.get(PHASE); }
 
+    // ------------------------------------------------------------ PhasedBoss (khung pha: cutscene + biến đổi + chiêu mới)
+    @Override public String phaseId() { return "hu_vuong"; }
+    @Override public com.hukhong.boss.phase.BossPhaseDirector director() { return director; }
+    @Override public int currentPhase() { return phase(); }
+    @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
+    @Override public void applyPhase(ServerLevel sl, int ph) { applyPhaseEffects(ph); }
+    @Override public boolean idleForMove() { return pending == 0; }
+    @Override public void cancelSkill() { pending = 0; windup = 0; skillCd = 40; }
+    @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "roar" : "slam"); }
+    @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
+
+    @Override public boolean isImmobile() { return super.isImmobile() || (director != null && director.frozen()); }
+
+    @Override public boolean hurt(DamageSource src, float amt) {
+        if (director != null && director.invulnerable() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+        return super.hurt(src, amt);
+    }
+
+    @Override public void tick() {
+        super.tick();
+        if (level() instanceof ServerLevel sl && isAlive()) director.tick(sl);
+    }
+
     @Override public boolean isPushable() { return false; }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
@@ -135,6 +159,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
         super.aiStep();
         if (level().isClientSide) {
             HuHoa.particles(this);
+            com.hukhong.boss.phase.PhaseClientFx.aura(this, this);
             if (phase() >= 2 && tickCount % 2 == 0)
                 level().addParticle(phase() == 3 ? ParticleTypes.SOUL_FIRE_FLAME : ModParticles.HU_KHONG.get(),
                         getRandomX(1.0), getRandomY(), getRandomZ(1.0), 0, 0.08, 0);
@@ -148,9 +173,6 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
         bar.setProgress(getHealth() / getMaxHealth());
 
         if (tickCount % 100 == 1) rescale(sl);
-
-        int ph = BossScaling.phase(getHealth() / getMaxHealth());
-        if (ph > phase()) enterPhase(sl, ph);
 
         if (phase() >= 2 && tickCount % 10 == 0)
             sl.sendParticles(phase() == 3 ? ParticleTypes.SOUL_FIRE_FLAME : ModParticles.HU_KHONG.get(),
@@ -239,20 +261,6 @@ public class HuVuong extends Monster implements GeoEntity, HuMob {
         }
         sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 0.5, getZ(), 40, r * 0.4, 0.3, r * 0.4, 0.05);
         playSound(SoundEvents.GENERIC_EXPLODE.value(), 2.0f, 0.7f);
-    }
-
-    private void enterPhase(ServerLevel sl, int ph) {
-        entityData.set(PHASE, ph);
-        applyPhaseEffects(ph);
-        triggerAnim("skill", "roar");
-        sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1, getZ(), 1, 0, 0, 0, 0);
-        sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 1, getZ(), 80, 2.5, 1.5, 2.5, 0.1);
-        playSound(SoundEvents.ENDER_DRAGON_GROWL, 3.0f, 0.7f);
-        for (ServerPlayer p : sl.players())
-            if (p.distanceToSqr(this) < 80 * 80) p.displayClientMessage(Component.translatable("hukhong.boss.phase", ph), true);
-        pending = 0;
-        skillCd = 40;
-        if (ph == 2) { pending = SUMMON; windup = 20; }
     }
 
     private void applyPhaseEffects(int ph) {

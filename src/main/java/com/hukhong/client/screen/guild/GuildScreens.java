@@ -222,8 +222,8 @@ public final class GuildScreens {
             var mc = Minecraft.getInstance();
             Component w = Component.translatable("hukhong.shop.wallet", TuTinhText.of(Wallet.count(mc.player)));
             g.drawString(font, w, leftPos + imageWidth - 12 - font.width(w), topPos + 8, TEXT, false);
-            if (!sellTab && menu.s.rank() > 0)
-                g.drawString(font, Component.translatable("hukhong.shop.discount", GuildMath.discountPct(menu.s.rank())), leftPos + 146, topPos + 26, GOOD, false);
+            if (!sellTab && menu.s.discountPct() > 0)
+                g.drawString(font, Component.translatable("hukhong.shop.discount", menu.s.discountPct()), leftPos + 146, topPos + 26, GOOD, false);
             List<ShopMenu.Entry> rows = rows();
             if (rows.isEmpty()) g.drawString(font, Component.translatable("hukhong.shop.empty"), leftPos + 12, topPos + 48, DIM, false);
             for (int i = 0; i < rows.size(); i++) {
@@ -234,7 +234,7 @@ public final class GuildScreens {
                 g.renderItemDecorations(font, e.stack(), leftPos + 12, y + 1);
                 int nameW = sellTab ? 110 : 140;
                 g.drawString(font, font.plainSubstrByWidth(e.stack().getHoverName().getString(), nameW), leftPos + 34, y, locked ? DIM : TEXT, false);
-                Component price = locked ? Component.translatable("hukhong.shop.locked", Component.translatable("hukhong.guild.rank." + e.minRank()))
+                Component price = locked ? Component.translatable("hukhong.shop.locked", Component.translatable(menu.s.marketLocks() ? com.hukhong.market.MarketRep.tierKey(e.minRank()) : "hukhong.guild.rank." + e.minRank()))
                         : TuTinhText.of(e.price());
                 g.drawString(font, font.plainSubstrByWidth(price.getString(), nameW), leftPos + 34, y + 10, locked ? BAD : GOLD, false);
                 if (sellTab) {

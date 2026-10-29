@@ -21,13 +21,18 @@ public class ShopMenu extends AbstractContainerMenu {
 
     public record Entry(ItemStack stack, long price, int minRank) {}
 
-    public record Snapshot(int entityId, int kind, int rank, List<Entry> buys, List<Entry> sells) {
+    /** rank: bac Hiep Hoi (cu) hoac bac Uy Danh Cho (marketLocks=true); discountPct = % giam gia hien thi. */
+    public record Snapshot(int entityId, int kind, int rank, List<Entry> buys, List<Entry> sells, int discountPct, boolean marketLocks) {
+        public Snapshot(int entityId, int kind, int rank, List<Entry> buys, List<Entry> sells) { this(entityId, kind, rank, buys, sells, 5 * rank, false); }
+
         public void write(RegistryFriendlyByteBuf b) {
             b.writeVarInt(entityId);
             b.writeVarInt(kind);
             b.writeVarInt(rank);
             writeList(b, buys);
             writeList(b, sells);
+            b.writeVarInt(discountPct);
+            b.writeBoolean(marketLocks);
         }
 
         private static void writeList(RegistryFriendlyByteBuf b, List<Entry> l) {
@@ -47,7 +52,7 @@ public class ShopMenu extends AbstractContainerMenu {
         }
 
         public static Snapshot read(RegistryFriendlyByteBuf b) {
-            return new Snapshot(b.readVarInt(), b.readVarInt(), b.readVarInt(), readList(b), readList(b));
+            return new Snapshot(b.readVarInt(), b.readVarInt(), b.readVarInt(), readList(b), readList(b), b.readVarInt(), b.readBoolean());
         }
     }
 

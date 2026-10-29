@@ -94,8 +94,8 @@ public final class AmbientClient {
         master = step(master, masterT, 1f / 40f);
         double px = mc.player.getX(), pz = mc.player.getZ();
 
-        float corrT = overworld ? AmbientState.corruptionAt(px, pz) : 0f;
-        float warT = overworld ? AmbientState.warAt(px, pz) : 0f;
+        float corrT = overworld ? Math.max(AmbientState.corruptionAt(px, pz), com.hukhong.client.boss.BossSkyFx.corr()) : 0f;
+        float warT = overworld ? Math.max(AmbientState.warAt(px, pz), com.hukhong.client.boss.BossSkyFx.war()) : 0f;
         corr = step(corr, corrT, STEP_SLOW);
         war = step(war, warT, STEP_SLOW);
 

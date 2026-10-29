@@ -30,6 +30,7 @@ public final class CityProtection {
     /** Bán kính (ô, hệ Chebyshev) quanh tâm thành tính là "trong thành": tường + vùng quanh cổng. */
     public static final int CITY_RADIUS = CityBuilder.HALF + 16;
     public static final int SECT_RADIUS = SectBuilder.HALF + 16;
+    public static final int MARKET_RADIUS = MarketDistrict.HALF + 8;
 
     /** Thực thể thuộc diện bảo vệ (dân làng, thương nhân, NPC cốt truyện). */
     public static boolean isProtectedKind(Entity e) {
@@ -44,6 +45,8 @@ public final class CityProtection {
             var c = CityService.builtCenter(ow, d);
             if (c != null && Math.abs(c.getX() - x) <= CITY_RADIUS && Math.abs(c.getZ() - z) <= CITY_RADIUS) return true;
         }
+        for (var m : MarketDistricts.get(ow).allBuilt().values()) // Khu Cho rieng (40-70 block tu tam thanh)
+            if (Math.abs(m.getX() - x) <= MARKET_RADIUS && Math.abs(m.getZ() - z) <= MARKET_RADIUS) return true;
         for (var c : SectSavedData.get(ow).all().values())
             if (Math.abs(c.getX() - x) <= SECT_RADIUS && Math.abs(c.getZ() - z) <= SECT_RADIUS) return true;
         return false;

@@ -63,6 +63,13 @@ public final class BossMusic {
         WATCHED.add(new Watch(boss, track));
     }
 
+    /** Đổi lớp nhạc của boss đang được theo dõi (chuyển pha): người nghe chuyển track trong ~1s. */
+    public static void retrack(Mob boss, String track) {
+        if (boss.level().isClientSide) return;
+        for (int i = 0; i < WATCHED.size(); i++)
+            if (WATCHED.get(i).boss == boss) { WATCHED.set(i, new Watch(boss, track)); return; }
+    }
+
     // ------------------------------------------------------------------ internals
     private static void send(ServerPlayer p, String track, boolean start) {
         PacketDistributor.sendToPlayer(p, new BossMusicPayload(track, start));

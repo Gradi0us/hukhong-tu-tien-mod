@@ -12,6 +12,7 @@ public final class SkillNet {
     public static void register(PayloadRegistrar r) {
         com.hukhong.flight.FlightNet.register(r);
         com.hukhong.audio.AudioNet.register(r);
+        com.hukhong.boss.phase.BossPhaseNet.register(r);
         com.hukhong.banmenh.BanMenhNet.register(r);
         com.hukhong.client.combatui.CombatTextPayload.register(r);
         com.hukhong.artifact.ArtifactNet.register(r);

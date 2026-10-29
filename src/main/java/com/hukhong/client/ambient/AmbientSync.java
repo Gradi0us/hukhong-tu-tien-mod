@@ -44,6 +44,7 @@ public final class AmbientSync {
                 if (Math.abs(x - pcx) <= CHUNK_R && Math.abs(z - pcz) <= CHUNK_R) chunks.add(l);
                 if (chunks.size() >= 1100) break;
             }
+            com.hukhong.zone.ZoneData.addNearbyChunks(pcx, pcz, CHUNK_R, chunks, 1100);
             hearts = nearestHearts(cd.hearts(), p.blockPosition());
             if (InvasionManager.active() || InvasionManager.warning()) {
                 CitySavedData d = CitySavedData.get(ow);

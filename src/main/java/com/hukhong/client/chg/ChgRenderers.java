@@ -22,7 +22,7 @@ public final class ChgRenderers {
         for (int i = 1; i <= ChgKit.COUNT; i++) {
             ResourceLocation id = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "chg_" + i);
             e.registerEntityRenderer(ChgRegistry.type(i),
-                    c -> HuRenderers.glow(new GeoEntityRenderer<ChapHanhGia>(c, new DefaultedEntityGeoModel<>(id))));
+                    c -> HuRenderers.glow(new com.hukhong.client.boss.PhasedBossRenderer<ChapHanhGia>(c, id.getPath())));
         }
     }
 }

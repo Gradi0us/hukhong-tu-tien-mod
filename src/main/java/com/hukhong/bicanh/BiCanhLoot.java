@@ -43,7 +43,12 @@ public final class BiCanhLoot {
         };
     }
 
+    /** Xac suat roi Truc Nang Cap Ky Nang (Bi Canh cap cao: Hac 8%, Hong 20%). */
+    public static double upgradeScrollChance(BiCanhTier t) { return t == BiCanhTier.HONG ? 0.20 : t == BiCanhTier.HAC ? 0.08 : 0.0; }
+
     public static List<ItemStack> stacks(BiCanhTier t, Random r) {
-        return BiCanhRewards.roll(t, r).stream().map(e -> toStack(e, r)).toList();
+        List<ItemStack> out = new java.util.ArrayList<>(BiCanhRewards.roll(t, r).stream().map(e -> toStack(e, r)).toList());
+        if (r.nextDouble() < upgradeScrollChance(t)) out.add(new ItemStack(com.hukhong.skillbook.SkillBookRegistry.UPGRADE_SCROLL.get()));
+        return out;
     }
 }

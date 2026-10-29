@@ -32,6 +32,10 @@ public final class SkillBookRegistry {
     public static final DeferredItem<SkillScrollItem> SCROLL = ITEMS.register("skill_scroll",
             () -> new SkillScrollItem(new Item.Properties().stacksTo(16)));
 
+    /** Truc Nang Cap Ky Nang: dung de +1 cap mot ky nang (Cho Thuong Khach bac 4+, roi hiem o Bi Canh cap cao). */
+    public static final DeferredItem<SkillUpgradeScrollItem> UPGRADE_SCROLL = ITEMS.register("skill_upgrade_scroll",
+            () -> new SkillUpgradeScrollItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE)));
+
     public static ItemStack stack(BookSkill s) {
         ItemStack st = new ItemStack(SCROLL.get());
         st.set(SKILL_ID.get(), s.id);
@@ -56,6 +60,7 @@ public final class SkillBookRegistry {
         ITEMS.register(bus);
         COMPONENTS.register(bus);
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
+            if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) { e.accept(UPGRADE_SCROLL.get()); }
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) for (BookSkill s : BookSkill.values()) e.accept(stack(s));
         });
     }

@@ -24,6 +24,6 @@ public final class EndgameRenderers {
         e.registerEntityRenderer(EndgameRegistry.BOSS.get(),
                 c -> HuRenderers.glow(new GeoEntityRenderer<NguyenThuyTichDiet>(c, new DefaultedEntityGeoModel<>(boss))));
         e.registerEntityRenderer(EndgameRegistry.DA_KHUYET.get(),
-                c -> HuRenderers.glow(new GeoEntityRenderer<DaKhuyet>(c, new DefaultedEntityGeoModel<>(dak))));
+                c -> HuRenderers.glow(new com.hukhong.client.boss.PhasedBossRenderer<DaKhuyet>(c, dak.getPath())));
     }
 }

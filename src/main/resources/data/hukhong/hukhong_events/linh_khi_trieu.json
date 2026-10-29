@@ -2,5 +2,5 @@
   "type": "linh_khi_trieu", "lane": "world",
   "recurrence": {"type": "every", "days": 1}, "start_offset": 12000, "duration": 7200,
   "location": "nearest_city", "level": [1, 100], "rewards": "hukhong.cal.reward.linh_khi_trieu",
-  "lore": {"faction": "THANH"}
+  "lore": {"faction": "THANH", "rumor": "hukhong.cal.rumor.linh_khi_trieu"}
 }

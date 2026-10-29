@@ -175,6 +175,38 @@ public final class SkillBookService {
         }
     }
 
+    // ------------------------------------------------------------------ Trục Nâng Cấp Kỹ Năng
+    /** Kỹ năng người chơi đang có và chưa đạt cấp tối đa (kỹ năng nền theo đạo đã tu + bí tịch đã học). */
+    public static java.util.List<String> scrollCandidates(ServerPlayer p) {
+        CultivationData cd = p.getData(ModAttachments.CULTIVATION);
+        SkillBookData d = data(p);
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (Skill s : Skill.values()) if (cd.paths().contains(s.path) && d.level(s.icon) < SkillBookMath.MAX_LEVEL) out.add(s.icon);
+        for (BookSkill b : BookSkill.values()) if (d.learned(b.id) && d.level(b.id) < SkillBookMath.MAX_LEVEL) out.add(b.id);
+        return out;
+    }
+
+    /** Dùng 1 Trục Nâng Cấp (trong túi) để +1 cấp kỹ năng id. Bỏ qua trần cấp tu luyện, trần tuyệt đối {@link SkillBookMath#MAX_LEVEL}. */
+    public static boolean applyScroll(ServerPlayer p, String id) {
+        CultivationData cd = p.getData(ModAttachments.CULTIVATION);
+        SkillBookData d = data(p);
+        if (id == null || !known(d, cd.paths(), id)) return false;
+        if (count(p, s -> s.is(SkillBookRegistry.UPGRADE_SCROLL.get())) < 1) {
+            msg(p, "hukhong.skillbook.upgrade_scroll.missing", "Không có Trục Nâng Cấp Kỹ Năng.");
+            return false;
+        }
+        int lv = d.level(id);
+        if (lv >= SkillBookMath.MAX_LEVEL) {
+            msg(p, "hukhong.skillbook.msg.max", "Kỹ năng đã đạt cấp tối đa.");
+            return false;
+        }
+        take(p, s -> s.is(SkillBookRegistry.UPGRADE_SCROLL.get()), 1);
+        set(p, d.withLevel(id, lv + 1));
+        p.level().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 1.6f);
+        msg(p, "hukhong.skillbook.msg.upgraded", "%s lên cấp %s.", nameOf(id), lv + 1);
+        return true;
+    }
+
     // ------------------------------------------------------------------ sự kiện
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {

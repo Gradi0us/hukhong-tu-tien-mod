@@ -37,6 +37,8 @@ public final class HuHoa {
      * Tuoi the gioi: +1 cap moi {@link #DAYS_PER_LEVEL} ngay game ke tu luc tao the gioi (gameTime/24000), toi da +{@link #AGE_BONUS_CAP}.
      */
     public static int levelFor(ServerLevelAccessor lvl, BlockPos pos, net.minecraft.util.RandomSource r) {
+        int zl = com.hukhong.zone.ZoneData.levelAt(pos.getX(), pos.getZ()); // vùng xâm thực đặt sẵn: cấp theo bán kính
+        if (zl > 0) return Math.max(1, Math.min(com.hukhong.zone.ZoneMath.MAX_LEVEL, zl + r.nextInt(3) - 1));
         BlockPos sp = lvl.getLevel().getSharedSpawnPos();
         double dx = pos.getX() - sp.getX(), dz = pos.getZ() - sp.getZ();
         return levelFor(Math.sqrt(dx * dx + dz * dz), ageBonus(lvl.getLevel().getGameTime() / 24000L), r.nextInt(3) - 1);

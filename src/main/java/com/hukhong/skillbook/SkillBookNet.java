@@ -18,6 +18,10 @@ public final class SkillBookNet {
         r.playToServer(AssignSkillPayload.TYPE, AssignSkillPayload.STREAM_CODEC, (pl, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> SkillBookService.assign(sp, pl.path(), pl.slot(), pl.id()));
         });
+        r.playToClient(OpenScrollPayload.TYPE, OpenScrollPayload.STREAM_CODEC, OpenScrollPayload::handle);
+        r.playToServer(ApplyScrollPayload.TYPE, ApplyScrollPayload.STREAM_CODEC, (pl, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> SkillBookService.applyScroll(sp, pl.id()));
+        });
         r.playToServer(UpgradeSkillPayload.TYPE, UpgradeSkillPayload.STREAM_CODEC, (pl, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> SkillBookService.upgrade(sp, pl.id(), pl.mode()));
         });

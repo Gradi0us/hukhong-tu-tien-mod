@@ -27,7 +27,7 @@ public final class CityMarket {
 
     private static final Logger LOG = LogUtils.getLogger();
     public static final String TAG = "hukhong_trader";
-    private static final String[] KEYS = {"herb", "pill", "weapon", "armor", "soul", "general", "scroll"};
+    private static final String[] KEYS = com.hukhong.currency.ShopCatalog.KEYS;
 
     /** Sau khi dat xong cau truc: xoa thuong nhan cu trong vung roi sinh lai. */
     public static void populate(StructurePlacer.Placed p, CityDef d) { populate(p, d, 0); }
@@ -120,7 +120,7 @@ public final class CityMarket {
         return pos;
     }
 
-    private static void spawn(ServerLevel l, BlockPos pos, int kind, CityDef d) {
+    static void spawn(ServerLevel l, BlockPos pos, int kind, CityDef d) {
         WanderingTrader t = EntityType.WANDERING_TRADER.create(l);
         if (t == null) return;
         t.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, l.random.nextFloat() * 360f, 0f);

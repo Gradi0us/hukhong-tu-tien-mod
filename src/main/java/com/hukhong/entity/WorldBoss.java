@@ -56,7 +56,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * windup -&gt; telegraph -&gt; fire, co gian theo so nguoi choi, bossbar, nhac, san dau truong BossArena (rao chan, giu dia hinh tu nhien).
  * Lop con chi khai bao bo ky nang (skillCount / windup / anim / cooldown / fire).
  */
-public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
+public abstract class WorldBoss extends Monster implements GeoEntity, HuMob, com.hukhong.boss.phase.PhasedBoss {
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(WorldBoss.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(WorldBoss.class, EntityDataSerializers.INT);
     private static final ResourceLocation HP_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "wboss_players_hp");
@@ -67,6 +67,7 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
     private final ServerBossEvent bar;
     protected int skillCd = 80, windup, pending = -1, last = -1, appliedPlayers = 1;
     protected Vec3 pendingAt = Vec3.ZERO;
+    private final com.hukhong.boss.phase.BossPhaseDirector director = new com.hukhong.boss.phase.BossPhaseDirector(this);
 
     protected WorldBoss(EntityType<? extends Monster> t, Level l, BossEvent.BossBarColor color) {
         super(t, l);
@@ -124,6 +125,29 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
 
     public int phase() { return entityData.get(PHASE); }
 
+    // ------------------------------------------------------------ PhasedBoss (3 pha: cutscene + biến đổi + chiêu mới)
+    @Override public String phaseId() { return id(); }
+    @Override public com.hukhong.boss.phase.BossPhaseDirector director() { return director; }
+    @Override public int currentPhase() { return phase(); }
+    @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
+    @Override public void applyPhase(ServerLevel sl, int ph) { applyPhaseEffects(ph); }
+    @Override public boolean idleForMove() { return pending < 0; }
+    @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; }
+    @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "phase" : "skill_b"); }
+    @Override public float moveDamage(double mult) { return skillDmg(mult); }
+
+    @Override public boolean isImmobile() { return super.isImmobile() || (director != null && director.frozen()); }
+
+    @Override public boolean hurt(DamageSource src, float amt) {
+        if (director != null && director.invulnerable() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+        return super.hurt(src, amt);
+    }
+
+    @Override public void tick() {
+        super.tick();
+        if (level() instanceof ServerLevel sl && isAlive()) director.tick(sl);
+    }
+
     @Override public int huLevel() { return entityData.get(LEVEL); }
     @Override public void setHuLevel(int level) { entityData.set(LEVEL, Math.max(1, level)); }
     @Override public double huWeight() { return 30.0; }
@@ -173,7 +197,7 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("WbPhase")) entityData.set(PHASE, Math.max(1, Math.min(2, tag.getInt("WbPhase"))));
+        if (tag.contains("WbPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("WbPhase"))));
         if (tag.contains(HuHoa.TAG_LEVEL)) entityData.set(LEVEL, tag.getInt(HuHoa.TAG_LEVEL));
         bar.setName(BossLevel.tag(Component.translatable(getType().getDescriptionId()), huLevel()));
         applyPhaseEffects(phase());
@@ -183,6 +207,7 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
         super.aiStep();
         if (level().isClientSide) {
             HuHoa.particles(this);
+            com.hukhong.boss.phase.PhaseClientFx.aura(this, this);
             if (phase() >= 2 && tickCount % 2 == 0)
                 level().addParticle(ModParticles.HU_KHONG.get(), getRandomX(1.0), getRandomY(), getRandomZ(1.0), 0, 0.08, 0);
         }
@@ -195,9 +220,6 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
         bar.setProgress(getHealth() / getMaxHealth());
         if (tickCount % 100 == 1) rescale(sl);
 
-        int ph = getHealth() / getMaxHealth() > 0.5f ? 1 : 2;
-        if (ph > phase()) enterPhase(sl, ph);
-
         LivingEntity t = getTarget();
         if (pending >= 0) {
             getNavigation().stop();
@@ -208,7 +230,7 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
                 pending = -1;
                 LivingEntity tg = t != null && t.isAlive() ? t : null;
                 fire(sl, sk, tg);
-                skillCd = BossBuff.cd(cooldown(phase()));
+                skillCd = (int) Math.round(BossBuff.cd(cooldown(phase())) * (phase() >= 3 ? 0.8 : 1.0));
             }
             return;
         }
@@ -294,25 +316,12 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob {
         sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 1, getZ(), 40, 2, 1, 2, 0.05);
     }
 
-    private void enterPhase(ServerLevel sl, int ph) {
-        entityData.set(PHASE, ph);
-        applyPhaseEffects(ph);
-        triggerAnim("skill", "phase");
-        sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1, getZ(), 1, 0, 0, 0, 0);
-        sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 1, getZ(), 80, 2.5, 1.5, 2.5, 0.1);
-        playSound(SoundEvents.ENDER_DRAGON_GROWL, 3.0f, 0.8f);
-        for (ServerPlayer p : sl.players())
-            if (p.distanceToSqr(this) < 80 * 80) p.displayClientMessage(Component.translatable("hukhong.boss.phase", ph), true);
-        pending = -1;
-        skillCd = 40;
-    }
-
     private void applyPhaseEffects(int ph) {
-        bar.setColor(ph == 1 ? bar.getColor() : BossEvent.BossBarColor.RED);
+        bar.setColor(ph == 1 ? bar.getColor() : ph == 2 ? BossEvent.BossBarColor.RED : BossEvent.BossBarColor.PURPLE);
         AttributeInstance spd = getAttribute(Attributes.MOVEMENT_SPEED);
         if (spd != null) {
             spd.removeModifier(SPD_MOD);
-            if (ph >= 2) spd.addPermanentModifier(new AttributeModifier(SPD_MOD, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+            if (ph >= 2) spd.addPermanentModifier(new AttributeModifier(SPD_MOD, ph >= 3 ? 0.4 : 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
         }
     }
 

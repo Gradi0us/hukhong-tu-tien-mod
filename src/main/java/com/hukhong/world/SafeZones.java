@@ -44,6 +44,9 @@ public final class SafeZones {
             BlockPos c = SectEvents.site(l, d);
             if (inBox(p.getX(), p.getZ(), c.getX(), c.getZ(), SectBuilder.HALF)) return true;
         }
+        for (BlockPos m : com.hukhong.city.MarketDistricts.get(l).allBuilt().values()) {
+            if (inBox(p.getX(), p.getZ(), m.getX(), m.getZ(), com.hukhong.city.MarketDistrict.HALF)) return true;
+        }
         for (BlockPos h : GuildHalls.get(l).all().values()) {
             if (inBox(p.getX(), p.getZ(), h.getX(), h.getZ(), GUILD_HALF)) return true;
         }

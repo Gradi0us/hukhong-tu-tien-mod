@@ -2,6 +2,7 @@ package com.hukhong.currency;
 
 import com.hukhong.HuKhong;
 import com.hukhong.city.CityDef;
+import com.hukhong.market.MarketRep;
 import com.hukhong.city.CityService;
 import com.hukhong.city.TradeDistrict;
 import com.hukhong.guild.GuildMath;
@@ -44,12 +45,19 @@ public final class ShopService {
         return ow == null ? null : CityService.nearest(ow, e.getX(), e.getZ(), 80);
     }
 
-    private static int rank(ServerPlayer p) { return GuildMath.clampRank(p.getData(GuildRegistry.DATA.get()).rank()); }
+    /** Bac Uy Danh Cho (0..4) - thay bac Hiep Hoi: giam gia + khoa hang theo Tu Tinh da tieu o cho. */
+    private static int rank(ServerPlayer p) { return MarketRep.tier(p); }
+
+    /** Ngay Lich hien tai (Quay Dac Biet xoay vong). */
+    public static long lichDay(ServerLevel l) {
+        ServerLevel ow = l.getServer().getLevel(Level.OVERWORLD);
+        return com.hukhong.world.calendar.LichMath.day((ow == null ? l : ow).getGameTime());
+    }
 
     private static List<ShopMenu.Entry> buys(ServerPlayer p, Entity t, int kind) {
         List<ShopMenu.Entry> out = new ArrayList<>();
-        for (ShopCatalog.Offer o : ShopCatalog.buys(p.serverLevel().getSeed(), kind, cityOf(p.serverLevel(), t)))
-            out.add(new ShopMenu.Entry(o.stack(), GuildMath.discounted(o.price(), rank(p)), o.minRank()));
+        for (ShopCatalog.Offer o : ShopCatalog.buys(p.serverLevel().getSeed(), kind, cityOf(p.serverLevel(), t), lichDay(p.serverLevel())))
+            out.add(new ShopMenu.Entry(o.stack(), MarketRep.discounted(o.price(), rank(p)), o.minRank()));
         return out;
     }
 
@@ -62,7 +70,7 @@ public final class ShopService {
     public static void open(ServerPlayer sp, Entity trader) {
         int kind = ShopCatalog.kindOf(trader);
         if (kind < 0) return;
-        var snap = new ShopMenu.Snapshot(trader.getId(), kind, rank(sp), buys(sp, trader, kind), sells(kind));
+        var snap = new ShopMenu.Snapshot(trader.getId(), kind, rank(sp), buys(sp, trader, kind), sells(kind), MarketRep.discountPct(rank(sp)), true);
         sp.openMenu(new SimpleMenuProvider((id, inv, pl) -> new ShopMenu(id, inv, snap), ShopCatalog.kindName(kind)), snap::write);
     }
 
@@ -73,11 +81,12 @@ public final class ShopService {
             List<ShopMenu.Entry> l = buys(sp, trader, kind);
             if (id < 0 || id >= l.size()) return false;
             ShopMenu.Entry e = l.get(id);
-            if (rank(sp) < e.minRank()) { sp.displayClientMessage(Component.translatable("hukhong.shop.locked", rankName(e.minRank())), true); return false; }
+            if (rank(sp) < e.minRank()) { sp.displayClientMessage(Component.translatable("hukhong.shop.locked", Component.translatable(MarketRep.tierKey(e.minRank()))), true); return false; }
             if (!Wallet.pay(sp, e.price())) { sp.displayClientMessage(Component.translatable("hukhong.shop.no_money"), true); return false; }
             ItemStack give = e.stack().copy();
             if (give.is(com.hukhong.item.ModItems.HON_TINH.get())) Wallet.grantHonTinh(sp, give.getCount()); // Hon Tinh = tien trong vi
             else if (!sp.getInventory().add(give)) sp.drop(give, false);
+            MarketRep.addSpent(sp, e.price());
             sp.displayClientMessage(Component.translatable("hukhong.shop.bought", e.stack().getHoverName(), TuTinhText.of(e.price())), true);
             return true;
         }

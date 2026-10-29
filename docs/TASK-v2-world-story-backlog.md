@@ -10,7 +10,7 @@
 ĐỢT 2  T1     Ấn Hồn Đài / Khu Chợ / Uy Danh  ⬜
 ĐỢT 3  T2     Hồn Tinh vào ví + giá nâng cấp  ✅
 ĐỢT 4  T3     Vùng xâm thực + 8 Hư Vương      ⬜
-ĐỢT 4b B      Cutscene + biến hình + chiêu mới ⬜
+ĐỢT 4b B      Cutscene + biến hình + chiêu mới 🔄 (khung xong; còn 8 Hư Vương mới, boss Bí Cảnh, Tâm Chiến, ảnh chụp)
 ĐỢT 5  S1+W1  Sự kiện có phe, tập kích, PvP   ⬜
 ĐỢT 6  S2/S3  Cung truyện 7 thành + Siêu Độ   ⬜
 ĐỢT 7  W2–W8  Phần còn lại PLAN-v1            ⬜
@@ -54,14 +54,14 @@
 
 ## Đợt 4b — Khung boss: cutscene chuyển phase + biến đổi ngoại hình + chiêu mới
 Thiết kế gốc: PLAN-v1-vfx-boss-mob-scaling §5 (B1–B7). Hiện chuyển phase chỉ hiện chữ "Phase 2" + 1 animation (`WorldBoss.enterPhase()`, `HuVuong.enterPhase()`). **Làm khung trước khi làm 8 Hư Vương** (Đợt 4 dùng khung này).
-- [ ] `BossPhaseDirector`: Đánh → Chuyển phase (boss bất tử, khóa AI 3–6s) → Đánh; cấu hình JSON mỗi boss: ngưỡng HP, kịch bản cutscene, bộ chiêu, biến đổi ngoại hình, biến đổi đấu trường
-- [ ] **Cutscene (client)**: camera keyframe (vị trí/góc/FOV, nội suy mượt), thanh đen điện ảnh, **phụ đề** (không lồng tiếng — người chơi đã chốt), bấm phím bỏ qua; người trong 60 block xem, mỗi người tự bỏ qua; server không khóa người chơi
-- [ ] **Biến đổi ngoại hình** mỗi phase: đổi texture + glowmask, bật/tắt xương phụ kiện (sừng, cánh, giáp vỡ, mặt thứ 2/3), to ra (scale 1.0 → 1.25 → 1.5), hào quang / hạt riêng, đổi nhạc lớp
-- [ ] **Chiêu mới mỗi phase**: phase 2 thêm 2 chiêu, phase 3 thêm 1 chiêu tối thượng (có vòng cảnh báo); giữ chiêu cũ nhưng nhanh hơn
-- [ ] Biến đổi đấu trường: trời tím / mưa máu / sàn nứt / cột Hư Không mọc
-- [ ] Áp dụng: **8 Hư Vương** (Thiên Diện đổi "mặt" mỗi phase), **4 Chấp Hành Giả**, **Dạ Khuyết** (+ cutscene Tâm Chiến của kết thúc Siêu Độ), **3 Yêu Vương** (Sa Hạt / Băng Nhân / Độc Mẫu), boss Bí Cảnh
-- [ ] Cutscene giải phóng vùng: trời tím tan, ánh sáng trở lại
-- [ ] GameTest: boss qua đủ phase, đúng chiêu mới từng phase, bất tử trong lúc chuyển; ảnh chụp từng phase
+- [x] `BossPhaseDirector` (package `boss/phase`, cấu hình trong code `BossPhases`, chưa JSON): Đánh → Chuyển phase (boss bất tử, khóa AI 3–6s) → Đánh; cấu hình JSON mỗi boss: ngưỡng HP, kịch bản cutscene, bộ chiêu, biến đổi ngoại hình, biến đổi đấu trường
+- [x] **Cutscene (client)** (`client/boss/CutsceneClient`, chưa kiểm bằng mắt): camera keyframe (vị trí/góc/FOV, nội suy mượt), thanh đen điện ảnh, **phụ đề** (không lồng tiếng — người chơi đã chốt), bấm phím bỏ qua; người trong 60 block xem, mỗi người tự bỏ qua; server không khóa người chơi
+- [x] **Biến đổi ngoại hình** (texture `_p2/_p3` tint + xương `ph2_spikes/ph3_halo` qua `tools/gen_boss_phase.py`; nhạc lớp dùng track có sẵn, chưa có stem riêng) mỗi phase: đổi texture + glowmask, bật/tắt xương phụ kiện (sừng, cánh, giáp vỡ, mặt thứ 2/3), to ra (scale 1.0 → 1.25 → 1.5), hào quang / hạt riêng, đổi nhạc lớp
+- [x] **Chiêu mới mỗi phase** (`PhaseMoves`: 6 hình dùng chung, tham số hoá): phase 2 thêm 2 chiêu, phase 3 thêm 1 chiêu tối thượng (có vòng cảnh báo); giữ chiêu cũ nhưng nhanh hơn
+- [x] Biến đổi đấu trường (`PhaseArena`): trời tím / mưa máu / sàn nứt / cột Hư Không mọc
+- [ ] 🔄 Áp dụng (xong: Hư Vương mẫu, 3 Yêu Vương, 4 CHG, Dạ Khuyết; CHƯA: 8 Hư Vương mới, Tâm Chiến Siêu Độ, boss Bí Cảnh): **8 Hư Vương** (Thiên Diện đổi "mặt" mỗi phase), **4 Chấp Hành Giả**, **Dạ Khuyết** (+ cutscene Tâm Chiến của kết thúc Siêu Độ), **3 Yêu Vương** (Sa Hạt / Băng Nhân / Độc Mẫu), boss Bí Cảnh
+- [x] Cutscene giải phóng vùng (`LiberationCutscene`): trời tím tan, ánh sáng trở lại
+- [ ] 🔄 GameTest (đã viết `BossPhaseGameTests`, chưa chạy; ảnh chụp từng phase chưa): boss qua đủ phase, đúng chiêu mới từng phase, bất tử trong lúc chuyển; ảnh chụp từng phase
 - Fermi: khung ≈ 1 lượt; áp cho ~17 boss ≈ 3 lượt → ≈ 1M token
 
 ## Đợt 5 — S1 + W1: Sự kiện có phe + tập kích + PvP

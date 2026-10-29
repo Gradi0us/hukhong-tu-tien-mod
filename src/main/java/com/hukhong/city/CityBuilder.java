@@ -124,7 +124,7 @@ public final class CityBuilder {
                 c.getY() + 1, c.getX(), c.getZ()));
         if (d.category().equals("city_ruined")) RuinGuard.spawnBoss(l, d, c.above());
         else {
-            CityMarket.populate(l, d, c.above(), java.util.List.of(), AltarShrine.procT(d.category()));
+            MarketDistricts.get(l).setPlazaT(d.id(), AltarShrine.procT(d.category())); // khong con thuong nhan o An Hon Dai: Khu Cho dung lazily (MarketDistrict)
             com.hukhong.guild.GuildBuilder.ensure(l, d); // Hiep Hoi Mao Hiem Gia
         }
         return c;
@@ -141,15 +141,19 @@ public final class CityBuilder {
         BlockPos fallback = p.origin().offset(p.st().sx / 2, 1, p.st().sz / 2);
         boolean marked = p.st().marker("altar") != null;
         BlockPos altar = p.marker("altar", fallback);
-        int shrineT = AltarShrine.build(l, altar, marked ? 7 : 9, false); // lat 3x3 neu khong du cho; marker: gioi han nho hon, tranh de thiet ke san
+        // Quang Truong An Hon lon (R toi da 18). Co marker altar: neu chat thi vet sach vung R=12 (quyet dinh: altar la tam gameplay). Khong marker: thu nho dan theo cho trong.
+        int shrineT = AltarShrine.build(l, altar, AltarShrine.MAX_R, false, marked);
+        MarketDistricts.get(l).setPlazaT(d.id(), shrineT);
+        boolean grand = shrineT >= AltarShrine.MIN_GRAND + 3;
         set(l, altar.getX(), altar.getY(), altar.getZ(), ModBlocks.AN_HON_DAI.get());
         for (int h = 1; h <= 5; h++) {
             BlockPos up = altar.above(h);
             if (l.getBlockState(up).isAir()) set(l, up.getX(), up.getY(), up.getZ(), Blocks.END_ROD);
         }
-        BlockPos board = p.marker("board", altar.offset(3, 0, -2));
+        BlockPos board = p.marker("board", altar.offset(grand ? 2 : 3, 0, grand ? -1 : -2));
+        if (grand && AltarShrine.oct(board.getX() - altar.getX(), board.getZ() - altar.getZ()) <= shrineT) board = altar.offset(2, 0, -1);
         set(l, board.getX(), board.getY(), board.getZ(), com.hukhong.society.SocietyRegistry.THANH_BANG.get());
-        if (!marked) sign(l, altar.getX(), altar.getY(), altar.getZ() + 3, 0, "hukhong.city.altar_sign");
+        if (!marked) sign(l, altar.getX(), altar.getY(), altar.getZ() + (grand ? 2 : 3), 0, "hukhong.city.altar_sign");
         List<BlockPos> npc = p.markers("npc");
         if (npc.isEmpty()) {
             npc = new ArrayList<>();
@@ -161,7 +165,6 @@ public final class CityBuilder {
                 altar.getY(), altar.getX(), altar.getZ()));
         if (d.category().equals("city_ruined")) { RuinGuard.spawnBoss(l, d, altar); return; }
         for (BlockPos np : npc) spawnVillager(l, np.getX(), np.getY(), np.getZ());
-        CityMarket.populate(p, d, shrineT);
         com.hukhong.guild.GuildBuilder.placeImported(p, d); // marker hukhong:guild; khong co thi GuildEvents dung lazy
     }
 
@@ -185,6 +188,7 @@ public final class CityBuilder {
     /** Dung thanh tai site (x,z); tra tam (y = mat nen Ấn Hồn Đài). tier quyet dinh do cao tuong. */
     public static BlockPos buildProcedural(ServerLevel l, BlockPos site, String nameKey, Tier tier, String cat) {
         final boolean mountain = cat.equals("city_mountain"), port = cat.equals("port"), ruined = cat.equals("city_ruined");
+        final boolean bigPlaza = AltarShrine.procR(cat) >= AltarShrine.MIN_GRAND;
         int cx = site.getX(), cz = site.getZ();
         int y0 = prepare(l, cx, cz, HALF, 26);
         int ex = tier.ordinal();
@@ -295,7 +299,8 @@ public final class CityBuilder {
         // 4) nha: moi goc phan tu 3 nha (A,B,C), mountain: nha nho tang 2, port: bo phia nam (hai cang)
         for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) {
             if (port && sz > 0) continue;
-            int[][] sites = mountain ? new int[][]{{11, 11, 0}} : new int[][]{{9, 9, 0}, {14, 9, 1}, {9, 14, 2}};
+            // Quang truong An Hon lon (R=14, vet T=17) chiem tam thanh: chi con 1 nha o moi goc phan tu, nam ngoai vet
+            int[][] sites = mountain ? new int[][]{{11, 11, 0}} : bigPlaza ? new int[][]{{13, 14, 0}} : new int[][]{{9, 9, 0}, {14, 9, 1}, {9, 14, 2}};
             for (int[] st : sites) {
                 int hx = cx + sx * st[0], hz = cz + sz * st[1];
                 int hs = ProcKit.hash(hx, 0, hz, salt);
@@ -349,19 +354,19 @@ public final class CityBuilder {
         sign(l, cx, y0 + 1, cz - 23, 8, nameKey);
         sign(l, cx + 23, y0 + 1, cz, 12, nameKey);
         sign(l, cx - 23, y0 + 1, cz, 4, nameKey);
-        sign(l, cx, plazaY + 1, cz + 3, 0, "hukhong.city.altar_sign");
-        set(l, cx + 3, plazaY + 1, cz - 2, com.hukhong.society.SocietyRegistry.THANH_BANG.get());
+        sign(l, cx, plazaY + 1, cz + (bigPlaza ? 2 : 3), 0, "hukhong.city.altar_sign");
+        set(l, cx + (bigPlaza ? 2 : 3), plazaY + 1, cz - (bigPlaza ? 1 : 2), com.hukhong.society.SocietyRegistry.THANH_BANG.get());
 
         // 9) hoang phe
         if (ruined) ProcKit.decay(l, cx, cz, y0, HALF + 1, 26, salt);
 
         // 10) dan lang
-        int[][] vp = {{3, 3}, {-3, 3}, {3, -3}};
-        for (int[] p : vp) spawnVillager(l, cx + p[0], plazaY + 1, cz + p[1]);
+        int[][] vp = bigPlaza ? new int[][]{{6, 6}, {-6, 6}, {6, -6}} : new int[][]{{3, 3}, {-3, 3}, {3, -3}};
+        for (int[] p : vp) spawnVillager(l, cx + p[0], bigPlaza ? plazaY - 1 : plazaY + 1, cz + p[1]); // bigPlaza: nen thap cua quang truong lom 2 o
         return new BlockPos(cx, plazaY, cz);
     }
 
-    private static void sign(ServerLevel l, int x, int y, int z, int rot, String key) {
+    static void sign(ServerLevel l, int x, int y, int z, int rot, String key) {
         BlockPos p = new BlockPos(x, y, z);
         l.setBlock(p, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, rot), FLAGS);
         if (l.getBlockEntity(p) instanceof SignBlockEntity s) {

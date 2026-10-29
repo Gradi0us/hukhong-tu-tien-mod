@@ -120,6 +120,9 @@ public final class TravelService {
         } else if (id.startsWith("g:")) {
             pos = GuildHalls.get(ow).get(id.substring(2));
             if (pos != null) yHint = pos.getY();
+        } else if (id.startsWith("m:")) { // Khu Cho: tam = san khu cho
+            pos = com.hukhong.city.MarketDistricts.get(ow).built(id.substring(2));
+            if (pos != null) yHint = pos.getY();
         } else return "hukhong.travel.err_unknown";
         if (pos == null) return "hukhong.travel.err_unbuilt";
         double dx = p.getX() - pos.getX(), dz = p.getZ() - pos.getZ();
@@ -232,6 +235,8 @@ public final class TravelService {
         }
         for (Map.Entry<String, BlockPos> g : GuildHalls.get(ow).all().entrySet())
             if (near(p, g.getValue(), r2)) nd = discover(p, nd, "g:" + g.getKey());
+        for (Map.Entry<String, BlockPos> m : com.hukhong.city.MarketDistricts.get(ow).allBuilt().entrySet())
+            if (near(p, m.getValue(), r2)) nd = discover(p, nd, "m:" + m.getKey());
         if (nd != d) p.setData(TravelRegistry.TRAVEL.get(), nd);
     }
 

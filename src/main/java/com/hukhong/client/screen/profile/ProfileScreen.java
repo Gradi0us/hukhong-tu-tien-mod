@@ -225,6 +225,18 @@ public class ProfileScreen extends Screen {
         g.drawString(font, t("hukhong.profile.hontinh", "Hồn Tinh: %s",
                 com.hukhong.currency.TuTinhText.honTinh(com.hukhong.currency.Wallet.honTinh(minecraft.player))), lx, y, 0xFFC9A0F0);
         y += 11;
+        { // Uy Danh Cho: bac + thanh tien do (attachment dong bo, khong doc CULTIVATION)
+            long spent = com.hukhong.market.MarketRep.spent(minecraft.player);
+            int mt = com.hukhong.market.MarketRep.tierOf(spent);
+            g.drawString(font, Component.translatable("hukhong.profile.market_rep", Component.translatable(com.hukhong.market.MarketRep.tierKey(mt))), lx, y, 0xFFF0C060);
+            y += 11;
+            int bw = 110, bx = lx;
+            g.fill(bx, y, bx + bw, y + 4, 0xFF22222E);
+            g.fill(bx, y, bx + (int) (bw * com.hukhong.market.MarketRep.progress(spent)), y + 4, 0xFFD8A83A);
+            long nx = com.hukhong.market.MarketRep.toNext(spent);
+            if (nx > 0) g.drawString(font, Component.translatable("hukhong.profile.market_next", com.hukhong.currency.TuTinhText.of(nx)), bx + bw + 6, y - 2, 0xFF999999);
+            y += 8;
+        }
         int leftEnd = y;
 
         // cột phải: bảng chỉ số

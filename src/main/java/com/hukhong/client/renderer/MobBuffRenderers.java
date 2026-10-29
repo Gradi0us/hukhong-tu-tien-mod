@@ -24,9 +24,9 @@ public final class MobBuffRenderers {
         geo(e, V3Entities.HU_GIAP.get(), "hu_giap");
         geo(e, V3Entities.HU_TRUNG.get(), "hu_trung");
         geo(e, V3Entities.HU_TRIEU_SU.get(), "hu_trieu_su");
-        geo(e, V3Entities.SA_HAT_VUONG.get(), "sa_hat_vuong");
-        geo(e, V3Entities.BANG_NHAN.get(), "bang_nhan");
-        geo(e, V3Entities.DOC_MAU.get(), "doc_mau");
+        phased(e, V3Entities.SA_HAT_VUONG.get(), "sa_hat_vuong");
+        phased(e, V3Entities.BANG_NHAN.get(), "bang_nhan");
+        phased(e, V3Entities.DOC_MAU.get(), "doc_mau");
         e.registerEntityRenderer(V3Entities.POISON_SPIT.get(), SpitRenderer::new);
     }
 
@@ -34,6 +34,12 @@ public final class MobBuffRenderers {
     private static void geo(EntityRenderersEvent.RegisterRenderers e, net.minecraft.world.entity.EntityType type, String id) {
         e.registerEntityRenderer(type, c -> HuRenderers.glow(new GeoEntityRenderer(c,
                 new DefaultedEntityGeoModel(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, id)))));
+    }
+
+    /** Boss 3 pha: doi texture / xuong theo pha (PhasedBossRenderer). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void phased(EntityRenderersEvent.RegisterRenderers e, net.minecraft.world.entity.EntityType type, String id) {
+        e.registerEntityRenderer(type, c -> HuRenderers.glow(new com.hukhong.client.boss.PhasedBossRenderer(c, id)));
     }
 
     /** Khong ve gi (hat nuoc bot do server gui). */

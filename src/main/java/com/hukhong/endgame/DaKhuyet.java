@@ -40,11 +40,14 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Dạ Khuyết (Bước 25): xuất hiện ở pha 3 của Nguyên Thủy Tịch Diệt. "Đêm Khuyết" (mù + yếu diện rộng)
  * và "Dịch Lời" (phiên dịch ý chí Hư Không: hồi máu cho boss chính). Hạ hắn trước thì boss mất nguồn hồi.
  */
-public class DaKhuyet extends Monster implements GeoEntity {
+public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.phase.PhasedBoss {
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> PHASE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(DaKhuyet.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final ServerBossEvent bar = new ServerBossEvent(com.hukhong.entity.BossLevel.tag(Component.translatable("entity.hukhong.da_khuyet"), EndgameKit.BOSS_LEVEL),
             BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.PROGRESS);
     private int skillCd = 80, windup, pending = -1;
+    private final com.hukhong.boss.phase.BossPhaseDirector director = new com.hukhong.boss.phase.BossPhaseDirector(this);
 
     public DaKhuyet(EntityType<? extends Monster> t, Level l) {
         super(t, l);
@@ -60,6 +63,46 @@ public class DaKhuyet extends Monster implements GeoEntity {
                 .add(Attributes.FOLLOW_RANGE, 48);
     }
 
+    @Override protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder b) {
+        super.defineSynchedData(b);
+        b.define(PHASE, 1);
+    }
+
+    @Override public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("DkPhase", phase());
+    }
+
+    @Override public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("DkPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("DkPhase"))));
+    }
+
+    public int phase() { return entityData.get(PHASE); }
+
+    // ------------------------------------------------------------ PhasedBoss (moi pha la mot mat trang khuyet dan)
+    @Override public String phaseId() { return "da_khuyet"; }
+    @Override public com.hukhong.boss.phase.BossPhaseDirector director() { return director; }
+    @Override public int currentPhase() { return phase(); }
+    @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
+    @Override public void applyPhase(ServerLevel sl, int ph) {
+        bar.setColor(ph == 1 ? BossEvent.BossBarColor.BLUE : ph == 2 ? BossEvent.BossBarColor.PURPLE : BossEvent.BossBarColor.RED);
+    }
+    @Override public boolean idleForMove() { return pending < 0; }
+    @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; }
+    @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "skill_b" : "skill_a"); }
+    @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
+
+    @Override public boolean hurt(DamageSource src, float amt) {
+        if (director != null && director.invulnerable() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+        return super.hurt(src, amt);
+    }
+
+    @Override public void aiStep() {
+        super.aiStep();
+        if (level().isClientSide) com.hukhong.boss.phase.PhaseClientFx.aura(this, this);
+    }
+
     @Override protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false));
@@ -72,7 +115,7 @@ public class DaKhuyet extends Monster implements GeoEntity {
     @Override public Component getDisplayName() { return com.hukhong.entity.BossLevel.tag(super.getDisplayName(), EndgameKit.BOSS_LEVEL); }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
-    @Override public boolean isImmobile() { return super.isImmobile() || windup > 0; }
+    @Override public boolean isImmobile() { return super.isImmobile() || windup > 0 || (director != null && director.frozen()); }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bar.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
@@ -96,6 +139,7 @@ public class DaKhuyet extends Monster implements GeoEntity {
     /** isImmobile() (windup > 0) làm LivingEntity.aiStep bỏ qua customServerAiStep => windup phải giảm ở tick(). */
     @Override public void tick() {
         super.tick();
+        if (level() instanceof ServerLevel sl0 && isAlive()) director.tick(sl0);
         if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
     }
 
@@ -105,7 +149,7 @@ public class DaKhuyet extends Monster implements GeoEntity {
         if (--windup <= 0) {
             fire(sl, pending);
             pending = -1;
-            skillCd = com.hukhong.events.BossBuff.cd(110);
+            skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(110) * cdMul());
         }
     }
 
@@ -117,7 +161,7 @@ public class DaKhuyet extends Monster implements GeoEntity {
         if (skillCd > 0) { skillCd--; return; }
         LivingEntity t = getTarget();
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
-        boolean ph2 = getHealth() < getMaxHealth() * 0.5f;  // pha 2: them Mua Manh Khuyet
+        boolean ph2 = phase() >= 2;  // pha 2: them Mua Manh Khuyet
         pending = ph2 && random.nextInt(3) == 0 ? 2 : random.nextInt(3) == 0 ? 1 : 0;
         windup = pending == 0 ? 35 : pending == 1 ? 45 : 40;
         triggerAnim("skill", pending == 1 ? "skill_b" : "skill_a");

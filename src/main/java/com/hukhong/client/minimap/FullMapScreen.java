@@ -106,7 +106,9 @@ public final class FullMapScreen extends Screen {
                 int ix = sx(m.x()), iy = sy(m.z());
                 if (ix < mapX - 8 || iy < mapY - 8 || ix > mapX + mapSize + 8 || iy > mapY + mapSize + 8) continue;
                 boolean hot = m == hover || MinimapState.isWaypoint(m);
-                if (m.kind() == MapMarkersPayload.GUILD) MapIcons.guild(g, ix, iy, hot);
+                if (m.kind() == MapMarkersPayload.MARKET) MapIcons.market(g, ix, iy, hot);
+                else if (m.kind() == MapMarkersPayload.GUILD) MapIcons.guild(g, ix, iy, hot);
+                else if (m.kind() == MapMarkersPayload.ZONE) MapIcons.zone(g, ix, iy, m.built(), hot);
                 else if (m.kind() == MapMarkersPayload.CITY) MapIcons.city(g, ix, iy, m.built(), hot);
                 else MapIcons.sect(g, ix, iy, m.built(), hot);
             }
@@ -138,7 +140,9 @@ public final class FullMapScreen extends Screen {
             int ry = ly + i * rowH;
             boolean over = mx >= lx && mx < lx + listW && my >= ry && my < ry + rowH;
             if (over || MinimapState.isWaypoint(m)) g.fill(lx - 2, ry - 1, lx + listW, ry + rowH - 1, over ? 0x60FFFFFF : 0x40E8C060);
-            if (m.kind() == MapMarkersPayload.GUILD) MapIcons.guild(g, lx + 4, ry + 4, false);
+            if (m.kind() == MapMarkersPayload.MARKET) MapIcons.market(g, lx + 4, ry + 4, false);
+            else if (m.kind() == MapMarkersPayload.GUILD) MapIcons.guild(g, lx + 4, ry + 4, false);
+            else if (m.kind() == MapMarkersPayload.ZONE) MapIcons.zone(g, lx + 4, ry + 4, m.built(), false);
             else if (m.kind() == MapMarkersPayload.CITY) MapIcons.city(g, lx + 4, ry + 4, m.built(), false);
             else MapIcons.sect(g, lx + 4, ry + 4, m.built(), false);
             int dist = (int) Math.sqrt(MinimapState.dist2(m, player.getX(), player.getZ()));

@@ -11,6 +11,7 @@ public final class TravelMath {
         if (id.startsWith("c:")) return "hukhong.city.n." + id.substring(2);
         if (id.startsWith("s:")) return "hukhong.sect.n." + id.substring(2);
         if (id.startsWith("g:")) return "hukhong.guild.hall";
+        if (id.startsWith("m:")) return "hukhong.market.n." + id.substring(2);
         return "hukhong.travel.objective";
     }
 

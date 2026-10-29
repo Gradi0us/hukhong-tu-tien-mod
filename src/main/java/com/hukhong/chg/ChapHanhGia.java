@@ -69,7 +69,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Chấp Hành Giả (Bước 20): 4 biến thể (EntityType chg_1..4), bộ kỹ năng + pha + nội tại pha 3 trong {@link ChgKit}.
  * Giáng lâm: rơi từ trời 60 tick (miễn thương), chạm đất có sét + sóng xung + title. Tag world boss = cấm bay.
  */
-public class ChapHanhGia extends Monster implements GeoEntity {
+public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.phase.PhasedBoss {
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(ChapHanhGia.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DESCEND = SynchedEntityData.defineId(ChapHanhGia.class, EntityDataSerializers.INT);
     private static final ResourceLocation HP_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "chg_hp");
@@ -84,7 +84,8 @@ public class ChapHanhGia extends Monster implements GeoEntity {
     private final int idx;
     private final Def def;
     private final ServerBossEvent bar;
-    private int skillCd = 80, windup, pending = -1, last = -1, invulTicks, appliedPlayers = 1;
+    private int skillCd = 80, windup, pending = -1, last = -1, appliedPlayers = 1;
+    private final com.hukhong.boss.phase.BossPhaseDirector director = new com.hukhong.boss.phase.BossPhaseDirector(this);
     private double landY;
     private Vec3 pendingAt = Vec3.ZERO;
 
@@ -129,13 +130,24 @@ public class ChapHanhGia extends Monster implements GeoEntity {
     public int phase() { return entityData.get(PHASE); }
     public boolean descending() { return entityData.get(DESCEND) > 0; }
 
+    // ------------------------------------------------------------ PhasedBoss (khung pha: cutscene + biến đổi + chiêu mới)
+    @Override public String phaseId() { return "chg_" + idx; }
+    @Override public com.hukhong.boss.phase.BossPhaseDirector director() { return director; }
+    @Override public int currentPhase() { return phase(); }
+    @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
+    @Override public void applyPhase(ServerLevel sl, int ph) { applyPhaseEffects(ph); bar.setName(barName()); }
+    @Override public boolean idleForMove() { return pending < 0 && !descending(); }
+    @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; }
+    @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "phase" : "skill_b"); }
+    @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
+
     @Override public boolean isPushable() { return false; }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
-    @Override public boolean isImmobile() { return super.isImmobile() || descending() || windup > 0; }
+    @Override public boolean isImmobile() { return super.isImmobile() || descending() || windup > 0 || (director != null && director.frozen()); }
 
     @Override public boolean hurt(DamageSource src, float amt) {
-        if ((descending() || invulTicks > 0) && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+        if ((descending() || (director != null && director.invulnerable())) && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
         return super.hurt(src, amt);
     }
 
@@ -181,6 +193,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
 
     @Override public void tick() {
         super.tick();
+        if (level() instanceof ServerLevel sl0 && !descending() && isAlive()) director.tick(sl0);
         if (level() instanceof ServerLevel sl && descending()) descentTick(sl);
         else if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
         else if (level().isClientSide && descending()) {
@@ -244,13 +257,6 @@ public class ChapHanhGia extends Monster implements GeoEntity {
         if (phase() >= 3 && def.passive() == ChgKit.Passive.REGEN && tickCount % 20 == 0)
             heal((float) (getMaxHealth() * ChgKit.REGEN_FRAC_PER_SEC));
 
-        int ph = BossScaling.phase(getHealth() / getMaxHealth());
-        if (ph > phase()) enterPhase(sl, ph);
-        if (invulTicks > 0) {
-            invulTicks--;
-            sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 4, 1.0, 1.5, 1.0, 0.05);
-            return;
-        }
         if (phase() >= 2 && tickCount % 10 == 0)
             sl.sendParticles(phase() == 3 ? ParticleTypes.SOUL_FIRE_FLAME : ModParticles.HU_KHONG.get(),
                     getX(), getY() + getBbHeight() * 0.5, getZ(), 6, 1.2, 1.2, 1.2, 0.02);
@@ -394,22 +400,6 @@ public class ChapHanhGia extends Monster implements GeoEntity {
             if (!p.isSpectator() && p.position().distanceToSqr(c) <= r * r) hit(sl, p, dmg, fx, c);
     }
 
-    private void enterPhase(ServerLevel sl, int ph) {
-        entityData.set(PHASE, ph);
-        applyPhaseEffects(ph);
-        bar.setName(barName());
-        invulTicks = ChgKit.PHASE_INVUL_TICKS;
-        pending = -1;
-        windup = 0;
-        skillCd = ChgKit.PHASE_INVUL_TICKS + 20;
-        triggerAnim("skill", "phase");
-        sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 1, getZ(), 1, 0, 0, 0, 0);
-        sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 1, getZ(), 80, 2.5, 1.5, 2.5, 0.1);
-        playSound(SoundEvents.ENDER_DRAGON_GROWL, 3f, 0.7f);
-        for (ServerPlayer p : sl.players())
-            if (p.distanceToSqr(this) < 80 * 80) p.displayClientMessage(Component.translatable("hukhong.chg.phase", Component.translatable("entity.hukhong.chg_" + idx), ph), true);
-    }
-
     private void applyPhaseEffects(int ph) {
         setModifier(Attributes.MOVEMENT_SPEED, SPD_MOD, ChgKit.speedModifier(ph));
         AttributeInstance arm = getAttribute(Attributes.ARMOR);
@@ -486,6 +476,7 @@ public class ChapHanhGia extends Monster implements GeoEntity {
     // ------------------------------------------------------------ client + GeckoLib
     @Override public void aiStep() {
         super.aiStep();
+        if (level().isClientSide && !descending()) com.hukhong.boss.phase.PhaseClientFx.aura(this, this);
         if (level().isClientSide && !descending() && phase() >= 2 && tickCount % 2 == 0)
             level().addParticle(phase() == 3 ? ParticleTypes.SOUL_FIRE_FLAME : ModParticles.HU_KHONG.get(),
                     getRandomX(1.0), getRandomY(), getRandomZ(1.0), 0, 0.08, 0);

@@ -55,7 +55,9 @@ public class CorruptionData extends SavedData {
         return tag;
     }
 
-    public boolean isCorrupted(int cx, int cz) { return chunks.contains(ChunkPos.asLong(cx, cz)); }
+    public boolean isCorrupted(int cx, int cz) { return chunks.contains(ChunkPos.asLong(cx, cz)) || com.hukhong.zone.ZoneData.coversChunk(cx, cz); }
+    /** Xếp chunk vào hàng đợi hoàn nguyên khối Hư Không (vùng xâm thực đã giải phóng). */
+    public void markRevert(long chunk) { if (reverting.add(chunk)) setDirty(); }
     public boolean isCorrupted(BlockPos p) { return isCorrupted(p.getX() >> 4, p.getZ() >> 4); }
     public int size() { return chunks.size(); }
     public Set<Long> chunks() { return chunks; }
