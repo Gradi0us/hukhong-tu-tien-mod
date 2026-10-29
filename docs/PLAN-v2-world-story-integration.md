@@ -470,3 +470,26 @@ Thứ tự làm đã chốt: **S0 + W0 trước** (phần nối cốt truyện +
 | Sau đó | W1 → … theo §7.2 |
 
 **Fermi:** T1 + T2 + T3 cần khoảng 3–4 lượt agent ≈ 0,8–1M token.
+
+### 12.6 Hư Vương nhiều dạng (bổ sung cho §12.4)
+- **Hiện trạng:** chỉ có 1 model (`geo/entity/hu_vuong.geo.json`, `textures/entity/hu_vuong.png`) và 1 tên cho mọi vùng.
+- **Mới:** 8 dạng Hư Vương theo địa hình của vùng, dựng trên 4 khung xương (mỗi khung một bộ animation; các dạng chung khung thì khác nhau ở texture, phụ kiện trên model và bộ chiêu). Cách này đỡ tốn công làm model.
+
+| Dạng | Khung | Địa hình | Chiêu riêng (2–3) |
+|---|---|---|---|
+| Huyết Ma Hư Vương | Người khổng lồ | Đồng bằng | Huyết trảo, hút máu, triệu Hư Thi |
+| Cốt Long Hư Vương | Thú 4 chân | Núi | Lao húc, đuôi quét, gầm làm choáng |
+| Mộc Yêu Hư Vương | Người khổng lồ | Rừng | Rễ trói, gai mọc, hồi máu từ cây |
+| Băng Phách Hư Vương | Linh thể lơ lửng | Tuyết | Mưa băng, đóng băng vùng, gương băng |
+| Sa Trần Hư Vương | Rắn / trùng | Sa mạc | Chui cát, lốc cát, nuốt |
+| Độc Chướng Hư Vương | Thú 4 chân | Đầm | Phun độc, ao độc, nổ chướng khí |
+| Hải Uyên Hư Vương | Rắn / trùng | Biển, bờ | Sóng dữ, kéo xuống nước, xoáy |
+| **Thiên Diện Hư Vương** | Linh thể lơ lửng (3 mặt) | Vùng lớn nhất (≥ 600 block) | 3 phase, mỗi phase một "mặt" với bộ chiêu khác. Do Sứ Đồ dẫn dắt |
+
+- **Tên riêng ngẫu nhiên:** `[Danh hiệu] + [Tên dạng] + "—" + [Tên riêng]`, ví dụ "Cổ Cốt Long Hư Vương — Mạc Trầm".
+  - Danh hiệu theo kích thước vùng: (không), "Tinh Anh", "Cổ".
+  - Tên riêng chọn từ danh sách khoảng 40 tên, cố định theo seed của vùng, nên mỗi map khác nhau.
+- **Hiện trên bossbar và bản đồ.** Tên lưu trong dữ liệu vùng, nên bản đồ và Lịch K gọi đúng tên ("Giải phóng vùng của Mạc Trầm").
+- **Hiệu ứng riêng mỗi dạng** (dùng lại `FxElem`): màu và hạt riêng, để không lặp lại lỗi "VFX na ná nhau" như Pháp.
+- **Kiểm tra (DoD):** GameTest cho mỗi dạng chạy đủ các chiêu (giống `MobBuffGameTests.bossRunsAllSkills`), cộng ảnh chụp trong game của cả 8 dạng.
+- **Fermi:** 4 khung model + 8 texture + 8 bộ chiêu ≈ 2 lượt agent (1 lượt model / texture, 1 lượt AI chiêu) ≈ 0,5M token. Làm trong đợt **T3**.
