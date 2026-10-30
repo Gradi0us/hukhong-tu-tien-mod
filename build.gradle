@@ -59,7 +59,7 @@ neoForge {
         client {
             client()
             // Fixed local player name for the development client.
-            programArguments.addAll '--username', (project.findProperty('username') ?: 'Minhhoangg').toString()
+            programArguments.addAll '--username', devUserName()
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             gameDirectory = project.file('run')
@@ -221,3 +221,15 @@ idea {
 }
 
 test { useJUnitPlatform() }
+
+// Ten nguoi choi ban dev: doc tu file username.txt (dong "userName = <Ten>"), tu tao neu chua co.
+// Uu tien: -Pusername=... > username.txt > Minhhoangg
+def devUserName() {
+    if (project.findProperty('username')) return project.findProperty('username').toString()
+    def f = project.file('username.txt')
+    if (!f.exists()) f.text = "userName = Minhhoangg
+"
+    def line = f.readLines('UTF-8').find { it.trim().toLowerCase().startsWith('username') && it.contains('=') }
+    def name = line ? line.split('=', 2)[1].trim() : ''
+    return name ? name : 'Minhhoangg'
+}
