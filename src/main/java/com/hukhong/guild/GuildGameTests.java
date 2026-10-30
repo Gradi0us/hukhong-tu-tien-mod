@@ -40,9 +40,9 @@ public final class GuildGameTests {
         if (!GuildService.handleButton(p, 0)) { h.fail("turn-in failed"); return; }
         GuildData after = GuildService.get(p);
         long gained = Wallet.count(p) - before;
-        long want = GuildMath.scale(q.ha(), false);
+        long want = GuildMath.scale(q.ha(), false) * 8 / 5; // buff x1.6
         if (gained != want) { h.fail("coins gained " + gained + " != " + want); return; }
-        if (after.points() != q.points()) { h.fail("points " + after.points() + " != " + q.points()); return; }
+        if (after.points() != q.points() * 3 / 2) { h.fail("points " + after.points() + " != " + q.points() * 3 / 2); return; }
         if (after.progOf(0) != GuildData.DONE) { h.fail("quest not marked done"); return; }
         h.succeed();
     }

@@ -107,12 +107,15 @@ public final class GuildService {
 
     private static void complete(ServerPlayer p, GuildData d, int slot, GuildMath.Quest q) {
         boolean sect = sectMember(p);
-        long ha = GuildMath.scale(q.ha(), sect);
-        int pts = (int) GuildMath.scale(q.points(), sect);
+        // Buff: Tu Tinh x1.6, diem hoi x1.5, luon co Hon Tinh + qua (nhiem vu bonus: them qua thu hai)
+        long ha = GuildMath.scale(q.ha(), sect) * 8 / 5;
+        int pts = (int) (GuildMath.scale(q.points(), sect) * 3 / 2);
         Wallet.give(p, ha);
+        com.hukhong.currency.Wallet.grantHonTinh(p, 2 + 2L * Math.max(0, q.tier()));
         GuildData n = d.withProg(slot, GuildData.DONE).withPoints(d.points() + pts).withDone(d.done() + 1);
         set(p, n);
-        if (q.bonus()) bonus(p, slot, d.day());
+        bonus(p, slot, d.day());
+        if (q.bonus()) bonus(p, slot + 1, d.day());
         p.sendSystemMessage(Component.translatable("hukhong.guild.done", TuTinhText.of(ha), pts));
     }
 

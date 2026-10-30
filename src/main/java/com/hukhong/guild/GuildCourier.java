@@ -81,6 +81,25 @@ public final class GuildCourier {
 
     private static final java.util.Set<UUID> CANCELLED = new java.util.HashSet<>();
 
+    private static final String[] ARROWS = {"↑", "↗", "→", "↘", "↓", "↙", "←", "↖"};
+
+    /** Mui ten chi duong (theo huong nhin) toi dich + cot sang tren tin su va dich. */
+    private static void guide(ServerPlayer p, ServerLevel l, Entity courier, BlockPos dest) {
+        double dx = dest.getX() + 0.5 - p.getX(), dz = dest.getZ() + 0.5 - p.getZ();
+        double yawTo = Math.toDegrees(Math.atan2(-dx, dz));
+        double rel = net.minecraft.util.Mth.wrapDegrees(yawTo - p.getYRot());
+        int idx = Math.floorMod((int) Math.round(rel / 45.0), 8);
+        int dist = (int) Math.sqrt(dx * dx + dz * dz);
+        double cd = courier.distanceTo(p);
+        p.displayClientMessage(Component.literal("§6" + ARROWS[idx] + " §fĐích: §e" + dist + "m"
+                + (cd > 12 ? "  §c⚠ Tín sứ cách " + (int) cd + "m" : "  §aTín sứ đi cùng")), true);
+        for (int i = 0; i < 6; i++) {
+            l.sendParticles(p, net.minecraft.core.particles.ParticleTypes.END_ROD, true, courier.getX(), courier.getY() + 2.2 + i * 0.5, courier.getZ(), 1, 0, 0, 0, 0);
+            if (dist < 160) l.sendParticles(p, net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, true,
+                    dest.getX() + 0.5, dest.getY() + 1 + i * 1.5, dest.getZ() + 0.5, 2, 0.2, 0.2, 0.2, 0);
+        }
+    }
+
     /** Moi 20 tick: ra lenh di chuyen, kiem tra toi noi / chet / het gio. */
     public static void tick(net.minecraft.server.MinecraftServer server) {
         for (ServerLevel l : server.getAllLevels()) {
@@ -114,6 +133,7 @@ public final class GuildCourier {
             }
             EscortMover.Walker w = WALKERS.get(en.getKey());
             if (w != null && w.waiting() && l.getGameTime() % 100 < 20) p.displayClientMessage(Component.translatable("hukhong.guild.courier_wait"), true);
+            else guide(p, l, e, r.dest());
         }
     }
 
