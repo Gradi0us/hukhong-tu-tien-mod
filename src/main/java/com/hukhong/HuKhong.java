@@ -18,6 +18,7 @@ public class HuKhong {
         com.hukhong.story.objective.ObjectiveAttachments.ATTACHMENTS.register(modBus);
         com.hukhong.travel.TravelRegistry.register(modBus);
         modBus.addListener(com.hukhong.world.calendar.CalendarNet::register);
+        modBus.addListener(com.hukhong.dongdao.DongDaoNet::register);
         com.hukhong.story.freequest.FreeQuestAttachments.ATTACHMENTS.register(modBus);
         com.hukhong.item.ModItems.register(modBus);
         com.hukhong.entity.ModEntities.register(modBus);

@@ -86,7 +86,7 @@ public final class PhapSkills {
         }
     }
 
-    private static void hit(ServerPlayer p, LivingEntity t, double amount) {
+    static void hit(ServerPlayer p, LivingEntity t, double amount) {
         if (amount <= 0) return;
         t.invulnerableTime = 0;
         DamageRules.hurtBySkill(p, t, (float) amount);
@@ -121,7 +121,7 @@ public final class PhapSkills {
         return out;
     }
 
-    private static List<LivingEntity> around(ServerLevel lv, ServerPlayer p, Vec3 c, double r) {
+    static List<LivingEntity> around(ServerLevel lv, ServerPlayer p, Vec3 c, double r) {
         return lv.getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(r, Math.max(2, r * 0.6), r),
                 e -> PhapRuntime.valid(p, e) && e.position().distanceToSqr(c) <= (r + e.getBbWidth()) * (r + e.getBbWidth()));
     }
@@ -138,7 +138,7 @@ public final class PhapSkills {
     }
 
     /** Điểm ngắm: mục tiêu đầu tiên trên tia nhìn, nếu không có thì điểm chạm khối/đầu tầm. */
-    private static Vec3 aim(ServerLevel lv, ServerPlayer p, double range) {
+    static Vec3 aim(ServerLevel lv, ServerPlayer p, double range) {
         Vec3 eye = p.getEyePosition(), look = p.getLookAngle();
         List<LivingEntity> l = line(lv, p, eye, look, range, 0.8);
         if (!l.isEmpty()) return l.get(0).position();
@@ -147,13 +147,13 @@ public final class PhapSkills {
         return r.getType() == HitResult.Type.MISS ? ground(lv, end) : r.getLocation();
     }
 
-    private static Vec3 ground(ServerLevel lv, Vec3 v) {
+    static Vec3 ground(ServerLevel lv, Vec3 v) {
         var r = lv.clip(new ClipContext(v, v.add(0, -24, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
                 net.minecraft.world.phys.shapes.CollisionContext.empty())); // KHÔNG truyền Entity null: CollisionContext.of(null) ném NPE -> E Thổ/nhiều chiêu không bao giờ ra
         return r.getType() == HitResult.Type.MISS ? v : r.getLocation();
     }
 
-    private static void sound(ServerLevel lv, Vec3 at, SoundEvent s, float vol, float pitch) {
+    static void sound(ServerLevel lv, Vec3 at, SoundEvent s, float vol, float pitch) {
         lv.playSound(null, at.x, at.y, at.z, s, SoundSource.PLAYERS, vol, pitch);
     }
 
@@ -169,7 +169,7 @@ public final class PhapSkills {
         Fx.play(lv, FxType.BEAM, from, dir.normalize(), (float) len, rgb, life);
     }
 
-    private static void knock(LivingEntity t, Vec3 from, double power, double up) {
+    static void knock(LivingEntity t, Vec3 from, double power, double up) {
         Vec3 d = t.position().subtract(from);
         d = new Vec3(d.x, 0, d.z);
         d = d.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : d.normalize();
@@ -509,32 +509,8 @@ public final class PhapSkills {
                 SkillEffects.ring(lv, o.add(0, 0.2, 0), 3.0, 36, DIRT);
                 sound(lv, o, SoundEvents.ANVIL_LAND, 1.2f, 0.5f);
             }
-            default -> { // Thiên Sơn Áp Đỉnh: núi đá rơi từ trời, báo trước 1s, choáng + nứt đất + rung camera
-                Vec3 pos = aim(lv, p, 16);
-                double R = PhapMath.THO_MOUNTAIN_RADIUS;
-                Fx.telegraphCircle(lv, p, pos.add(0, 0.05, 0), (float) R, 20, col);
-                Fx.rune(lv, p, pos.add(0, 0.08, 0), (float) R * 0.7f, col, 26, 8);
-                Fx.elem(lv, p, Fx.E_BOULDER, pos, Vec3.ZERO, 3.6f, col, 30);
-                SkillScheduler.later(20, () -> {
-                    for (LivingEntity e : around(lv, p, pos, R)) {
-                        hit(p, e, c);
-                        PhapRuntime.stun(e, PhapMath.THO_MOUNTAIN_STUN);
-                        knock(e, pos, 0.5, 0.35);
-                    }
-                    int max = PhapMath.thoMaxTurrets(PhapTu.aptitude(p));
-                    for (int i = PhapRuntime.turretCount(lv, p); i < max; i++) {
-                        double a = 2 * Math.PI * i / Math.max(1, max) + p.getYRot() * 0.0174;
-                        PhapRuntime.summonTurret(lv, p, ground(lv, p.position().add(Math.cos(a) * 3.2, 1, Math.sin(a) * 3.2)));
-                    }
-                    PhapRuntime.empowerTurrets(lv, p, 200);
-                    Fx.groundCrack(lv, p, pos.add(0, 0.06, 0), (float) R + 1.5f, col, 9, 70);
-                    Fx.groundRing(lv, p, pos.add(0, 0.06, 0), (float) R, 0xC49A5C, 22);
-                    Fx.elem(lv, p, Fx.E_SPIKES, pos, Vec3.ZERO, (float) R * 0.9f, col, 36);
-                    Fx.shake(lv, pos, 1.4f, 14, 40f);
-                    Fx.play(lv, FxType.SCREEN_TINT, pos, Vec3.ZERO, 0.18f, 0x7A5A30, 8);
-                    lv.sendParticles(STONE, pos.x, pos.y + 0.6, pos.z, 60, 2.5, 0.6, 2.5, 0.25);
-                    FxSfx.cast(lv, pos, 1.4f, 0.5f, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.ANVIL_LAND, SoundEvents.DEEPSLATE_BREAK);
-                });
+            default -> { // Thiên Sơn Áp Đỉnh: mưa núi đá 3 đợt (mỗi đợt 60% T), rồi giữ T dẫn nổ 175% (xem ThoService)
+                ThoService.startT(lv, p, aim(lv, p, 16), c);
             }
         }
     }

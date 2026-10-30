@@ -14,14 +14,14 @@ public final class ThiemBoClient {
     private static int held;
 
     /** Gọi mỗi tick từ SkillKeyHandler. active = thế bật + trang Pháp Tu Quang + không mở màn hình. */
-    public static void tickKeys(Minecraft mc, boolean active) {
+    public static void tickKeys(Minecraft mc, boolean active, boolean tho) {
         boolean down = active && mc.screen == null && PhapBeamClient.physicalDown(mc, SkillKeys.SKILL[1]);
         if (down && !prev) { PacketDistributor.sendToServer(new ThiemBoPayload(ThiemBoPayload.PRESS)); held = 0; }
         if (!down && prev) PacketDistributor.sendToServer(new ThiemBoPayload(ThiemBoPayload.RELEASE));
         prev = down;
         if (down) {
             held++;
-            if (ThiemBoMath.isHold(held) && mc.player != null) mc.player.setSprinting(true);
+            if (ThiemBoMath.isHold(held) && mc.player != null && !tho) mc.player.setSprinting(true); // Thổ giữ E = xuyên tường, không chạy nước rút
         } else held = 0;
     }
 }

@@ -420,6 +420,24 @@ public final class PhapRuntime {
         St s = st(p);
         Aptitude apt = PhapTu.aptitude(p);
         s.turrets.removeIf(id -> !(sl.getEntity(id) instanceof PhapTurret t) || !t.isAlive());
+        // Hợp Thể: trụ cùng chủ (chưa hợp thể) cách <= 5 block -> gộp thành MỘT trụ laser (to hơn, sống = tổng, máu = tổng)
+        PhapTurret partner = null;
+        for (UUID id : s.turrets) {
+            if (sl.getEntity(id) instanceof PhapTurret o && o.isAlive() && !o.isMerged() && o.position().distanceTo(pos) <= PhapMath.THO_MERGE_RADIUS
+                    && (partner == null || o.position().distanceToSqr(pos) < partner.position().distanceToSqr(pos))) partner = o;
+        }
+        if (partner != null) {
+            Vec3 mid = partner.position().add(pos).scale(0.5);
+            partner.absorb(PhapMath.THO_LIFE_TICKS, PhapMath.thoTurretHp(apt, p.getMaxHealth()), mid);
+            Fx.elem(sl, p, Fx.E_SPIKES, mid, Vec3.ZERO, 2.2f, PhapElement.THO.rgb, 34);
+            Fx.groundCrack(sl, p, mid.add(0, 0.06, 0), 3.4f, PhapElement.THO.rgb, 8, 40);
+            Fx.groundRing(sl, p, mid.add(0, 0.06, 0), 3.0f, 0xFFE9A0, 18);
+            Fx.shake(sl, mid, 0.6f, 8, 20f);
+            sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.GOLD_BLOCK.defaultBlockState()),
+                    mid.x, mid.y + 1.2, mid.z, 30, 0.6, 0.8, 0.6, 0.15);
+            sl.playSound(null, mid.x, mid.y, mid.z, net.minecraft.sounds.SoundEvents.ANVIL_LAND, net.minecraft.sounds.SoundSource.PLAYERS, 1.2f, 0.4f);
+            return partner;
+        }
         int max = PhapMath.thoMaxTurrets(apt);
         while (s.turrets.size() >= max) {
             if (sl.getEntity(s.turrets.remove(0)) instanceof PhapTurret old) old.discard();

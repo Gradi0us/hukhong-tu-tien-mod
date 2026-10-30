@@ -86,7 +86,35 @@ public final class PhapMath {
         return raw * (0.5 + 0.5 * frac(a));
     }
     /** Thiên Sơn Áp Đỉnh (T): choáng (giây) và bán kính. */
-    public static final double THO_MOUNTAIN_STUN = 1.5, THO_MOUNTAIN_RADIUS = 7.5;
+    public static final double THO_MOUNTAIN_STUN = 1.0, THO_MOUNTAIN_RADIUS = 7.5;
+
+    // ---- Thổ: Hợp Thể (hai trụ cùng chủ cách <= 5 block gộp thành một trụ laser đơn mục tiêu kiểu Inferno Tower)
+    public static final double THO_MERGE_RADIUS = 5.0;
+    public static final double THO_MERGED_SCALE = 1.6;
+    /** Laser: bắt đầu 30% sát thương một trụ thường, tăng tuyến tính tới 300% sau 6s khoá cùng mục tiêu; đổi mục tiêu thì về 30%. */
+    public static final double THO_LASER_MIN = 0.30, THO_LASER_MAX = 3.00;
+    public static final int THO_LASER_RAMP_TICKS = 120, THO_LASER_PULSE_TICKS = 4;
+    public static double thoLaserMult(int lockedTicks) {
+        double k = Math.max(0, Math.min(1.0, lockedTicks / (double) THO_LASER_RAMP_TICKS));
+        return THO_LASER_MIN + (THO_LASER_MAX - THO_LASER_MIN) * k;
+    }
+    /** Sát thương một nhịp laser (mỗi THO_LASER_PULSE_TICKS tick) từ sát thương một phát của trụ thường và nhịp bắn thường. */
+    public static float thoLaserPulse(float shotDamage, int shotTicks, int lockedTicks) {
+        return (float) (shotDamage * (20.0 / Math.max(1, shotTicks)) * thoLaserMult(lockedTicks) * THO_LASER_PULSE_TICKS / 20.0);
+    }
+
+    // ---- Thổ E giữ: xuyên tường 5s
+    public static final int THO_PHASE_TICKS = 100, THO_PHASE_COOLDOWN_TICKS = 300, THO_PHASE_COST = 25;
+    /** Xuyên tường: tốc độ hạ nhẹ khi không bấm Space/Shift (block/tick, > 0,03125 để máy chủ không coi là bay). */
+    public static final double THO_PHASE_SINK = 0.04;
+
+    // ---- Thổ T "Thiên Sơn Áp Đỉnh": hồi chiêu 45s, 3 đợt núi rơi x 60%, giữ T dẫn nổ 175% trong ~6s, nổ rút 99% Pháp Lực hiện có
+    public static final int THO_T_COOLDOWN_TICKS = 900, THO_T_WAVES = 3, THO_T_WAVE_GAP = 30, THO_T_FALL_DELAY = 18, THO_T_WINDOW_TICKS = 120, THO_T_HOLD_TICKS = 8;
+    public static final double THO_T_WAVE_FRAC = 0.60, THO_T_BLAST_MULT = 1.75, THO_T_MANA_DRAIN = 0.99;
+    public static final double THO_T_AREA = 9.0, THO_T_IMPACT_RADIUS = 3.8, THO_T_BLAST_RADIUS = 13.0;
+    public static final int THO_T_IMPACTS = 5;
+    /** Tổng hệ số T Thổ so với "sát thương T hiện tại" nếu mọi đợt + nổ đều trúng cùng mục tiêu. */
+    public static final double THO_T_TOTAL = THO_T_WAVES * THO_T_WAVE_FRAC + THO_T_BLAST_MULT;
     public static int thoMaxTurrets(Aptitude a) { return 1 + (int) Math.round((THO_MAX_TURRETS - 1) * t(a)); }
     public static float thoShotDamage(Aptitude a, double spellPower) { return (float) (thoDamagePct(a) * THO_SHOT_COEF * spellPower); }
     public static float thoTurretHp(Aptitude a, double ownMaxHp) { return (float) Math.max(4, thoHpPct(a) * ownMaxHp); }
@@ -104,9 +132,16 @@ public final class PhapMath {
             /* LOI   */ {0.57, 1.26, 2.84, 8.1},
             /* HOA   */ {0.43, 0.92, 2.05, 6.2},
             /* THUY  */ {0.59, 0.86, 2.28, 7.6},
-            /* THO   */ {0.50, 0.50, 2.10, 6.40},
+            /* THO   */ {0.50, 0.50, 2.10, 2.00}, // T Thổ: 3 đợt x 60% + nổ 175% = THO_T_TOTAL x hệ số
             /* KIM   */ {0.63, 1.44, 3.32, 9.8},
     };
+
+    /** Mặt nạ phím cố định theo nguyên tố (bit i = phím i): Thổ E+T (2|8), Quang/Lôi/Hỏa/Thủy T (8), Kim không. Dùng cho UI client. */
+    public static int lockMask(PhapElement e) {
+        if (e == null) return 0;
+        if (e == PhapElement.THO) return 2 | 8;
+        return com.hukhong.phaptu.beam.PhapBeamMath.locksT(e) ? 8 : 0;
+    }
 
     public static double coef(PhapElement e, int slot) { return COEF[e.ordinal()][Math.max(0, Math.min(3, slot))]; }
 
@@ -137,7 +172,11 @@ public final class PhapMath {
     public static double sustainedSp(PhapElement e, Aptitude a, double spellPower) {
         com.hukhong.skill.Skill[] ks = {com.hukhong.skill.Skill.PHAP_1, com.hukhong.skill.Skill.PHAP_2, com.hukhong.skill.Skill.PHAP_3, com.hukhong.skill.Skill.PHAP_ULT};
         double sum = 0;
-        for (int i = 0; i < 4; i++) sum += coef(e, i) / (ks[i].cooldownTicks / 20.0 * cooldownMult(e));
+        for (int i = 0; i < 4; i++) {
+            double c = coef(e, i) * (e == PhapElement.THO && i == 3 ? THO_T_TOTAL : 1.0);
+            int cdt = e == PhapElement.THO && i == 3 ? THO_T_COOLDOWN_TICKS : ks[i].cooldownTicks;
+            sum += c / (cdt / 20.0 * cooldownMult(e));
+        }
         return sum * damageMult(e, a) + passiveDps(e, a, spellPower) / spellPower;
     }
 }

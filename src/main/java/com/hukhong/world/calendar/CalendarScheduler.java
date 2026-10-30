@@ -3,9 +3,7 @@ package com.hukhong.world.calendar;
 import com.hukhong.HuKhong;
 import com.hukhong.city.CityDef;
 import com.hukhong.city.CityService;
-import com.hukhong.events.WorldBossManager;
 import com.hukhong.story.world.StoryHooks;
-import com.hukhong.travel.TravelService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -130,12 +128,6 @@ public final class CalendarScheduler {
         }
         try {
             if (CalendarHandlers.begin(ow, d, a)) { /* handler rieng (Dot 5) */ } else switch (d.type()) {
-                case "yeu_vuong" -> {                                  // boss the gioi co san, sinh gan diem su kien
-                    BlockPos land = TravelService.findLanding(ow, a.x(), a.z(), null);
-                    int kind = WorldBossManager.kindOf(ow.getBiome(land).unwrapKey().map(k -> k.location().getPath()).orElse(""));
-                    if (kind < 0) kind = (int) (LichMath.unit(d.id(), o.start()) * 3);
-                    WorldBossManager.spawn(ow, kind, land);
-                }
                 default -> { } // linh_khi_trieu / thu_trieu / prophecy: chi danh dau vi tri + dong ho (chua co he thong gameplay)
             }
         } catch (RuntimeException ex) {
@@ -144,6 +136,13 @@ public final class CalendarScheduler {
     }
 
     /** Ket thuc: lan story-lane, nguoi choi o gan (trong NEAR_RADIUS) va duoc phep thi nhan StoryHooks.complete. */
+    /** Ket thuc som (vd. boss su kien bi ha). */
+    static void finishNow(ServerLevel ow, String key) {
+        CalendarData data = CalendarData.get(ow);
+        CalendarData.Act a = data.active().get(key);
+        if (a != null) finish(ow, data, a);
+    }
+
     private static void finish(ServerLevel ow, CalendarData data, CalendarData.Act a) {
         data.removeActive(a.key());
         try { CalendarHandlers.end(ow, a); } catch (RuntimeException ex) { com.mojang.logging.LogUtils.getLogger().error("Calendar end {} failed", a.defId(), ex); }

@@ -73,7 +73,7 @@ public final class SkillService {
         SkillBookData bd = SkillBookService.data(p);
         boolean lockT = page == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamService.locksT(p);
         if (lockT && slot == 3) return; // phím T của Quang/Lôi/Hỏa/Thủy đi qua PhapBeamService (nạp -> bắn), không cast tức thời
-        SkillBook.Resolved r = SkillBook.resolve(bd, page, slot, d.level(), lockT);
+        SkillBook.Resolved r = SkillBook.resolve(bd, page, slot, d.level(), page == Path.PHAP ? com.hukhong.phaptu.ThoService.lockMask(p) : 0); // Thổ khoá E + T
         // phím R: Bản Mệnh / Vạn Cốt Cộng Minh, trừ khi có kỹ năng gán thủ công và chưa mở Bản Mệnh
         if (slot == 2 && r == null) {
             SkillBookRuntime.clear(p);
@@ -115,6 +115,7 @@ public final class SkillService {
             BookSkillEffects.run(r.book(), p, lvl);
         }
         int tbCd = r.base() == Skill.PHAP_2 ? com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, slot) : -1;
+        if (tbCd < 0 && r.base() == Skill.PHAP_ULT) tbCd = com.hukhong.phaptu.ThoService.cooldownOverride(p, page, slot); // Thiên Sơn: 45s
         st.cooldownEnd[slot] = now + (tbCd >= 0 ? tbCd : Math.round(SkillBookMath.cooldown(r.baseCooldown(), lvl) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)));
         st.lastCombat = now;
         sync(p);
@@ -129,10 +130,11 @@ public final class SkillService {
         List<Integer> rem = new ArrayList<>(4), tot = new ArrayList<>(4);
         boolean lockT = page == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamService.locksT(p);
         for (int i = 0; i < 4; i++) {
-            SkillBook.Resolved r = SkillBook.resolve(bd, page, i, plv, lockT);
+            SkillBook.Resolved r = SkillBook.resolve(bd, page, i, plv, page == Path.PHAP ? com.hukhong.phaptu.ThoService.lockMask(p) : 0);
             rem.add((int) Math.max(0, st.cooldownEnd[i] - now));
             tot.add(i == 2 && r == null ? Math.max(1, st.rTotal) : r == null ? 1
                     : r.base() == Skill.KIEM_ULT ? SkillEffects.DOMAIN_LOCK_TICKS
+                    : r.base() == Skill.PHAP_ULT && com.hukhong.phaptu.ThoService.cooldownOverride(p, page, i) >= 0 ? com.hukhong.phaptu.ThoService.cooldownOverride(p, page, i)
                     : r.base() == Skill.PHAP_2 && com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, i) >= 0 ? com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, i)
                     : (int) Math.round(SkillBookMath.cooldown(r.baseCooldown(), bd.level(r.id())) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)));
         }

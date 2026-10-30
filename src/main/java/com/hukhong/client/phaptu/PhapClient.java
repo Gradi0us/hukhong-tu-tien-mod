@@ -73,6 +73,9 @@ public final class PhapClient {
         public void render(PhapTurret t, float yaw, float pt, PoseStack ps, MultiBufferSource buf, int light) {
             float age = t.tickCount + pt;
             ps.pushPose();
+            float sc = t.isMerged() ? (float) com.hukhong.phaptu.PhapMath.THO_MERGED_SCALE : 1f;
+            float ramp = t.isMerged() ? t.rampFraction() : 0f;
+            ps.scale(sc, sc, sc); // Hợp Thể: mô hình to hơn
             block(ps, buf, BASE, 0, 0, 0, 1.0f, 0, light);
             block(ps, buf, MID, 0, 0.95, 0, 0.72f, 45, light);
             for (int i = 0; i < 4; i++) { // 4 gai đá quanh chân trụ
@@ -80,7 +83,8 @@ public final class PhapClient {
                 block(ps, buf, SPIKE, Math.cos(a) * 0.62, 0, Math.sin(a) * 0.62, 0.7f, 0, light);
             }
             double bob = Math.sin(age * 0.1) * 0.06;
-            block(ps, buf, CORE, 0, 1.55 + bob, 0, 0.42f, age * 5f, LightTexture.pack(15, 15));
+            block(ps, buf, CORE, 0, 1.55 + bob, 0, 0.42f + 0.22f * ramp, age * (5f + 25f * ramp), LightTexture.pack(15, 15));
+            if (t.isMerged()) block(ps, buf, CORE, 0, 1.55 + bob, 0, 0.62f + 0.3f * ramp, -age * 3f, LightTexture.pack(15, 15)); // lõi thứ hai quay ngược
             ps.popPose();
             super.render(t, yaw, pt, ps, buf, light);
         }

@@ -165,7 +165,36 @@ class PhapMathTest {
 
     @Test
     void thoUltimateAndEHaveRealDamage() {
-        assertTrue(PhapMath.coef(PhapElement.THO, 3) >= 6.0);
+        // T Thổ: 3 đợt x 60% + nổ 175% của "sát thương T hiện tại" => tổng lên một mục tiêu >= 6 Phép lực
+        assertEquals(3 * 0.6 + 1.75, PhapMath.THO_T_TOTAL, EPS);
+        assertTrue(PhapMath.coef(PhapElement.THO, 3) * PhapMath.THO_T_TOTAL >= 6.0);
         assertTrue(PhapMath.coef(PhapElement.THO, 1) > 0, "E không còn 0 sát thương");
+        assertEquals(900, PhapMath.THO_T_COOLDOWN_TICKS, "T Thổ hồi 45s");
+    }
+
+    @Test
+    void thoLaserRampsFrom30To300PercentOverSixSecondsAndClamps() {
+        assertEquals(0.30, PhapMath.thoLaserMult(0), EPS);
+        assertEquals(3.00, PhapMath.thoLaserMult(PhapMath.THO_LASER_RAMP_TICKS), EPS);
+        assertEquals(3.00, PhapMath.thoLaserMult(10_000), EPS);
+        assertEquals(0.30, PhapMath.thoLaserMult(-5), EPS);
+        assertEquals(1.65, PhapMath.thoLaserMult(PhapMath.THO_LASER_RAMP_TICKS / 2), EPS);
+        assertEquals(120, PhapMath.THO_LASER_RAMP_TICKS, "6s");
+        // DPS = nhịp x (20 / pulseTicks) = sát thương trụ thường/s x hệ số
+        float shot = 10f;
+        int shotTicks = 16;
+        double dps0 = PhapMath.thoLaserPulse(shot, shotTicks, 0) * 20.0 / PhapMath.THO_LASER_PULSE_TICKS;
+        double dpsMax = PhapMath.thoLaserPulse(shot, shotTicks, 999) * 20.0 / PhapMath.THO_LASER_PULSE_TICKS;
+        double normal = shot * 20.0 / shotTicks;
+        assertEquals(0.30 * normal, dps0, 1e-4);
+        assertEquals(3.00 * normal, dpsMax, 1e-4);
+    }
+
+    @Test
+    void thoLocksEAndTOnly() {
+        assertEquals(2 | 8, PhapMath.lockMask(PhapElement.THO));
+        assertEquals(8, PhapMath.lockMask(PhapElement.QUANG));
+        assertEquals(0, PhapMath.lockMask(PhapElement.KIM));
+        assertEquals(0, PhapMath.lockMask(null));
     }
 }

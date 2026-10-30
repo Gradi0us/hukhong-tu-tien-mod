@@ -67,6 +67,40 @@ public final class SkillBook {
         return new Resolved(def, null);
     }
 
+    /** Mặt nạ phím cố định: bit i = phím i luôn là kỹ năng mặc định của đạo (không gán/tháo được). T = 8, E = 2. */
+    public static final int LOCK_E = 2, LOCK_T = 8;
+
+    /** Nhiều phím cố định cùng lúc (Thổ: E + T). lockMask = 0 => như resolve thường. */
+    public static Resolved resolve(SkillBookData d, Path page, int slot, int playerLevel, int lockMask) {
+        if (lockMask == 0 || page != Path.PHAP) return resolve(d, page, slot, playerLevel);
+        if (slot < 0 || slot > 3) return null;
+        if ((lockMask >> slot & 1) != 0) {
+            Skill f = Skill.of(page, slot);
+            return f == null ? null : new Resolved(f, null);
+        }
+        if (slot == 2 && com.hukhong.skill.BanMenhSkill.of(page, playerLevel) != null) return null;
+        String id = d.slot(page, slot);
+        if (id != null && !fixedId(page, lockMask, id) && assignable(d, page, id)) return of(id);
+        Skill def = Skill.of(page, slot);
+        if (def == null) return null;
+        for (int i = 0; i < 4; i++) {
+            if (i == slot || (lockMask >> i & 1) != 0) continue;
+            String o = d.slot(page, i);
+            if (def.icon.equals(o) && assignable(d, page, o)) return null;
+        }
+        return new Resolved(def, null);
+    }
+
+    /** Id này là kỹ năng mặc định của một phím đang bị khoá? */
+    public static boolean fixedId(Path page, int lockMask, String id) {
+        for (int i = 0; i < 4; i++) {
+            if ((lockMask >> i & 1) == 0) continue;
+            Skill f = Skill.of(page, i);
+            if (f != null && f.icon.equals(id)) return true;
+        }
+        return false;
+    }
+
     /** Phím có gán thủ công hợp lệ không (R cần biết để nhường cho Bản Mệnh). */
     public static boolean hasAssignment(SkillBookData d, Path page, int slot) {
         String id = d.slot(page, slot);

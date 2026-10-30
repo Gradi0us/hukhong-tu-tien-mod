@@ -115,6 +115,11 @@ public final class ThuTrieuHandler {
     }
 
     private static void spawn(Wave w) {
+        // chi sinh khi co nguoi choi gan (chunk dang tai); khong dem la "that bai" khi chua co ai toi, tranh bo cuoc -> "don sach" gia
+        boolean near = false;
+        for (ServerPlayer p : w.level.players())
+            if (!p.isSpectator() && p.distanceToSqr(w.center.getX(), p.getY(), w.center.getZ()) < 96 * 96) { near = true; break; }
+        if (!near) return;
         if (++w.tries > w.total * 8) { w.total -= w.toSpawn; w.toSpawn = 0; return; }
         double ang = w.level.random.nextDouble() * Math.PI * 2, rad = 28 + w.level.random.nextDouble() * 8;
         int x = w.center.getX() + (int) (Math.cos(ang) * rad), z = w.center.getZ() + (int) (Math.sin(ang) * rad);

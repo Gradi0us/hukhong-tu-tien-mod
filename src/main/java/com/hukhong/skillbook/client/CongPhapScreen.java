@@ -391,8 +391,8 @@ public class CongPhapScreen extends Screen {
     }
 
     /** Phím T của Pháp Tu Quang/Lôi/Hỏa/Thủy cố định (Tinh Hà Quang Trụ). */
-    private static boolean lockT(Path page) {
+    private static int lockT(Path page) {
         var pl = net.minecraft.client.Minecraft.getInstance().player;
-        return page == Path.PHAP && pl != null && com.hukhong.phaptu.beam.PhapBeamMath.locksT(com.hukhong.phaptu.PhapTu.element(pl));
+        return page == Path.PHAP && pl != null ? com.hukhong.phaptu.PhapMath.lockMask(com.hukhong.phaptu.PhapTu.rawElement(pl)) : 0;
     }
 }

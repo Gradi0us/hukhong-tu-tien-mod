@@ -34,6 +34,9 @@ import java.util.UUID;
  */
 public class PhapTurret extends PathfinderMob {
     private static final EntityDataAccessor<Integer> ELEM = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> MERGED = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.BOOLEAN);
+    /** Tiến độ laser 0..1000 (đồng bộ để client biết độ dày tia / hạt). */
+    private static final EntityDataAccessor<Integer> RAMP = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.INT);
     private static final double RANGE = 14;
 
     private UUID owner;
@@ -41,6 +44,9 @@ public class PhapTurret extends PathfinderMob {
     private ServerPlayer ownerRef;
     private float shotDamage;
     private int life = PhapMath.THO_LIFE_TICKS, empowered, shotTicks = PhapMath.THO_SHOT_TICKS;
+    /** Hợp Thể: laser đơn mục tiêu. */
+    private UUID laserTarget;
+    private int lockTicks;
 
     public PhapTurret(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -57,6 +63,8 @@ public class PhapTurret extends PathfinderMob {
     protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
         b.define(ELEM, PhapElement.THO.ordinal());
+        b.define(MERGED, false);
+        b.define(RAMP, 0);
     }
 
     public PhapElement element() { return PhapElement.values()[Math.floorMod(entityData.get(ELEM), PhapElement.values().length)]; }
@@ -76,6 +84,90 @@ public class PhapTurret extends PathfinderMob {
         setHealth(hp);
     }
 
+
+    // ------------------------------------------------------------------ Hợp Thể
+
+    public boolean isMerged() { return entityData.get(MERGED); }
+
+    /** Tiến độ laser 0..1 (client dùng cho độ dày tia). */
+    public float rampFraction() { return entityData.get(RAMP) / 1000f; }
+
+    public int lifeLeft() { return life; }
+
+    /** Số tick đã khoá cùng một mục tiêu (0 khi chưa có). */
+    public int lockTicks() { return lockTicks; }
+
+    public UUID laserTargetId() { return laserTarget; }
+
+    @Override
+    protected net.minecraft.world.entity.EntityDimensions getDefaultDimensions(net.minecraft.world.entity.Pose pose) {
+        var d = super.getDefaultDimensions(pose);
+        return isMerged() ? d.scale((float) PhapMath.THO_MERGED_SCALE) : d;
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (MERGED.equals(key)) refreshDimensions();
+    }
+
+    /**
+     * Gộp một trụ nữa (còn otherLife tick, máu otherHp) vào trụ này tại midpoint: to hơn, thời gian sống = tổng, máu = tổng, chuyển sang laser.
+     * Không gộp tiếp trụ đã Hợp Thể.
+     */
+    public void absorb(int otherLife, float otherHp, Vec3 mid) {
+        life += Math.max(0, otherLife);
+        var inst = getAttribute(Attributes.MAX_HEALTH);
+        float hp = (inst == null ? 20f : (float) inst.getBaseValue()) + otherHp;
+        if (inst != null) inst.setBaseValue(hp);
+        setHealth(Math.min(hp, getHealth() + otherHp));
+        entityData.set(MERGED, true);
+        refreshDimensions();
+        moveTo(mid.x, mid.y, mid.z, getYRot(), 0);
+        lockTicks = 0;
+        laserTarget = null;
+        entityData.set(RAMP, 0);
+    }
+
+    /** Laser kiểu Inferno Tower: khoá MỘT mục tiêu, sát thương tăng dần theo thời gian khoá, đổi mục tiêu thì về mức khởi đầu. */
+    private void laser(ServerLevel sl, ServerPlayer o) {
+        LivingEntity t = null;
+        if (laserTarget != null && sl.getEntity(laserTarget) instanceof LivingEntity le && enemy(le) && le.distanceToSqr(this) <= RANGE * RANGE) t = le;
+        if (t == null) {
+            t = nearestEnemy(sl);
+            lockTicks = 0;
+            laserTarget = t == null ? null : t.getUUID();
+            if (t == null) { if (entityData.get(RAMP) != 0) entityData.set(RAMP, 0); return; }
+        }
+        lockTicks++;
+        double mult = PhapMath.thoLaserMult(lockTicks);
+        float k = (float) ((mult - PhapMath.THO_LASER_MIN) / (PhapMath.THO_LASER_MAX - PhapMath.THO_LASER_MIN));
+        entityData.set(RAMP, Math.round(k * 1000));
+        if (tickCount % PhapMath.THO_LASER_PULSE_TICKS != 0) return;
+        Vec3 from = position().add(0, 1.55 * PhapMath.THO_MERGED_SCALE, 0), to = t.getBoundingBox().getCenter();
+        float dmg = PhapMath.thoLaserPulse(shotDamage * (empowered > 0 ? 2f : 1f), shotTicks, lockTicks);
+        t.invulnerableTime = 0;
+        DamageRules.hurtBySkill(o, t, dmg);
+        int core = lerpRgb(0xC49A5C, 0xFFE9A0, k);
+        Fx.ribbon(sl, o, from, to, 0, 5, 0, 0.10f + 0.42f * k, core);                 // tia dày dần theo độ nạp
+        Fx.ribbon(sl, o, from, to, 0, 5, 0, 0.04f + 0.14f * k, 0xFFFFFF);              // lõi trắng
+        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.GOLD_BLOCK.defaultBlockState()),
+                to.x, to.y, to.z, 2 + Math.round(8 * k), 0.25, 0.25, 0.25, 0.1 + 0.15 * k);
+        if (lockTicks % 20 == 0) sl.playSound(null, to.x, to.y, to.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_RESONATE,
+                net.minecraft.sounds.SoundSource.PLAYERS, 0.4f, 0.6f + 0.9f * k);
+    }
+
+    private static int lerpRgb(int a, int b, float k) {
+        int r = Math.round(((a >> 16) & 255) * (1 - k) + ((b >> 16) & 255) * k), g = Math.round(((a >> 8) & 255) * (1 - k) + ((b >> 8) & 255) * k),
+                bl = Math.round((a & 255) * (1 - k) + (b & 255) * k);
+        return (r << 16) | (g << 8) | bl;
+    }
+
+    private LivingEntity nearestEnemy(ServerLevel sl) {
+        return sl.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(RANGE, 5, RANGE), this::enemy).stream()
+                .filter(e -> e.distanceToSqr(this) <= RANGE * RANGE)
+                .min(Comparator.comparingDouble(e -> e.distanceToSqr(this))).orElse(null);
+    }
     /** Thiên Địa Phong Tháp: sát thương x2 trong ticks tick. */
     public void empower(int ticks) { empowered = Math.max(empowered, ticks); }
 
@@ -114,7 +206,8 @@ public class PhapTurret extends PathfinderMob {
             taunt(sl);
             if (getHealth() < getMaxHealth() && o.distanceToSqr(this) < 16 * 16) heal(getMaxHealth() * 0.02f); // chủ ở gần thì tháp tự phục hồi 2%/s
         }
-        if (tickCount % shotTicks == 0) shoot(sl, o);
+        if (isMerged()) laser(sl, o);
+        else if (tickCount % shotTicks == 0) shoot(sl, o);
     }
 
     private boolean enemy(LivingEntity e) {

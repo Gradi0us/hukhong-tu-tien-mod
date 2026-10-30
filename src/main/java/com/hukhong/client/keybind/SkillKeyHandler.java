@@ -55,11 +55,14 @@ public final class SkillKeyHandler {
         boolean beamT = on && com.hukhong.client.fx.PhapBeamClient.lockedT(mc) && Skill.skillPath(com.hukhong.client.ClientCache.cultivation(), ClientSkillState.page()) == com.hukhong.core.Path.PHAP;
         boolean thiemBo = on && Skill.skillPath(com.hukhong.client.ClientCache.cultivation(), ClientSkillState.page()) == com.hukhong.core.Path.PHAP
                 && (com.hukhong.phaptu.PhapTu.rawElement(mc.player) == com.hukhong.phaptu.PhapElement.QUANG
-                    || com.hukhong.phaptu.PhapTu.rawElement(mc.player) == com.hukhong.phaptu.PhapElement.LOI);
-        com.hukhong.client.fx.ThiemBoClient.tickKeys(mc, thiemBo);
+                    || com.hukhong.phaptu.PhapTu.rawElement(mc.player) == com.hukhong.phaptu.PhapElement.LOI
+                    || com.hukhong.phaptu.PhapTu.rawElement(mc.player) == com.hukhong.phaptu.PhapElement.THO);
+        boolean thoKeys = thiemBo && com.hukhong.phaptu.PhapTu.rawElement(mc.player) == com.hukhong.phaptu.PhapElement.THO;
+        com.hukhong.client.fx.ThiemBoClient.tickKeys(mc, thiemBo, thoKeys);
+        com.hukhong.client.fx.ThoClient.tickKeys(mc, thoKeys); // Thổ: giữ T sau 3 đợt = dẫn nổ
         for (int i = 0; i < 4; i++) {
             while (SkillKeys.SKILL[i].consumeClick()) {
-                if (i == 1 && thiemBo) continue; // Quang E: giữ/bấm nhanh do ThiemBoClient + server phân biệt
+                if (i == 1 && thiemBo) continue; // Quang/Lôi/Thổ E: giữ/bấm nhanh do ThiemBoClient + server phân biệt
                 if (on && !(i == 3 && beamT)) PacketDistributor.sendToServer(new CastSkillPayload(i)); // T của Quang/Lôi/Hỏa/Thủy: giữ để nạp (PhapBeamClient)
             }
         }

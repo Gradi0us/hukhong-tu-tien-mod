@@ -51,4 +51,34 @@ public final class CalendarGameTests {
         if (!"hukhong.cal.err_combat".equals(CalendarService.validate(p, o, data))) { h.fail("combat must block the calendar trip"); return; }
         h.succeed();
     }
+
+    /** Su kien Yeu Vuong dang dien ra -> sau vai tick co boss song tai diem su kien; het su kien -> boss bien mat. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void yeuVuongEventHasLivingBoss(GameTestHelper h) {
+        net.minecraft.server.level.ServerLevel ow = h.getLevel();
+        net.minecraft.core.BlockPos at = h.absolutePos(new net.minecraft.core.BlockPos(2, 1, 2));
+        long now = ow.getGameTime();
+        CalendarData.Act a = new CalendarData.Act("yeu_vuong@" + now, "yeu_vuong", now, now + 12000, -1, at.getX(), at.getZ());
+        CalendarData.get(ow).addActive(a);
+        try {
+            YeuVuongHandler.ensure(ow, a, false);
+            h.runAfterDelay(5, () -> {
+                try {
+                    var bosses = YeuVuongHandler.find(ow, a);
+                    if (bosses.isEmpty()) { h.fail("yeu_vuong event must have a living boss near the event point"); return; }
+                    if (bosses.get(0).distanceToSqr(at.getX(), at.getY(), at.getZ()) > 40 * 40) { h.fail("boss too far from event point"); return; }
+                    YeuVuongHandler.ensure(ow, a, false);
+                    if (YeuVuongHandler.find(ow, a).size() != 1) { h.fail("ensure must not spawn a duplicate boss"); return; }
+                    YeuVuongHandler.end(ow, a);
+                    if (!YeuVuongHandler.find(ow, a).isEmpty()) { h.fail("boss must be removed when the event ends"); return; }
+                    h.succeed();
+                } finally {
+                    CalendarData.get(ow).removeActive(a.key());
+                }
+            });
+        } catch (RuntimeException ex) {
+            CalendarData.get(ow).removeActive(a.key());
+            throw ex;
+        }
+    }
 }

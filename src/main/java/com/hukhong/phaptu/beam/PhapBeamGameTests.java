@@ -133,10 +133,13 @@ public final class PhapBeamGameTests {
             SkillBookService.assign(p, Path.PHAP.ordinal(), 0, "phap_ult");
             if (SkillBookService.data(p).slot(Path.PHAP, 0) != null) h.fail("gan phap_ult sang Q voi " + el);
         }
-        // Thổ giữ hành vi cũ
+        // Thổ: khoá E + T (xem PhapThoGameTests); Kim giữ hành vi cũ (gán T được)
         ServerPlayer tho = player(h, PhapElement.THO, Aptitude.B, 30);
         SkillBookService.assign(tho, Path.PHAP.ordinal(), 3, "phap_1");
-        if (!"phap_1".equals(SkillBookService.data(tho).slot(Path.PHAP, 3))) h.fail("Tho khong gan duoc phim T");
+        if (SkillBookService.data(tho).slot(Path.PHAP, 3) != null) h.fail("Tho gan duoc phim T (phai bi khoa)");
+        ServerPlayer kim = player(h, PhapElement.KIM, Aptitude.B, 30);
+        SkillBookService.assign(kim, Path.PHAP.ordinal(), 3, "phap_1");
+        if (!"phap_1".equals(SkillBookService.data(kim).slot(Path.PHAP, 3))) h.fail("Kim khong gan duoc phim T");
         h.succeed();
     }
 }

@@ -13,6 +13,7 @@ public final class CalendarHandlers {
             case "thu_trieu" -> ThuTrieuHandler.begin(ow, a);
             case "loi_vu" -> LoiVuHandler.begin(ow, a);
             case "pvp_bracket" -> PvpBracketHandler.begin(ow, a);
+            case "yeu_vuong" -> YeuVuongHandler.begin(ow, a);
             case "linh_khi_trieu" -> { } // khong can khoi dong: vung tinh tu CalendarData.active() moi tick
             default -> { return false; }
         }
@@ -27,6 +28,7 @@ public final class CalendarHandlers {
             case "thu_trieu" -> ThuTrieuHandler.end(ow, a);
             case "loi_vu" -> LoiVuHandler.end(ow, a);
             case "pvp_bracket" -> PvpBracketHandler.end(ow, a);
+            case "yeu_vuong" -> YeuVuongHandler.end(ow, a);
             default -> { }
         }
     }

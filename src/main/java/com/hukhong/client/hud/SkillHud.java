@@ -73,10 +73,11 @@ public final class SkillHud {
             }
         }
 
-        boolean lockT = sp == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamMath.locksT(com.hukhong.phaptu.PhapTu.rawElement(mc.player));
+        int lockMask = sp == Path.PHAP ? com.hukhong.phaptu.PhapMath.lockMask(com.hukhong.phaptu.PhapTu.rawElement(mc.player)) : 0;
+        boolean lockT = lockMask == 8; // chỉ Quang/Lôi/Hỏa/Thủy dùng tia; Thổ khoá E+T nhưng T vẫn cast tức thời
         for (int i = 0; i < 4; i++) {
             int x = x0 + i * (SIZE + GAP);
-            com.hukhong.skillbook.SkillBook.Resolved rs = com.hukhong.skillbook.SkillBook.resolve(com.hukhong.skillbook.ClientSkillBook.get(), sp, i, d.level(), lockT);
+            com.hukhong.skillbook.SkillBook.Resolved rs = com.hukhong.skillbook.SkillBook.resolve(com.hukhong.skillbook.ClientSkillBook.get(), sp, i, d.level(), lockMask);
             Skill s = rs != null ? rs.base() : null;
             g.fill(x, y, x + SIZE, y + SIZE, stance ? 0xCC000000 : 0x88000000);
             com.hukhong.skill.BanMenhSkill bm = i == 2 && rs == null ? com.hukhong.skill.BanMenhSkill.of(sp, d.level()) : null;
@@ -91,7 +92,7 @@ public final class SkillHud {
             if (has) {
                 int rem = ClientSkillState.remaining(i);
                 if (rem > 0) {
-                    int h = Math.max(1, 16 * rem / ClientSkillState.total(i));
+                    int h = Math.max(1, Math.min(16, 16 * rem / Math.max(1, ClientSkillState.total(i))));
                     g.fill(x + 2, y + 2, x + 18, y + 2 + h, 0xBB000000);
                     String sec = String.valueOf((rem + 19) / 20);
                     g.drawString(mc.font, sec, x + (SIZE - mc.font.width(sec)) / 2, y + 6, 0xFFFFFFFF, true);

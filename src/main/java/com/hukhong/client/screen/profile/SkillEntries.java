@@ -140,7 +140,7 @@ public final class SkillEntries {
         return false;
     }
 
-    private static boolean lockT(Ctx x, Path p) { return p == Path.PHAP && x.element() != null && PhapBeamMath.locksT(x.element()); }
+    private static int lockT(Ctx x, Path p) { return p == Path.PHAP ? PhapMath.lockMask(x.element()) : 0; } // mặt nạ phím cố định (Thổ E+T)
 
     private static Entry forSlot(Ctx x, Path page, int slot) {
         SkillBook.Resolved r = SkillBook.resolve(x.book(), page, slot, x.level(), lockT(x, page));
@@ -378,7 +378,7 @@ public final class SkillEntries {
             {"Lôi Châu", "Lôi Trận", "Thiên Lôi Liên", "Tinh Hà Quang Trụ"},
             {"Hỏa Cầu", "Liệt Diễm Hoàn", "Hỏa Long", "Tinh Hà Quang Trụ"},
             {"Thủy Tiễn", "Cam Lộ", "Thủy Bích", "Tinh Hà Quang Trụ"},
-            {"Thạch Mâu", "Thổ Tháp", "Địa Chấn", "Thiên Địa Phong Tháp"},
+            {"Thạch Mâu", "Thổ Tháp", "Địa Chấn", "Thiên Sơn Áp Đỉnh"},
             {"Kim Nhận", "Kim Giáp", "Kim Quang Phá", "Thiên Kim Trảm"},
     };
 
@@ -423,9 +423,27 @@ public final class SkillEntries {
                     fmt(ThiemBoMath.DASH_DIST), fmt(ThiemBoMath.IMMUNE_TICKS / 20.0)), DMG));
             return new Entry(key, name, ls);
         }
-        if (el == PhapElement.THO && slot == 1) { // Thổ Tháp: không sát thương trực tiếp
+        if (el == PhapElement.THO && slot == 1) { // Thổ Tháp: không sát thương trực tiếp; bấm = dựng trụ, giữ = xuyên tường, hai trụ gần nhau hợp thể
             ls.add(meta(x, Path.PHAP, s.cost, cd));
             appendTurret(x, ls, apt);
+            ls.add(l(t("hukhong.skills.tho.merge", "Hợp Thể: 2 trụ cùng chủ cách <= %s block gộp thành 1 trụ lớn x%s (máu + thời gian sống cộng dồn), bắn laser 1 mục tiêu: %s%% sát thương trụ thường, tăng tuyến tính tới %s%% sau %ss khoá cùng mục tiêu (đổi mục tiêu thì về lại)",
+                    fmt(PhapMath.THO_MERGE_RADIUS), fmt(PhapMath.THO_MERGED_SCALE), fmt(PhapMath.THO_LASER_MIN * 100), fmt(PhapMath.THO_LASER_MAX * 100),
+                    fmt(PhapMath.THO_LASER_RAMP_TICKS / 20.0)), DMG));
+            ls.add(l(t("hukhong.skills.tho.phase", "Giữ E: xuyên tường %ss (tốn %s, hồi chiêu %ss); hết giờ bị đẩy ra chỗ trống gần nhất. Không dùng được ở Bí Cảnh / đấu trường boss, không xuyên bedrock và rào chắn.",
+                    fmt(PhapMath.THO_PHASE_TICKS / 20.0), PhapMath.THO_PHASE_COST * x.costMult(), fmt(PhapMath.THO_PHASE_COOLDOWN_TICKS / 20.0)), META));
+            return new Entry(key, name, ls);
+        }
+        if (el == PhapElement.THO && slot == 3) { // Thiên Sơn Áp Đỉnh: 3 đợt núi rơi + giữ T dẫn nổ
+            ls.add(meta(x, Path.PHAP, s.cost, (int) Math.round(PhapMath.THO_T_COOLDOWN_TICKS * PhapMath.cooldownMult(el))));
+            double c3 = coef * sp * m;
+            ls.add(l(t("hukhong.skills.tho.t.waves", "%s đợt núi rơi (cách %ss), mỗi đợt %s%% sát thương T = %s/mục tiêu, vùng bán kính %s, choáng %ss",
+                    PhapMath.THO_T_WAVES, fmt(PhapMath.THO_T_WAVE_GAP / 20.0), fmt(PhapMath.THO_T_WAVE_FRAC * 100), num(c3 * PhapMath.THO_T_WAVE_FRAC),
+                    fmt(PhapMath.THO_T_AREA), fmt(PhapMath.THO_MOUNTAIN_STUN)), DMG));
+            ls.add(l(t("hukhong.skills.tho.t.blast", "Sau đợt 3, giữ T trong %ss để dẫn nổ: %s%% sát thương T = %s, bán kính %s, rút %s%% Pháp Lực hiện có. Quá %ss không dẫn nổ thì mất.",
+                    fmt(PhapMath.THO_T_HOLD_TICKS / 20.0), fmt(PhapMath.THO_T_BLAST_MULT * 100), num(c3 * PhapMath.THO_T_BLAST_MULT),
+                    fmt(PhapMath.THO_T_BLAST_RADIUS), fmt(PhapMath.THO_T_MANA_DRAIN * 100), fmt(PhapMath.THO_T_WINDOW_TICKS / 20.0)), DMG));
+            ls.add(l(t("hukhong.skills.tho.t.total", "Tổng nếu trúng đủ 3 đợt + nổ: %s%% sát thương T = %s. Phím E và T của Pháp Thổ cố định, không thể thay.",
+                    fmt(PhapMath.THO_T_TOTAL * 100), num(c3 * PhapMath.THO_T_TOTAL)), META));
             return new Entry(key, name, ls);
         }
         ls.add(meta(x, Path.PHAP, s.cost, cd));
@@ -451,7 +469,7 @@ public final class SkillEntries {
             case KIM -> ls.add(dmg(true, coef, slot == 3 ? winM(14, m) : m, sp, 1)); // Thiên Kim Trảm: nhát đến sau 14 tick (ngoài cửa sổ Cường Hóa)
             case THO -> {
                 ls.add(dmg(true, coef, m, sp, 1));
-                if (slot == 3) appendTurret(x, ls, apt);
+
             }
             default -> ls.add(dmg(true, coef, m, sp, 1));
         }
@@ -497,9 +515,9 @@ public final class SkillEntries {
                     "Khiên nước cho người chơi trong 8 block (Hấp Thụ II 8 giây, giảm sát thương 6 giây); đẩy lùi và gây sát thương kẻ địch bán kính 5.",
                     ""},
             {"Gai đá dọc đường dài 10 block.",
-                    "Dựng 1 tháp trước mặt; tháp tự bắn kẻ địch.",
+                    "Bấm: dựng tháp, 2 tháp gần nhau hợp thể thành trụ laser. Giữ: xuyên tường 5 giây.",
                     "Địa chấn bán kính 7: làm chậm 3 giây, hất lên.",
-                    "Lấp đầy số tháp tối đa, khuếch đại tháp x2 sát thương 10 giây; chấn động bán kính 8 quanh bạn."},
+                    "Mưa núi đá 3 đợt (mỗi đợt 60% sát thương T), rồi giữ T dẫn nổ 175% và rút 99% Pháp Lực."},
             {"Lưỡi kim bay 14 block, trúng mọi mục tiêu trên đường.",
                     "Giáp Kim 8 giây (giảm sát thương + Hấp Thụ II); lưỡi phản chấn bán kính 4.",
                     "Chém quạt lớn tầm 6,5 block.",

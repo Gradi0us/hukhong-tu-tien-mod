@@ -74,13 +74,15 @@ public final class SkillBookService {
         if (pathOrd < 0 || pathOrd >= ps.length || slot < 0 || slot > 3) return;
         Path page = ps[pathOrd];
         if (!p.getData(ModAttachments.CULTIVATION).paths().contains(page)) return;
+        int lockMask = page == Path.PHAP ? com.hukhong.phaptu.ThoService.lockMask(p) : 0; // Thổ: E + T cố định; Quang/Lôi/Hỏa/Thủy: T cố định
+        if (lockMask != 0 && ((lockMask >> slot & 1) != 0 || (id != null && SkillBook.fixedId(page, lockMask, id)))) {
+            if (com.hukhong.phaptu.ThoService.isTho(p)) msg(p, "hukhong.phap.tho.locked", "Thổ Tháp (E) và Thiên Sơn Áp Đỉnh (T) là kỹ năng cố định của Pháp Thổ, không thể thay hoặc tháo.");
+            else msg(p, "hukhong.phap.beam.locked", "Tuyệt kỹ của nguyên tố này cố định ở phím T, không thể thay bằng kỹ năng khác.");
+            return;
+        }
         SkillBookData d = data(p);
         if (id == null || id.isEmpty()) {
             set(p, d.withSlot(page, slot, null));
-            return;
-        }
-        if (page == Path.PHAP && (slot == 3 || Skill.PHAP_ULT.icon.equals(id)) && com.hukhong.phaptu.beam.PhapBeamService.locksT(p)) {
-            msg(p, "hukhong.phap.beam.locked", "Tuyệt kỹ của nguyên tố này cố định ở phím T, không thể thay bằng kỹ năng khác.");
             return;
         }
         if (!SkillBook.assignable(d, page, id)) {

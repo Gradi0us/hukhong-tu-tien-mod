@@ -95,6 +95,12 @@ public final class BossArena {
         if (theme != null && !overlap && boss.tickCount < 40) build(a, theme, clearAbove);
     }
 
+    /** Người chơi đang bị nhốt trong một đấu trường boss còn sống (cấm xuyên tường). */
+    public static boolean isEngaged(ServerPlayer p) {
+        for (Arena a : ARENAS) if (a.engaged.contains(p.getUUID())) return true;
+        return false;
+    }
+
     // ------------------------------------------------------------------ build / restore
     private static void put(Arena a, BlockPos.MutableBlockPos p, BlockState st) {
         BlockState old = a.level.getBlockState(p);

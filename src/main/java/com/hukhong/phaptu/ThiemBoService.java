@@ -61,6 +61,7 @@ public final class ThiemBoService {
     private static final ResourceLocation SPEED_ID = ModAttributes.id("phap/thiem_bo_speed");
     private static final ResourceLocation STEP_ID = ModAttributes.id("phap/thiem_bo_step");
     private static final int GOLD = 0xFFE066, VIOLET = 0x9A7BFF, CYAN = 0x8FD8FF;
+    static boolean isTho(ServerPlayer p) { return PhapTu.element(p) == PhapElement.THO; }
     static boolean isLoi(ServerPlayer p) { return PhapTu.element(p) == PhapElement.LOI; }
     static int col(ServerPlayer p) { return isLoi(p) ? VIOLET : GOLD; }
 
@@ -76,13 +77,13 @@ public final class ThiemBoService {
     public static boolean eligible(ServerPlayer p) {
         if (!p.isAlive() || p.isSpectator() || MaRules.isLost(p)) return false;
         PhapElement el = PhapTu.element(p);
-        if (el != PhapElement.QUANG && el != PhapElement.LOI) return false; // Quang: Thiem Bo; Loi: Loi Tran (giu E)
+        if (el != PhapElement.QUANG && el != PhapElement.LOI && el != PhapElement.THO) return false; // Quang: Thiem Bo; Loi: Loi Tran; Tho: bam = thap, giu = xuyen tuong
         SkillState st = SkillService.state(p);
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         Path page = Skill.skillPath(d, st.page);
         if (!st.stance || page != Path.PHAP) return false;
         if (com.hukhong.phaptu.beam.PhapBeamService.busy(p)) return false;
-        SkillBook.Resolved r = SkillBook.resolve(SkillBookService.data(p), page, 1, d.level(), com.hukhong.phaptu.beam.PhapBeamService.locksT(p));
+        SkillBook.Resolved r = SkillBook.resolve(SkillBookService.data(p), page, 1, d.level(), ThoService.lockMask(p));
         return r != null && r.base() == Skill.PHAP_2 && r.book() == null;
     }
 
@@ -106,6 +107,8 @@ public final class ThiemBoService {
             s.held = 0;
         } else if (action == ThiemBoPayload.RELEASE) {
             release(p);
+        } else if (action == ThiemBoPayload.T_PRESS || action == ThiemBoPayload.T_RELEASE) {
+            if (ThoService.isTho(p)) ThoService.tKey(p, action == ThiemBoPayload.T_PRESS); // Thổ: giữ T dẫn nổ Thiên Sơn
         }
     }
 
@@ -120,6 +123,7 @@ public final class ThiemBoService {
 
     /** Dừng mọi trạng thái (tắt thế, đổi trang, chết, thoát). */
     public static void cancel(ServerPlayer p) {
+        ThoService.cancelPhase(p);
         St s = STATES.get(p.getUUID());
         if (s == null) return;
         s.pressed = false;
@@ -142,6 +146,7 @@ public final class ThiemBoService {
         s.held++;
         if (!s.sprinting) {
             if (s.held != ThiemBoMath.HOLD_TICKS || !eligible(p)) return;
+            if (isTho(p)) { ThoService.startPhase(p); return; } // Thổ: giữ E = xuyên tường 5s (không chạy tia sáng)
             CultivationData d0 = p.getData(ModAttachments.CULTIVATION);
             if (d0.resource() < ThiemBoMath.minStartMana(d0.resourceMax())) {
                 p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);

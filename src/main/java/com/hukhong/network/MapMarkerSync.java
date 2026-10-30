@@ -57,6 +57,10 @@ public final class MapMarkerSync {
             out.add(new MapMarkersPayload.Marker(MapMarkersPayload.MARKET, m.getKey(), m.getValue().getX(), m.getValue().getZ(), true));
         for (var z : com.hukhong.zone.ZoneData.get(ow).zones()) // vùng xâm thực (id = tên vùng; built = đã giải phóng)
             out.add(new MapMarkersPayload.Marker(MapMarkersPayload.ZONE, z.name, z.cx, z.cz, z.liberated));
+        for (var a : com.hukhong.world.calendar.CalendarData.get(ow).active().values()) { // su kien lich dang dien ra (dau do)
+            var d = com.hukhong.world.calendar.EventDefs.get(a.defId());
+            if (d != null && !d.story()) out.add(new MapMarkersPayload.Marker(MapMarkersPayload.ZONE, d.nameKey(), a.x(), a.z(), false));
+        }
         return out;
     }
 

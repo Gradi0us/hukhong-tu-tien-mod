@@ -177,6 +177,11 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob, com
         return r;
     }
 
+    /** Hien/an thanh mau cho nguoi choi ngoai tam theo doi (su kien lich). */
+    public void showBar(ServerPlayer p) { bar.addPlayer(p); }
+    public void hideBar(ServerPlayer p) { bar.removePlayer(p); }
+    public void hideAll() { bar.removeAllPlayers(); }
+
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bar.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
