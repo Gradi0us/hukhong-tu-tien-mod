@@ -227,8 +227,7 @@ test { useJUnitPlatform() }
 def devUserName() {
     if (project.findProperty('username')) return project.findProperty('username').toString()
     def f = project.file('username.txt')
-    if (!f.exists()) f.text = "userName = Minhhoangg
-"
+    if (!f.exists()) f.text = 'userName = Minhhoangg' + System.lineSeparator()
     def line = f.readLines('UTF-8').find { it.trim().toLowerCase().startsWith('username') && it.contains('=') }
     def name = line ? line.split('=', 2)[1].trim() : ''
     return name ? name : 'Minhhoangg'
