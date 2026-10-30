@@ -215,4 +215,88 @@ public final class MarketGameTests {
         if (!special || !evo) { h.fail("market lacks special/evolution stall"); return; }
         h.succeed();
     }
+
+    // ---- Thu mua (Ban) ----
+
+    /** Ban het 1 chong: vi + dung gia, Uy Danh = 50% gia tri ban, vuot moc thi len bac (tier-up). */
+    @GameTest(template = "empty")
+    public static void sellCreditsWalletAndHalfRep(GameTestHelper h) {
+        WanderingTrader t = trader(h, "herb");
+        ServerPlayer p = player(h, MarketRep.THRESHOLDS[1] - 5, 0); // 995: con 5 la len bac 1
+        p.getInventory().add(new ItemStack(com.hukhong.alchemy.AlchemyRegistry.THANH_DIEP.get(), 5));
+        long want = com.hukhong.currency.SellPrices.of(p.getInventory().getItem(0));
+        if (want <= 0) { h.fail("herb not sellable"); return; }
+        if (!ShopService.handleButton(p, t, com.hukhong.currency.ShopMenu.B_SELLALL)) { h.fail("sell all refused"); return; }
+        if (Wallet.count(p) != want) { h.fail("wallet " + Wallet.count(p) + " != " + want); return; }
+        if (MarketRep.spent(p) != MarketRep.THRESHOLDS[1] - 5 + want / 2) { h.fail("rep " + MarketRep.spent(p) + " not +50%"); return; }
+        if (MarketRep.tier(p) != 1) { h.fail("no tier-up after crossing threshold"); return; }
+        if (!p.getInventory().isEmpty()) { h.fail("items not removed"); return; }
+        // Ban 1 cai
+        p.getInventory().add(new ItemStack(com.hukhong.alchemy.AlchemyRegistry.HOA_LIEN.get(), 3));
+        long u = com.hukhong.currency.SellPrices.unit(new ItemStack(com.hukhong.alchemy.AlchemyRegistry.HOA_LIEN.get()));
+        long w0 = Wallet.count(p);
+        if (!ShopService.handleButton(p, t, com.hukhong.currency.ShopMenu.B_SELL1) || Wallet.count(p) != w0 + u || p.getInventory().getItem(0).getCount() != 2) { h.fail("sell 1 wrong"); return; }
+        h.succeed();
+    }
+
+    /** Mon khong thu mua (vanilla, tien te, Hon Tinh, Van Kien, vat bind) bi tu choi; vi / Uy Danh khong doi. */
+    @GameTest(template = "empty")
+    public static void sellRefusesNonSellable(GameTestHelper h) {
+        WanderingTrader t = trader(h, "special");
+        ServerPlayer p = player(h, 0, 0);
+        ItemStack bound = new ItemStack(com.hukhong.item.ModItems.KHAI_MACH_DAN.get());
+        bound.set(com.hukhong.item.ModItems.BOUND_TO.get(), p.getUUID());
+        ItemStack[] junk = {new ItemStack(net.minecraft.world.item.Items.DIAMOND, 3), new ItemStack(com.hukhong.currency.CurrencyRegistry.HA.get(), 5),
+                new ItemStack(com.hukhong.item.ModItems.HON_TINH.get(), 4), new ItemStack(com.hukhong.item.ModItems.BAN_MENH_KIEM.get()), bound,
+                new ItemStack(com.hukhong.story.StoryRegistry.DOC_ITEMS.values().iterator().next().get()),
+                new ItemStack(com.hukhong.phaptu.linhtruong.LinhTruongRegistry.LINH_TRUONG.get())};
+        for (ItemStack s : junk) {
+            if (com.hukhong.currency.SellPrices.of(s) != 0) { h.fail("sellable but must not be: " + s); return; }
+            p.getInventory().add(s);
+        }
+        if (!com.hukhong.currency.SellPrices.rows(p).isEmpty()) { h.fail("rows not empty"); return; }
+        if (ShopService.handleButton(p, t, com.hukhong.currency.ShopMenu.B_SELLALL) || ShopService.handleButton(p, t, com.hukhong.currency.ShopMenu.B_SELL1)
+                || ShopService.handleButton(p, t, com.hukhong.currency.ShopMenu.B_SELLEVERYTHING)) { h.fail("sale accepted"); return; }
+        if (Wallet.count(p) != 0 || MarketRep.spent(p) != 0) { h.fail("wallet/rep changed"); return; }
+        h.succeed();
+    }
+
+    /** Ban tat ca do mod: thu het mon thu mua duoc, giu lai mon khong ban duoc, cong dung tong + 50% Uy Danh. */
+    @GameTest(template = "empty")
+    public static void sellEverythingMixed(GameTestHelper h) {
+        WanderingTrader t = trader(h, "evo");
+        ServerPlayer p = player(h, 0, 0);
+        ItemStack[] goods = {new ItemStack(com.hukhong.alchemy.AlchemyRegistry.LINH_THAO.get(), 7), new ItemStack(com.hukhong.resource.ResourceRegistry.MATERIALS.get("huyen_thiet").get(), 4),
+                com.hukhong.honcot.HonCotRegistry.stack(com.hukhong.honcot.Bone.values()[0], 1, 60), com.hukhong.skillbook.SkillBookRewards.stack(new java.util.Random(1), com.hukhong.skillbook.SkillGrade.HUYEN, null),
+                new ItemStack(com.hukhong.skillbook.SkillBookRegistry.UPGRADE_SCROLL.get(), 2), new ItemStack(com.hukhong.creature.CreatureRegistry.MATERIALS.get("linh_ho_vi").get(), 3)};
+        long sum = 0;
+        for (ItemStack s : goods) { long v = com.hukhong.currency.SellPrices.of(s); if (v <= 0) { h.fail("not sellable: " + s); return; } sum += v; p.getInventory().add(s.copy()); }
+        p.getInventory().add(new ItemStack(net.minecraft.world.item.Items.DIAMOND, 2));
+        if (!ShopService.handleButton(p, t, com.hukhong.currency.ShopMenu.B_SELLEVERYTHING)) { h.fail("sell everything refused"); return; }
+        if (Wallet.count(p) != sum) { h.fail("wallet " + Wallet.count(p) + " != " + sum); return; }
+        if (MarketRep.spent(p) != sum / 2) { h.fail("rep " + MarketRep.spent(p) + " != " + sum / 2); return; }
+        if (!com.hukhong.currency.SellPrices.rows(p).isEmpty() || p.getInventory().countItem(net.minecraft.world.item.Items.DIAMOND) != 2) { h.fail("leftovers wrong"); return; }
+        h.succeed();
+    }
+
+    /** Chong khai thac: moi mon trong catalog (moi loai, thanh, ngay) thu mua < gia mua; mon thuong nhan ban deu thu mua duoc (tru Hon Tinh = tien). */
+    @GameTest(template = "empty")
+    public static void sellPriceBelowBuyForEveryCatalogItem(GameTestHelper h) {
+        long seed = h.getLevel().getSeed();
+        int checked = 0;
+        java.util.List<CityDef> cities = new java.util.ArrayList<>(CityDef.ALL);
+        cities.add(null);
+        for (CityDef d : cities) for (int kind = 0; kind < ShopCatalog.KEYS.length; kind++) for (long day = 0; day < 7; day++)
+            for (var o : ShopCatalog.buys(seed, kind, d, day)) {
+                long sell = com.hukhong.currency.SellPrices.of(o.stack());
+                boolean hon = o.stack().is(com.hukhong.item.ModItems.HON_TINH.get());
+                if (hon ? sell != 0 : sell <= 0) { h.fail("sellability wrong for " + o.stack()); return; }
+                // ca khi giam gia Uy Danh toi da (10%) va thien cam, gia ban lai van thap hon gia mua
+                long minPaid = MarketRep.discounted(o.price(), 4);
+                if (sell >= minPaid) { h.fail("sell " + sell + " >= buy " + minPaid + " for " + o.stack()); return; }
+                checked++;
+            }
+        if (checked < 50) { h.fail("too few offers checked: " + checked); return; }
+        h.succeed();
+    }
 }

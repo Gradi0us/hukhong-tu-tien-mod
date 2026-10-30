@@ -61,16 +61,10 @@ public final class ShopService {
         return out;
     }
 
-    private static List<ShopMenu.Entry> sells(int kind) {
-        List<ShopMenu.Entry> out = new ArrayList<>();
-        for (ShopCatalog.Offer o : ShopCatalog.sells(kind)) out.add(new ShopMenu.Entry(o.stack(), o.price(), 0));
-        return out;
-    }
-
     public static void open(ServerPlayer sp, Entity trader) {
         int kind = ShopCatalog.kindOf(trader);
         if (kind < 0) return;
-        var snap = new ShopMenu.Snapshot(trader.getId(), kind, rank(sp), buys(sp, trader, kind), sells(kind), MarketRep.discountPct(rank(sp)), true);
+        var snap = new ShopMenu.Snapshot(trader.getId(), kind, rank(sp), buys(sp, trader, kind), List.of(), MarketRep.discountPct(rank(sp)), true);
         sp.openMenu(new SimpleMenuProvider((id, inv, pl) -> new ShopMenu(id, inv, snap), ShopCatalog.kindName(kind)), snap::write);
     }
 
@@ -90,23 +84,38 @@ public final class ShopService {
             sp.displayClientMessage(Component.translatable("hukhong.shop.bought", e.stack().getHoverName(), TuTinhText.of(e.price())), true);
             return true;
         }
+        if (id == ShopMenu.B_SELLEVERYTHING) {
+            long total = 0;
+            int n = 0;
+            for (SellPrices.Row r : SellPrices.rows(sp)) {
+                int got = SellPrices.take(sp, r.proto(), r.count());
+                total += r.unit() * got;
+                n += got;
+            }
+            if (n == 0) { sp.displayClientMessage(Component.translatable("hukhong.shop.nothing_to_sell"), true); return false; }
+            long rep = settle(sp, total);
+            sp.displayClientMessage(Component.translatable("hukhong.shop.sold_everything", n, TuTinhText.of(total), rep), true);
+            return true;
+        }
         boolean all = id >= ShopMenu.B_SELLALL;
         int idx = id - (all ? ShopMenu.B_SELLALL : ShopMenu.B_SELL1);
-        List<ShopMenu.Entry> l = sells(kind);
-        if (idx < 0 || idx >= l.size()) return false;
-        ShopMenu.Entry e = l.get(idx);
-        int want = all ? Integer.MAX_VALUE : 1, sold = 0;
-        for (ItemStack s : sp.getInventory().items) {
-            if (sold >= want) break;
-            if (!ItemStack.isSameItemSameComponents(s, e.stack())) continue;
-            int t = Math.min(want - sold, s.getCount());
-            s.shrink(t);
-            sold += t;
-        }
+        List<SellPrices.Row> rows = SellPrices.rows(sp);
+        if (idx < 0 || idx >= rows.size()) return false;
+        SellPrices.Row r = rows.get(idx);
+        int sold = SellPrices.take(sp, r.proto(), all ? r.count() : 1);
         if (sold == 0) { sp.displayClientMessage(Component.translatable("hukhong.shop.nothing_to_sell"), true); return false; }
-        Wallet.give(sp, e.price() * sold);
-        sp.displayClientMessage(Component.translatable("hukhong.shop.sold", sold, e.stack().getHoverName(), TuTinhText.of(e.price() * sold)), true);
+        long total = r.unit() * sold;
+        long rep = settle(sp, total);
+        sp.displayClientMessage(Component.translatable("hukhong.shop.sold_rep", sold, r.proto().getHoverName(), TuTinhText.of(total), rep), true);
         return true;
+    }
+
+    /** Tra tien thu mua + cong Uy Danh = 50% gia tri ban (mua van 100%). Tra so Uy Danh nhan duoc. */
+    public static long settle(ServerPlayer sp, long total) {
+        Wallet.give(sp, total);
+        long rep = total * SellPrices.REP_PCT / 100;
+        MarketRep.addSpent(sp, rep);
+        return rep;
     }
 
     public static Component rankName(int rank) { return Component.translatable("hukhong.guild.rank." + GuildMath.clampRank(rank)); }

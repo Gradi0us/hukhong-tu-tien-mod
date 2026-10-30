@@ -17,7 +17,7 @@ import java.util.List;
  * 1000+i ban 1, 2000+i ban het. Server tinh lai danh sach va kiem tra moi thu.
  */
 public class ShopMenu extends AbstractContainerMenu {
-    public static final int B_SELL1 = 1000, B_SELLALL = 2000;
+    public static final int B_SELL1 = 1000, B_SELLALL = 2000, B_SELLEVERYTHING = 3000;
 
     public record Entry(ItemStack stack, long price, int minRank) {}
 
