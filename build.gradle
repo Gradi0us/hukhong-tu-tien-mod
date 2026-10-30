@@ -58,6 +58,8 @@ neoForge {
     runs {
         client {
             client()
+            // Fixed local player name for the development client.
+            programArguments.addAll '--username', (project.findProperty('username') ?: 'Minhhoangg').toString()
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
             gameDirectory = project.file('run')
