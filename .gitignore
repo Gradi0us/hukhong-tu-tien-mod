@@ -21,4 +21,3 @@ tools/.venv/
 tools/third_party/chunker/
 tools/__pycache__/
 dist/
-username.txt
