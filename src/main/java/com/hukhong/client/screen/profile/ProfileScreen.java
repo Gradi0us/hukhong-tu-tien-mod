@@ -233,9 +233,12 @@ public class ProfileScreen extends Screen {
             int bw = 110, bx = lx;
             g.fill(bx, y, bx + bw, y + 4, 0xFF22222E);
             g.fill(bx, y, bx + (int) (bw * com.hukhong.market.MarketRep.progress(spent)), y + 4, 0xFFD8A83A);
+            y += 7;
             long nx = com.hukhong.market.MarketRep.toNext(spent);
-            if (nx > 0) g.drawString(font, Component.translatable("hukhong.profile.market_next", com.hukhong.currency.TuTinhText.of(nx)), bx + bw + 6, y - 2, 0xFF999999);
-            y += 8;
+            if (nx > 0) { // dong rieng duoi thanh, khong tran sang cot chi so ben phai
+                g.drawString(font, Component.translatable("hukhong.profile.market_next", com.hukhong.currency.TuTinhText.of(nx)), lx, y, 0xFF999999);
+                y += 11;
+            }
         }
         int leftEnd = y;
 
