@@ -1,0 +1,6 @@
+{
+ "type": "neoforge:add_features",
+ "features": "hukhong:ore_linh_thach_thuong_ore",
+ "step": "underground_ores",
+ "biomes": "#hukhong:gen_ore_linh_thach_thuong_ore"
+}

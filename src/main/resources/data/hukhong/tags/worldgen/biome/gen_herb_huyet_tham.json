@@ -1,0 +1,17 @@
+{
+ "replace": false,
+ "values": [
+  {
+   "id": "#minecraft:is_mountain",
+   "required": false
+  },
+  {
+   "id": "#minecraft:is_badlands",
+   "required": false
+  },
+  {
+   "id": "#minecraft:is_taiga",
+   "required": false
+  }
+ ]
+}

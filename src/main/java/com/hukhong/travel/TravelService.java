@@ -123,6 +123,10 @@ public final class TravelService {
         } else if (id.startsWith("m:")) { // Khu Cho: tam = san khu cho
             pos = com.hukhong.city.MarketDistricts.get(ow).built(id.substring(2));
             if (pos != null) yHint = pos.getY();
+        } else if (id.startsWith("p:")) { // dia diem (Khach Diem): diem dung truoc cua
+            com.hukhong.poi.PoiInstance pi = com.hukhong.poi.PoiSavedData.get(ow).get(id.substring(2));
+            pos = pi == null ? null : com.hukhong.poi.PoiService.travelPos(pi);
+            if (pos != null) yHint = pos.getY();
         } else return "hukhong.travel.err_unknown";
         if (pos == null) return "hukhong.travel.err_unbuilt";
         double dx = p.getX() - pos.getX(), dz = p.getZ() - pos.getZ();

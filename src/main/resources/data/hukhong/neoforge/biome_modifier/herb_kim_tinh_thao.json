@@ -1,0 +1,6 @@
+{
+ "type": "neoforge:add_features",
+ "features": "hukhong:herb_kim_tinh_thao",
+ "step": "vegetal_decoration",
+ "biomes": "#hukhong:gen_herb_kim_tinh_thao"
+}

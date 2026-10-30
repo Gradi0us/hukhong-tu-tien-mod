@@ -1,0 +1,37 @@
+{
+ "type": "minecraft:crafting_shapeless",
+ "category": "misc",
+ "ingredients": [
+  {
+   "item": "hukhong:linh_thach_trung"
+  },
+  {
+   "item": "hukhong:linh_thach_trung"
+  },
+  {
+   "item": "hukhong:linh_thach_trung"
+  },
+  {
+   "item": "hukhong:linh_thach_trung"
+  },
+  {
+   "item": "hukhong:linh_thach_trung"
+  },
+  {
+   "item": "hukhong:linh_thach_trung"
+  },
+  {
+   "item": "hukhong:linh_thach_trung"
+  },
+  {
+   "item": "hukhong:linh_thach_trung"
+  },
+  {
+   "item": "hukhong:linh_thach_trung"
+  }
+ ],
+ "result": {
+  "id": "hukhong:linh_thach_thuong",
+  "count": 1
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "role": "hostile",
+ "hp_mul": 1.6,
+ "dmg_mul": 1.2,
+ "exp_weight": 1.2,
+ "hon_tinh": 0.12,
+ "drops": [
+  {
+   "item": "hukhong:moc_yeu_loi",
+   "chance": 0.6,
+   "min": 1,
+   "max": 1
+  },
+  {
+   "item": "hukhong:linh_thao",
+   "chance": 0.3,
+   "min": 1,
+   "max": 2
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "minecraft:dark_forest",
+   "minecraft:old_growth_birch_forest",
+   "minecraft:old_growth_spruce_taiga",
+   "minecraft:jungle"
+  ],
+  "weight": 8,
+  "min": 1,
+  "max": 1,
+  "time": "any"
+ }
+}

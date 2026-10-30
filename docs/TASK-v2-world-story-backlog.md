@@ -13,7 +13,7 @@
 ĐỢT 4b B      Cutscene + biến hình + chiêu mới ✅ (chưa thử trong game)
 ĐỢT 5  S1+W1  Sự kiện có phe, tập kích, PvP   ✅ (chưa thử trong game)
 ĐỢT 6  S2/S3  Cung truyện 7 thành + Siêu Độ   ✅ (chưa thử trong game)
-ĐỢT 7  W2–W8  Phần còn lại PLAN-v1            ⬜
+ĐỢT 7  W2–W8  Địa điểm, linh thảo, sinh vật, đấu giá, NPC sống ✅ (chưa thử trong game; bỏ A7,A9,A10,A16,A17,A18,A21,A22,A24)
 ```
 
 ## Đợt 1 — S0 + W0: Nối cốt truyện + Lịch K
@@ -75,7 +75,8 @@ Thiết kế gốc: PLAN-v1-vfx-boss-mob-scaling §5 (B1–B7). Hiện chuyển 
 - [x] (🔄 code+JUnit xong, chưa chơi thật) Kết thúc **Siêu Độ** (`ending_truth`): cần 10 Di thư C + Hư Ảnh TB <30% + 4 CHG + đủ số vùng giải phóng; Tâm Chiến 4 tàn ảnh CHG; giữ 4 Mảnh 60s; Mộ Dao về / tàn hồn; Hạng Chiêu tỉnh; Thế Giới Tầng 2 "Linh Khí Phục Hưng" (Yêu Tộc trỗi dậy); danh hiệu + bản mệnh dạng Thủ Hộ (ngự bay đường dài)
 
 ## Đợt 7 — Phần còn lại PLAN-v1 (W2–W8), mỗi JSON có `lore`
-- [ ] Địa điểm (Bia Đá, Khách Điếm + tin đồn, Động Phủ, Cổ Chiến Trường, dungeon theo đạo, Tiên Đảo vào bằng ngự kiếm…)
+- [ ] 🔄 **Địa điểm 7a** (code + JUnit `poi/PoiTest` + GameTest `poi/PoiGameTests` đã viết, build xanh; CHƯA chạy GameTest, CHƯA ảnh chụp, CHƯA chơi thật; lang: docs/research/lang-p7.txt): khung `com.hukhong.poi` (JSON `hukhong_poi`, đặt lười theo chunk, trạng thái khám phá/dọn/hồi sinh, marker bản đồ) + 15 nơi: A1 Bia Đá, A2 Động Phủ, A3 Cổ Chiến Trường, A4 Thổ Địa Miếu, A5 Linh Tuyền, A6 Khách Điếm + tin đồn, A8 Tàn Tích Tông Môn, A11 Kiếm Trủng, A12 Ma Uyên, A13 Đạo Quán, A14 Võ Đài, A15 Ngũ Hành Trận Đài, A19 Thác Linh Khí, A20 Mộ Vô Danh, A23 Khe Nứt nhỏ. **Bỏ qua đợt này:** A9 Phế Tháp, A17 Tiên Đảo, A18 Thủy Cung, A24 Thạch Khắc (cùng A7, A10, A16, A21, A22 thuộc đợt sau)
+- [ ] Địa điểm còn lại: Thôn Nhỏ, Đan Lô Cổ, Sào Huyệt, Chợ Đen, Cổ Đạo, Tiên Đảo vào bằng ngự kiếm…
 - [ ] Linh thảo, khoáng mạch, mùa; NPC sống, thiện cảm, nhiệm vụ ngẫu nhiên; linh sủng / thú chiến đấu (**không thú cưỡi**)
 - [ ] Đấu Giá Hành (sàn + Đấu Giá Hội giờ thực, lô truyện, người mua bí ẩn = Sứ Đồ) + Phi Kiếm Truyền Thư
 - [ ] Rà soát hiệu năng, cân bằng, ảnh chụp, multiplayer 2 client

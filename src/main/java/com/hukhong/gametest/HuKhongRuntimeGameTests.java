@@ -303,6 +303,9 @@ public final class HuKhongRuntimeGameTests {
         ServerPlayer p = fake(h, 10, Set.of(Path.KIEM));
         place(h, p, 2, 1, 2);
         double x = p.getX(), y = p.getY(), z = p.getZ();
+        // cac test o canh (VoidGameTests dung hang Bi Canh) co the de lai da Hu Khong tai o dung -> surfaceExit coi la ho sap; don sach de test doc lap
+        h.getLevel().setBlock(net.minecraft.core.BlockPos.containing(x, y, z), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+        h.getLevel().setBlock(net.minecraft.core.BlockPos.containing(x, y + 1, z), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
         var server = h.getLevel().getServer();
         BiCanhManager.reset();
         if (server.getLevel(BiCanhRegistry.DIM) != null) {

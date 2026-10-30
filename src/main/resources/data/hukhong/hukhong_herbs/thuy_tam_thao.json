@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:thuy_tam_thao",
+ "seasons": [
+  "xuan",
+  "ha"
+ ],
+ "biomes": [
+  "minecraft:river",
+  "minecraft:swamp",
+  "minecraft:beach"
+ ],
+ "rarity": 7
+}

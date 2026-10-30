@@ -1,0 +1,16 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:linh_ho",
+  "weight": 6,
+  "minCount": 1,
+  "maxCount": 2
+ },
+ "biomes": [
+  "minecraft:snowy_taiga",
+  "minecraft:taiga",
+  "minecraft:grove",
+  "minecraft:snowy_plains",
+  "minecraft:old_growth_pine_taiga"
+ ]
+}

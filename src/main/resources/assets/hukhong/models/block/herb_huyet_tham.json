@@ -1,0 +1,7 @@
+{
+ "parent": "minecraft:block/cross",
+ "textures": {
+  "cross": "hukhong:item/huyet_tham"
+ },
+ "render_type": "minecraft:cutout"
+}

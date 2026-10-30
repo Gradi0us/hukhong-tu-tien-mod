@@ -57,7 +57,7 @@ public final class ShopService {
     private static List<ShopMenu.Entry> buys(ServerPlayer p, Entity t, int kind) {
         List<ShopMenu.Entry> out = new ArrayList<>();
         for (ShopCatalog.Offer o : ShopCatalog.buys(p.serverLevel().getSeed(), kind, cityOf(p.serverLevel(), t), lichDay(p.serverLevel())))
-            out.add(new ShopMenu.Entry(o.stack(), MarketRep.discounted(o.price(), rank(p)), o.minRank()));
+            out.add(new ShopMenu.Entry(o.stack(), com.hukhong.living.AffectionService.adjustPrice(p, MarketRep.discounted(o.price(), rank(p))), o.minRank()));
         return out;
     }
 

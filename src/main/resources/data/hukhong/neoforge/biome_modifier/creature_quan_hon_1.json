@@ -1,0 +1,14 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:quan_hon",
+  "weight": 10,
+  "minCount": 3,
+  "maxCount": 5
+ },
+ "biomes": [
+  "minecraft:plains",
+  "minecraft:savanna",
+  "minecraft:meadow"
+ ]
+}

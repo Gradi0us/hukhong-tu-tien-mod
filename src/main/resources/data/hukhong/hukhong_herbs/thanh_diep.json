@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:thanh_diep",
+ "seasons": [
+  "xuan",
+  "ha",
+  "thu"
+ ],
+ "biomes": [
+  "#minecraft:is_forest",
+  "#minecraft:is_jungle"
+ ],
+ "rarity": 7
+}

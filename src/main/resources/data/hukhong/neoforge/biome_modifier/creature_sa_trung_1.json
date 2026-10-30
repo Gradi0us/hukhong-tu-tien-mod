@@ -1,0 +1,10 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:sa_trung",
+  "weight": 12,
+  "minCount": 1,
+  "maxCount": 2
+ },
+ "biomes": "minecraft:desert"
+}

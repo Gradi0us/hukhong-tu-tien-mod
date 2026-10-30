@@ -1,0 +1,24 @@
+{
+  "builder": "waterfall",
+  "biomes": [
+    "#minecraft:is_mountain",
+    "#minecraft:is_forest",
+    "#minecraft:is_taiga",
+    "#minecraft:is_jungle"
+  ],
+  "rarity": 0.2,
+  "min_spacing": 500,
+  "level": [
+    1,
+    100
+  ],
+  "encounter": "none",
+  "respawn_ticks": 24000,
+  "lore": {
+    "faction": "tien_nhan",
+    "chapter": [
+      1,
+      10
+    ]
+  }
+}

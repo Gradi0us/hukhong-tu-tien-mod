@@ -75,7 +75,7 @@ public final class GuildEvents {
                 BlockPos c = CityService.builtCenter(ow, d);
                 if (c == null || !GuildBuilder.eligible(d)) continue;
                 if (Math.abs(p.getX() - c.getX()) > NEAR || Math.abs(p.getZ() - c.getZ()) > NEAR) continue;
-                if (!halls.has(d.id()) || !halls.isCurrent(d.id())) { if (GuildBuilder.ensure(ow, d)) return; } // dung moi / dung lai hall cu sai cho; toi da 1 nha moi lan kiem
+                if (!halls.has(d.id()) || !halls.isCurrent(d.id()) || !com.hukhong.city.CityLayouts.get(ow).has(d.id())) { if (GuildBuilder.ensure(ow, d)) return; } // dung moi / dung lai hall cu sai cho; toi da 1 nha moi lan kiem
                 else GuildBuilder.ensureNpc(ow, halls.get(d.id()));
             }
         }

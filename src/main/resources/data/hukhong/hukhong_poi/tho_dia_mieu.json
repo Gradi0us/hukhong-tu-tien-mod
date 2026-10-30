@@ -1,0 +1,28 @@
+{
+  "builder": "shrine",
+  "biomes": [
+    "*"
+  ],
+  "rarity": 0.45,
+  "min_spacing": 300,
+  "level": [
+    1,
+    100
+  ],
+  "encounter": "none",
+  "respawn_ticks": 24000,
+  "params": {
+    "cost": 5,
+    "buff_ticks": 24000
+  },
+  "lore": {
+    "faction": "thanh",
+    "chapter": [
+      1,
+      10
+    ],
+    "sets_flags": [
+      "wl.poi.tho_dia"
+    ]
+  }
+}

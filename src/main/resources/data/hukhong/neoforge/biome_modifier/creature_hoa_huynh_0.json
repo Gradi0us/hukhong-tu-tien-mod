@@ -1,0 +1,15 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:hoa_huynh",
+  "weight": 8,
+  "minCount": 3,
+  "maxCount": 6
+ },
+ "biomes": [
+  "minecraft:swamp",
+  "minecraft:mangrove_swamp",
+  "minecraft:forest",
+  "minecraft:flower_forest"
+ ]
+}

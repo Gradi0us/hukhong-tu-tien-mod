@@ -1,0 +1,12 @@
+{
+ "item": "hukhong:phong_linh_diep",
+ "seasons": [
+  "ha",
+  "thu"
+ ],
+ "biomes": [
+  "#minecraft:is_mountain",
+  "minecraft:windswept_hills"
+ ],
+ "rarity": 9
+}

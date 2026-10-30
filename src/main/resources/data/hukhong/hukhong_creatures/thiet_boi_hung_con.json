@@ -1,0 +1,23 @@
+{
+ "role": "pet",
+ "hp_mul": 0.8,
+ "dmg_mul": 0.6,
+ "exp_weight": 0.5,
+ "hon_tinh": 0.0,
+ "drops": [],
+ "spawn": {
+  "biomes": [
+   "#minecraft:is_mountain",
+   "#minecraft:is_taiga"
+  ],
+  "weight": 2,
+  "min": 1,
+  "max": 1,
+  "time": "any"
+ },
+ "tame": {
+  "item": "hukhong:huyet_tham",
+  "hp_frac": 0.3,
+  "slot": "battle"
+ }
+}

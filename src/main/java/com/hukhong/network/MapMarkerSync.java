@@ -31,7 +31,7 @@ public final class MapMarkerSync {
     private static int lastHash = 0;
     private static final Set<UUID> SENT = new HashSet<>();
 
-    static List<MapMarkersPayload.Marker> collect(MinecraftServer server) {
+    public static List<MapMarkersPayload.Marker> collect(MinecraftServer server) {
         ServerLevel ow = server.getLevel(Level.OVERWORLD);
         List<MapMarkersPayload.Marker> out = new ArrayList<>();
         if (ow == null) return out;
@@ -61,7 +61,7 @@ public final class MapMarkerSync {
     }
 
     private static void send(ServerPlayer p) {
-        PacketDistributor.sendToPlayer(p, new MapMarkersPayload(collect(p.server)));
+        PacketDistributor.sendToPlayer(p, new MapMarkersPayload(com.hukhong.poi.PoiService.withMarkers(p, collect(p.server))));
         SENT.add(p.getUUID());
     }
 
@@ -95,11 +95,10 @@ public final class MapMarkerSync {
         int h = now.hashCode();
         boolean changed = h != lastHash;
         lastHash = h;
-        MapMarkersPayload pl = null;
         for (ServerPlayer p : players) {
-            if (!changed && SENT.contains(p.getUUID())) continue;
-            if (pl == null) pl = new MapMarkersPayload(now);
-            PacketDistributor.sendToPlayer(p, pl);
+            boolean poiDirty = com.hukhong.poi.PoiService.takeMarkerDirty(p.getUUID());
+            if (!changed && !poiDirty && SENT.contains(p.getUUID())) continue;
+            PacketDistributor.sendToPlayer(p, new MapMarkersPayload(com.hukhong.poi.PoiService.withMarkers(p, now)));
             SENT.add(p.getUUID());
         }
     }

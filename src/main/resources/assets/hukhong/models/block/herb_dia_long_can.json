@@ -1,0 +1,7 @@
+{
+ "parent": "minecraft:block/cross",
+ "textures": {
+  "cross": "hukhong:item/dia_long_can"
+ },
+ "render_type": "minecraft:cutout"
+}

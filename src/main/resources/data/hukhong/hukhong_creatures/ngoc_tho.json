@@ -1,0 +1,32 @@
+{
+ "role": "passive",
+ "hp_mul": 0.5,
+ "dmg_mul": 0.4,
+ "exp_weight": 0.1,
+ "hon_tinh": 0.0,
+ "drops": [
+  {
+   "item": "hukhong:ngoc_tho_mao",
+   "chance": 0.6,
+   "min": 1,
+   "max": 2
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "minecraft:plains",
+   "minecraft:meadow",
+   "minecraft:sunflower_plains",
+   "#minecraft:is_savanna"
+  ],
+  "weight": 10,
+  "min": 2,
+  "max": 3,
+  "time": "any"
+ },
+ "tame": {
+  "item": "hukhong:linh_thao",
+  "hp_frac": 0.3,
+  "slot": "spirit"
+ }
+}

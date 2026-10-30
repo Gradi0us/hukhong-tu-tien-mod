@@ -1,0 +1,10 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:hac_tien",
+  "weight": 6,
+  "minCount": 1,
+  "maxCount": 2
+ },
+ "biomes": "#minecraft:is_mountain"
+}

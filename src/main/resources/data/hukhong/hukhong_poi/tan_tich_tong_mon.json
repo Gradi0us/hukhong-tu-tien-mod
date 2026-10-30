@@ -1,0 +1,93 @@
+{
+  "builder": "ruin",
+  "biomes": [
+    "#minecraft:is_mountain",
+    "#minecraft:is_forest",
+    "#minecraft:is_taiga",
+    "#minecraft:is_jungle",
+    "minecraft:plains"
+  ],
+  "rarity": 0.12,
+  "min_spacing": 700,
+  "level": [
+    35,
+    70
+  ],
+  "encounter": "approach",
+  "respawn_ticks": 96000,
+  "mobs": [
+    {
+      "type": "hu_thi",
+      "count": 4,
+      "level_offset": 0,
+      "at": "room",
+      "hp_mul": 1.0,
+      "dmg_mul": 1.0,
+      "name": ""
+    },
+    {
+      "type": "hu_cot",
+      "count": 2,
+      "level_offset": 0,
+      "at": "room",
+      "hp_mul": 1.0,
+      "dmg_mul": 1.0,
+      "name": ""
+    },
+    {
+      "type": "hu_thi",
+      "count": 1,
+      "level_offset": 3,
+      "at": "boss",
+      "hp_mul": 14.0,
+      "dmg_mul": 1.6,
+      "name": "hukhong.poi.mob.truong_lao_hoa_ma"
+    }
+  ],
+  "loot": [
+    {
+      "item": "@skillbook:huyen",
+      "min": 1,
+      "max": 1,
+      "chance": 1.0
+    },
+    {
+      "item": "@skillbook:dia",
+      "min": 1,
+      "max": 1,
+      "chance": 0.5
+    },
+    {
+      "item": "@hontinh",
+      "min": 5,
+      "max": 9,
+      "chance": 1.0
+    },
+    {
+      "item": "@bone",
+      "min": 1,
+      "max": 1,
+      "chance": 0.25
+    },
+    {
+      "item": "minecraft:golden_apple",
+      "min": 1,
+      "max": 2,
+      "chance": 0.5
+    }
+  ],
+  "params": {
+    "gate_flag": "qc.noi_gian.c.expose"
+  },
+  "lore": {
+    "faction": "tong_mon",
+    "chapter": [
+      1,
+      10
+    ],
+    "sets_flags": [
+      "wl.poi.tan_tich"
+    ],
+    "modao_line": "hukhong.dlg.modao.wl.tan_tich"
+  }
+}

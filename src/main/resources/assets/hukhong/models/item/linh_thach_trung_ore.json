@@ -1,0 +1,6 @@
+{
+ "parent": "hukhong:block/linh_thach_trung_ore",
+ "textures": {
+  "layer0": "hukhong:item/linh_thach_trung_ore"
+ }
+}

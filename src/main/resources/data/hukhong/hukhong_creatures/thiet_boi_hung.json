@@ -1,0 +1,39 @@
+{
+ "role": "elite",
+ "hp_mul": 3.0,
+ "dmg_mul": 1.4,
+ "exp_weight": 3.0,
+ "hon_tinh": 0.15,
+ "drops": [
+  {
+   "item": "hukhong:thiet_boi_hung_trao",
+   "chance": 0.8,
+   "min": 1,
+   "max": 2
+  },
+  {
+   "item": "hukhong:huyen_thiet",
+   "chance": 0.3,
+   "min": 1,
+   "max": 2
+  },
+  {
+   "item": "hukhong:huyet_tham",
+   "chance": 0.25,
+   "min": 1,
+   "max": 1
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "#minecraft:is_mountain",
+   "#minecraft:is_hill",
+   "#minecraft:is_taiga",
+   "minecraft:old_growth_birch_forest"
+  ],
+  "weight": 3,
+  "min": 1,
+  "max": 1,
+  "time": "any"
+ }
+}

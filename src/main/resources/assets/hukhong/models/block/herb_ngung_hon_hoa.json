@@ -1,0 +1,7 @@
+{
+ "parent": "minecraft:block/cross",
+ "textures": {
+  "cross": "hukhong:item/ngung_hon_hoa"
+ },
+ "render_type": "minecraft:cutout"
+}

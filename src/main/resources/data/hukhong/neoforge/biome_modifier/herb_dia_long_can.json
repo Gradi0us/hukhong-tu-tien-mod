@@ -1,0 +1,6 @@
+{
+ "type": "neoforge:add_features",
+ "features": "hukhong:herb_dia_long_can",
+ "step": "vegetal_decoration",
+ "biomes": "#hukhong:gen_herb_dia_long_can"
+}

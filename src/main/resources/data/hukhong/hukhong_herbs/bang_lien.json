@@ -1,0 +1,14 @@
+{
+ "item": "hukhong:bang_lien",
+ "seasons": [
+  "dong"
+ ],
+ "biomes": [
+  "minecraft:snowy_plains",
+  "minecraft:snowy_taiga",
+  "minecraft:ice_spikes",
+  "minecraft:grove",
+  "minecraft:snowy_slopes"
+ ],
+ "rarity": 7
+}

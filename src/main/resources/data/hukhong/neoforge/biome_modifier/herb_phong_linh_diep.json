@@ -1,0 +1,6 @@
+{
+ "type": "neoforge:add_features",
+ "features": "hukhong:herb_phong_linh_diep",
+ "step": "vegetal_decoration",
+ "biomes": "#hukhong:gen_herb_phong_linh_diep"
+}

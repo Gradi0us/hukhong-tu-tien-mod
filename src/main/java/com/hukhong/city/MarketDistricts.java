@@ -62,6 +62,8 @@ public class MarketDistricts extends SavedData {
     public BlockPos built(String id) { return built.get(id); }
     public Map<String, BlockPos> allBuilt() { return built; }
     public void setBuilt(String id, BlockPos p) { built.put(id, p); setDirty(); }
+    /** Di cu: quen vi tri khu cho cu (da go) de dung lai o o moi. */
+    public void forget(String id) { boolean a = built.remove(id) != null, b = sites.remove(id) != null; if (a || b) setDirty(); }
     public int plazaT(String id) { return plazaT.getOrDefault(id, 0); }
     public Map<String, Integer> allPlaza() { return plazaT; }
     public void setPlazaT(String id, int t) { if (plazaT.getOrDefault(id, -1) != t) { plazaT.put(id, t); setDirty(); } }

@@ -36,7 +36,7 @@ public final class MarketDistrict {
     public static final int ALTAR_CLEAR = 32;
 
     /** Loai thuong nhan theo tung sap: {u, v, kind}. u doc mat tien cong, v huong ve cong (+ = cong). */
-    private static final int[][] STALLS = {
+    static final int[][] STALLS = {
             {-10, -9, 0}, {0, -11, 8}, {10, -9, 1}, {-11, 0, 4}, {11, 0, 6}, {-10, 8, 7}};
 
     public static boolean eligible(CityDef d) { return !d.category().equals("city_ruined"); }
@@ -62,6 +62,12 @@ public final class MarketDistrict {
         MarketDistricts md = MarketDistricts.get(ow);
         BlockPos s = md.site(d.id());
         if (s != null) return s;
+        CityLayout.Plot plot = CityLayouts.get(ow).market(d.id()); // o rieng da quy hoach (khong de len tuong/nha/dien dan)
+        if (plot != null) {
+            s = new BlockPos(plot.cx(), plot.y(), plot.cz());
+            md.setSite(d.id(), s);
+            return s;
+        }
         for (int slope : new int[]{6, 14, 1000}) {
             for (int k = 0; k < MAX_CANDIDATES; k++) {
                 int[] c = candidate(ow.getSeed(), d.id(), city.getX(), city.getZ(), k);
@@ -81,7 +87,7 @@ public final class MarketDistrict {
     }
 
     private static boolean footprintLoaded(ServerLevel l, BlockPos c) {
-        int h = HALF + 2;
+        int h = HALF + 3;
         for (int sx = -1; sx <= 1; sx++) for (int sz = -1; sz <= 1; sz++)
             if (!l.hasChunkAt(new BlockPos(c.getX() + sx * h, 64, c.getZ() + sz * h))) return false;
         return true;
@@ -94,20 +100,34 @@ public final class MarketDistrict {
         if (!eligible(d)) return false;
         BlockPos city = CityService.builtCenter(ow, d);
         if (city == null) return false;
+        if (CityRelayout.ensurePlanned(ow, d) == null) return false; // bo cuc + di cu the gioi cu truoc moi viec
         MarketDistricts md = MarketDistricts.get(ow);
         BlockPos done = md.built(d.id());
         if (done != null) {
             ensureTraders(ow, d, done);
             cleanupAltar(ow, city);
+            hall(ow, d, done);
             return true;
         }
         BlockPos site = pickSite(ow, d, city);
         if (site == null || !footprintLoaded(ow, site)) return false;
-        BlockPos c = build(ow, d, site, city);
+        boolean planned = CityLayouts.get(ow).market(d.id()) != null;
+        BlockPos c = build(ow, d, site, city, planned ? site.getY() : null);
         md.setBuilt(d.id(), c);
+        if (planned) {
+            try { CityRelayout.path(ow, d, true); }
+            catch (RuntimeException ex) { LOG.error("Market path failed for {}: {}", d.id(), ex.toString(), ex); }
+        }
         cleanupAltar(ow, city);
+        hall(ow, d, c);
         LOG.info("Market district of {} built at {}", d.id(), c);
         return true;
+    }
+
+    /** Dau Gia Hanh (Dot 7c): dinh dau gia + Dau Gia Su + Thay Boi trong khu cho. Loi khong lam hong viec dung khu cho. */
+    private static void hall(ServerLevel ow, CityDef d, BlockPos c) {
+        try { MarketAuctionHall.ensure(ow, d, c); }
+        catch (RuntimeException ex) { LOG.error("Auction hall ensure failed for {}: {}", d.id(), ex.toString(), ex); }
     }
 
     /** Don thuong nhan con sot trong ban kinh ALTAR_CLEAR quanh An Hon Dai (the gioi cu / thanh vua dung). Tra so con bi xoa. */
@@ -143,6 +163,8 @@ public final class MarketDistrict {
 
     /** Huong tu khu cho ve thanh (truc troi): cong chao nam o canh nay. */
     static Direction gateDir(ServerLevel l, BlockPos c, CityDef d) {
+        CityLayout.Plot plot = CityLayouts.get(l).market(d.id()); // o da quy hoach: mat tien theo o (cong thang hang cong thanh)
+        if (plot != null && plot.cx() == c.getX() && plot.cz() == c.getZ()) return plot.dir();
         BlockPos city = CityService.builtCenter(l, d);
         if (city == null) return Direction.NORTH;
         int dx = city.getX() - c.getX(), dz = city.getZ() - c.getZ();
@@ -164,11 +186,15 @@ public final class MarketDistrict {
     }
 
     /** Dung khu cho tai site (tam x,z) cho thanh d. Tra tam (y = mat san). */
-    public static BlockPos build(ServerLevel l, CityDef d, BlockPos site, BlockPos city) {
+    public static BlockPos build(ServerLevel l, CityDef d, BlockPos site, BlockPos city) { return build(l, d, site, city, null); }
+
+    /** floorY != null: mat san da quy hoach (o phang, nen mong tru da); null: lay mat dat hien tai (duong cu / kiem thu). */
+    public static BlockPos build(ServerLevel l, CityDef d, BlockPos site, BlockPos city, Integer floorY) {
         int cx = site.getX(), cz = site.getZ();
-        int y0 = StructurePlacer.surfaceY(l, cx, cz);
+        int y0 = floorY != null ? floorY : StructurePlacer.surfaceY(l, cx, cz);
         BlockPos c = new BlockPos(cx, y0, cz);
         Direction g = gateDir(l, c, d);
+        CityRelayout.marginFoundation(l, c, HALF + 1, HALF + 3); // vien dem 2 block: tru da + don vat can + phu co
         // 1) san phang + lat nen
         for (int u = -HALF - 1; u <= HALF + 1; u++) for (int v = -HALF - 1; v <= HALF + 1; v++) {
             int x = wx(c, g, u, v), z = wz(c, g, u, v);
@@ -177,8 +203,9 @@ public final class MarketDistrict {
             for (int dd = 1; dd <= 14; dd++) {
                 BlockPos bp = new BlockPos(x, y0 - dd, z);
                 var s = l.getBlockState(bp);
-                if (s.blocksMotion() && l.getFluidState(bp).isEmpty()) break;
-                l.setBlock(bp, (dd == 1 ? Blocks.DIRT : Blocks.STONE).defaultBlockState(), 18);
+                if (s.blocksMotion() && l.getFluidState(bp).isEmpty() && !s.is(net.minecraft.tags.BlockTags.LEAVES) && !s.is(net.minecraft.tags.BlockTags.LOGS)) break;
+                boolean pillar = dd > 1 && ((x & 3) == 0 && (z & 3) == 0 || edge); // tru gach da chong lo lung
+                l.setBlock(bp, (dd == 1 ? Blocks.DIRT : pillar ? Blocks.STONE_BRICKS : Blocks.STONE).defaultBlockState(), 18);
             }
             for (int h = 1; h <= 14; h++) air(l, x, y0 + h, z);
             if (skirt) { set(l, x, y0, z, Blocks.GRASS_BLOCK); continue; }

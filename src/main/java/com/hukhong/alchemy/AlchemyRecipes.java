@@ -1,6 +1,7 @@
 package com.hukhong.alchemy;
 
 import com.hukhong.item.ModItems;
+import com.hukhong.resource.ResourceRegistry;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -36,7 +37,16 @@ public final class AlchemyRecipes {
             new Recipe("giai_doc", 2, List.of(n(AlchemyRegistry.THANH_DIEP, 3), n(AlchemyRegistry.HOA_LIEN, 1)),
                     AlchemyRegistry.GIAI_DOC_DAN, 2),
             new Recipe("tho_nguyen", 3, List.of(n(AlchemyRegistry.LINH_THAO, 2), n(AlchemyRegistry.HUYET_THAM, 2), n(AlchemyRegistry.HOA_LIEN, 1)),
-                    AlchemyRegistry.THO_NGUYEN_DAN, 1));
+                    AlchemyRegistry.THO_NGUYEN_DAN, 1),
+            // ---- Dot 7b (G10): dan tier 7-9, Tu Linh Dan; nguyen lieu tu linh thao tu nhien (resource.ResourceRegistry) ----
+            new Recipe("tu_linh", 3, List.of(n(AlchemyRegistry.LINH_THAO, 2), n(ResourceRegistry.herbItem("kim_tinh_thao"), 1), n(AlchemyRegistry.THANH_DIEP, 1)),
+                    ResourceRegistry.TU_LINH_DAN, 1),
+            new Recipe("huyen_ton", 7, List.of(n(ResourceRegistry.herbItem("hoa_linh_chi"), 3), n(ResourceRegistry.herbItem("bang_lien"), 2),
+                    n(ResourceRegistry.herbItem("kim_tinh_thao"), 1)), ResourceRegistry.HUYEN_TON_DAN, 1),
+            new Recipe("thanh_co", 8, List.of(n(ResourceRegistry.herbItem("tu_linh_thao"), 3), n(ResourceRegistry.herbItem("ngung_hon_hoa"), 2),
+                    n(ResourceRegistry.herbItem("kim_tinh_thao"), 2)), ResourceRegistry.THANH_CO_DAN, 1),
+            new Recipe("than_dan", 9, List.of(n(ResourceRegistry.herbItem("ngung_hon_hoa"), 3), n(ResourceRegistry.herbItem("tu_linh_thao"), 3),
+                    n(AlchemyRegistry.HUYET_THAM, 3), n(() -> ResourceRegistry.MATERIALS.get("tinh_than_sa").get(), 1)), ResourceRegistry.THAN_DAN, 1));
 
     private static int total(List<ItemStack> in, Item item) {
         int c = 0;

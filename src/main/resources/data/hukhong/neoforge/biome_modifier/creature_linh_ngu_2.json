@@ -1,0 +1,13 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:linh_ngu",
+  "weight": 12,
+  "minCount": 2,
+  "maxCount": 5
+ },
+ "biomes": [
+  "minecraft:swamp",
+  "minecraft:mangrove_swamp"
+ ]
+}

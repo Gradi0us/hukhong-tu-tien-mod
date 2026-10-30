@@ -1,0 +1,6 @@
+{
+ "parent": "hukhong:block/huyen_thiet_ore",
+ "textures": {
+  "layer0": "hukhong:item/huyen_thiet_ore"
+ }
+}

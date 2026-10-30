@@ -1,0 +1,33 @@
+{
+ "role": "neutral",
+ "hp_mul": 0.8,
+ "dmg_mul": 0.7,
+ "exp_weight": 0.4,
+ "hon_tinh": 0.0,
+ "drops": [
+  {
+   "item": "hukhong:linh_ho_vi",
+   "chance": 0.5,
+   "min": 1,
+   "max": 1
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "minecraft:snowy_taiga",
+   "minecraft:taiga",
+   "minecraft:grove",
+   "minecraft:snowy_plains",
+   "minecraft:old_growth_pine_taiga"
+  ],
+  "weight": 6,
+  "min": 1,
+  "max": 2,
+  "time": "any"
+ },
+ "tame": {
+  "item": "hukhong:hoa_lien",
+  "hp_frac": 0.3,
+  "slot": "spirit"
+ }
+}

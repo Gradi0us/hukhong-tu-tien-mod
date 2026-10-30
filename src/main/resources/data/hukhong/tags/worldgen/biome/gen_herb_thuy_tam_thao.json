@@ -1,0 +1,17 @@
+{
+ "replace": false,
+ "values": [
+  {
+   "id": "minecraft:river",
+   "required": false
+  },
+  {
+   "id": "minecraft:swamp",
+   "required": false
+  },
+  {
+   "id": "minecraft:beach",
+   "required": false
+  }
+ ]
+}

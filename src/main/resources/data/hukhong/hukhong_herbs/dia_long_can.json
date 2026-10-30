@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:dia_long_can",
+ "seasons": [
+  "dong",
+  "xuan"
+ ],
+ "biomes": [
+  "#minecraft:is_taiga",
+  "minecraft:old_growth_pine_taiga",
+  "minecraft:windswept_forest"
+ ],
+ "rarity": 9
+}

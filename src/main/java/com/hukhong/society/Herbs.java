@@ -10,7 +10,8 @@ public final class Herbs {
 
     public static boolean isHerb(ItemStack s) {
         return s.is(AlchemyRegistry.LINH_THAO.get()) || s.is(AlchemyRegistry.HUYET_THAM.get())
-                || s.is(AlchemyRegistry.HOA_LIEN.get()) || s.is(AlchemyRegistry.THANH_DIEP.get());
+                || s.is(AlchemyRegistry.HOA_LIEN.get()) || s.is(AlchemyRegistry.THANH_DIEP.get())
+                || com.hukhong.resource.ResourceRegistry.isHerb(s);
     }
 
     public static int count(Inventory inv) {

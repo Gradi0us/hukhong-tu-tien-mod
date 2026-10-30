@@ -1,0 +1,15 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:moc_yeu",
+  "weight": 8,
+  "minCount": 1,
+  "maxCount": 1
+ },
+ "biomes": [
+  "minecraft:dark_forest",
+  "minecraft:old_growth_birch_forest",
+  "minecraft:old_growth_spruce_taiga",
+  "minecraft:jungle"
+ ]
+}

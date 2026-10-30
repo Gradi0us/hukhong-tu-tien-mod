@@ -1,0 +1,26 @@
+{
+ "role": "passive",
+ "hp_mul": 0.6,
+ "dmg_mul": 0.5,
+ "exp_weight": 0.15,
+ "hon_tinh": 0.0,
+ "drops": [
+  {
+   "item": "hukhong:linh_loc_giac",
+   "chance": 0.7,
+   "min": 1,
+   "max": 2
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "#minecraft:is_forest",
+   "minecraft:meadow",
+   "minecraft:cherry_grove"
+  ],
+  "weight": 10,
+  "min": 2,
+  "max": 4,
+  "time": "any"
+ }
+}

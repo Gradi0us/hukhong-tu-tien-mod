@@ -41,6 +41,8 @@ import java.util.EnumSet;
  */
 public class AmbientNpc extends PathfinderMob {
     public static final int CITIZEN = 0, GUARD = 1, COURIER = 2, DOCK = 3, DISCIPLE = 4, CHILD = 5;
+    /** Dot 7c: Dau Gia Su, Thay Boi (dung yen tai vi tri), Ma Tu Doi Lot (Su Do cai trang). */
+    public static final int AUCTIONEER = 6, SEER = 7, MA_TU = 8;
     public static final String TAG = "hukhong_ambient";
     private static final EntityDataAccessor<Integer> ROLE = SynchedEntityData.defineId(AmbientNpc.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> SKIN = SynchedEntityData.defineId(AmbientNpc.class, EntityDataSerializers.INT);
@@ -57,6 +59,7 @@ public class AmbientNpc extends PathfinderMob {
     private BlockPos home = BlockPos.ZERO;
     private int radius = 40;
     private BlockPos waypoint;
+    private int activity;
 
     public AmbientNpc(EntityType<? extends AmbientNpc> t, Level l) {
         super(t, l);
@@ -79,6 +82,9 @@ public class AmbientNpc extends PathfinderMob {
     public int role() { return entityData.get(ROLE); }
     public int skin() { return entityData.get(SKIN); }
     public boolean meditating() { return entityData.get(MEDITATING); }
+    /** Lich sinh hoat hien tai (NpcSchedule.WORK/EAT/SLEEP), do com.hukhong.living.NpcLife cap nhat. */
+    public int activity() { return activity; }
+    public void setActivity(int a) { activity = a; }
 
     /** Gan vai tro + ranh gioi di dao (tam home, ban kinh radius) + do dung. */
     public void setup(int role, int skin, BlockPos home, int radius) {
@@ -88,6 +94,11 @@ public class AmbientNpc extends PathfinderMob {
         this.radius = radius;
         restrictTo(home, radius);
         dress(role);
+        if (role == AUCTIONEER || role == SEER) {
+            setPersistenceRequired();
+            setCustomName(com.hukhong.auction.Tx.t(role == AUCTIONEER ? "hukhong.npc.auctioneer" : "hukhong.npc.seer",
+                    role == AUCTIONEER ? "Đấu Giá Sư" : "Thầy Bói", role == AUCTIONEER ? "Auctioneer" : "Fortune Teller"));
+        }
     }
 
     private void dress(int role) {
@@ -100,6 +111,8 @@ public class AmbientNpc extends PathfinderMob {
             case COURIER -> setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(random.nextBoolean() ? Items.BARREL : Items.CHEST));
             case DOCK -> setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(random.nextBoolean() ? Items.BARREL : Items.HAY_BLOCK));
             case DISCIPLE -> setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(random.nextInt(3) == 0 ? Items.STICK : Items.WOODEN_SWORD));
+            case AUCTIONEER -> { setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.MACE)); setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.GOLDEN_HELMET)); }
+            case SEER -> setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.AMETHYST_SHARD));
             case CHILD -> {
                 var sc = getAttribute(Attributes.SCALE);
                 if (sc != null) sc.setBaseValue(0.6);
@@ -120,6 +133,7 @@ public class AmbientNpc extends PathfinderMob {
         goalSelector.addGoal(0, new SiegeCombat(this));
         goalSelector.addGoal(0, new Defend(this));
         goalSelector.addGoal(0, new Cheer(this));
+        goalSelector.addGoal(0, new Routine(this));
         goalSelector.addGoal(1, new Practice(this));
         goalSelector.addGoal(2, new Shuttle(this));
         goalSelector.addGoal(3, new Wander(this));
@@ -135,7 +149,8 @@ public class AmbientNpc extends PathfinderMob {
     }
     @Override public boolean removeWhenFarAway(double d) { return true; }
     @Override public boolean canBeLeashed() { return false; }
-    @Override public boolean shouldShowName() { return false; }
+    @Override public boolean shouldShowName() { return (role() == AUCTIONEER || role() == SEER) && hasCustomName(); }
+    @Override public net.minecraft.world.InteractionResult mobInteract(Player p, InteractionHand h) { return com.hukhong.living.NpcLife.interact(this, p, h); }
     @Override public boolean isPushable() { return !hidden && super.isPushable(); }
     @Override public boolean isPickable() { return !hidden && super.isPickable(); }
 
@@ -247,6 +262,7 @@ public class AmbientNpc extends PathfinderMob {
     public void tick() {
         super.tick();
         if (level().isClientSide) return;
+        com.hukhong.living.NpcLife.tick(this);
         if (downed > 0) {
             if (--downed == 0) {
                 setShiftKeyDown(false);
@@ -308,6 +324,7 @@ public class AmbientNpc extends PathfinderMob {
 
         @Override public boolean canUse() {
             if (m.meditating() || m.role() == DISCIPLE && m.random.nextInt(3) != 0) return false;
+            if (m.role() >= AUCTIONEER && m.role() <= SEER) return false;
             if (--cooldown > 0) return false;
             cooldown = 20 + m.random.nextInt(60);
             return m.getNavigation().isDone();
@@ -377,6 +394,24 @@ public class AmbientNpc extends PathfinderMob {
             m.setShiftKeyDown(false);
             m.entityData.set(MEDITATING, false);
         }
+    }
+
+    /** Lich ngay/dem (Dot 7c): luc an thi dung lai nhai; luc ngu thi cui nguoi nam yen. Khong chay khi vay thanh. */
+    private static final class Routine extends Goal {
+        private final AmbientNpc m;
+        Routine(AmbientNpc m) { this.m = m; setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK)); }
+        @Override public boolean canUse() { return m.activity != 0 && m.siegeMode == SIEGE_NONE && !m.hidden && m.downed <= 0 && !m.meditating(); }
+        @Override public boolean canContinueToUse() { return canUse(); }
+        @Override public void start() { m.getNavigation().stop(); if (m.activity == 2) m.setShiftKeyDown(true); }
+        @Override public void tick() {
+            if (m.activity == 1 && m.tickCount % 30 == 0) {
+                m.swing(InteractionHand.MAIN_HAND);
+                if (m.level() instanceof ServerLevel sl) sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, m.getX(), m.getY() + 1.6, m.getZ(), 1, 0.2, 0.1, 0.2, 0);
+            } else if (m.activity == 2 && m.tickCount % 60 == 0 && m.level() instanceof ServerLevel sl) {
+                sl.sendParticles(ParticleTypes.CLOUD, m.getX(), m.getY() + 1.7, m.getZ(), 1, 0.1, 0.05, 0.1, 0.0);
+            }
+        }
+        @Override public void stop() { m.setShiftKeyDown(false); }
     }
 
     // ------------------------------------------------------------------ goals vay thanh

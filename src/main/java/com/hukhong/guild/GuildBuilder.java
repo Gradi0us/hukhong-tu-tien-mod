@@ -55,7 +55,10 @@ public final class GuildBuilder {
     public static boolean ensure(ServerLevel ow, CityDef d) {
         if (!eligible(d)) return false;
         GuildHalls halls = GuildHalls.get(ow);
+        var lay = com.hukhong.city.CityRelayout.ensurePlanned(ow, d); // bo cuc + di cu hall cu truoc moi viec
+        if (lay == null) return false;
         if (halls.has(d.id()) && halls.isCurrent(d.id())) return true;
+        if (lay.guild() != null) return ensurePlot(ow, d, halls, lay.guild());
         WorldBuildData.Settlement st = WorldBuildData.get(ow).settlements().get(d.id());
         if (st == null) return false;
         int t = shrineOuter(ow, st, d);
@@ -68,6 +71,21 @@ public final class GuildBuilder {
         spawnNpc(ow, npc);
         halls.put(d.id(), npc);
         LOG.info("Guild hall of {} built at {} (east of the Altar Shrine)", d.id(), npc);
+        return true;
+    }
+
+    /** Dung hall tai o rieng da quy hoach (khong de len tuong/nha/dien dan): nen mong, hall quay mat ve thanh, loi di tu cong thanh. */
+    private static boolean ensurePlot(ServerLevel ow, CityDef d, GuildHalls halls, com.hukhong.city.CityLayout.Plot plot) {
+        var r = com.hukhong.city.CityLayout.guildRect(plot);
+        for (int x : new int[]{r.minX() - 1, r.cx(), r.maxX() + 1}) for (int z : new int[]{r.minZ() - 1, r.cz(), r.maxZ() + 1})
+            if (!ow.hasChunkAt(new BlockPos(x, plot.y(), z))) return false;
+        flattenRect(ow, r, plot.y() - 1);
+        BlockPos npc = GuildHallBuild.build(ow, plot.cx(), plot.cz(), plot.y() - 1, plot.dir());
+        spawnNpc(ow, npc);
+        halls.put(d.id(), npc);
+        try { com.hukhong.city.CityRelayout.path(ow, d, false); }
+        catch (RuntimeException ex) { LOG.error("Guild path failed for {}: {}", d.id(), ex.toString(), ex); }
+        LOG.info("Guild hall of {} built at {} on its own plot {}", d.id(), npc, plot);
         return true;
     }
 
@@ -85,11 +103,15 @@ public final class GuildBuilder {
 
     /** Chi san/don dung vet dat dai sanh: lap dat duoi toi 24 o, don 22 o phia tren. */
     private static void flatten(ServerLevel l, int hx, int hz, int floorY) {
-        for (int x = hx - V_FRONT; x <= hx + V_BACK; x++) for (int z = hz - HALF_U; z <= hz + HALF_U; z++) {
+        flattenRect(l, new com.hukhong.city.CityLayout.Rect(hx - V_FRONT, hz - HALF_U, hx + V_BACK, hz + HALF_U), floorY);
+    }
+
+    private static void flattenRect(ServerLevel l, com.hukhong.city.CityLayout.Rect r, int floorY) {
+        for (int x = r.minX(); x <= r.maxX(); x++) for (int z = r.minZ(); z <= r.maxZ(); z++) {
             for (int d = 0; d <= 24; d++) {
                 BlockPos bp = new BlockPos(x, floorY - d, z);
                 var s = l.getBlockState(bp);
-                if (d > 0 && s.blocksMotion() && l.getFluidState(bp).isEmpty()) break;
+                if (d > 0 && s.blocksMotion() && l.getFluidState(bp).isEmpty() && !s.is(net.minecraft.tags.BlockTags.LEAVES) && !s.is(net.minecraft.tags.BlockTags.LOGS)) break;
                 l.setBlock(bp, (d == 0 ? Blocks.STONE_BRICKS : Blocks.STONE).defaultBlockState(), 18);
             }
             for (int h = 1; h <= 22; h++) {
@@ -118,7 +140,7 @@ public final class GuildBuilder {
     }
 
     /** Go le tan + bang cua hall cu (vi tri sai) truoc khi dung lai o cho dung. */
-    static void removeOld(ServerLevel l, BlockPos old) {
+    public static void removeOld(ServerLevel l, BlockPos old) {
         if (l.hasChunkAt(old)) {
             for (Villager v : l.getEntitiesOfClass(Villager.class, new AABB(old).inflate(24, 16, 24), v -> v.getTags().contains(NPC_TAG))) v.discard();
         }

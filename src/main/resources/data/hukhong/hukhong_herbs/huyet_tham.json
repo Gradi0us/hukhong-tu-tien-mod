@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:huyet_tham",
+ "seasons": [
+  "thu",
+  "dong"
+ ],
+ "biomes": [
+  "#minecraft:is_mountain",
+  "#minecraft:is_badlands",
+  "#minecraft:is_taiga"
+ ],
+ "rarity": 9
+}

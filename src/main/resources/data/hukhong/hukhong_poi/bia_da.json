@@ -1,0 +1,26 @@
+{
+  "builder": "stele",
+  "biomes": [
+    "*"
+  ],
+  "rarity": 0.5,
+  "min_spacing": 300,
+  "level": [
+    1,
+    100
+  ],
+  "encounter": "none",
+  "respawn_ticks": 24000,
+  "lore": {
+    "faction": "tien_nhan",
+    "chapter": [
+      1,
+      10
+    ],
+    "sets_flags": [
+      "wl.poi.bia_da"
+    ],
+    "clue": "c2",
+    "modao_line": "hukhong.dlg.modao.wl.bia_da"
+  }
+}

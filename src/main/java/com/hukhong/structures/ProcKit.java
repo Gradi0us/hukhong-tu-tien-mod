@@ -21,7 +21,14 @@ public final class ProcKit {
     public static final int FLAGS = 18;
 
     // ---- primitives ----
-    public static void set(ServerLevel l, int x, int y, int z, BlockState s) { l.setBlock(new BlockPos(x, y, z), s, FLAGS); }
+    /** Hop cat (minX,minZ,maxX,maxZ) cho che do sua chua: khac null thi set() bo qua o ngoai hop. Chi tren server thread, luon try/finally. */
+    public static volatile int[] clip;
+
+    public static void set(ServerLevel l, int x, int y, int z, BlockState s) {
+        int[] c = clip;
+        if (c != null && (x < c[0] || x > c[2] || z < c[1] || z > c[3])) return;
+        l.setBlock(new BlockPos(x, y, z), s, FLAGS);
+    }
 
     public static void set(ServerLevel l, int x, int y, int z, Block b) { set(l, x, y, z, b.defaultBlockState()); }
 

@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:block/cube_all",
+ "textures": {
+  "all": "hukhong:block/huyen_thiet_ore"
+ }
+}

@@ -1,0 +1,14 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:ngoc_tho",
+  "weight": 10,
+  "minCount": 2,
+  "maxCount": 3
+ },
+ "biomes": [
+  "minecraft:plains",
+  "minecraft:meadow",
+  "minecraft:sunflower_plains"
+ ]
+}

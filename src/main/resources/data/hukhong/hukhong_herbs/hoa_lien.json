@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:hoa_lien",
+ "seasons": [
+  "ha",
+  "thu"
+ ],
+ "biomes": [
+  "minecraft:swamp",
+  "minecraft:mangrove_swamp",
+  "#minecraft:is_jungle"
+ ],
+ "rarity": 9
+}

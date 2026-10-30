@@ -1,0 +1,45 @@
+{
+  "builder": "dao_quan",
+  "biomes": [
+    "#minecraft:is_mountain",
+    "#minecraft:is_hill",
+    "#minecraft:is_taiga"
+  ],
+  "rarity": 0.1,
+  "min_spacing": 800,
+  "level": [
+    30,
+    70
+  ],
+  "encounter": "none",
+  "respawn_ticks": 96000,
+  "path": "dao",
+  "loot": [
+    {
+      "item": "@hontinh",
+      "min": 4,
+      "max": 8,
+      "chance": 1.0
+    },
+    {
+      "item": "@tutinh",
+      "min": 20,
+      "max": 40,
+      "chance": 1.0
+    }
+  ],
+  "params": {
+    "cooldown": 24000,
+    "exp_frac": 0.04
+  },
+  "lore": {
+    "faction": "thanh",
+    "chapter": [
+      1,
+      10
+    ],
+    "sets_flags": [
+      "wl.poi.dao_quan"
+    ]
+  }
+}

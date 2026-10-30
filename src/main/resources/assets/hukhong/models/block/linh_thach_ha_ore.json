@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:block/cube_all",
+ "textures": {
+  "all": "hukhong:block/linh_thach_ha_ore"
+ }
+}

@@ -1,0 +1,30 @@
+{
+  "builder": "inn",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:meadow",
+    "minecraft:savanna",
+    "#minecraft:is_forest",
+    "#minecraft:is_taiga",
+    "minecraft:desert"
+  ],
+  "rarity": 0.3,
+  "min_spacing": 500,
+  "level": [
+    1,
+    100
+  ],
+  "encounter": "none",
+  "respawn_ticks": 24000,
+  "travel": true,
+  "lore": {
+    "faction": "thanh",
+    "chapter": [
+      1,
+      10
+    ],
+    "sets_flags": [
+      "wl.poi.khach_dien"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+ "parent": "minecraft:block/cross",
+ "textures": {
+  "cross": "hukhong:item/linh_thao"
+ },
+ "render_type": "minecraft:cutout"
+}

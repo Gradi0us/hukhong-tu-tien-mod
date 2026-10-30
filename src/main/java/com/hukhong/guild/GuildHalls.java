@@ -56,4 +56,6 @@ public class GuildHalls extends SavedData {
     public boolean isCurrent(String cityId) { return current.contains(cityId); }
     public Map<String, BlockPos> all() { return halls; }
     public void put(String cityId, BlockPos p) { halls.put(cityId, p); current.add(cityId); setDirty(); }
+    /** Di cu: quen hall cu (da go). */
+    public void remove(String cityId) { boolean a = halls.remove(cityId) != null, b = current.remove(cityId); if (a || b) setDirty(); }
 }

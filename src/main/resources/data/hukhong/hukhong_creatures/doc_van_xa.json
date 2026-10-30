@@ -1,0 +1,32 @@
+{
+ "role": "hostile",
+ "hp_mul": 0.8,
+ "dmg_mul": 1.0,
+ "exp_weight": 0.7,
+ "hon_tinh": 0.08,
+ "drops": [
+  {
+   "item": "hukhong:doc_van_xa_nha",
+   "chance": 0.5,
+   "min": 1,
+   "max": 2
+  },
+  {
+   "item": "hukhong:thanh_diep",
+   "chance": 0.15,
+   "min": 1,
+   "max": 1
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "minecraft:swamp",
+   "minecraft:mangrove_swamp",
+   "#minecraft:is_jungle"
+  ],
+  "weight": 12,
+  "min": 1,
+  "max": 2,
+  "time": "any"
+ }
+}

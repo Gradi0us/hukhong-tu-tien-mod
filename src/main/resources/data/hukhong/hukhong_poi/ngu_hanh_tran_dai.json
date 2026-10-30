@@ -1,0 +1,39 @@
+{
+  "builder": "wuxing",
+  "biomes": [
+    "*"
+  ],
+  "rarity": 0.1,
+  "min_spacing": 800,
+  "level": [
+    30,
+    70
+  ],
+  "encounter": "none",
+  "respawn_ticks": 96000,
+  "path": "phap",
+  "loot": [
+    {
+      "item": "@hontinh",
+      "min": 8,
+      "max": 14,
+      "chance": 1.0
+    },
+    {
+      "item": "@skillbook:huyen",
+      "min": 1,
+      "max": 1,
+      "chance": 0.3
+    }
+  ],
+  "lore": {
+    "faction": "tien_nhan",
+    "chapter": [
+      1,
+      10
+    ],
+    "sets_flags": [
+      "wl.poi.ngu_hanh"
+    ]
+  }
+}

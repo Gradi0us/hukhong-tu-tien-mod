@@ -111,7 +111,8 @@ public final class MinimapHud {
                 double dx = m.x() - px, dz = m.z() - pz;
                 if (inside(dx, dz, lim, round)) {
                     int ix = cx + (int) Math.round(dx), iy = cy + (int) Math.round(dz);
-                    if (m.kind() == MapMarkersPayload.MARKET) MapIcons.market(g, ix, iy, wp);
+                    if (m.kind() == MapMarkersPayload.POI) MapIcons.poi(g, ix, iy, m.built(), wp);
+                    else if (m.kind() == MapMarkersPayload.MARKET) MapIcons.market(g, ix, iy, wp);
                     else if (m.kind() == MapMarkersPayload.GUILD) MapIcons.guild(g, ix, iy, wp);
                     else if (MinimapState.isPort(m)) MapIcons.port(g, ix, iy, m.built(), wp);
                     else if (m.kind() == MapMarkersPayload.ZONE) MapIcons.zone(g, ix, iy, m.built(), wp);

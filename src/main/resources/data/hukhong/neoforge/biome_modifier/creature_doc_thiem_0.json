@@ -1,0 +1,13 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:doc_thiem",
+  "weight": 12,
+  "minCount": 1,
+  "maxCount": 3
+ },
+ "biomes": [
+  "minecraft:swamp",
+  "minecraft:mangrove_swamp"
+ ]
+}

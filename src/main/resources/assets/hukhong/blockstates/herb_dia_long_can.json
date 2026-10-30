@@ -1,0 +1,22 @@
+{
+ "variants": {
+  "age=0,cultivated=false": {
+   "model": "hukhong:block/herb_stage0"
+  },
+  "age=1,cultivated=false": {
+   "model": "hukhong:block/herb_stage1"
+  },
+  "age=2,cultivated=false": {
+   "model": "hukhong:block/herb_dia_long_can"
+  },
+  "age=0,cultivated=true": {
+   "model": "hukhong:block/herb_stage0"
+  },
+  "age=1,cultivated=true": {
+   "model": "hukhong:block/herb_stage1"
+  },
+  "age=2,cultivated=true": {
+   "model": "hukhong:block/herb_dia_long_can"
+  }
+ }
+}

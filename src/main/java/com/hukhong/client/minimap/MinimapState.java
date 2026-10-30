@@ -46,6 +46,7 @@ public final class MinimapState {
     public static int color(MapMarkersPayload.Marker m) {
         if (m.kind() == MapMarkersPayload.ZONE) return m.built() ? 0xFF8CE08C : 0xFFFF5A4A;
         if (m.kind() == MapMarkersPayload.MARKET) return 0xFFE8803A;
+        if (m.kind() == MapMarkersPayload.POI) return m.built() ? 0xFF7FA08A : 0xFFB6F08C;
         return m.kind() == MapMarkersPayload.GUILD ? 0xFFC070FF : isPort(m) ? 0xFF6AB8FF : m.kind() == MapMarkersPayload.CITY ? 0xFFE8C060 : 0xFF6FE0D0;
     }
 

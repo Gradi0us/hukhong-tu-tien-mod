@@ -1,0 +1,13 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:linh_loc",
+  "weight": 10,
+  "minCount": 2,
+  "maxCount": 4
+ },
+ "biomes": [
+  "minecraft:meadow",
+  "minecraft:cherry_grove"
+ ]
+}

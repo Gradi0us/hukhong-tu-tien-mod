@@ -1,0 +1,60 @@
+{
+  "builder": "grave",
+  "biomes": [
+    "*"
+  ],
+  "rarity": 0.4,
+  "min_spacing": 300,
+  "level": [
+    10,
+    70
+  ],
+  "encounter": "none",
+  "respawn_ticks": 72000,
+  "mobs": [
+    {
+      "type": "hu_thi",
+      "count": 3,
+      "level_offset": 0,
+      "at": "room",
+      "hp_mul": 1.0,
+      "dmg_mul": 1.0,
+      "name": "hukhong.poi.mob.am_binh"
+    }
+  ],
+  "loot": [
+    {
+      "item": "@tutinh",
+      "min": 15,
+      "max": 40,
+      "chance": 1.0
+    },
+    {
+      "item": "minecraft:diamond",
+      "min": 1,
+      "max": 2,
+      "chance": 0.5
+    },
+    {
+      "item": "@skillbook:huyen",
+      "min": 1,
+      "max": 1,
+      "chance": 0.2
+    }
+  ],
+  "params": {
+    "p_reward": 0.55,
+    "p_curse": 0.25,
+    "curse_ticks": 3600
+  },
+  "lore": {
+    "faction": "tien_nhan",
+    "chapter": [
+      1,
+      10
+    ],
+    "sets_flags": [
+      "wl.poi.mo_vo_danh"
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:bang_hon",
+  "weight": 12,
+  "minCount": 1,
+  "maxCount": 2
+ },
+ "biomes": [
+  "minecraft:snowy_plains",
+  "minecraft:ice_spikes",
+  "minecraft:snowy_taiga",
+  "minecraft:frozen_peaks",
+  "minecraft:snowy_slopes"
+ ]
+}

@@ -1,0 +1,63 @@
+{
+  "builder": "rift",
+  "biomes": [
+    "*"
+  ],
+  "rarity": 0.5,
+  "min_spacing": 300,
+  "level": [
+    10,
+    45
+  ],
+  "encounter": "timed",
+  "respawn_ticks": 48000,
+  "mobs": [
+    {
+      "type": "hu_thi",
+      "count": 2,
+      "level_offset": 0,
+      "at": "room",
+      "hp_mul": 1.0,
+      "dmg_mul": 1.0,
+      "name": ""
+    },
+    {
+      "type": "hu_cot",
+      "count": 1,
+      "level_offset": 0,
+      "at": "room",
+      "hp_mul": 1.0,
+      "dmg_mul": 1.0,
+      "name": ""
+    }
+  ],
+  "loot": [
+    {
+      "item": "@hontinh",
+      "min": 2,
+      "max": 4,
+      "chance": 1.0
+    },
+    {
+      "item": "@tutinh",
+      "min": 10,
+      "max": 20,
+      "chance": 1.0
+    }
+  ],
+  "params": {
+    "waves": 3,
+    "interval": 200,
+    "limit": 6000
+  },
+  "lore": {
+    "faction": "da_khuyet",
+    "chapter": [
+      1,
+      10
+    ],
+    "sets_flags": [
+      "wl.poi.rift"
+    ]
+  }
+}

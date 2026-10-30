@@ -37,6 +37,16 @@ final class MapIcons {
         g.fill(cx + 3, cy + 0, cx + 4, cy + 3, 0xFF8A6A3A);
     }
 
+    /** Địa điểm đã khám phá: sao bốn cánh xanh lá (đã dọn: xám xanh). */
+    static void poi(GuiGraphics g, int cx, int cy, boolean cleared, boolean hot) {
+        int c = hot ? WHITE : cleared ? 0xFF7FA08A : 0xFFB6F08C;
+        g.fill(cx - 1, cy - 4, cx + 2, cy + 5, INK);
+        g.fill(cx - 4, cy - 1, cx + 5, cy + 2, INK);
+        g.fill(cx, cy - 3, cx + 1, cy + 4, c);
+        g.fill(cx - 3, cy, cx + 4, cy + 1, c);
+        g.fill(cx - 1, cy - 1, cx + 2, cy + 2, c);
+    }
+
     /** Hiệp Hội Mạo Hiểm Giả: khiên tím viền vàng. */
     static void guild(GuiGraphics g, int cx, int cy, boolean hot) {
         g.fill(cx - 3, cy - 4, cx + 4, cy + 1, INK);

@@ -187,10 +187,25 @@ public final class CityBuilder {
 
     /** Dung thanh tai site (x,z); tra tam (y = mat nen Ấn Hồn Đài). tier quyet dinh do cao tuong. */
     public static BlockPos buildProcedural(ServerLevel l, BlockPos site, String nameKey, Tier tier, String cat) {
+        return buildProcedural(l, site, nameKey, tier, cat, null);
+    }
+
+    /**
+     * Sua chua thanh thu tuc: dung lai CHI cac block nam trong hop cat (minX,minZ,maxX,maxZ) cua thanh (khong san phang, khong sinh dan, khong dung lai
+     * Ấn Hồn Đài/bien). Dung khi Hiep Hoi/Khu Cho cu da de len tuong/nha. y0 = mat nen goc cua thanh (nui: mat bac thap nhat).
+     */
+    public static void repairProcedural(ServerLevel l, BlockPos center, CityDef d, int[] clip, int y0) {
+        int[] old = ProcKit.clip;
+        ProcKit.clip = clip;
+        try { buildProcedural(l, center, d.nameKey(), d.tier(), d.category(), new int[]{y0}); }
+        finally { ProcKit.clip = old; }
+    }
+
+    private static BlockPos buildProcedural(ServerLevel l, BlockPos site, String nameKey, Tier tier, String cat, int[] repair) {
         final boolean mountain = cat.equals("city_mountain"), port = cat.equals("port"), ruined = cat.equals("city_ruined");
         final boolean bigPlaza = AltarShrine.procR(cat) >= AltarShrine.MIN_GRAND;
         int cx = site.getX(), cz = site.getZ();
-        int y0 = prepare(l, cx, cz, HALF, 26);
+        int y0 = repair != null ? repair[0] : prepare(l, cx, cz, HALF, 26);
         int ex = tier.ordinal();
         long salt = l.getSeed() ^ ((long) cx * 31 + cz);
         int plazaY = mountain ? y0 + 8 : y0;
@@ -345,6 +360,7 @@ public final class CityBuilder {
             }
         }
 
+        if (repair != null) return new BlockPos(cx, plazaY, cz); // sua chua: khong dung lai Ấn Hồn Đài / bien / dan lang
         // 7) Ấn Hồn Đài + cot sang
         AltarShrine.build(l, new BlockPos(cx, plazaY + 1, cz), AltarShrine.procR(cat), true);
         set(l, cx, plazaY + 1, cz, ModBlocks.AN_HON_DAI.get());

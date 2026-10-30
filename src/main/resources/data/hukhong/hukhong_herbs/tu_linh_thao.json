@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:tu_linh_thao",
+ "seasons": [
+  "thu",
+  "dong"
+ ],
+ "biomes": [
+  "minecraft:dark_forest",
+  "minecraft:swamp",
+  "minecraft:old_growth_birch_forest"
+ ],
+ "rarity": 8
+}

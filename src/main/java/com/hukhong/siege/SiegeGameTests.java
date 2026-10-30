@@ -43,14 +43,15 @@ public final class SiegeGameTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 500, batch = "siegeB")
+    @GameTest(template = "empty", timeoutTicks = 700, batch = "siegeB")
     public static void citizensShelterThenReturn(GameTestHelper h) {
         SiegeDirector.abort();
         AmbientNpc c = h.spawn(AmbientRegistry.AMBIENT.get(), 2, 2, 2);
         c.setup(AmbientNpc.CITIZEN, 1, c.blockPosition(), 40);
         c.setPersistenceRequired();
         SiegeDirector.begin(h.getLevel(), h.absolutePos(new BlockPos(2, 1, 2)), 8, false, false);
-        h.runAfterDelay(260, () -> {
+        // Shelter hides at the latest 360 ticks after the panic start (10-70 ticks delay) when a door (possibly of a neighbouring test) is unreachable
+        h.runAfterDelay(460, () -> {
             h.assertTrue(c.hiddenInside() && c.isInvisible(), "citizen must be sheltered: mode=" + c.siegeMode() + " hidden=" + c.hiddenInside() + " invis=" + c.isInvisible() + " alive=" + c.isAlive() + " removed=" + c.isRemoved() + " running=" + SiegeDirector.running());
             SiegeDirector.abort();
             h.runAfterDelay(5, () -> {

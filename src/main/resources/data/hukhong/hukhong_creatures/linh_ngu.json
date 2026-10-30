@@ -1,0 +1,27 @@
+{
+ "role": "aquatic",
+ "hp_mul": 0.4,
+ "dmg_mul": 0.2,
+ "exp_weight": 0.1,
+ "hon_tinh": 0.0,
+ "drops": [
+  {
+   "item": "hukhong:linh_ngu_lan",
+   "chance": 0.7,
+   "min": 1,
+   "max": 2
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "#minecraft:is_river",
+   "minecraft:swamp",
+   "minecraft:mangrove_swamp",
+   "#minecraft:is_ocean"
+  ],
+  "weight": 12,
+  "min": 2,
+  "max": 5,
+  "time": "any"
+ }
+}

@@ -160,6 +160,7 @@ public final class HuKhongCommand {
                             msg(c.getSource(), b == null ? "spawn failed" : "chg " + b.idx() + " descending");
                             return b == null ? 0 : 1;
                         })))
+                .then(com.hukhong.city.CityRelayout.node())
                 .then(com.hukhong.bicanh.BiCanhCommand.node())
                 .then(com.hukhong.endgame.EndgameCommand.node())
                 .then(Commands.literal("age").executes(c -> {

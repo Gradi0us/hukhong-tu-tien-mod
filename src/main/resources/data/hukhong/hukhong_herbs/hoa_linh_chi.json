@@ -1,0 +1,12 @@
+{
+ "item": "hukhong:hoa_linh_chi",
+ "seasons": [
+  "ha"
+ ],
+ "biomes": [
+  "minecraft:desert",
+  "#minecraft:is_badlands",
+  "#minecraft:is_savanna"
+ ],
+ "rarity": 8
+}

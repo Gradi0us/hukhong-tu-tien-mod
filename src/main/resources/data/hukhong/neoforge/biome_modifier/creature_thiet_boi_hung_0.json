@@ -1,0 +1,10 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:thiet_boi_hung",
+  "weight": 3,
+  "minCount": 1,
+  "maxCount": 1
+ },
+ "biomes": "#minecraft:is_mountain"
+}

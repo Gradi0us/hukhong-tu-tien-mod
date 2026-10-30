@@ -1,0 +1,12 @@
+{
+ "item": "hukhong:kim_tinh_thao",
+ "seasons": [
+  "thu"
+ ],
+ "biomes": [
+  "#minecraft:is_savanna",
+  "minecraft:plains",
+  "minecraft:sunflower_plains"
+ ],
+ "rarity": 8
+}

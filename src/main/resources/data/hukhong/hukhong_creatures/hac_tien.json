@@ -1,0 +1,26 @@
+{
+ "role": "passive",
+ "hp_mul": 0.5,
+ "dmg_mul": 0.4,
+ "exp_weight": 0.15,
+ "hon_tinh": 0.0,
+ "drops": [
+  {
+   "item": "hukhong:hac_tien_vu",
+   "chance": 0.8,
+   "min": 1,
+   "max": 3
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "minecraft:swamp",
+   "minecraft:mangrove_swamp",
+   "#minecraft:is_mountain"
+  ],
+  "weight": 6,
+  "min": 1,
+  "max": 2,
+  "time": "day"
+ }
+}
