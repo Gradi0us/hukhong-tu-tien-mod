@@ -1,0 +1,103 @@
+{
+ "npc": "dau_gia_su",
+ "city": "co_xao_thanh",
+ "name_key": "hukhong.npc.dau_gia_su",
+ "entry": [
+  {
+   "if": {
+    "flags": [
+     "qc.dau_gia.done"
+    ]
+   },
+   "node": "done"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.dau_gia.3"
+    ]
+   },
+   "node": "s3"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.dau_gia.2"
+    ]
+   },
+   "node": "s2"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.dau_gia.1"
+    ]
+   },
+   "node": "s1"
+  },
+  {
+   "if": {
+    "chapter_min": 5,
+    "min_level": 40
+   },
+   "node": "offer"
+  },
+  {
+   "node": "early"
+  }
+ ],
+ "nodes": {
+  "early": {
+   "text": [
+    "hukhong.dlg.dau_gia_su.early.p1"
+   ]
+  },
+  "offer": {
+   "text": [
+    "hukhong.dlg.dau_gia_su.offer.p1",
+    "hukhong.dlg.dau_gia_su.offer.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.dau_gia_su.offer.c1",
+     "actions": [
+      {
+       "type": "qc",
+       "chain": "dau_gia",
+       "stage": 1
+      }
+     ],
+     "next": "accepted"
+    },
+    {
+     "text": "hukhong.dlg.dau_gia_su.offer.c2"
+    }
+   ]
+  },
+  "accepted": {
+   "text": [
+    "hukhong.dlg.dau_gia_su.accepted.p1"
+   ]
+  },
+  "s1": {
+   "text": [
+    "hukhong.dlg.dau_gia_su.s1.p1"
+   ]
+  },
+  "s2": {
+   "text": [
+    "hukhong.dlg.dau_gia_su.s2.p1"
+   ]
+  },
+  "s3": {
+   "text": [
+    "hukhong.dlg.dau_gia_su.s3.p1"
+   ]
+  },
+  "done": {
+   "text": [
+    "hukhong.dlg.dau_gia_su.done.p1"
+   ]
+  }
+ }
+}

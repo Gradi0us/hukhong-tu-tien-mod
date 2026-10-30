@@ -24,6 +24,15 @@ public final class EndgameKit {
     public static double dmgMul(int tier) { return DMG[clampTier(tier) - 1]; }
     public static double rewardMul(int tier) { return REWARD[clampTier(tier) - 1]; }
 
+    // ------------------------------------------------------------ bien the Tang II "Linh Khi Phuc Hung" (ket thuc Sieu Do)
+    public static final int VARIANT_NONE = 0, VARIANT_LINH_KHI = 1;
+    /** Vung Hu Hoa cu thanh vung linh khi: EXP tu luyen x1.3 trong vung; Hu mob yeu di. */
+    public static final double LINH_KHI_EXP = 1.3, LINH_KHI_HP = 0.8, LINH_KHI_DMG = 0.8;
+
+    public static double hpMul(int tier, int variant) { return variant == VARIANT_LINH_KHI && tier >= 2 ? LINH_KHI_HP : hpMul(tier); }
+    public static double dmgMul(int tier, int variant) { return variant == VARIANT_LINH_KHI && tier >= 2 ? LINH_KHI_DMG : dmgMul(tier); }
+    public static double expMul(int tier, int variant, boolean inSpiritZone) { return variant == VARIANT_LINH_KHI && tier >= 2 && inSpiritZone ? LINH_KHI_EXP : 1.0; }
+
     // ------------------------------------------------------------ boss cuối
     /** Chỉ số gốc boss cuối (Bước 27: BalanceSimTest khóa TTK theo các hằng này). */
     public static final double BOSS_HP = 510000, BOSS_DMG = 60, BOSS_ARMOR = 10;
@@ -90,10 +99,10 @@ public final class EndgameKit {
     public static int depth(double d, int r) { return d > r ? 0 : 2 + (int) ((r - d) * 0.5); }
 
     // ------------------------------------------------------------ cutscene
-    public static final int ENDING_SEAL = 1, ENDING_ABSORB = 2;
+    public static final int ENDING_SEAL = 1, ENDING_ABSORB = 2, ENDING_TRUTH = 3;
     public static final int CUTSCENE_TICKS = 600, FADE_IN = 40, FADE_OUT = 80, LINES = 3;
 
-    public static boolean validEnding(int e) { return e == ENDING_SEAL || e == ENDING_ABSORB; }
+    public static boolean validEnding(int e) { return e == ENDING_SEAL || e == ENDING_ABSORB || e == ENDING_TRUTH; }
 
     /** Độ mờ lớp phủ 0..1: vào dần, giữ, ra dần. */
     public static float overlay(int t) {

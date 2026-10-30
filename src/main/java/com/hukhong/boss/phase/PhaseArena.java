@@ -101,6 +101,7 @@ public final class PhaseArena {
             case VOID -> Blocks.CRACKED_DEEPSLATE_TILES; case FROST -> Blocks.PACKED_ICE; case TOXIC -> Blocks.MOSS_BLOCK;
             case SAND -> Blocks.SOUL_SAND; case HOLY -> Blocks.CRACKED_STONE_BRICKS; case BLOOD -> Blocks.RED_NETHER_BRICKS;
             case MOON -> Blocks.CRACKED_DEEPSLATE_BRICKS;
+            case WOOD -> Blocks.MOSS_BLOCK; case BONE -> Blocks.BONE_BLOCK; case SEA -> Blocks.PRISMARINE;
         };
     }
 
@@ -109,6 +110,7 @@ public final class PhaseArena {
             case VOID -> Blocks.CRYING_OBSIDIAN; case FROST -> Blocks.BLUE_ICE; case TOXIC -> Blocks.MOSSY_COBBLESTONE;
             case SAND -> Blocks.CUT_SANDSTONE; case HOLY -> Blocks.QUARTZ_PILLAR; case BLOOD -> Blocks.NETHER_WART_BLOCK;
             case MOON -> Blocks.AMETHYST_BLOCK;
+            case WOOD -> Blocks.MUDDY_MANGROVE_ROOTS; case BONE -> Blocks.BONE_BLOCK; case SEA -> Blocks.DARK_PRISMARINE;
         };
     }
 

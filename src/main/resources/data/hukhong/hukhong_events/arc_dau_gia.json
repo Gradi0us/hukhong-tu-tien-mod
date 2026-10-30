@@ -1,0 +1,25 @@
+{
+ "type": "prophecy",
+ "lane": "story",
+ "recurrence": {
+  "type": "every",
+  "days": 2
+ },
+ "start_offset": 23000,
+ "duration": 14000,
+ "location": {
+  "city": 5
+ },
+ "level": [
+  35,
+  100
+ ],
+ "rewards": "hukhong.cal.reward.arc_dau_gia",
+ "lore": {
+  "faction": "DA_KHUYET",
+  "chapter": [
+   5,
+   6
+  ]
+ }
+}

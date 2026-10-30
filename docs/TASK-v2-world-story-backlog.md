@@ -7,12 +7,12 @@
 
 ```
 ĐỢT 1  S0+W0  Nối cốt truyện + Lịch K        ✅ (chưa thử trong game)
-ĐỢT 2  T1     Ấn Hồn Đài / Khu Chợ / Uy Danh  ⬜
+ĐỢT 2  T1     Ấn Hồn Đài / Khu Chợ / Uy Danh  ✅ (chưa thử trong game)
 ĐỢT 3  T2     Hồn Tinh vào ví + giá nâng cấp  ✅
-ĐỢT 4  T3     Vùng xâm thực + 8 Hư Vương      ⬜
-ĐỢT 4b B      Cutscene + biến hình + chiêu mới 🔄 (khung xong; còn 8 Hư Vương mới, boss Bí Cảnh, Tâm Chiến, ảnh chụp)
-ĐỢT 5  S1+W1  Sự kiện có phe, tập kích, PvP   ⬜
-ĐỢT 6  S2/S3  Cung truyện 7 thành + Siêu Độ   ⬜
+ĐỢT 4  T3     Vùng xâm thực + 8 Hư Vương      ✅ (chưa thử trong game)
+ĐỢT 4b B      Cutscene + biến hình + chiêu mới ✅ (chưa thử trong game)
+ĐỢT 5  S1+W1  Sự kiện có phe, tập kích, PvP   ✅ (chưa thử trong game)
+ĐỢT 6  S2/S3  Cung truyện 7 thành + Siêu Độ   ✅ (chưa thử trong game)
 ĐỢT 7  W2–W8  Phần còn lại PLAN-v1            ⬜
 ```
 
@@ -46,11 +46,11 @@
 - [ ] Cấp quái theo bán kính: 20–40 / 40–65 / 65–**85**
 - [ ] Vào vùng → tự nhận nhiệm vụ "Giải Phóng", mục tiêu trỏ tâm vùng; hiện trên bản đồ + Lịch
 - [ ] Hạ boss → vùng sạch dần (dùng Liberation), giảm Hư Ảnh, thưởng Hồn Tinh + Văn Kiện/Di thư
-- [ ] **8 dạng Hư Vương** trên 4 khung model (khổng lồ / thú 4 chân / rắn / linh thể): Huyết Ma, Cốt Long, Mộc Yêu, Băng Phách, Sa Trần, Độc Chướng, Hải Uyên, **Thiên Diện** (vùng ≥600, 3 phase)
-- [ ] Mỗi dạng 2–3 chiêu riêng + VFX riêng (FxElem)
-- [ ] Tên riêng ngẫu nhiên theo seed: `[Danh hiệu] Tên dạng — Tên riêng`; hiện bossbar / bản đồ / Lịch
-- [ ] **Rơi Hồn Cốt 100%**: khe hợp dạng, phẩm theo kích thước (Thiên Diện phẩm cao nhất + 30% thêm cái thứ hai), mỗi người ≥10% sát thương nhận riêng, vùng đã giải phóng không rơi lại
-- [ ] GameTest mỗi dạng chạy đủ chiêu + rơi đúng Hồn Cốt; ảnh chụp 8 dạng
+- [ ] 🔄 **8 dạng Hư Vương** trên 4 khung model (khổng lồ / thú 4 chân / rắn / linh thể): Huyết Ma, Cốt Long, Mộc Yêu, Băng Phách, Sa Trần, Độc Chướng, Hải Uyên, **Thiên Diện** (vùng ≥600, 3 phase) — 🔄 code + GameTest `zone/form/HvFormGameTests` đã viết, build xanh; CHƯA chạy GameTest, CHƯA ảnh chụp (tools/gen_hv_forms.py, lang: docs/research/lang-hv.txt)
+- [ ] 🔄 Mỗi dạng 2–3 chiêu riêng + VFX riêng (FxElem) — 🔄 code + GameTest `zone/form/HvFormGameTests` đã viết, build xanh; CHƯA chạy GameTest, CHƯA ảnh chụp (tools/gen_hv_forms.py, lang: docs/research/lang-hv.txt)
+- [ ] 🔄 Tên riêng ngẫu nhiên theo seed: `[Danh hiệu] Tên dạng — Tên riêng`; hiện bossbar / bản đồ / Lịch — 🔄 code + GameTest `zone/form/HvFormGameTests` đã viết, build xanh; CHƯA chạy GameTest, CHƯA ảnh chụp (tools/gen_hv_forms.py, lang: docs/research/lang-hv.txt)
+- [ ] 🔄 **Rơi Hồn Cốt 100%**: khe hợp dạng, phẩm theo kích thước (Thiên Diện phẩm cao nhất + 30% thêm cái thứ hai), mỗi người ≥10% sát thương nhận riêng, vùng đã giải phóng không rơi lại — 🔄 code + GameTest `zone/form/HvFormGameTests` đã viết, build xanh; CHƯA chạy GameTest, CHƯA ảnh chụp (tools/gen_hv_forms.py, lang: docs/research/lang-hv.txt)
+- [ ] 🔄 GameTest mỗi dạng chạy đủ chiêu + rơi đúng Hồn Cốt; ảnh chụp 8 dạng — 🔄 code + GameTest `zone/form/HvFormGameTests` đã viết, build xanh; CHƯA chạy GameTest, CHƯA ảnh chụp (tools/gen_hv_forms.py, lang: docs/research/lang-hv.txt)
 
 ## Đợt 4b — Khung boss: cutscene chuyển phase + biến đổi ngoại hình + chiêu mới
 Thiết kế gốc: PLAN-v1-vfx-boss-mob-scaling §5 (B1–B7). Hiện chuyển phase chỉ hiện chữ "Phase 2" + 1 animation (`WorldBoss.enterPhase()`, `HuVuong.enterPhase()`). **Làm khung trước khi làm 8 Hư Vương** (Đợt 4 dùng khung này).
@@ -71,8 +71,8 @@ Thiết kế gốc: PLAN-v1-vfx-boss-mob-scaling §5 (B1–B7). Hiện chuyển 
 - [ ] **Đấu Trường Sinh Tử** ở Thiên Khải Hoàng Đô (mở sau khi tái chiếm): 2 bên cược Tử Tinh bằng nhau, đốt 5%, khán giả cược pari-mutuel, 3 hiệp × 3 phút, không chết / mất đồ, cấm đan hồi, cân bằng cấp tùy chọn, 3 trận / cặp / ngày Lịch, giải 8 người mỗi tuần Lịch
 
 ## Đợt 6 — S2 + S3: Cung truyện 7 thành + kết thúc Siêu Độ
-- [ ] Huyết Nguyệt Phường "Chợ Máu" (ch.4) · Đan Hà "Hắc Triều" (ch.5) · Cổ Xảo "Đấu Giá Đẫm Máu" (ch.5–6) · Lạc Nhật "Lôi Vũ Viêm Sơn" (ch.7) · Thanh Vân "Đại Hội Tông Môn" (ch.8, duel Hạng Chiêu tại võ đài) · Bắc Hàn "Kiếm Trủng Tuyết" (ch.9) · Thiên Khải "Hoàng Đô Thất Thủ" (ch.10)
-- [ ] Kết thúc **Siêu Độ** (`ending_truth`): cần 10 Di thư C + Hư Ảnh TB <30% + 4 CHG + đủ số vùng giải phóng; Tâm Chiến 4 tàn ảnh CHG; giữ 4 Mảnh 60s; Mộ Dao về / tàn hồn; Hạng Chiêu tỉnh; Thế Giới Tầng 2 "Linh Khí Phục Hưng" (Yêu Tộc trỗi dậy); danh hiệu + bản mệnh dạng Thủ Hộ (ngự bay đường dài)
+- [x] (🔄 code+JUnit xong, chưa chơi thật) Huyết Nguyệt Phường "Chợ Máu" (ch.4) · Đan Hà "Hắc Triều" (ch.5) · Cổ Xảo "Đấu Giá Đẫm Máu" (ch.5–6) · Lạc Nhật "Lôi Vũ Viêm Sơn" (ch.7) · Thanh Vân "Đại Hội Tông Môn" (ch.8, duel Hạng Chiêu tại võ đài) · Bắc Hàn "Kiếm Trủng Tuyết" (ch.9) · Thiên Khải "Hoàng Đô Thất Thủ" (ch.10)
+- [x] (🔄 code+JUnit xong, chưa chơi thật) Kết thúc **Siêu Độ** (`ending_truth`): cần 10 Di thư C + Hư Ảnh TB <30% + 4 CHG + đủ số vùng giải phóng; Tâm Chiến 4 tàn ảnh CHG; giữ 4 Mảnh 60s; Mộ Dao về / tàn hồn; Hạng Chiêu tỉnh; Thế Giới Tầng 2 "Linh Khí Phục Hưng" (Yêu Tộc trỗi dậy); danh hiệu + bản mệnh dạng Thủ Hộ (ngự bay đường dài)
 
 ## Đợt 7 — Phần còn lại PLAN-v1 (W2–W8), mỗi JSON có `lore`
 - [ ] Địa điểm (Bia Đá, Khách Điếm + tin đồn, Động Phủ, Cổ Chiến Trường, dungeon theo đạo, Tiên Đảo vào bằng ngự kiếm…)

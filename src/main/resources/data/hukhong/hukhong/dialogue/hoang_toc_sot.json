@@ -1,0 +1,122 @@
+{
+ "npc": "hoang_toc_sot",
+ "city": "thien_khai_hoang_do",
+ "name_key": "hukhong.npc.hoang_toc_sot",
+ "entry": [
+  {
+   "if": {
+    "flags": [
+     "qc.hoang_do.done"
+    ]
+   },
+   "node": "done"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.hoang_do.3"
+    ]
+   },
+   "node": "s3"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.hoang_do.2"
+    ]
+   },
+   "node": "s2"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.hoang_do.1"
+    ]
+   },
+   "node": "s1"
+  },
+  {
+   "if": {
+    "chapter_min": 10,
+    "min_level": 90
+   },
+   "node": "offer"
+  },
+  {
+   "node": "early"
+  }
+ ],
+ "nodes": {
+  "early": {
+   "text": [
+    "hukhong.dlg.hoang_toc_sot.early.p1"
+   ]
+  },
+  "offer": {
+   "text": [
+    "hukhong.dlg.hoang_toc_sot.offer.p1",
+    "hukhong.dlg.hoang_toc_sot.offer.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hoang_toc_sot.offer.c1",
+     "actions": [
+      {
+       "type": "qc",
+       "chain": "hoang_do",
+       "stage": 1
+      }
+     ],
+     "next": "accepted"
+    },
+    {
+     "text": "hukhong.dlg.hoang_toc_sot.offer.c2"
+    }
+   ]
+  },
+  "accepted": {
+   "text": [
+    "hukhong.dlg.hoang_toc_sot.accepted.p1"
+   ]
+  },
+  "s1": {
+   "text": [
+    "hukhong.dlg.hoang_toc_sot.s1.p1"
+   ]
+  },
+  "s2": {
+   "text": [
+    "hukhong.dlg.hoang_toc_sot.s2.p1"
+   ]
+  },
+  "s3": {
+   "text": [
+    "hukhong.dlg.hoang_toc_sot.s3.p1",
+    "hukhong.dlg.hoang_toc_sot.s3.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hoang_toc_sot.s3.c1",
+     "actions": [
+      {
+       "type": "qc",
+       "chain": "hoang_do",
+       "stage": 9
+      }
+     ],
+     "next": "s3_end"
+    }
+   ]
+  },
+  "s3_end": {
+   "text": [
+    "hukhong.dlg.hoang_toc_sot.s3_end.p1"
+   ]
+  },
+  "done": {
+   "text": [
+    "hukhong.dlg.hoang_toc_sot.done.p1"
+   ]
+  }
+ }
+}

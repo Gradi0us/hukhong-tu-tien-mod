@@ -145,7 +145,7 @@ public final class StoryFlow {
         switch (s.kind()) {
             case KILL -> WaveCountdown.start(p, s.id()); // 30s chuan bi roi quai moi toi
             case TALK -> { if (s.arg().equals("su_phu")) spawnNpc(p, "su_phu", 4); }
-            case DUEL -> spawnNpc(p, s.arg(), 7);
+            case DUEL -> spawnDuelNpc(p, s);
             default -> { }
         }
         setObjective(p, s);
@@ -219,7 +219,10 @@ public final class StoryFlow {
             case REACH, INVASION -> cityPos(p, s.arg());
             case ALTAR, MILESTONE -> altarPos(ow);
             case TALK -> switch (s.arg()) {
-                case "mo_dao" -> cityPos(p, HUB);
+                case "mo_dao" -> {
+                    BlockPos bh = s.id().equals("c9_modao") ? com.hukhong.story.chain.CityArcs.modaoSpot(ow) : null; // canh Mo Dao dien ra o Bac Han (cung Kiem Trung); chua dung thanh thi ve Luu Ly Cang
+                    yield bh != null ? bh : cityPos(p, HUB);
+                }
                 case "hang_chieu" -> cityPos(p, "hac_thach_quan");
                 case "hua_co" -> cityPos(p, "co_tien_thanh");
                 default -> null; // NPC đi theo người chơi (su_phu)
@@ -227,6 +230,7 @@ public final class StoryFlow {
             case BICANH -> { BlockPos c = cityPos(p, s.arg()); BlockPos pt = c == null ? null : storyPortal(ow, c, CultivationService.get(p).level()); yield pt != null ? pt : c; }
             case LINH_KHI, SECT -> sectPos(p, ow);
             case CHG -> lair(ow, s.n());
+            case DUEL -> s.id().equals("c8_rival") ? com.hukhong.story.chain.CityArcs.arenaTarget(ow) : null; // vo dai Thanh Van
             case GATE -> WorldTierData.get(ow).gateway();
             default -> null;
         };
@@ -322,9 +326,16 @@ public final class StoryFlow {
         }
     }
 
-    public static StoryNpc spawnNpc(ServerPlayer p, String id, double dist) {
+    /** Doi thu cua buoc DUEL: o vo dai Thanh Van neu nguoi choi dang gan (c8_rival), nguoc lai canh nguoi choi (khong bao gio chan luong). */
+    private static void spawnDuelNpc(ServerPlayer p, FlowSteps.Step s) {
+        BlockPos spot = s.id().equals("c8_rival") ? com.hukhong.story.chain.CityArcs.duelSpot(p) : null;
+        if (spot != null) spawnNpcAt(p, s.arg(), spot); else spawnNpc(p, s.arg(), 7);
+    }
+
+    public static StoryNpc spawnNpc(ServerPlayer p, String id, double dist) { return spawnNpcAt(p, id, standNear(p, dist)); }
+
+    public static StoryNpc spawnNpcAt(ServerPlayer p, String id, BlockPos pos) {
         ServerLevel sl = p.serverLevel();
-        BlockPos pos = standNear(p, dist);
         StoryNpc n = StoryNpcRegistry.STORY_NPC.get().create(sl);
         if (n == null) return null;
         n.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, sl.random.nextFloat() * 360f, 0f);
@@ -456,7 +467,17 @@ public final class StoryFlow {
             }
             case DUEL -> {
                 if (p.tickCount % 100 != 7) return;
-                if (flowEntities(p, 128).isEmpty()) spawnNpc(p, s.arg(), 7);
+                BlockPos spot = s.id().equals("c8_rival") ? com.hukhong.story.chain.CityArcs.duelSpot(p) : null; // gan Thanh Van: dau o vo dai
+                if (spot != null) {
+                    StoryNpc at = null;
+                    boolean rival = false; // dang giao dau (the SuDo thay NPC)
+                    for (Entity x : flowEntities(p, 160)) {
+                        if (x instanceof StoryNpc n) { if (n.npcId().equals(s.arg()) && n.isAlive()) at = n; } else rival = true;
+                    }
+                    if (rival) return;
+                    if (at == null) spawnNpcAt(p, s.arg(), spot);
+                    else if (at.distanceToSqr(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5) > 40.0 * 40.0) at.teleportTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5);
+                } else if (flowEntities(p, 128).isEmpty()) spawnNpc(p, s.arg(), 7);
             }
             case INVASION -> {
                 ServerLevel ow = ow(p);

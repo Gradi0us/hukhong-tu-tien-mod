@@ -48,6 +48,9 @@ public final class LoiVuHandler {
     /** Thuan: hang (1..ChgKit.COUNT) duoc chon cho mot lan xuat hien. */
     public static int lairFor(long start) { return 1 + LichMath.pickIndex(TYPE, start, ChgKit.COUNT); }
 
+    /** Su kien lich lane truyen co dinh hang (vd arc_loi_vu = Chap Hanh Gia I, cung Lac Nhat Thanh); cac su kien khac chon theo lan xuat hien. */
+    public static int lairFor(String defId, long start) { return "arc_loi_vu".equals(defId) ? 1 : lairFor(start); }
+
     /** Thuan: sat thuong set len muc tieu co maxHealth: 12% mau toi da, toi thieu 3. */
     public static float strikeDamage(float maxHealth) { return Math.max(3f, maxHealth * 0.12f); }
 
@@ -55,13 +58,15 @@ public final class LoiVuHandler {
     public static long rewardExp(long expToNext) { return Math.max(1, expToNext / 5); }
 
     /** Vi tri su kien cho lich (nut "Den"): ngay tai hang. */
-    public static BlockPos locate(ServerLevel ow, long start) {
-        int[] xz = ChgService.lairXZ(ow, lairFor(start));
+    public static BlockPos locate(ServerLevel ow, long start) { return locate(ow, TYPE, start); }
+
+    public static BlockPos locate(ServerLevel ow, String defId, long start) {
+        int[] xz = ChgService.lairXZ(ow, lairFor(defId, start));
         return new BlockPos(xz[0], 64, xz[1]);
     }
 
     public static void begin(ServerLevel ow, CalendarData.Act a) {
-        int lair = lairFor(a.start());
+        int lair = lairFor(a.defId(), a.start());
         boolean any = ow.players().isEmpty();
         for (ServerPlayer p : ow.players()) if (!ChgKit.defeated(StoryService.get(p).lair(), lair)) { any = true; break; }
         if (!any) return; // moi nguoi da ha CHG nay: khong co bao
@@ -80,6 +85,8 @@ public final class LoiVuHandler {
             CultivationService.addExp(p, rewardExp(CultivationService.expToNext(CultivationService.get(p).level())));
             Wallet.grantHonTinh(p, 2);
             p.sendSystemMessage(Component.translatable("hukhong.cal.loi_vu.survived"));
+            com.hukhong.story.chain.CityArcs.onLoiVuSurvived(p, s.lair); // cung Lac Nhat Thanh "Loi Vu Viem Son"
+
         }
     }
 

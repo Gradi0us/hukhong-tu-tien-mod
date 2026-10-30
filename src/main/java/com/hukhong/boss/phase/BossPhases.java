@@ -161,5 +161,37 @@ public final class BossPhases {
                         m("nguyet_lien", Shape.SHOCK, Pal.MOON, 12, 1.0, 40, Hit.SLOW, false)),
                 p3("da_khuyet", 3.8, 3, fx(ArenaEffect.BLOOD_RAIN, ArenaEffect.VOID_PILLARS), "tam_ma",
                         m("nguyet_thuc", Shape.PULL_BURST, Pal.MOON, 22, 2.6, 100, Hit.BLIND, true)));
+
+        // 8 Hu Vuong dang (PLAN-v2 12.6): moi dang 1 mau chu de + 2 chieu pha 2 + 1 chieu toi thuong pha 3 (chieu rieng tung dang o HvSkill)
+        hv("huyet_ma", Pal.BLOOD, 4.1, fx(ArenaEffect.BLOOD_RAIN), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "tam_ma", 2, 2,
+                m("hv_ma_tru", Shape.PILLARS, Pal.BLOOD, 2.4, 1.0, 36, Hit.WEAK, false), m("hv_ma_vu", Shape.METEOR, Pal.BLOOD, 3.0, 0.9, 44, Hit.NAUSEA, false),
+                m("hv_ma_hai", Shape.DONUT, Pal.BLOOD, 19, 2.3, 90, Hit.WEAK, true));
+        hv("cot_long", Pal.BONE, 4.5, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.VOID_PILLARS), "bicanh_boss", 2, 2,
+                m("hv_long_tru", Shape.PILLARS, Pal.BONE, 2.6, 1.0, 36, Hit.KNOCK_UP, false), m("hv_long_tram", Shape.LINE, Pal.BONE, 20, 1.2, 28, Hit.SLOW, false),
+                m("hv_long_no", Shape.PULL_BURST, Pal.BONE, 20, 2.5, 90, Hit.KNOCK_UP, true));
+        hv("moc_yeu", Pal.WOOD, 4.1, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.BLOOD_RAIN), "tam_ma", 2, 2,
+                m("hv_moc_tru", Shape.PILLARS, Pal.WOOD, 2.4, 1.0, 36, Hit.SLOW, false), m("hv_moc_vu", Shape.METEOR, Pal.WOOD, 3.0, 0.9, 44, Hit.POISON, false),
+                m("hv_moc_lam", Shape.DONUT, Pal.WOOD, 20, 2.2, 90, Hit.POISON, true));
+        hv("bang_phach", Pal.FROST, 4.0, fx(ArenaEffect.PURPLE_SKY), fx(ArenaEffect.CRACKED_FLOOR), "bicanh_boss", 2, 2,
+                m("hv_bang_tru", Shape.PILLARS, Pal.FROST, 2.4, 1.0, 36, Hit.FREEZE, false), m("hv_bang_tram", Shape.LINE, Pal.FROST, 18, 1.1, 30, Hit.SLOW, false),
+                m("hv_bang_diet", Shape.PULL_BURST, Pal.FROST, 19, 2.4, 90, Hit.FREEZE, true));
+        hv("sa_tran", Pal.SAND, 4.6, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.PURPLE_SKY), "bicanh_boss", 2, 2,
+                m("hv_sa_tru", Shape.PILLARS, Pal.SAND, 2.6, 1.0, 36, Hit.KNOCK_UP, false), m("hv_sa_tram", Shape.LINE, Pal.SAND, 18, 1.1, 30, Hit.BLIND, false),
+                m("hv_sa_bao", Shape.DONUT, Pal.SAND, 18, 2.2, 90, Hit.BLIND, true));
+        hv("doc_chuong", Pal.TOXIC, 4.2, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.BLOOD_RAIN), "tam_ma", 2, 2,
+                m("hv_doc_vu", Shape.METEOR, Pal.TOXIC, 3.0, 0.9, 44, Hit.POISON, false), m("hv_doc_tru", Shape.PILLARS, Pal.TOXIC, 2.4, 1.0, 36, Hit.WEAK, false),
+                m("hv_doc_no", Shape.DONUT, Pal.TOXIC, 20, 2.2, 90, Hit.POISON, true));
+        hv("hai_uyen", Pal.SEA, 4.6, fx(ArenaEffect.PURPLE_SKY), fx(ArenaEffect.VOID_PILLARS), "bicanh_boss", 2, 2,
+                m("hv_hai_tru", Shape.PILLARS, Pal.SEA, 2.4, 1.0, 36, Hit.SLOW, false), m("hv_hai_tram", Shape.LINE, Pal.SEA, 20, 1.2, 28, Hit.SLOW, false),
+                m("hv_hai_nuot", Shape.PULL_BURST, Pal.SEA, 20, 2.5, 90, Hit.SLOW, true));
+        // Thien Dien: 3 mat, phap thay doi theo pha
+        hv("thien_dien", Pal.HOLY, 4.0, fx(ArenaEffect.PURPLE_SKY, ArenaEffect.VOID_PILLARS), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.BLOOD_RAIN), "tam_ma", 3, 3,
+                m("hv_td_tru", Shape.PILLARS, Pal.VOID, 2.4, 1.0, 36, Hit.KNOCK_UP, false), m("hv_td_tram", Shape.LINE, Pal.HOLY, 22, 1.2, 28, Hit.BLIND, false),
+                m("hv_td_diet", Shape.PULL_BURST, Pal.VOID, 22, 2.8, 100, Hit.BLIND, true));
+    }
+
+    private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {
+        String id = "hvf_" + key;
+        reg(id, aura, size, p2(id, size, l2, a2, null, a, b), p3(id, size, l3, a3, music3, ult));
     }
 }

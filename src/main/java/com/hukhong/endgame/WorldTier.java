@@ -17,12 +17,13 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 public final class WorldTier {
     private WorldTier() {}
 
-    private static volatile int tier = EndgameKit.MIN_TIER;
+    private static volatile int tier = EndgameKit.MIN_TIER, variant = EndgameKit.VARIANT_NONE;
 
     /** Tầng Thế Giới hiện tại (1..2). */
     public static int get() { return tier; }
-    public static double hpMul() { return EndgameKit.hpMul(tier); }
-    public static double dmgMul() { return EndgameKit.dmgMul(tier); }
+    public static int variant() { return variant; }
+    public static double hpMul() { return EndgameKit.hpMul(tier, variant); }
+    public static double dmgMul() { return EndgameKit.dmgMul(tier, variant); }
     public static double rewardMul() { return EndgameKit.rewardMul(tier); }
 
     /** Nâng (không bao giờ hạ) tầng thế giới và lưu. */
@@ -32,6 +33,25 @@ public final class WorldTier {
         WorldTierData d = WorldTierData.get(ow);
         if (EndgameKit.clampTier(t) > d.tier()) d.setTier(t);
         tier = d.tier();
+    }
+
+    /** Đặt biến thể Tầng II (Linh Khí Phục Hưng) và lưu; cũng nâng tầng lên 2 nếu chưa. */
+    public static void setVariant(MinecraftServer server, int v) {
+        ServerLevel ow = server.getLevel(Level.OVERWORLD);
+        if (ow == null) return;
+        raiseTo(server, 2);
+        WorldTierData d = WorldTierData.get(ow);
+        d.setVariant(v);
+        variant = v;
+    }
+
+    /** EXP tu luyen nhan he so khi dung trong vung (Hu Hoa cu) o bien the Linh Khi Phuc Hung. */
+    public static long spiritBoost(net.minecraft.server.level.ServerPlayer p, long amount) {
+        if (variant != EndgameKit.VARIANT_LINH_KHI || amount <= 0 || p.level().dimension() != Level.OVERWORLD) return amount;
+        boolean in = false;
+        for (com.hukhong.zone.ZoneData.Zone z : com.hukhong.zone.ZoneData.snapshot())
+            if (Math.hypot(p.getX() - z.cx, p.getZ() - z.cz) <= z.radius) { in = true; break; }
+        return Math.round(amount * EndgameKit.expMul(tier, variant, in));
     }
 
     /** Lệnh thử: đặt thẳng (kể cả hạ). */
@@ -47,8 +67,9 @@ public final class WorldTier {
     public static void onStarted(ServerStartedEvent e) {
         ServerLevel ow = e.getServer().getLevel(Level.OVERWORLD);
         tier = ow == null ? EndgameKit.MIN_TIER : WorldTierData.get(ow).tier();
+        variant = ow == null ? EndgameKit.VARIANT_NONE : WorldTierData.get(ow).variant();
     }
 
     @SubscribeEvent
-    public static void onStopped(ServerStoppedEvent e) { tier = EndgameKit.MIN_TIER; }
+    public static void onStopped(ServerStoppedEvent e) { tier = EndgameKit.MIN_TIER; variant = EndgameKit.VARIANT_NONE; }
 }

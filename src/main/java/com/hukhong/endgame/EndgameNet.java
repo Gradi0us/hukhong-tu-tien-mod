@@ -15,9 +15,13 @@ public final class EndgameNet {
 
     private static ResourceLocation id(String s) { return ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, s); }
 
-    public record OpenChoice() implements CustomPacketPayload {
+    /** missing = bit thieu cua Sieu Do (SieuDoKit.M_*); cac so con lai de client hien goi y (Di thu C, Hu Anh TB, CHG, vung giai phong / can). */
+    public record OpenChoice(int missing, int docs, int huAnh, int chg, int zones, int zonesNeeded) implements CustomPacketPayload {
         public static final Type<OpenChoice> TYPE = new Type<>(id("endgame_open_choice"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, OpenChoice> CODEC = StreamCodec.unit(new OpenChoice());
+        public static final StreamCodec<RegistryFriendlyByteBuf, OpenChoice> CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, OpenChoice::missing, ByteBufCodecs.VAR_INT, OpenChoice::docs, ByteBufCodecs.VAR_INT, OpenChoice::huAnh,
+                ByteBufCodecs.VAR_INT, OpenChoice::chg, ByteBufCodecs.VAR_INT, OpenChoice::zones, ByteBufCodecs.VAR_INT, OpenChoice::zonesNeeded,
+                OpenChoice::new);
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
@@ -44,7 +48,7 @@ public final class EndgameNet {
     public static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(OpenChoice.TYPE, OpenChoice.CODEC,
-                (p, ctx) -> ctx.enqueueWork(com.hukhong.client.endgame.EndgameClient::openChoice));
+                (p, ctx) -> ctx.enqueueWork(() -> com.hukhong.client.endgame.EndgameClient.openChoice(p)));
         r.playToClient(PlayCutscene.TYPE, PlayCutscene.CODEC,
                 (p, ctx) -> ctx.enqueueWork(() -> com.hukhong.client.endgame.EndgameClient.playCutscene(p.ending())));
         r.playToServer(ChooseEnding.TYPE, ChooseEnding.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {

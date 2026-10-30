@@ -44,6 +44,6 @@ public interface ZoneBossFactory {
     /** Nha may dang dung. */
     final class Holder {
         private Holder() {}
-        public static volatile ZoneBossFactory current = DEFAULT;
+        public static volatile ZoneBossFactory current = com.hukhong.zone.form.HvFactory.INSTANCE;
     }
 }

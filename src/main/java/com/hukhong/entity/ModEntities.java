@@ -40,6 +40,10 @@ public final class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<HuVuong>> HU_VUONG = TYPES.register("hu_vuong",
             () -> EntityType.Builder.of(HuVuong::new, MobCategory.MONSTER).sized(2.4f, 3.6f).fireImmune().clientTrackingRange(10).build("hu_vuong"));
 
+    /** 8 dang Hu Vuong theo vung (dang dong bo qua du lieu; xem zone.form.HuVuongForm). */
+    public static final DeferredHolder<EntityType<?>, EntityType<com.hukhong.zone.form.HuVuongForm>> HU_VUONG_FORM = TYPES.register("hu_vuong_form",
+            () -> EntityType.Builder.of(com.hukhong.zone.form.HuVuongForm::new, MobCategory.MONSTER).sized(2.2f, 4.1f).fireImmune().clientTrackingRange(10).build("hu_vuong_form"));
+
     public static final DeferredHolder<EntityType<?>, EntityType<TamMa>> TAM_MA = TYPES.register("tam_ma",
             () -> EntityType.Builder.of(TamMa::new, MobCategory.MONSTER).sized(0.6f, 1.8f).fireImmune().clientTrackingRange(10).build("tam_ma"));
 
@@ -63,6 +67,7 @@ public final class ModEntities {
         e.put(HU_COT.get(), AbstractSkeleton.createAttributes().build());
         e.put(HU_CHU.get(), Spider.createAttributes().build());
         e.put(HU_VUONG.get(), HuVuong.attrs().build());
+        e.put(HU_VUONG_FORM.get(), com.hukhong.zone.form.HuVuongForm.attrs().build());
         e.put(TAM_MA.get(), TamMa.attrs().build());
     }
 

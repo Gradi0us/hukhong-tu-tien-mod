@@ -458,6 +458,8 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
             StoryData d = StoryService.get(p);
             if ((d.lair() & bit) == 0) p.setData(StoryRegistry.STORY.get(), d.withLair(bit));
             StoryService.sync(p);
+            String clue = com.hukhong.story.chain.CityArcKit.chgClue(idx); // Di thu C cuoi trong hang CHG III
+            if (clue != null && !StoryService.get(p).has(clue)) StoryService.collect(p, clue);
             p.displayClientMessage(Component.translatable("hukhong.chg.fall." + idx), false);
             p.displayClientMessage(Component.translatable("hukhong.chg.slain", Component.translatable("entity.hukhong.chg_" + idx)), false);
         }

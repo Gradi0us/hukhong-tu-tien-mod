@@ -31,6 +31,17 @@ BOSSES = {
     "chg_4": (0xC0, 0x10, 0x28),
     "da_khuyet": (0x8F, 0xA8, 0xFF),
 }
+# Dot 4 (8 Hu Vuong): texture rieng moi dang (hvf_<dang>), geo dung chung theo khung xuong (hvf_<khung>)
+FORMS = {
+    "hvf_huyet_ma": ("hvf_giant", (0xC0, 0x10, 0x28)),
+    "hvf_moc_yeu": ("hvf_giant", (0x4F, 0xA8, 0x3A)),
+    "hvf_cot_long": ("hvf_quad", (0xE8, 0xE0, 0xC8)),
+    "hvf_doc_chuong": ("hvf_quad", (0x7B, 0xD0, 0x4A)),
+    "hvf_sa_tran": ("hvf_worm", (0xE0, 0xB0, 0x60)),
+    "hvf_hai_uyen": ("hvf_worm", (0x2E, 0x8F, 0xD8)),
+    "hvf_bang_phach": ("hvf_spirit", (0x9F, 0xE8, 0xFF)),
+    "hvf_thien_dien": ("hvf_spirit", (0xFF, 0xD8, 0x66)),
+}
 SOLID_UV = [0, 200]
 GLOW_UV = [64, 200]
 
@@ -134,6 +145,12 @@ def make_tex(bid, tint):
 
 
 def main():
+    for skel in sorted({v[0] for v in FORMS.values()}):
+        patch_geo(skel)
+        print("ok geo", skel)
+    for fid, (_, tint) in FORMS.items():
+        make_tex(fid, tint)
+        print("ok", fid)
     for bid, tint in BOSSES.items():
         patch_geo(bid)
         make_tex(bid, tint)

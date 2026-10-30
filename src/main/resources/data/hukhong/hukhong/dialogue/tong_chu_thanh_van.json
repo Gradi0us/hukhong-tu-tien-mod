@@ -1,0 +1,103 @@
+{
+ "npc": "tong_chu_thanh_van",
+ "city": "thanh_van_thanh",
+ "name_key": "hukhong.npc.tong_chu_thanh_van",
+ "entry": [
+  {
+   "if": {
+    "flags": [
+     "qc.dai_hoi.done"
+    ]
+   },
+   "node": "done"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.dai_hoi.3"
+    ]
+   },
+   "node": "s3"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.dai_hoi.2"
+    ]
+   },
+   "node": "s2"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.dai_hoi.1"
+    ]
+   },
+   "node": "s1"
+  },
+  {
+   "if": {
+    "chapter_min": 8,
+    "min_level": 70
+   },
+   "node": "offer"
+  },
+  {
+   "node": "early"
+  }
+ ],
+ "nodes": {
+  "early": {
+   "text": [
+    "hukhong.dlg.tong_chu_thanh_van.early.p1"
+   ]
+  },
+  "offer": {
+   "text": [
+    "hukhong.dlg.tong_chu_thanh_van.offer.p1",
+    "hukhong.dlg.tong_chu_thanh_van.offer.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.tong_chu_thanh_van.offer.c1",
+     "actions": [
+      {
+       "type": "qc",
+       "chain": "dai_hoi",
+       "stage": 1
+      }
+     ],
+     "next": "accepted"
+    },
+    {
+     "text": "hukhong.dlg.tong_chu_thanh_van.offer.c2"
+    }
+   ]
+  },
+  "accepted": {
+   "text": [
+    "hukhong.dlg.tong_chu_thanh_van.accepted.p1"
+   ]
+  },
+  "s1": {
+   "text": [
+    "hukhong.dlg.tong_chu_thanh_van.s1.p1"
+   ]
+  },
+  "s2": {
+   "text": [
+    "hukhong.dlg.tong_chu_thanh_van.s2.p1"
+   ]
+  },
+  "s3": {
+   "text": [
+    "hukhong.dlg.tong_chu_thanh_van.s3.p1"
+   ]
+  },
+  "done": {
+   "text": [
+    "hukhong.dlg.tong_chu_thanh_van.done.p1"
+   ]
+  }
+ }
+}

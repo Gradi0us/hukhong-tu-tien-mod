@@ -48,7 +48,7 @@ public class CreditsScreen extends Screen {
         g.fill(0, 0, width, height, 0xFF000000);
         float y0 = height - (scroll + pt * SPEED);
         int cx = width / 2;
-        int tc = ending == EndgameKit.ENDING_SEAL ? 0xFFFFE9A0 : 0xFFC88CFF;
+        int tc = ending == EndgameKit.ENDING_SEAL ? 0xFFFFE9A0 : ending == EndgameKit.ENDING_TRUTH ? 0xFFA8F0E0 : 0xFFC88CFF;
         g.drawCenteredString(font, title, cx, (int) y0, tc);
         for (int i = 1; i <= LINES; i++) {
             int y = (int) (y0 + 30 + (i - 1) * 22);

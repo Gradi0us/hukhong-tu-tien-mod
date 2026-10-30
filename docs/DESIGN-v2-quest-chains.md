@@ -63,6 +63,38 @@ Action thoại mới: `{"type":"qc","chain":"merchant","stage":2}` (chuyển bư
 - Cho Hạng Chiêu / Hứa Cổ tham chiếu thêm cờ.
 - Lưu escort qua restart (hiện cố ý lui bước cho đơn giản).
 
+
+## 6. Cung truyện thành (Đợt 6, 2026-10-30)
+
+7 cung, mỗi cung 3 bước, là chuỗi QuestChains (`qc.<id>.<n>`), engine `story/chain/CityArcs` + toán thuần `CityArcKit`. NPC giao việc đứng trong thành (dialogue JSON, `DialogueService` sinh qua `NpcPlacement`); mỗi cung có sự kiện Lịch lane truyện (`hukhong_events/arc_*.json`, lọc theo chương). Cung là tuỳ chọn: tuyến chính chỉ dùng `CityArcs.duelSpot / arenaTarget / modaoSpot` để chỉ đường và không bao giờ chờ cung.
+
+| Cung (id) | Thành | Ch. | Bước 1 → 2 → 3 | Thưởng |
+|---|---|---|---|---|
+| Chợ Máu (`cho_mau`) | 3 Huyết Nguyệt Phường | 4 | đêm tại phường → theo dấu lái buôn → hạ Sứ Đồ Huyết Tế Tư (variant 2) | a7, c1 |
+| Hắc Triều (`hac_trieu`) | 4 Đan Hà | 5 | dọn quái Hư ven nước → nhặt 5 ngọc trai Hư Hóa → thoại Hải Tướng | c2, cờ `wl.sea_threat` (boss biển sau này) |
+| Đấu Giá Đẫm Máu (`dau_gia`) | 5 Cổ Xảo | 5–6 | cảnh đấu giá (Hạng Chiêu vs người mua bí ẩn, 8 dòng) → đuổi theo → hạ kẻ mua | b7, c3; Hạng Chiêu có thoại thêm (`qc.dau_gia.c.seen`) |
+| Lôi Vũ Viêm Sơn (`loi_vu`) | 6 Lạc Nhật | 7 | tới hang CHG I → sống sót Lôi Vũ (sự kiện Lịch `arc_loi_vu` cố định hang I, hoặc Lôi Vũ thường trúng hang I) → báo Lão Giả | c4, `ChgService.revealLair(1)`, cờ `wl.chg1_path` |
+| Đại Hội Tông Môn (`dai_hoi`) | 7 Thanh Vân | 8 | vòng 1 (1 đệ tử) → bán kết (2 tinh anh) tại võ đài (`ArenaBuilder` dựng cạnh thành) → chung kết = duel `c8_rival` ở võ đài | b8, c5; cờ `rival_saved/lost` như cũ |
+| Kiếm Trủng Tuyết (`kiem_trung`) | 8 Bắc Hàn | 9 | tìm Kiếm Trủng → hạ 3 Kiếm Hồn → (hạ CHG III) cảnh Mộ Dao `c9_modao` ở Bắc Hàn | c6, c7, lộ đường CHG III |
+| Hoàng Đô Thất Thủ (`hoang_do`) | 9 Thiên Khải | 10 | tới Hoàng Đô → `CityRetake` → thoại Hoàng Tộc | a9, c8, c9; dựng lại cổng Hư Không cạnh thành (cho `c10_gate`) |
+
+Độ bền: cuộc chạm trán (sinh quái) chỉ trong RAM; đăng xuất thì dọn, vào lại sẽ sinh lại khi người chơi đến gần. Mộ Dao bình luận mỗi cung 1 lần (`hukhong.dlg.modao.wl.arc_*`).
+
+### Nguồn Di thư C (c1–c10) — đủ cả 10 không phụ thuộc may rủi
+| Nguồn | Di thư |
+|---|---|
+| Cung thành (bảng trên) | c1 Chợ Máu, c2 Hắc Triều, c3 Đấu Giá, c4 Lôi Vũ, c5 Đại Hội, c6+c7 Kiếm Trủng, c8+c9 Hoàng Đô |
+| Hạ Chấp Hành Giả III (`ChapHanhGia.die` → `CityArcKit.chgClue`) | c10 |
+| Vùng xâm thực bán kính ≥ 450 (`ZoneMath.clueFor`: `c(1 + (id*7+3) mod 10)`, theo id vùng) | bổ sung ngẫu nhiên theo seed |
+| POI thế giới (`structures/`) | chưa có POI nào (Bia Đá, Động Phủ, Cổ Chiến Trường là Đợt 7) — thêm `lore.clue` khi làm |
+JUnit `CityArcKitTest.allTenCDocsObtainable` khoá việc đủ 10.
+
+## 7. Kết thúc "Siêu Độ" (`ending_truth`)
+- Điều kiện (`EndgameService.truthStatus` / `SieuDoKit.Status`): 10 Di thư C, Hư Ảnh trung bình < 30%, 4 CHG, ≥ nửa số vùng xâm thực đã giải phóng. Màn chọn kết thúc luôn hiện lựa chọn thứ ba; thiếu thì mờ + tooltip/gợi ý từng mục (số liệu do server gửi trong `EndgameNet.OpenChoice`, client không đọc CULTIVATION).
+- Sau khi hạ Nguyên Thủy Tịch Diệt và chọn Siêu Độ: `SieuDo` (một phiên mỗi lúc, RAM): INTRO (Dạ Khuyết, cutscene phụ đề) → TÂM CHIẾN (4 tàn ảnh CHG = SuDo yếu 50% máu, mỗi tàn ảnh một câu ký ức bằng subtitle) → GIỮ 4 MẢNH 60s (đứng trong vòng, nhảy né sóng Hư Không; Dạ Khuyết bất tử, noAI) → OUTRO (Mộ Dao về hoặc tàn hồn nếu `mo_dao_died`; Hạng Chiêu tỉnh nếu `rival_lost`) → `EndgameService.completeTruth`. Chết/rời arena = thất bại, vẫn còn lựa chọn.
+- Kết quả: Thế Giới Tầng 2 biến thể "Linh Khí Phục Hưng" (`WorldTierData.variant`): vùng cũ chuyển sang giải phóng (tẩy dần), EXP tu luyện ×1.3 trong vùng (`WorldTier.spiritBoost`), Hư mob ×0.8 máu/sát thương, cờ Yêu Tộc trỗi dậy (`WorldTierData.yeuTocThreat`, `wl.yeu_toc_rising`), reset Hư Ảnh, danh hiệu "Siêu Độ Giả" (`title.sieu_do_gia`, tiền tố tên), bản mệnh dạng Thủ Hộ (`banmenh.thu_ho`: +5% hồi/tối đa tài nguyên; ngự bay đường dài chưa làm).
+- Chưa kiểm bằng chơi thật (AP4): chỉ có JUnit (`SieuDoKitTest`) và GameTest `CityArcGameTests` (chưa chạy).
+
 ## Document Lineage
 | Version | Document | Status |
 |---|---|---|

@@ -1,6 +1,7 @@
 package com.hukhong.endgame;
 
 import com.hukhong.HuKhong;
+import com.hukhong.chg.ChgKit;
 import com.hukhong.core.CultivationService;
 import com.hukhong.entity.HuMob;
 import com.hukhong.story.StoryService;
@@ -33,11 +34,25 @@ import java.util.UUID;
 public final class EndgameService {
     private EndgameService() {}
 
-    public static final String F_PENDING = "ending_pending", F_SEAL = "ending_seal", F_ABSORB = "ending_absorb";
+    public static final String F_PENDING = "ending_pending", F_SEAL = "ending_seal", F_ABSORB = "ending_absorb", F_TRUTH = "ending_truth";
     /** uuid -> {ending, ticksLeft}. */
     private static final Map<UUID, int[]> CUTSCENE = new HashMap<>();
 
-    public static boolean hasEnding(QuestData q) { return q.has(F_SEAL) || q.has(F_ABSORB); }
+    public static boolean hasEnding(QuestData q) { return q.has(F_SEAL) || q.has(F_ABSORB) || q.has(F_TRUTH); }
+
+    // ------------------------------------------------------------ ket thuc thu ba "Sieu Do": dieu kien
+    /** Trang thai dieu kien Sieu Do cua nguoi choi: 10 Di thu C, Hu Anh trung binh, 4 CHG, vung giai phong (nua so vung). */
+    public static SieuDoKit.Status truthStatus(ServerPlayer p) {
+        ServerLevel ow = p.getServer().overworld();
+        int lair = StoryService.get(p).lair(), chg = 0;
+        for (int i = 1; i <= ChgKit.COUNT; i++) if (ChgKit.defeated(lair, i)) chg++;
+        var zones = com.hukhong.zone.ZoneData.get(ow).zones();
+        int lib = 0;
+        for (var z : zones) if (z.liberated) lib++;
+        return new SieuDoKit.Status(com.hukhong.story.StoryDocs.countSet(p, 'c'), com.hukhong.story.world.HuAnh.average(ow), chg, lib, zones.size());
+    }
+
+    public static boolean truthAvailable(ServerPlayer p) { return truthStatus(p).met(); }
 
     public static boolean eligible(ServerPlayer p) {
         return EndgameKit.gatewayEligible(StoryService.get(p).lair(), CultivationService.get(p).level());
@@ -135,19 +150,59 @@ public final class EndgameService {
     }
 
     // ------------------------------------------------------------ chọn kết thúc + cutscene
-    public static void promptChoice(ServerPlayer p) { PacketDistributor.sendToPlayer(p, new EndgameNet.OpenChoice()); }
+    public static void promptChoice(ServerPlayer p) {
+        SieuDoKit.Status st = truthStatus(p);
+        PacketDistributor.sendToPlayer(p, new EndgameNet.OpenChoice(st.missing(), st.docsC(), st.huAnhAvg(), st.chgDefeated(), st.zonesLiberated(), st.zonesNeeded()));
+    }
 
     public static void choose(ServerPlayer p, int ending) {
         QuestData q = DialogueService.quest(p);
         if (!EndgameKit.validEnding(ending) || !q.has(F_PENDING) || hasEnding(q)) return;
+        if (ending == EndgameKit.ENDING_TRUTH) { // Sieu Do: phai du dieu kien, roi vao phien Tam Chien / giu Manh (SieuDo)
+            if (!truthAvailable(p)) {
+                p.displayClientMessage(Component.translatable("hukhong.sieudo.locked"), false);
+                promptChoice(p);
+                return;
+            }
+            SieuDo.begin(p);
+            return;
+        }
         DialogueService.setQuest(p, q.withFlag(ending == EndgameKit.ENDING_SEAL ? F_SEAL : F_ABSORB).withChapter(6));
         WorldTier.raiseTo(p.getServer(), 2);
         p.displayClientMessage(Component.translatable("hukhong.endgame.tier2"), false);
+        playEnding(p, ending);
+    }
+
+    /** Hieu ung chung sau khi chot ket thuc: bat tu + dung hinh trong cutscene, phat man cutscene + credits. */
+    static void playEnding(ServerPlayer p, int ending) {
         int dur = EndgameKit.CUTSCENE_TICKS + 200;
         p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, dur, 4, false, false));
         p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, dur, 6, false, false));
         CUTSCENE.put(p.getUUID(), new int[]{ending, EndgameKit.CUTSCENE_TICKS});
         PacketDistributor.sendToPlayer(p, new EndgameNet.PlayCutscene(ending));
+    }
+
+    /**
+     * Hoan tat Sieu Do (goi tu {@link SieuDo}): co ending_truth, Tang The Gioi II bien the "Linh Khi Phuc Hung" (vung Hu Hoa cu thanh vung linh khi,
+     * Hu mob yeu di, co Yeu Toc troi day), reset Hu Anh, danh hieu "Sieu Do Gia", ban menh dang Thu Ho.
+     */
+    public static void completeTruth(ServerPlayer p) {
+        MinecraftServer server = p.getServer();
+        QuestData q = DialogueService.quest(p);
+        DialogueService.setQuest(p, q.withFlag(F_TRUTH).withFlag(SieuDoKit.TITLE_FLAG).withFlag(SieuDoKit.BANMENH_FLAG)
+                .withFlag(SieuDoKit.YEU_TOC_FLAG).withChapter(6));
+        WorldTier.setVariant(server, EndgameKit.VARIANT_LINH_KHI);
+        ServerLevel ow = server.overworld();
+        WorldTierData.get(ow).setYeuTocThreat();
+        for (var z : com.hukhong.zone.ZoneData.get(ow).zones()) { z.liberated = true; z.cleansed = 0; } // vung Hu Hoa cu tay dan thanh vung linh khi (ZoneManager.cleanseStep)
+        com.hukhong.zone.ZoneData.get(ow).setDirty();
+        for (var c : com.hukhong.city.CityDef.ALL) com.hukhong.story.world.HuAnh.add(ow, c.index(), -100);
+        com.hukhong.currency.Wallet.grantHonTinh(p, 100);
+        p.displayClientMessage(Component.translatable("hukhong.sieudo.tier2"), false);
+        p.displayClientMessage(Component.translatable("hukhong.sieudo.title"), false);
+        p.displayClientMessage(Component.translatable("hukhong.banmenh.thu_ho.desc"), false);
+        com.hukhong.stats.StatService.refresh(p); // ap bonus Thu Ho
+        playEnding(p, EndgameKit.ENDING_TRUTH);
     }
 
     /** Client báo xong cutscene + credits (hoặc bỏ qua): trả người chơi về thế giới. */
@@ -158,7 +213,7 @@ public final class EndgameService {
         p.removeEffect(MobEffects.DAMAGE_RESISTANCE);
         p.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
         leave(p);
-        p.displayClientMessage(Component.translatable(q.has(F_SEAL) ? "hukhong.endgame.return.seal" : "hukhong.endgame.return.absorb"), false);
+        p.displayClientMessage(Component.translatable(q.has(F_SEAL) ? "hukhong.endgame.return.seal" : q.has(F_TRUTH) ? "hukhong.endgame.return.truth" : "hukhong.endgame.return.absorb"), false);
     }
 
     private static void cutsceneTick(MinecraftServer server) {

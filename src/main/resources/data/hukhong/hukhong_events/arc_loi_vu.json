@@ -1,0 +1,25 @@
+{
+ "type": "loi_vu",
+ "lane": "story",
+ "recurrence": {
+  "type": "every",
+  "days": 1
+ },
+ "start_offset": 30000,
+ "duration": 6000,
+ "location": {
+  "city": 6
+ },
+ "level": [
+  55,
+  100
+ ],
+ "rewards": "hukhong.cal.reward.arc_loi_vu",
+ "lore": {
+  "faction": "CHG",
+  "chapter": [
+   7,
+   7
+  ]
+ }
+}

@@ -3,6 +3,7 @@
  "city": "hac_thach_quan",
  "name_key": "hukhong.npc.hang_chieu",
  "entry": [
+  {"if":{"flags":["qc.dau_gia.c.seen"],"not_flags":["qc.told.hc_auction"]},"node":"hc_auction"},
   {
    "if": {
     "flags": [
@@ -23,6 +24,7 @@
   }
  ],
  "nodes": {
+  "hc_auction": {"text":["hukhong.dlg.hang_chieu.hc_auction.p1","hukhong.dlg.hang_chieu.hc_auction.p2"],"actions":[{"type":"set_flag","flag":"qc.told.hc_auction"}]},
   "early": {
    "text": [
     "hukhong.dlg.hang_chieu.early.p1"

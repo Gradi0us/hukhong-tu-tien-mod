@@ -1,0 +1,103 @@
+{
+ "npc": "chu_cho_den",
+ "city": "huyet_nguyet_phuong",
+ "name_key": "hukhong.npc.chu_cho_den",
+ "entry": [
+  {
+   "if": {
+    "flags": [
+     "qc.cho_mau.done"
+    ]
+   },
+   "node": "done"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.cho_mau.3"
+    ]
+   },
+   "node": "s3"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.cho_mau.2"
+    ]
+   },
+   "node": "s2"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.cho_mau.1"
+    ]
+   },
+   "node": "s1"
+  },
+  {
+   "if": {
+    "chapter_min": 4,
+    "min_level": 30
+   },
+   "node": "offer"
+  },
+  {
+   "node": "early"
+  }
+ ],
+ "nodes": {
+  "early": {
+   "text": [
+    "hukhong.dlg.chu_cho_den.early.p1"
+   ]
+  },
+  "offer": {
+   "text": [
+    "hukhong.dlg.chu_cho_den.offer.p1",
+    "hukhong.dlg.chu_cho_den.offer.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.chu_cho_den.offer.c1",
+     "actions": [
+      {
+       "type": "qc",
+       "chain": "cho_mau",
+       "stage": 1
+      }
+     ],
+     "next": "accepted"
+    },
+    {
+     "text": "hukhong.dlg.chu_cho_den.offer.c2"
+    }
+   ]
+  },
+  "accepted": {
+   "text": [
+    "hukhong.dlg.chu_cho_den.accepted.p1"
+   ]
+  },
+  "s1": {
+   "text": [
+    "hukhong.dlg.chu_cho_den.s1.p1"
+   ]
+  },
+  "s2": {
+   "text": [
+    "hukhong.dlg.chu_cho_den.s2.p1"
+   ]
+  },
+  "s3": {
+   "text": [
+    "hukhong.dlg.chu_cho_den.s3.p1"
+   ]
+  },
+  "done": {
+   "text": [
+    "hukhong.dlg.chu_cho_den.done.p1"
+   ]
+  }
+ }
+}

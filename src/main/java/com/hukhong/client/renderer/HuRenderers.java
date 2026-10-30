@@ -27,6 +27,7 @@ public final class HuRenderers {
                 c -> glow(new GeoEntityRenderer<HuChu>(c, new DefaultedEntityGeoModel<>(rl("hu_chu")))));
         e.registerEntityRenderer(ModEntities.HU_VUONG.get(),
                 c -> glow(new com.hukhong.client.boss.PhasedBossRenderer<com.hukhong.entity.HuVuong>(c, "hu_vuong")));
+        e.registerEntityRenderer(ModEntities.HU_VUONG_FORM.get(), c -> glow(new com.hukhong.client.boss.HuVuongFormRenderer(c)));
         e.registerEntityRenderer(ModEntities.TAM_MA.get(), TamMaRenderer::new);
     }
 

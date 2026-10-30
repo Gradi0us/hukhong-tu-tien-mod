@@ -1,0 +1,122 @@
+{
+ "npc": "hai_tuong",
+ "city": "dan_ha_thanh",
+ "name_key": "hukhong.npc.hai_tuong",
+ "entry": [
+  {
+   "if": {
+    "flags": [
+     "qc.hac_trieu.done"
+    ]
+   },
+   "node": "done"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.hac_trieu.3"
+    ]
+   },
+   "node": "s3"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.hac_trieu.2"
+    ]
+   },
+   "node": "s2"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.hac_trieu.1"
+    ]
+   },
+   "node": "s1"
+  },
+  {
+   "if": {
+    "chapter_min": 5,
+    "min_level": 40
+   },
+   "node": "offer"
+  },
+  {
+   "node": "early"
+  }
+ ],
+ "nodes": {
+  "early": {
+   "text": [
+    "hukhong.dlg.hai_tuong.early.p1"
+   ]
+  },
+  "offer": {
+   "text": [
+    "hukhong.dlg.hai_tuong.offer.p1",
+    "hukhong.dlg.hai_tuong.offer.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hai_tuong.offer.c1",
+     "actions": [
+      {
+       "type": "qc",
+       "chain": "hac_trieu",
+       "stage": 1
+      }
+     ],
+     "next": "accepted"
+    },
+    {
+     "text": "hukhong.dlg.hai_tuong.offer.c2"
+    }
+   ]
+  },
+  "accepted": {
+   "text": [
+    "hukhong.dlg.hai_tuong.accepted.p1"
+   ]
+  },
+  "s1": {
+   "text": [
+    "hukhong.dlg.hai_tuong.s1.p1"
+   ]
+  },
+  "s2": {
+   "text": [
+    "hukhong.dlg.hai_tuong.s2.p1"
+   ]
+  },
+  "s3": {
+   "text": [
+    "hukhong.dlg.hai_tuong.s3.p1",
+    "hukhong.dlg.hai_tuong.s3.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.hai_tuong.s3.c1",
+     "actions": [
+      {
+       "type": "qc",
+       "chain": "hac_trieu",
+       "stage": 9
+      }
+     ],
+     "next": "s3_end"
+    }
+   ]
+  },
+  "s3_end": {
+   "text": [
+    "hukhong.dlg.hai_tuong.s3_end.p1"
+   ]
+  },
+  "done": {
+   "text": [
+    "hukhong.dlg.hai_tuong.done.p1"
+   ]
+  }
+ }
+}

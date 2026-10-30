@@ -8,7 +8,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class EndgameClient {
     private EndgameClient() {}
 
-    public static void openChoice() { Minecraft.getInstance().setScreen(new EndingChoiceScreen()); }
+    public static void openChoice(EndgameNet.OpenChoice c) { Minecraft.getInstance().setScreen(new EndingChoiceScreen(c)); }
 
     public static void playCutscene(int ending) { Minecraft.getInstance().setScreen(new CutsceneScreen(ending)); }
 

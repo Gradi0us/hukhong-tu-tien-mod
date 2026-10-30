@@ -1,0 +1,103 @@
+{
+ "npc": "kiem_si",
+ "city": "bac_han_thanh",
+ "name_key": "hukhong.npc.kiem_si",
+ "entry": [
+  {
+   "if": {
+    "flags": [
+     "qc.kiem_trung.done"
+    ]
+   },
+   "node": "done"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.kiem_trung.3"
+    ]
+   },
+   "node": "s3"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.kiem_trung.2"
+    ]
+   },
+   "node": "s2"
+  },
+  {
+   "if": {
+    "flags": [
+     "qc.kiem_trung.1"
+    ]
+   },
+   "node": "s1"
+  },
+  {
+   "if": {
+    "chapter_min": 9,
+    "min_level": 80
+   },
+   "node": "offer"
+  },
+  {
+   "node": "early"
+  }
+ ],
+ "nodes": {
+  "early": {
+   "text": [
+    "hukhong.dlg.kiem_si.early.p1"
+   ]
+  },
+  "offer": {
+   "text": [
+    "hukhong.dlg.kiem_si.offer.p1",
+    "hukhong.dlg.kiem_si.offer.p2"
+   ],
+   "choices": [
+    {
+     "text": "hukhong.dlg.kiem_si.offer.c1",
+     "actions": [
+      {
+       "type": "qc",
+       "chain": "kiem_trung",
+       "stage": 1
+      }
+     ],
+     "next": "accepted"
+    },
+    {
+     "text": "hukhong.dlg.kiem_si.offer.c2"
+    }
+   ]
+  },
+  "accepted": {
+   "text": [
+    "hukhong.dlg.kiem_si.accepted.p1"
+   ]
+  },
+  "s1": {
+   "text": [
+    "hukhong.dlg.kiem_si.s1.p1"
+   ]
+  },
+  "s2": {
+   "text": [
+    "hukhong.dlg.kiem_si.s2.p1"
+   ]
+  },
+  "s3": {
+   "text": [
+    "hukhong.dlg.kiem_si.s3.p1"
+   ]
+  },
+  "done": {
+   "text": [
+    "hukhong.dlg.kiem_si.done.p1"
+   ]
+  }
+ }
+}

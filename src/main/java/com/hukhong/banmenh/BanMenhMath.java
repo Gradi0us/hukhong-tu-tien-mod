@@ -11,6 +11,8 @@ public final class BanMenhMath {
 
     public static final int OK = 0, MAXED = 1, REALM_CAP = 2, NEED_TINH = 3;
 
+    /** Dang Thu Ho (ket thuc Sieu Do, co banmenh.thu_ho): +5% hoi tai nguyen, +5% tai nguyen toi da. Ngu bay duong dai: noi dung sau. */
+    public static final double THU_HO_REGEN = 0.05, THU_HO_MAX_RESOURCE = 0.05;
     public static final double NGOC_TAM_REGEN = 0.25, NGOC_TAM_MAX_RESOURCE = 0.15, NGOC_TAM_SKILL_COST = 0.90;
     public static final double TRONG_NHAC_SPEED = -0.06;
 

@@ -1,0 +1,25 @@
+{
+ "type": "prophecy",
+ "lane": "story",
+ "recurrence": {
+  "type": "every",
+  "days": 2
+ },
+ "start_offset": 37000,
+ "duration": 14000,
+ "location": {
+  "city": 7
+ },
+ "level": [
+  65,
+  100
+ ],
+ "rewards": "hukhong.cal.reward.arc_dai_hoi",
+ "lore": {
+  "faction": "TONG_MON",
+  "chapter": [
+   8,
+   8
+  ]
+ }
+}

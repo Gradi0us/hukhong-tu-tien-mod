@@ -20,11 +20,22 @@ public class ZoneData extends SavedData {
         public volatile boolean liberated;
         /** Ban kinh da tay sach tu tam ra (0 = chua tay). */
         public volatile int cleansed;
+        /** Ten rieng Hu Vuong (co dinh theo vi tri vung -> theo seed the gioi); luu cung du lieu vung, ban do/Lich doc o day. */
+        private volatile String bossName = "";
 
         public Zone(int id, int cx, int cz, int radius, int level, int form, String name) {
             this.id = id; this.cx = cx; this.cz = cz; this.radius = radius; this.level = level; this.form = form; this.name = name;
         }
         public int tier() { return ZoneMath.tier(radius); }
+        /** Ten rieng cua Hu Vuong vung nay ("Mac Tram"). */
+        public String bossName() {
+            if (bossName.isEmpty()) bossName = com.hukhong.zone.form.HvNames.personal(id, cx, cz);
+            return bossName;
+        }
+        /** Ten day du "[Danh hieu] <dang> Hu Vuong — <ten rieng>". */
+        public String bossTitle() {
+            return com.hukhong.zone.form.HvNames.full(com.hukhong.zone.form.HvForm.byId(form), tier(), bossName());
+        }
         public boolean covers(double x, double z) { return ZoneMath.covers(x, z, cx, cz, radius, cleansed); }
     }
 
@@ -47,6 +58,7 @@ public class ZoneData extends SavedData {
             Zone z = new Zone(c.getInt("id"), c.getInt("cx"), c.getInt("cz"), c.getInt("r"), c.getInt("lv"), c.getInt("form"), c.getString("name"));
             z.liberated = c.getBoolean("lib");
             z.cleansed = c.getInt("clean");
+            z.bossName = c.getString("bname");
             d.zones.add(z);
         }
         return d;
@@ -59,7 +71,7 @@ public class ZoneData extends SavedData {
         for (Zone z : zones) {
             CompoundTag c = new CompoundTag();
             c.putInt("id", z.id); c.putInt("cx", z.cx); c.putInt("cz", z.cz); c.putInt("r", z.radius); c.putInt("lv", z.level);
-            c.putInt("form", z.form); c.putString("name", z.name); c.putBoolean("lib", z.liberated); c.putInt("clean", z.cleansed);
+            c.putInt("form", z.form); c.putString("name", z.name); c.putBoolean("lib", z.liberated); c.putInt("clean", z.cleansed); c.putString("bname", z.bossName());
             l.add(c);
         }
         tag.put("zones", l);

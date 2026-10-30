@@ -92,7 +92,7 @@ public final class QuestChains {
         if (n >= 9) q = q.withFlag(doneFlag(chain));
         else if (n > 0) q = q.withFlag(stageFlag(chain, n));
         DialogueService.setQuest(p, q);
-        if (n >= 9) { p.sendSystemMessage(Component.translatable("hukhong.qc." + chain + ".done")); cleanup(p, chain); }
+        if (n >= 9) { p.sendSystemMessage(Component.translatable("hukhong.qc." + chain + ".done")); cleanup(p, chain); CityArcs.onDone(p, chain); }
         else if (n > 0) onStage(p, chain, n);
         else p.sendSystemMessage(Component.translatable("hukhong.qc." + chain + ".reset"));
     }
@@ -106,12 +106,13 @@ public final class QuestChains {
             case DISCIPLE + ":4" -> spawnWave(p, p.blockPosition(), 5, TAG_WAVE, 7, 12);
             case DYING + ":1" -> pickTarget(p, DYING, 170, 230);
             case NOI_GIAN + ":8" -> REVENGE.put(p.getUUID(), p.serverLevel().getGameTime() + 1200);
-            default -> { }
+            default -> CityArcs.onStage(p, chain, n); // 7 cung truyen thanh (CityArcs)
         }
         if (!(chain.equals(MERCHANT) && n == 2)) p.sendSystemMessage(Component.translatable("hukhong.qc." + chain + ".s" + n));
     }
 
     private static void cleanup(ServerPlayer p, String chain) {
+        CityArcs.cleanup(p, chain);
         if (chain.equals(MERCHANT)) { Escort e = ESCORTS.remove(p.getUUID()); if (e != null) tmp(p, e.npc); }
         if (chain.equals(DISCIPLE)) for (Entity x : owned(p, 128)) if (x instanceof StoryNpc n && n.npcId().equals("de_tu_lac")) n.discard();
         if (chain.equals(NOI_GIAN)) for (Entity x : owned(p, 128)) if (x instanceof StoryNpc n && n.npcId().equals("truong_lao_gian")) n.discard();

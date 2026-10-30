@@ -201,8 +201,9 @@ public final class BanMenhService {
     /** Gỡ + áp lại modifier transient: Ngọc Tâm (hồi/tối đa tài nguyên), Trọng Nhạc (tốc -6%). Gọi từ StatService.refresh. */
     public static void applyPassives(ServerPlayer p) {
         BanMenhType t = typeOf(p);
-        passive(p, com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.RESOURCE_REGEN), BanMenhMath.regenBonus(t));
-        passive(p, com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.MAX_RESOURCE), BanMenhMath.maxResourceBonus(t));
+        boolean thuHo = com.hukhong.story.npc.DialogueService.quest(p).has(com.hukhong.endgame.SieuDoKit.BANMENH_FLAG);
+        passive(p, com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.RESOURCE_REGEN), BanMenhMath.regenBonus(t) + (thuHo ? BanMenhMath.THU_HO_REGEN : 0));
+        passive(p, com.hukhong.stats.ModAttributes.holder(com.hukhong.stats.ModAttributes.MAX_RESOURCE), BanMenhMath.maxResourceBonus(t) + (thuHo ? BanMenhMath.THU_HO_MAX_RESOURCE : 0));
         passive(p, net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, BanMenhMath.speedBonus(t));
     }
 

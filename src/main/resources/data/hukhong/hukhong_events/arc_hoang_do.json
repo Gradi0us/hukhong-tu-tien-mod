@@ -1,0 +1,25 @@
+{
+ "type": "prophecy",
+ "lane": "story",
+ "recurrence": {
+  "type": "every",
+  "days": 3
+ },
+ "start_offset": 51000,
+ "duration": 14000,
+ "location": {
+  "city": 9
+ },
+ "level": [
+  85,
+  100
+ ],
+ "rewards": "hukhong.cal.reward.arc_hoang_do",
+ "lore": {
+  "faction": "THANH",
+  "chapter": [
+   10,
+   10
+  ]
+ }
+}

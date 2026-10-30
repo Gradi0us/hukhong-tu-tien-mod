@@ -11,7 +11,9 @@ public final class BossPhaseConfig {
 
     /** Bảng màu chủ đề (hào quang, telegraph, hạt). */
     public enum Pal {
-        VOID(0xA050FF), FROST(0x9FE8FF), TOXIC(0x7BD04A), SAND(0xE0B060), HOLY(0xFFE9A0), BLOOD(0xC01028), MOON(0x8FA8FF);
+        VOID(0xA050FF), FROST(0x9FE8FF), TOXIC(0x7BD04A), SAND(0xE0B060), HOLY(0xFFE9A0), BLOOD(0xC01028), MOON(0x8FA8FF),
+        /** 8 Hu Vuong dang: go / xuong / bien. */
+        WOOD(0x4FA83A), BONE(0xE8E0C8), SEA(0x2E8FD8);
         public final int rgb;
         Pal(int rgb) { this.rgb = rgb; }
     }

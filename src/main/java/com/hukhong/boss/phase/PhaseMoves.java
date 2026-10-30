@@ -48,6 +48,9 @@ public final class PhaseMoves {
             case HOLY -> ParticleTypes.END_ROD;
             case BLOOD -> ParticleTypes.CRIMSON_SPORE;
             case MOON -> ParticleTypes.GLOW;
+            case WOOD -> ParticleTypes.COMPOSTER;
+            case BONE -> ParticleTypes.ASH;
+            case SEA -> ParticleTypes.SPLASH;
         };
     }
 

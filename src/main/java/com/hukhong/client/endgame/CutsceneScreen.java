@@ -21,7 +21,7 @@ public class CutsceneScreen extends Screen {
         this.ending = ending;
     }
 
-    private static String key(int e) { return e == EndgameKit.ENDING_SEAL ? "seal" : "absorb"; }
+    private static String key(int e) { return e == EndgameKit.ENDING_SEAL ? "seal" : e == EndgameKit.ENDING_TRUTH ? "truth" : "absorb"; }
 
     @Override public boolean shouldCloseOnEsc() { return false; }
     @Override public boolean isPauseScreen() { return false; }
@@ -47,12 +47,12 @@ public class CutsceneScreen extends Screen {
         float t = tick + pt;
         int ti = (int) t;
         int a = (int) (EndgameKit.overlay(ti) * 255) & 0xFF;
-        g.fill(0, 0, width, height, (a << 24) | (ending == EndgameKit.ENDING_SEAL ? 0x0A1018 : 0x14081C));
+        g.fill(0, 0, width, height, (a << 24) | (ending == EndgameKit.ENDING_SEAL ? 0x0A1018 : ending == EndgameKit.ENDING_TRUTH ? 0x10202A : 0x14081C));
         int bar = (int) (Math.min(1f, t / EndgameKit.FADE_IN) * height * 0.12f);
         g.fill(0, 0, width, bar, 0xFF000000);
         g.fill(0, height - bar, width, height, 0xFF000000);
         int cx = width / 2;
-        int tc = ending == EndgameKit.ENDING_SEAL ? 0xFFFFE9A0 : 0xFFC88CFF;
+        int tc = ending == EndgameKit.ENDING_SEAL ? 0xFFFFE9A0 : ending == EndgameKit.ENDING_TRUTH ? 0xFFA8F0E0 : 0xFFC88CFF;
         if (ti < EndgameKit.FADE_IN + 20) {
             int ta = (int) (Math.min(1f, t / 20f) * 255);
             g.pose().pushPose();

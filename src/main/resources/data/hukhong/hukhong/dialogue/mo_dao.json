@@ -37,6 +37,8 @@
    },
    "node": "ch9_leave"
   },
+  {"if":{"flags":["ending_truth","mo_dao_died"],"not_flags":["ch6_done"]},"node":"ch6_truth_soul"},
+  {"if":{"flags":["ending_truth"],"not_flags":["ch6_done"]},"node":"ch6_truth"},
   {
    "if": {
     "flags": [
@@ -297,6 +299,8 @@
     "hukhong.dlg.mo_dao.ch5_end.p1"
    ]
   },
+  "ch6_truth":{"text":["hukhong.dlg.mo_dao.ch6_truth.p1","hukhong.dlg.mo_dao.ch6_truth.p2"],"actions":[{"type":"set_flag","flag":"ch6_done"},{"type":"exp","amount":12000}]},
+  "ch6_truth_soul":{"text":["hukhong.dlg.mo_dao.ch6_truth_soul.p1","hukhong.dlg.mo_dao.ch6_truth_soul.p2"],"actions":[{"type":"set_flag","flag":"ch6_done"},{"type":"exp","amount":12000}]},
   "ch6_seal": {
    "text": [
     "hukhong.dlg.mo_dao.ch6_seal.p1",

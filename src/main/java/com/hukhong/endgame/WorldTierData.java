@@ -9,8 +9,8 @@ import net.minecraft.world.level.saveddata.SavedData;
 /** Trạng thái cấp thế giới (lưu ở Overworld): Tầng Thế Giới, vị trí cổng Hư Không Bản Nguyên, đảo đã dựng chưa. */
 public class WorldTierData extends SavedData {
     private static final String NAME = "hukhong_world_tier";
-    private int tier = EndgameKit.MIN_TIER;
-    private boolean hasGateway, arenaBuilt;
+    private int tier = EndgameKit.MIN_TIER, variant;
+    private boolean hasGateway, arenaBuilt, yeuToc;
     private long gateway;
 
     public static WorldTierData get(ServerLevel ow) {
@@ -23,6 +23,8 @@ public class WorldTierData extends SavedData {
         d.hasGateway = tag.getBoolean("hasGateway");
         d.gateway = tag.getLong("gateway");
         d.arenaBuilt = tag.getBoolean("arenaBuilt");
+        d.variant = tag.getInt("variant");
+        d.yeuToc = tag.getBoolean("yeuToc");
         return d;
     }
 
@@ -32,6 +34,8 @@ public class WorldTierData extends SavedData {
         tag.putBoolean("hasGateway", hasGateway);
         tag.putLong("gateway", gateway);
         tag.putBoolean("arenaBuilt", arenaBuilt);
+        tag.putInt("variant", variant);
+        tag.putBoolean("yeuToc", yeuToc);
         return tag;
     }
 
@@ -39,6 +43,12 @@ public class WorldTierData extends SavedData {
     public void setTier(int t) { tier = EndgameKit.clampTier(t); setDirty(); }
     public BlockPos gateway() { return hasGateway ? BlockPos.of(gateway) : null; }
     public void setGateway(BlockPos p) { hasGateway = true; gateway = p.asLong(); setDirty(); }
+    /** Bien the Tang II (EndgameKit.VARIANT_*): 1 = Linh Khi Phuc Hung (ket thuc Sieu Do). */
+    public int variant() { return variant; }
+    public void setVariant(int v) { variant = v; setDirty(); }
+    /** Co "Yeu Toc troi day" cho noi dung sau (chua co he thong). */
+    public boolean yeuTocThreat() { return yeuToc; }
+    public void setYeuTocThreat() { yeuToc = true; setDirty(); }
     public boolean arenaBuilt() { return arenaBuilt; }
     public void setArenaBuilt() { arenaBuilt = true; setDirty(); }
 }

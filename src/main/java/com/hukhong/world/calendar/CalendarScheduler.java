@@ -55,7 +55,7 @@ public final class CalendarScheduler {
     }
 
     public static BlockPos locate(ServerLevel ow, EventDef d, long start) {
-        if ("loi_vu".equals(d.type())) return LoiVuHandler.locate(ow, start); // ngay tai hang CHG
+        if ("loi_vu".equals(d.type())) return LoiVuHandler.locate(ow, d.id(), start); // ngay tai hang CHG
         int c = d.cityOf(start, CityDef.ALL.size());
         if (c < 0) return new BlockPos(d.loc().x(), 64, d.loc().z());
         return CityService.site(ow, CityDef.ALL.get(c));
