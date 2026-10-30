@@ -232,3 +232,6 @@ def devUserName() {
     def name = line ? line.split('=', 2)[1].trim() : ''
     return name ? name : 'Minhhoangg'
 }
+
+// Cho phep go lenh vao may chu (stop, op, ...) khi chay bang gradlew runServer
+tasks.matching { it.name == 'runServer' }.configureEach { standardInput = System.in }
