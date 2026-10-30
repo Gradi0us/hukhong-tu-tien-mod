@@ -126,6 +126,10 @@ public class AuctionScreen extends Screen {
         return super.mouseClicked(mx, my, btn);
     }
 
+    /** Bỏ lớp làm mờ mặc định của Screen.render (nó vẽ đè lên nội dung tự vẽ khiến chữ bị nhòe). */
+    @Override
+    public void renderBackground(GuiGraphics g, int mx, int my, float pt) { }
+
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         renderTransparentBackground(g);

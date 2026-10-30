@@ -39,6 +39,10 @@ public class LiveScreen extends Screen {
         b10.setMessage(Component.literal("+10%  " + (can ? TuTinhText.of(s.raise10()).getString() : "")));
     }
 
+    /** Bỏ lớp làm mờ mặc định của Screen.render (nó vẽ đè lên nội dung tự vẽ khiến chữ bị nhòe). */
+    @Override
+    public void renderBackground(GuiGraphics g, int mx, int my, float pt) { renderTransparentBackground(g); }
+
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         g.fill(left, top, left + W, top + H, PANEL);

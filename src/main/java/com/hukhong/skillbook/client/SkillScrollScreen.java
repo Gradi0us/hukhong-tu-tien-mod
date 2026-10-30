@@ -50,10 +50,9 @@ public final class SkillScrollScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
-        renderBackground(g, mx, my, pt);
+        super.render(g, mx, my, pt); // tự vẽ nền mờ 1 lần; chữ vẽ sau để không bị nhòe
         g.drawCenteredString(font, title, width / 2, height / 2 - 90, 0xFFE8C060);
         g.drawCenteredString(font, Component.translatable("hukhong.skillbook.upgrade_scroll.pick"), width / 2, height / 2 - 78, 0xFFAAAAAA);
-        super.render(g, mx, my, pt);
     }
 
     @Override
