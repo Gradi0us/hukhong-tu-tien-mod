@@ -42,9 +42,32 @@ public final class DongDaoNet {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    /** Vi tri chet cho client: has=false neu khong co. ageTicks<0: khong ro. */
+    public record Death(boolean has, String dim, int x, int y, int z, long ageTicks) implements CustomPacketPayload {
+        public static final Type<Death> TYPE = new Type<>(id("chochet_info"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Death> CODEC = StreamCodec.of(
+                (b, d) -> { b.writeBoolean(d.has); b.writeUtf(d.dim, 128); b.writeInt(d.x); b.writeInt(d.y); b.writeInt(d.z); b.writeLong(d.ageTicks); },
+                b -> new Death(b.readBoolean(), b.readUtf(128), b.readInt(), b.readInt(), b.readInt(), b.readLong()));
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    public record GoDeath() implements CustomPacketPayload {
+        public static final Type<GoDeath> TYPE = new Type<>(id("chochet_go"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, GoDeath> CODEC = StreamCodec.unit(new GoDeath());
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     public static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(Sync.TYPE, Sync.CODEC, (p, ctx) -> ctx.enqueueWork(() -> DongDaoClient.set(p.entries())));
+        r.playToClient(Death.TYPE, Death.CODEC, (p, ctx) -> ctx.enqueueWork(() -> DongDaoClient.setDeath(p)));
+        r.playToServer(GoDeath.TYPE, GoDeath.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
+            if (ctx.player() instanceof ServerPlayer sp) {
+                String err = VeChoChet.go(sp);
+                if (err != null) sp.displayClientMessage(Component.translatable(err), true);
+                send(sp);
+            }
+        }));
         r.playToServer(Request.TYPE, Request.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
             if (ctx.player() instanceof ServerPlayer sp) send(sp);
         }));
@@ -65,5 +88,10 @@ public final class DongDaoNet {
         return out;
     }
 
-    public static void send(ServerPlayer p) { PacketDistributor.sendToPlayer(p, new Sync(entriesFor(p))); }
+    public static void send(ServerPlayer p) {
+        PacketDistributor.sendToPlayer(p, new Sync(entriesFor(p)));
+        var d = VeChoChet.valid(p);
+        PacketDistributor.sendToPlayer(p, d.isEmpty() ? new Death(false, "", 0, 0, 0, -1)
+                : new Death(true, d.get().dimension().location().toString(), d.get().pos().getX(), d.get().pos().getY(), d.get().pos().getZ(), VeChoChet.ageTicks(p)));
+    }
 }

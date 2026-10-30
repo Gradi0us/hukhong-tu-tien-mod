@@ -48,4 +48,30 @@ public final class DongDaoGameTests {
         if (DongDao.validate(a, b) != null) { h.fail("after cooldown reset must be allowed"); return; }
         h.succeed();
     }
+
+    /** @return true neu su kien sat thuong bi huy. (FakePlayer.hurt luon bi chan nen phat su kien truc tiep.) */
+    private static boolean incoming(GameTestHelper h, ServerPlayer a) {
+        var ev = new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(a, new net.neoforged.neoforge.common.damagesource.DamageContainer(new net.minecraft.world.damagesource.DamageSource(h.getLevel().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE).getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.GENERIC)), 5f));
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(ev);
+        return ev.isCanceled();
+    }
+
+    @GameTest(template = "empty")
+    public static void veChoChetImmuneThenOnce(GameTestHelper h) {
+        ServerPlayer a = fake(h, "hk-vcc1");
+        var at = h.absolutePos(new net.minecraft.core.BlockPos(2, 2, 2));
+        a.setPos(at.getX() + 150.5, at.getY(), at.getZ() + 0.5);
+        if (!"hukhong.chochet.err_none".equals(VeChoChet.go(a))) { h.fail("no death must refuse"); return; }
+        a.setLastDeathLocation(java.util.Optional.of(net.minecraft.core.GlobalPos.of(h.getLevel().dimension(), at)));
+        if (VeChoChet.go(a) != null) { h.fail("teleport refused"); return; }
+        if (a.position().distanceTo(at.getCenter()) > 14) { h.fail("not near death: " + a.position()); return; }
+        if (!VeChoChet.immune(a)) { h.fail("must be immune"); return; }
+        if (!incoming(h, a)) { h.fail("damage must be cancelled while immune"); return; }
+        if (!"hukhong.chochet.err_none".equals(VeChoChet.go(a))) { h.fail("second use must be refused"); return; }
+        h.runAfterDelay(VeChoChet.IMMUNE_TICKS + 2, () -> {
+            if (VeChoChet.immune(a)) { h.fail("immunity must expire"); return; }
+            if (incoming(h, a)) { h.fail("damage must work after expiry"); return; }
+            h.succeed();
+        });
+    }
 }

@@ -2489,6 +2489,11 @@
   "hukhong.dongdao.err_here": "Không thể dịch chuyển khi đang ở Bí Cảnh, Tâm Thức, đấu trường hay đang đấu.",
   "hukhong.dongdao.err_there": "Đối phương đang ở nơi không thể dịch chuyển tới.",
   "hukhong.dongdao.notice": "%s đã dịch chuyển tới bạn",
+  "hukhong.chochet.btn": "Về chỗ chết",
+  "hukhong.chochet.none": "Về chỗ chết: chưa có nơi chết để quay về.",
+  "hukhong.chochet.ago": "Đã chết %s trước",
+  "hukhong.chochet.err_none": "Không có nơi chết hợp lệ (đã dùng, hoặc chết ở nơi bị cấm).",
+  "hukhong.chochet.immune": "Bá Thể: bất tử %ss",
   "hukhong.dongdao.dim.overworld": "Thế Giới Thường",
   "hukhong.dongdao.dim.the_nether": "Địa Ngục",
   "hukhong.dongdao.dim.the_end": "Tận Thế"

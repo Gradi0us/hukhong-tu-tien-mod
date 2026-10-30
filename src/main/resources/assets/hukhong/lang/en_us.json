@@ -2489,6 +2489,11 @@
   "hukhong.dongdao.err_here": "Cannot teleport from a Secret Realm, Mind Trial, arena or duel.",
   "hukhong.dongdao.err_there": "The target is in a place you cannot teleport to.",
   "hukhong.dongdao.notice": "%s teleported to you",
+  "hukhong.chochet.btn": "Back to death spot",
+  "hukhong.chochet.none": "Back to death spot: no death location to return to.",
+  "hukhong.chochet.ago": "Died %s ago",
+  "hukhong.chochet.err_none": "No valid death location (already used, or you died in a restricted place).",
+  "hukhong.chochet.immune": "Invulnerable: %ss",
   "hukhong.dongdao.dim.overworld": "Overworld",
   "hukhong.dongdao.dim.the_nether": "The Nether",
   "hukhong.dongdao.dim.the_end": "The End"
