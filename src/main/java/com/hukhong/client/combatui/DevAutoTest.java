@@ -69,6 +69,11 @@ public final class DevAutoTest {
             sp.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
         });
         if (t == 292) bcCheck();
+        String kiem = System.getenv("HUKHONG_KIEM"); // dev: HUKHONG_KIEM=1 -> Kiếm Tu cầm Bản Mệnh Kiếm, 8 đòn đánh thường lên bù nhìn (4 ngôi thứ ba + 4 ngôi thứ nhất), chụp ảnh giữa nhát chém
+        if (kiem != null && !kiem.isEmpty()) {
+            kiemHarness(mc, server, sp);
+            return;
+        }
         String skills = System.getenv("HUKHONG_SKILLS"); // dev: HUKHONG_SKILLS=QUANG|LOI|HOA|THUY|THO|KIM -> thi triển Q,E,R,T lần lượt lên bù nhìn và chụp ảnh từng chiêu
         if (skills != null && !skills.isEmpty()) {
             skillsHarness(mc, server, sp, skills);
@@ -95,6 +100,67 @@ public final class DevAutoTest {
             return;
         }
         if (t == 340) { LOG.info("AUTOTEST done"); mc.stop(); }
+    }
+
+    /** Kiếm Tu + Bản Mệnh Kiếm: 8 đòn đánh thường, mỗi đòn chụp ở +3/+5/+7/+10 tick sau khi gửi yêu cầu. Ảnh -> HUKHONG_SHOTDIR. */
+    private static void kiemHarness(Minecraft mc, net.minecraft.server.MinecraftServer server, net.minecraft.server.level.ServerPlayer sp) {
+        final int start = 400, gap = 34, n = 8;
+        if (t == start) server.execute(() -> {
+            var d = sp.getData(com.hukhong.core.ModAttachments.CULTIVATION);
+            sp.setData(com.hukhong.core.ModAttachments.CULTIVATION, new com.hukhong.core.CultivationData(60, 0, 1000, 1000,
+                    java.util.Set.of(com.hukhong.core.Path.KIEM), java.util.Map.of(com.hukhong.core.Path.KIEM, com.hukhong.core.Aptitude.SSS), false, d.origin(), d.roll(), d.milestoneUnlocked()));
+            com.hukhong.stats.StatService.refresh(sp);
+            com.hukhong.banmenh.BanMenhService.grant(sp);
+            var bm = sp.getData(com.hukhong.banmenh.BanMenhAttachments.BAN_MENH.get());
+            sp.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, com.hukhong.banmenh.BanMenhService.create(bm.withStage(4)));
+            var lv = sp.serverLevel(); // sân phẳng trên cao, ban ngày: không vướng công trình / bóng đổ
+            int cx = (int) sp.getX(), cz = (int) sp.getZ(), cy = 230;
+            for (int x = -14; x <= 14; x++) for (int z = -14; z <= 14; z++)
+                lv.setBlockAndUpdate(new net.minecraft.core.BlockPos(cx + x, cy, cz + z), net.minecraft.world.level.block.Blocks.SMOOTH_STONE.defaultBlockState());
+            lv.setDayTime(13200); // chạng vạng: thấy rõ hiệu ứng cộng sáng
+            sp.teleportTo(cx + 0.5, cy + 1, cz + 0.5);
+            sp.setYRot(0); sp.setXRot(8);
+            sp.setInvulnerable(true);
+            LOG.info("AUTOTEST kiem hand={} stage={}", sp.getMainHandItem(), com.hukhong.banmenh.BanMenhKiemItem.stageOf(sp.getMainHandItem()));
+        });
+        if (t == start) mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+        if (t == start + 34 + n / 2 * gap - 10) mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+        String dir = System.getenv("HUKHONG_SHOTDIR");
+        for (int k = 0; k < n; k++) {
+            final int t0 = start + 40 + k * gap;
+            if (t == t0 - 3) server.execute(() -> { // bù nhìn mới (bất tử) ngay trước mặt trên sân phẳng, người nhìn ngang
+                {
+                    if (dummy != null) dummy.discard();
+                    dummy = EntityType.ZOMBIE.create(sp.serverLevel());
+                    dummy.setNoAi(true); dummy.setPersistenceRequired(); dummy.setInvulnerable(true);
+                    sp.serverLevel().addFreshEntity(dummy);
+                }
+                sp.setNoGravity(true); sp.setDeltaMovement(Vec3.ZERO);
+                sp.teleportTo(sp.serverLevel(), -34.5, 231, -321.5, java.util.Set.of(), 0f, 8f);
+                dummy.clearFire(); dummy.setDeltaMovement(Vec3.ZERO); dummy.setNoGravity(true);
+                dummy.moveTo(-34.5, 231, -321.5 + 4.5, 180f, 0f);
+            });
+            if (t == t0) server.execute(() -> {
+                if (dummy == null) return;
+                com.hukhong.banmenh.BanMenhStrike.request(sp, dummy.getId());
+                LOG.info("AUTOTEST kiem strike id={} alive={} dummy={} player={} rot={},{} hand={} type={} owner={}", dummy.getId(), dummy.isAlive(), dummy.position(), sp.getEyePosition(), sp.getYRot(), sp.getXRot(), sp.getMainHandItem().getItem(), com.hukhong.banmenh.BanMenhKiemItem.typeOf(sp.getMainHandItem()), com.hukhong.banmenh.BanMenhKiemItem.isOwner(sp.getMainHandItem(), sp));
+            });
+            int[] offs = {6, 8, 10, 12, 14, 17};
+            for (int o : offs) if (t == t0 + o) shotTo(dir, "kiem_" + (k < n / 2 ? "3p" : "1p") + "_atk" + (k % 4) + "_t" + o);
+        }
+        if (t == start + 40 + n * gap + 20) { LOG.info("AUTOTEST done"); mc.stop(); }
+    }
+
+    private static void shotTo(String dir, String name) {
+        Minecraft mc = Minecraft.getInstance();
+        try (var img = Screenshot.takeScreenshot(mc.getMainRenderTarget())) {
+            java.io.File f = new java.io.File(dir == null || dir.isEmpty() ? "D:/mc_mod/docs/vfx-review/kiem" : dir, name + ".png");
+            f.getParentFile().mkdirs();
+            img.writeToFile(f);
+            LOG.info("AUTOTEST screenshot {}", f);
+        } catch (Exception ex) {
+            LOG.error("AUTOTEST screenshot failed", ex);
+        }
     }
 
     /** Mỗi phím cách 70 tick: cast ở t0, chụp ảnh ở t0+3 / +8 / +16. Phím T của Quang/Lôi/Hỏa/Thủy là tia kênh (dùng HUKHONG_BEAM). */

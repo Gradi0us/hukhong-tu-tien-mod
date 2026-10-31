@@ -41,7 +41,20 @@ public final class BanMenhStrike {
         if (ready != null && now < ready) return;
         READY.put(p.getUUID(), now + 5 + BanMenhMath.STRIKE_RETURN_TICKS);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(p, new BanMenhStrikeFxPayload(p.getId(), t.getId(), 5,
-                BanMenhMath.strikeSwords(BanMenhKiemItem.stageOf(s))));
+                BanMenhMath.strikeSwords(BanMenhKiemItem.stageOf(s)), nextCombo(p), (float) sweepReach(p)));
+    }
+
+    private static final Map<UUID, Integer> COMBO = new HashMap<>();
+
+    /** Số thứ tự đòn của chủ (đổi chiều chém trên client; mỗi đòn có thể phóng nhiều kiếm, kiếm thứ i dùng combo+i). */
+    private static int nextCombo(ServerPlayer p) { return COMBO.merge(p.getUUID(), 2, Integer::sum) - 2; }
+
+    /** Tầm quạt quét thực tế (gồm thưởng nội tại Kiếm Tu): hình ảnh cung kiếm khí client vẽ đúng bằng tầm này. */
+    static double sweepReach(ServerPlayer p) {
+        var cd = p.getData(com.hukhong.core.ModAttachments.CULTIVATION);
+        double bonus = cd.paths().contains(com.hukhong.core.Path.KIEM)
+                ? com.hukhong.passive.PassiveMath.kiemSweepBonus(cd.aptitude().get(com.hukhong.core.Path.KIEM)) : 0;
+        return SWEEP_REACH * (1 + bonus);
     }
 
     private record Pending(UUID player, UUID target, long due) {}
@@ -76,7 +89,7 @@ public final class BanMenhStrike {
         READY.put(p.getUUID(), now + flight + BanMenhMath.STRIKE_RETURN_TICKS);
         PENDING.add(new Pending(p.getUUID(), t.getUUID(), now + flight));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(p,
-                new BanMenhStrikeFxPayload(p.getId(), t.getId(), flight, count));
+                new BanMenhStrikeFxPayload(p.getId(), t.getId(), flight, count, nextCombo(p), (float) sweepReach(p)));
     }
 
     /** Khoảng cách từ mắt tới điểm gần nhất của hộp va chạm (dung sai 1.5 block cho độ trễ mạng). */
@@ -117,11 +130,7 @@ public final class BanMenhStrike {
 
     /** Kiếm quét cung trước mặt: sinh vật quanh chủ trong hình quạt ~3,8 block (hướng về mục tiêu chính) cũng trúng, 50% đòn gốc. */
     private static void sweep(ServerPlayer p, LivingEntity main, ItemStack s) {
-        var cd = p.getData(com.hukhong.core.ModAttachments.CULTIVATION);
-        double bonus = cd.paths().contains(com.hukhong.core.Path.KIEM)
-                ? com.hukhong.passive.PassiveMath.kiemSweepBonus(cd.aptitude().get(com.hukhong.core.Path.KIEM)) : 0;
-        final double reach = SWEEP_REACH * (1 + bonus);
-        if (p.level() instanceof net.minecraft.server.level.ServerLevel lv) sweepFx(lv, p, reach);
+        final double reach = sweepReach(p); // hình ảnh (cung kiếm khí) do client dựng từ BanMenhStrikeFxPayload
         Vec3 dir = main.position().subtract(p.position());
         dir = new Vec3(dir.x, 0, dir.z);
         if (dir.lengthSqr() < 1e-3) { Vec3 lk = p.getLookAngle(); dir = new Vec3(lk.x, 0, lk.z); }
@@ -142,20 +151,13 @@ public final class BanMenhStrike {
         for (LivingEntity e : list) BanMenhEvents.extra(p, e, dmg);
     }
 
-    /** Cung chém mềm, rõ và chậm hơn (9 nhịp thay vì 5), màu xanh nhạt. */
-    private static void sweepFx(net.minecraft.server.level.ServerLevel lv, ServerPlayer p, double reach) {
-        com.hukhong.vfx.Fx.slash(lv, p, 25, Math.min(4.6, reach * 0.9), 0, 9, 1.4f);
-        Vec3 look = p.getLookAngle();
-        Vec3 from = p.getEyePosition().subtract(0, 0.5, 0).add(look.scale(0.6));
-        com.hukhong.vfx.Fx.qi(lv, from, look.scale(reach * 0.8), 2.2f, 0xBFE4FF, 25, 14);
-    }
-
     public static final double SWEEP_REACH = 3.8, SWEEP_COS_HALF = 0.3;
 
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
         UUID id = e.getEntity().getUUID();
         READY.remove(id);
+        COMBO.remove(id);
         PENDING.removeIf(pd -> pd.player().equals(id));
     }
 
@@ -163,5 +165,6 @@ public final class BanMenhStrike {
     public static void onStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent e) {
         PENDING.clear();
         READY.clear();
+        COMBO.clear();
     }
 }

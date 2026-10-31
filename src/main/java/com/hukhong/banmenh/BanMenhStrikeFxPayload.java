@@ -7,8 +7,8 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
-/** Server -> client (tracking + self): kiếm sau vai chủ phóng tới mục tiêu rồi bay về (chỉ hình ảnh). */
-public record BanMenhStrikeFxPayload(int ownerId, int targetId, int flight, int count) implements CustomPacketPayload {
+/** Server -> client (tracking + self): kiếm sau vai chủ phóng tới mục tiêu rồi bay về (chỉ hình ảnh). combo = số thứ tự đòn (đổi chiều chém), reach = tầm quạt quét (khớp hitbox). */
+public record BanMenhStrikeFxPayload(int ownerId, int targetId, int flight, int count, int combo, float reach) implements CustomPacketPayload {
     public static final Type<BanMenhStrikeFxPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "banmenh_strike_fx"));
     public static final StreamCodec<RegistryFriendlyByteBuf, BanMenhStrikeFxPayload> STREAM_CODEC = StreamCodec.composite(
@@ -16,6 +16,8 @@ public record BanMenhStrikeFxPayload(int ownerId, int targetId, int flight, int 
             ByteBufCodecs.VAR_INT, BanMenhStrikeFxPayload::targetId,
             ByteBufCodecs.VAR_INT, BanMenhStrikeFxPayload::flight,
             ByteBufCodecs.VAR_INT, BanMenhStrikeFxPayload::count,
+            ByteBufCodecs.VAR_INT, BanMenhStrikeFxPayload::combo,
+            ByteBufCodecs.FLOAT, BanMenhStrikeFxPayload::reach,
             BanMenhStrikeFxPayload::new);
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }

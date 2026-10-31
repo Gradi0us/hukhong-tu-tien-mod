@@ -31,6 +31,11 @@ public final class OrbitState {
         boolean slash;         // chủ vung cung chém trước mặt (thay vì phóng tới mục tiêu)
         double roll, radius;   // cung chém: góc nghiêng (độ, dấu = chiều quét) và bán kính
         boolean giant;         // kiếm khổng lồ (Liên Hoàn Trảm)
+        double tiltDeg = Double.NaN; // góc nghiêng mặt chém có dấu (>0: đầu cung cao, <0: đầu cung thấp = chém hất lên); NaN: |roll|
+        boolean arc;           // đòn đánh thường: phát cung kiếm khí khi vung
+        boolean arcFired;
+        double reach;          // tầm quạt quét (khớp hitbox server)
+        int color = 0x9FE8FF;
         static final int WIND = 3;
 
         Flight(int owner, int target, Vec3 from, Vec3 to, long start, int flight, int ret, double side, float size, ItemStack stack) {
@@ -55,25 +60,33 @@ public final class OrbitState {
         FLIGHTS.add(f);
     }
 
+    /** 4 kiểu chém luân phiên: {chiều quét (+1 = từ phải sang trái), độ nghiêng có dấu}. */
+    static final double[][] COMBO = {{1, 22}, {-1, 22}, {1, -38}, {-1, 62}};
+
     /**
      * Đòn đánh thường: kiếm sau vai bay ra, chém một cung TRƯỚC MẶT chủ (hướng về mục tiêu) rồi quay về vai.
-     * count kiếm nối tiếp (cách 3 tick), chiều quét đổi qua lại. Mục tiêu xa hơn cung: thêm một vệt kiếm khí bay tới đó.
+     * count kiếm nối tiếp (cách 3 tick); kiểu chém đổi theo combo (ngang phải->trái, trái->phải, hất chéo lên, bổ chéo xuống).
+     * Mỗi kiếm phát một cung kiếm khí lưỡi liềm bay ra tới tầm quạt quét của server; mục tiêu xa hơn: thêm vệt kiếm khí bay tới đó.
      */
-    public static void onFx(int ownerId, int targetId, int flight, int count) {
+    public static void onFx(int ownerId, int targetId, int flight, int count, int combo, float reach) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null) return;
         Entity t = level.getEntity(targetId);
         Entity o = level.getEntity(ownerId);
         double dist = t != null && o != null ? o.position().distanceTo(t.position()) : 0;
-        double radius = Math.max(2.4, Math.min(3.4, dist));
+        double rch = reach > 1 ? reach : 3.8;
+        double radius = Math.max(2.0, rch - 0.85); // mũi kiếm chạm đúng mép quạt hitbox
+        int color = o instanceof Player pl ? OrbitRenderer.colorOf(OrbitRenderer.heldSword(pl)) : 0x9FE8FF;
         for (int i = 0; i < count; i++) {
             Flight f = new Flight(ownerId, targetId, null, Vec3.ZERO, level.getGameTime() + 3L * i, SWEEP_TICKS,
                     BanMenhMath.STRIKE_RETURN_TICKS - 3, 1, 1f, ItemStack.EMPTY);
-            f.slash = true; f.radius = radius; f.roll = (i % 2 == 0 ? 1 : -1) * 28;
+            double[] c = COMBO[Math.floorMod(combo + i, COMBO.length)];
+            f.slash = true; f.radius = radius; f.roll = c[0]; f.tiltDeg = c[1];
+            f.arc = true; f.reach = rch; f.color = color;
             add(f);
         }
-        if (t != null && o != null && dist > 4.2)
-            com.hukhong.client.fx.FxClient.qi(o.getEyePosition().subtract(0, 0.5, 0), t.position().add(0, t.getBbHeight() * 0.5, 0), 0.8f, 0x9FE8FF, 3, flight);
+        if (t != null && o != null && dist > rch + 0.4)
+            com.hukhong.client.fx.FxClient.qi(o.getEyePosition().subtract(0, 0.5, 0), t.position().add(0, t.getBbHeight() * 0.5, 0), 0.8f, color, 3, flight);
     }
 
     public static final int SWEEP_TICKS = 5;

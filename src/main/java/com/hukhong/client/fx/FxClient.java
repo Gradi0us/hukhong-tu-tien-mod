@@ -203,8 +203,9 @@ public final class FxClient {
     @SubscribeEvent
     public static void onTick(ClientTickEvent.Post e) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) { ACTIVE.clear(); FxHit.clear(); FxGiantSword.clear(); return; }
+        if (mc.level == null) { ACTIVE.clear(); FxHit.clear(); FxGiantSword.clear(); FxSword.clear(); return; }
         if (mc.isPaused()) return;
+        FxSword.tick();
         for (int i = ACTIVE.size() - 1; i >= 0; i--) {
             Inst f = ACTIVE.get(i);
             if (f.delay > 0) { f.delay--; continue; }
@@ -228,7 +229,7 @@ public final class FxClient {
     @SubscribeEvent
     public static void onRender(RenderLevelStageEvent e) {
         if (e.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
-        if (ACTIVE.isEmpty() && !FxHit.hasFlash() && !FxGiantSword.any()) return;
+        if (ACTIVE.isEmpty() && !FxHit.hasFlash() && !FxGiantSword.any() && !FxSword.any()) return;
         Minecraft mc = Minecraft.getInstance();
         float pt = e.getPartialTick().getGameTimeDeltaPartialTick(false);
         MultiBufferSource.BufferSource bs = mc.renderBuffers().bufferSource();
@@ -245,6 +246,7 @@ public final class FxClient {
             FxEffects.render(f, g, pt);
         }
         g.gain = 1f;
+        FxSword.render(g, pt);
         FxHit.renderFlash(g, pt);
         bs.endBatch(RenderType.lightning());
         FxGiantSword.renderItems(e, mc, bs, pt);

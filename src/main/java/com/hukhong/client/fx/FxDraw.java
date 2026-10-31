@@ -5,20 +5,20 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /** Bộ vẽ hình học cộng sáng (RenderType.lightning): ribbon hướng camera, vòng phẳng, đa giác. Toạ độ thế giới. */
-final class FxDraw {
+public final class FxDraw {
     static final Vec3 UP = new Vec3(0, 1, 0);
-    final VertexConsumer vc; final Matrix4f m; final Vec3 cam;
+    public final VertexConsumer vc; public final Matrix4f m; public final Vec3 cam;
     /** Hệ số độ đậm chung (hiệu ứng của người chơi khác = 0.5). */
     float gain = 1f;
 
-    FxDraw(VertexConsumer vc, Matrix4f m, Vec3 cam) { this.vc = vc; this.m = m; this.cam = cam; }
+    public FxDraw(VertexConsumer vc, Matrix4f m, Vec3 cam) { this.vc = vc; this.m = m; this.cam = cam; }
 
-    static int col(int rgb, float a) {
+    public static int col(int rgb, float a) {
         int ai = (int) (Math.max(0f, Math.min(1f, a)) * 255);
         return ai << 24 | (rgb & 0xFFFFFF);
     }
 
-    static int white(int rgb, float t) {
+    public static int white(int rgb, float t) {
         int r = rgb >> 16 & 255, g = rgb >> 8 & 255, b = rgb & 255;
         r += (int) ((255 - r) * t); g += (int) ((255 - g) * t); b += (int) ((255 - b) * t);
         return r << 16 | g << 8 | b;
@@ -32,7 +32,7 @@ final class FxDraw {
     void quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, int ca, int cb, int cc, int cd) { v(a, ca); v(b, cb); v(c, cc); v(d, cd); }
 
     /** Quad hai mặt (phòng khi bật cull): phát cả hai chiều quấn. */
-    void quad2(Vec3 a, Vec3 b, Vec3 c, Vec3 d, int ca, int cb, int cc, int cd) {
+    public void quad2(Vec3 a, Vec3 b, Vec3 c, Vec3 d, int ca, int cb, int cc, int cd) {
         v(a, ca); v(b, cb); v(c, cc); v(d, cd);
         v(d, cd); v(c, cc); v(b, cb); v(a, ca);
     }
@@ -40,7 +40,7 @@ final class FxDraw {
     void tri(Vec3 a, Vec3 b, Vec3 c, int col) { v(a, col); v(b, col); v(c, col); v(c, col); }
 
     /** Dải hướng camera từ a->b, nửa rộng wa/wb. */
-    void ribbon(Vec3 a, Vec3 b, double wa, double wb, int ca, int cb) {
+    public void ribbon(Vec3 a, Vec3 b, double wa, double wb, int ca, int cb) {
         Vec3 d = b.subtract(a);
         Vec3 s = d.cross(a.subtract(cam));
         double l = s.lengthSqr();
