@@ -12,6 +12,12 @@ public final class ThiemBoClient {
 
     private static boolean prev;
     private static int held;
+    private static boolean sprintLocal;
+
+    /** Dang giu Thiem Bo / Loi Tran chay toc (dung de du doan chay tren mat nuoc phia client). */
+    public static boolean sprintingLocal(net.minecraft.world.entity.player.Player p) {
+        return sprintLocal && p == Minecraft.getInstance().player;
+    }
 
     /** Gọi mỗi tick từ SkillKeyHandler. active = thế bật + trang Pháp Tu Quang + không mở màn hình. */
     public static void tickKeys(Minecraft mc, boolean active, boolean tho) {
@@ -23,5 +29,6 @@ public final class ThiemBoClient {
             held++;
             if (ThiemBoMath.isHold(held) && mc.player != null && !tho) mc.player.setSprinting(true); // Thổ giữ E = xuyên tường, không chạy nước rút
         } else held = 0;
+        sprintLocal = down && !tho && ThiemBoMath.isHold(held);
     }
 }

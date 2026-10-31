@@ -52,13 +52,18 @@ public final class TheBody {
     public static void onTick(PlayerTickEvent.Pre e) {
         Player p = e.getEntity();
         boolean the = isThe(p);
-        if (the) walkOnWater(p);
+        if (the || phapSprint(p)) walkOnWater(p); // The tu, hoac Phap Quang/Loi dang giu chay toc (Thiem Bo / Loi Tran)
         if (p instanceof ServerPlayer sp && sp.tickCount % 20 == 0) {
             int lv = sp.getData(ModAttachments.CULTIVATION).level();
             set(sp, Attributes.MOVEMENT_SPEED, SPEED_ID, the ? speedBonus(lv) : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
             set(sp, Attributes.JUMP_STRENGTH, JUMP_ID, the ? jumpBonus(lv) : 0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
             set(sp, Attributes.SAFE_FALL_DISTANCE, FALL_ID, the ? SAFE_FALL : 0, AttributeModifier.Operation.ADD_VALUE);
         }
+    }
+
+    static boolean phapSprint(Player p) {
+        if (p.level().isClientSide) return com.hukhong.client.fx.ThiemBoClient.sprintingLocal(p);
+        return p instanceof ServerPlayer sp && com.hukhong.phaptu.ThiemBoService.sprinting(sp);
     }
 
     /** Đứng/chạy trên mặt nước: chân chạm mặt nước, đầu không ngập, không giữ Shift, không bơi/bay. */
