@@ -207,15 +207,11 @@ public final class PassiveService {
                 en -> en instanceof LivingEntity le && validTarget(p, le));
         LivingEntity first = null;
         if (eh != null) { end = eh.getLocation(); first = (LivingEntity) eh.getEntity(); }
-        Vec3 from = eye.add(look.scale(0.7)).subtract(0, 0.25, 0);
-        double len = from.distanceTo(end);
-        for (double t = 0; t <= len; t += 0.5) {
-            Vec3 q = from.add(look.scale(t));
-            lv.sendParticles(DARK, q.x, q.y, q.z, 1, 0.03, 0.03, 0.03, 0);
-            if (((int) (t * 2)) % 3 == 0) lv.sendParticles(ParticleTypes.SQUID_INK, q.x, q.y, q.z, 1, 0.04, 0.04, 0.04, 0.005);
-        }
+        // đòn tay không: 3 vệt móng đỏ thẫm / tím sẫm quét trước mặt (không còn tia đen thẳng)
+        com.hukhong.vfx.MaClawFx.arc(lv, p, Math.min(4.0, eye.distanceTo(end)), 0.9);
         lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.EVOKER_CAST_SPELL, SoundSource.PLAYERS, 0.5f, 1.4f);
         if (first == null) return;
+        com.hukhong.vfx.MaClawFx.burst(lv, end);
         // đòn trúng đầu: sát thương tay không (DamageRules.resolve -> 2 cố định)
         first.hurt(p.damageSources().playerAttack(p), DamageRules.UNARMED_FIXED_DAMAGE);
         explode(lv, p, d, s, end, look, now);

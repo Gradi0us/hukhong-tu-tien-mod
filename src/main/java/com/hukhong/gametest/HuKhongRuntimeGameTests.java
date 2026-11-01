@@ -201,6 +201,35 @@ public final class HuKhongRuntimeGameTests {
     @GameTest(template = "empty") public static void skillMaR(GameTestHelper h) { skillCase(h, Path.MA, 2, true); }
     @GameTest(template = "empty") public static void skillMaT(GameTestHelper h) { skillCase(h, Path.MA, 3, false); }
 
+    /** Huyết Trảo (Q): kéo địch về sát người, choáng, 3 nhát cách 6 tick; nhát 3 bạo kích (≈ 1.5 x nhát 1). */
+    @GameTest(template = "empty")
+    public static void maQPullStunThreeHits(GameTestHelper h) {
+        ServerPlayer p = fake(h, 60, Set.of(Path.MA));
+        place(h, p, 2, 1, 2);
+        GameTestSupport.noCrit(p);                 // chỉ bạo kích bắt buộc của nhát 3 được tính
+        Zombie z = dummy(h, 2, 6);                 // cách 4 block phía trước, trong quạt 8 block
+        z.setNoAi(false);                          // dummy() đặt NoAI sẵn; bỏ đi để đo đúng hiệu ứng choáng
+        SkillService.state(p).stance = true;
+        float hp0 = z.getHealth();
+        SkillService.cast(p, 0);
+        float hp1 = z.getHealth();                 // sau nhát 1 (đồng bộ với cast)
+        if (!z.isNoAi()) h.fail("MA Q khong choang muc tieu");
+        if (z.distanceTo(p) > 2.2) h.fail("MA Q khong keo muc tieu ve sat: khoang cach " + z.distanceTo(p));
+        float d1 = hp0 - hp1;
+        if (d1 <= 0) h.fail("MA Q nhat 1 khong gay sat thuong");
+        h.runAfterDelay(9, () -> {                 // sau nhát 2 (tick 6), chưa tới nhát 3 (tick 12)
+            float hp2 = z.getHealth();
+            float d2 = hp1 - hp2;
+            if (Math.abs(d2 - d1) > 0.05f * d1 + 0.01f) h.fail("nhat 2 = " + d2 + ", ky vong ~ " + d1);
+            h.runAfterDelay(7, () -> {             // sau nhát 3 (tick 12)
+                float hp3 = z.getHealth();
+                float d3 = hp2 - hp3;
+                if (d3 < 1.4f * d1 || d3 > 1.6f * d1) h.fail("nhat 3 (bao kich) = " + d3 + ", ky vong ~ " + (1.5f * d1));
+                h.succeed();
+            });
+        });
+    }
+
     // ------------------------------------------------------------ 3. bay
 
     private static ServerPlayer flier(GameTestHelper h, Path path) {

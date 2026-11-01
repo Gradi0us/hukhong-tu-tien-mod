@@ -1511,7 +1511,7 @@
   "hukhong.skills.kiem_ult.desc": "Toggle (T): a domain of radius 5 around you; every %s s it cuts all enemies inside and rains swords.",
   "hukhong.skills.kiem_ult.meta": "Cost %s%% max %s per second (~%s/s) - toggle lock %ss",
   "hukhong.skills.kiem_ult.dps": "Per second: %s pulses = %s",
-  "hukhong.skills.ma_1.desc": "3 melee claw marks, 4 block fan; Lifesteal is doubled on this hit.",
+  "hukhong.skills.ma_1.desc": "Pulls enemies in an 8-block fan close and stuns them for 1.5s, then 3 claw strikes 6 ticks apart; the 3rd always crits.",
   "hukhong.skills.ma_2.desc": "Shield of 15%% max health for 6 seconds (self only): %s.",
   "hukhong.skills.ma_ult.desc": "12 seconds: +40%% Attack (= +%s), +4%% Lifesteal, Wickedness +15.",
   "hukhong.skills.dao_1.desc": "Light ray, 14 blocks, hits 1 target (Dao passive x%s).",

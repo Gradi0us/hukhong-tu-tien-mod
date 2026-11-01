@@ -1511,7 +1511,7 @@
   "hukhong.skills.kiem_ult.desc": "Bật/tắt (phím T): lĩnh vực bán kính 5 block quanh bạn, mỗi %s giây chém mọi kẻ địch trong vùng và rơi mưa kiếm.",
   "hukhong.skills.kiem_ult.meta": "Tốn %s%% %s tối đa mỗi giây (~%s/s) · khóa bấm %ss",
   "hukhong.skills.kiem_ult.dps": "Mỗi giây: %s nhịp = %s",
-  "hukhong.skills.ma_1.desc": "3 vệt móng cận chiến tầm 4 block (quạt); Hút Huyết nhân đôi trên đòn này.",
+  "hukhong.skills.ma_1.desc": "Kéo địch trong quạt 8 block về sát người và choáng 1.5 giây, rồi chém 3 nhát móng (cách 6 tick); nhát thứ 3 chắc chắn bạo kích.",
   "hukhong.skills.ma_2.desc": "Lá chắn bằng 15%% máu tối đa trong 6 giây (chỉ bản thân): %s.",
   "hukhong.skills.ma_ult.desc": "12 giây: +40%% Công (= +%s), +4%% Hút Huyết, Ác Tính +15.",
   "hukhong.skills.dao_1.desc": "Tia sáng tầm 14 block đánh 1 mục tiêu (nội tại Đạo Tu x%s).",

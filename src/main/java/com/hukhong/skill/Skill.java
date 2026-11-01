@@ -25,7 +25,7 @@ public enum Skill {
 
     /** Hệ số sát thương kỹ năng 1 (nhân Phép lực / Công lực) - dùng chung với bài test cân bằng. */
     public static final double DAO_1_COEF = 0.95, THE_1_COEF = 4.00;
-    /** Hệ số x Công (attack_power): Trảm Khí 120%, Liên Hoàn 3 x 70%, Kiếm Vực 55%/nhịp; Huyết Trảo 125%. */
+    /** Hệ số x Công (attack_power): Trảm Khí 120%, Liên Hoàn 3 x 70%, Kiếm Vực 55%/nhịp; Huyết Trảo 125% tổng (3 nhát, nhát 3 bạo kích thêm). */
     public static final double KIEM_1_COEF = 0.50, KIEM_2_COEF = 0.50, KIEM_ULT_COEF = 0.55, MA_1_COEF = 1.25;
 
     public final Path path;

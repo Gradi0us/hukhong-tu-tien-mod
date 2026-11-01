@@ -29,7 +29,20 @@ public final class DamageRules {
     /** Đòn vừa resolve có bạo kích (cho số sát thương nổi; đọc-và-xóa). */
     public static boolean lastCrit = false;
 
+    /** Đang gây đòn kỹ năng bắt buộc bạo kích (đòn kết liễu Huyết Trảo): resolve() bỏ qua lượt roll Bạo Kích. */
+    private static boolean forceCrit = false;
+
     public static boolean isSkill() { return skillActive; }
+
+    /** Như hurtBySkill nhưng chắc chắn bạo kích (x Bạo Thương, qua đúng đường resolve). */
+    public static void hurtBySkillCrit(ServerPlayer caster, LivingEntity target, float amount) {
+        forceCrit = true;
+        try {
+            hurtBySkill(caster, target, amount);
+        } finally {
+            forceCrit = false;
+        }
+    }
 
     /** Gây sát thương phép/kỹ năng từ caster (bỏ qua luật đòn thường = 0). */
     public static void hurtBySkill(ServerPlayer caster, LivingEntity target, float amount) {
@@ -80,7 +93,7 @@ public final class DamageRules {
         }
         if (out > 0f && !fixed && !d.paths().isEmpty()) {
             double cc = com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_CHANCE);
-            if (cc > 0 && atk.getRandom().nextDouble() < cc) {
+            if (forceCrit || (cc > 0 && atk.getRandom().nextDouble() < cc)) {
                 out *= (float) com.hukhong.stats.StatService.value(atk, com.hukhong.stats.ModAttributes.CRIT_DAMAGE);
                 lastCrit = true;
             }

@@ -24,6 +24,7 @@ import org.joml.Vector3f;
 
 import com.hukhong.vfx.Fx;
 import com.hukhong.vfx.FxType;
+import com.hukhong.vfx.MaClawFx;
 
 import java.util.Comparator;
 import java.util.List;
@@ -420,29 +421,49 @@ public final class SkillEffects {
 
     private static final DustParticleOptions BLOOD = new DustParticleOptions(new Vector3f(0.7f, 0.05f, 0.08f), 1.1f);
 
-    /** Huyết Trảo: 3 vệt móng cận chiến 4 block, 125% Công, Hấp Huyết nhân đôi trên đòn này. */
+    /** Huyết Trảo (Q): kéo địch trong quạt 8 block về sát người, choáng 1.5s, rồi 3 nhát móng cách 6 tick; nhát 3 chắc chắn bạo kích. */
     private static void huyetTrao(ServerLevel lv, ServerPlayer p) {
-        float total = 0;
-        for (LivingEntity e : coneTargets(lv, p, 4, 0.5)) total += slash(p, e, Skill.MA_1_COEF);
-        double ls = com.hukhong.stats.StatService.value(p, com.hukhong.stats.ModAttributes.LIFESTEAL);
-        if (total > 0 && ls > 0) p.heal(Math.min((float) (total * ls), p.getMaxHealth() * 0.04f)); // phần nhân đôi (phần 1 ở DamageRules)
-        for (int i = -1; i <= 1; i++)
-            Fx.play(lv, FxType.SWORD_CRESCENT, p.getEyePosition().subtract(0, 0.5, 0).add(p.getLookAngle().scale(0.4)), p.getLookAngle(), 0.9f, Fx.RED, 9);
-        for (int i = -1; i <= 1; i++) arc(lv, p, 2.2 + 0.1 * i, 0.9, 10, BLOOD, i * 0.45);
-        arc(lv, p, 2.0, 0.9, 8, com.hukhong.vfx.ModParticles.MA_KHI.get(), 0);
-        {   // ba vệt móng đỏ thẫm
-            Vec3 lk = p.getLookAngle(), rt = lk.cross(new Vec3(0, 1, 0));
-            rt = rt.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : rt.normalize();
-            Vec3 b0 = p.getEyePosition().subtract(0, 0.5, 0).add(lk.scale(0.6));
-            for (int i = -1; i <= 1; i++) {
-                Vec3 a = b0.add(rt.scale(i * 0.55)).add(0, 0.7, 0), b = b0.add(lk.scale(2.8)).add(rt.scale(i * 0.3)).add(0, -0.6, 0);
-                Fx.ribbon(lv, p, a, b, 0.25, 4, i + 1, 0.1f, 0xB01030);
-            }
+        List<LivingEntity> targets = coneTargets(lv, p, 8, 0.5);
+        for (LivingEntity e : targets) {
+            pullNear(lv, p, e, 1.6);
+            com.hukhong.phaptu.PhapRuntime.stun(e, 1.5);
         }
-        if (total > 0) lv.sendParticles(BLOOD, p.getX(), p.getY() + 1.2, p.getZ(), 8, 0.3, 0.3, 0.3, 0.05);
-        lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
+        clawHit(lv, p, targets, false);
+        SkillScheduler.later(6, () -> clawHit(lv, p, targets, false));
+        SkillScheduler.later(12, () -> clawHit(lv, p, targets, true));
         layer(lv, p.position(), SoundEvents.RAVAGER_ATTACK, 0.5f, 1.4f);
         layer(lv, p.position(), SoundEvents.WITHER_SHOOT, 0.25f, 1.9f);
+    }
+
+    /** Kéo mục tiêu về cách người chơi {@code dist} block (giữ nguyên độ cao). */
+    private static void pullNear(ServerLevel lv, ServerPlayer p, LivingEntity e, double dist) {
+        Vec3 from = e.position();
+        Vec3 d = new Vec3(from.x - p.getX(), 0, from.z - p.getZ());
+        if (d.lengthSqr() < 1e-4) return;
+        d = d.normalize();
+        e.setPos(p.getX() + d.x * dist, e.getY(), p.getZ() + d.z * dist);
+        e.setDeltaMovement(Vec3.ZERO);
+        e.hurtMarked = true;
+        Vec3 to = e.position();
+        for (int i = 1; i <= 4; i++) {                       // vệt hồn kéo từ chỗ cũ về người
+            Vec3 q = from.lerp(to, i / 4.0).add(0, e.getBbHeight() * 0.5, 0);
+            lv.sendParticles(ParticleTypes.SOUL, q.x, q.y, q.z, 1, 0.05, 0.05, 0.05, 0);
+        }
+    }
+
+    /** Một nhát móng lên các mục tiêu còn sống trong 12 block; {@code finisher}: bạo kích chắc chắn (x Bạo Thương). */
+    private static void clawHit(ServerLevel lv, ServerPlayer p, List<LivingEntity> targets, boolean finisher) {
+        if (!p.isAlive()) return;
+        float per = (float) (Skill.MA_1_COEF / 3 * com.hukhong.stats.StatService.attackPower(p));
+        for (LivingEntity e : targets) {
+            if (!e.isAlive() || e.isRemoved() || e.distanceToSqr(p) > 144) continue;
+            e.invulnerableTime = 0;
+            if (finisher) DamageRules.hurtBySkillCrit(p, e, per);
+            else DamageRules.hurtBySkill(p, e, per);
+            MaClawFx.burst(lv, e.position().add(0, e.getBbHeight() * 0.5, 0));
+        }
+        MaClawFx.arc(lv, p, finisher ? 4.6 : 4.0, 0.9);
+        lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, finisher ? 0.5f : 0.7f);
     }
 
     /** Ma Khí Hộ Thể: lá chắn 15% HP tối đa trong 6s (chỉ bản thân, qua Absorption). */

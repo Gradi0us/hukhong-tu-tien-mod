@@ -239,7 +239,7 @@ public final class SkillEntries {
                         20 / SkillEffects.DOMAIN_PULSE_TICKS, num(per * 20.0 / SkillEffects.DOMAIN_PULSE_TICKS)), DMG));
             }
             case MA_1 -> {
-                ls.add(note("hukhong.skills.ma_1.desc", "3 vệt móng cận chiến tầm 4 block (quạt); Hút Huyết nhân đôi trên đòn này."));
+                ls.add(note("hukhong.skills.ma_1.desc", "Kéo địch trong quạt 8 block về sát người và choáng 1.5 giây, rồi chém 3 nhát móng (cách 6 tick); nhát thứ 3 chắc chắn bạo kích."));
                 ls.add(meta(x, page, s.cost, cd));
                 ls.add(dmg(false, Skill.MA_1_COEF, m, x.ap(), 1));
             }
