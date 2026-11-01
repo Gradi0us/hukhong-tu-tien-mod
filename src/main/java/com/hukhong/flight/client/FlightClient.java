@@ -57,6 +57,9 @@ public final class FlightClient {
                 mc.level.addParticle(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(((c >> 16) & 255) / 255f, ((c >> 8) & 255) / 255f, (c & 255) / 255f), 1.1f),
                         p.getX() + (rnd.nextDouble() - 0.5) * 0.9, p.getY() + 0.1, p.getZ() + (rnd.nextDouble() - 0.5) * 0.9, 0, 0.01, 0);
             } else if (m == FlightMode.MA) {
+                // Huyết vụ: sương đỏ nhỏ rơi từ dạng dơi
+                mc.level.addParticle(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.55f, 0.02f, 0.05f), 0.9f),
+                        p.getX() + (rnd.nextDouble() - 0.5) * 1.6, p.getY() + 0.9 + rnd.nextDouble() * 0.6, p.getZ() + (rnd.nextDouble() - 0.5) * 1.6, 0, -0.02, 0);
                 mc.level.addParticle(ParticleTypes.LARGE_SMOKE, p.getX() + (rnd.nextDouble() - 0.5) * 0.9,
                         p.getY() + 0.05, p.getZ() + (rnd.nextDouble() - 0.5) * 0.9, 0, 0.005, 0);
                 if (rnd.nextInt(3) == 0) {

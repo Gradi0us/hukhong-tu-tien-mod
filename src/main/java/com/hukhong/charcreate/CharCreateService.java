@@ -75,9 +75,8 @@ public final class CharCreateService {
         for (Path x : set) apt.put(x, roll.aptitude().get(x));
         com.hukhong.phaptu.PhapTu.setElement(p, set.contains(Path.PHAP) ? com.hukhong.phaptu.PhapElement.roll(roll.seed(), rerolled) : null);
         CultivationData nd = d.withCharacter(set, apt, roll.origin().id, roll);
-        // Tiên Thiên: cấp khởi đầu 1..10 theo tư chất tốt nhất (đặt trực tiếp, không qua EXP -> không kích Bình Cảnh/khóa mốc nhầm).
-        int tt = TienThien.roll(apt.values(), new java.util.Random(roll.seed() ^ 0x5454L));
-        if (tt > nd.level()) nd = nd.withLevel(tt).withCharacter(set, apt, roll.origin().id, roll);
+        // Tiên Thiên: cấp khởi đầu (đơn đạo 1..10; đa đạo tới 20). Đặt trực tiếp, không qua EXP.
+        nd = applyStartLevel(nd, TienThien.startLevel(apt.values(), roll.seed()));
         p.setData(ModAttachments.CULTIVATION, nd);
         SyncPayload.send(p);
         com.hukhong.stats.StatService.refresh(p);
@@ -86,5 +85,16 @@ public final class CharCreateService {
         if (set.contains(Path.KIEM)) com.hukhong.banmenh.BanMenhService.grant(p); // Kiếm Tu nhận Bản Mệnh Kiếm
         if (set.contains(Path.PHAP)) com.hukhong.phaptu.linhtruong.LinhTruongService.grant(p); // Pháp Tu nhận Linh Trượng
         com.hukhong.story.StoryService.promptIfNeeded(p); // Bước 19: chọn Truyện/Tự do
+    }
+
+    /**
+     * Đặt cấp khởi đầu. Nếu rơi đúng mốc khóa (10/20) thì mở khóa luôn: nhân vật mới không bị kẹt chờ Ấn Hồn Đài
+     * (Lõi của các mốc đã vượt không được cấp -- đánh đổi có chủ đích, tránh soft-lock).
+     * Truyện: chapterFor(level, unlocked) cho chương đúng.
+     */
+    public static CultivationData applyStartLevel(CultivationData nd, int level) {
+        if (level <= nd.level()) return nd;
+        CultivationData r = nd.withLevel(level);
+        return CultivationData.isMilestoneLevel(level) ? r.withMilestoneUnlocked(true) : r;
     }
 }

@@ -50,9 +50,10 @@ public final class FlightService {
     public static FlightMode modeFor(ServerPlayer p) {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         Path primary = d.primaryPath();
+        com.hukhong.phaptu.PhapElement el = com.hukhong.phaptu.PhapTu.element(p);
         FlightMode best = null;
         for (FlightMode m : FlightMode.values()) {
-            if (!d.paths().contains(m.path) || d.level() < m.minLevel) continue;
+            if (!d.paths().contains(m.path) || d.level() < m.minLevelFor(el)) continue;
             if (m == FlightMode.KIEM && !p.getData(BanMenhAttachments.BAN_MENH.get()).hasType()) continue;
             if (best == null || m.path == primary) best = m;
         }
@@ -151,7 +152,7 @@ public final class FlightService {
         if (s == null) return;
         if (p.isCreative() || p.isSpectator() || !p.isAlive()) { stop(p, null, false); return; }
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
-        if (d.level() < s.mode.minLevel) { stop(p, "hukhong.flight.locked", true); return; }
+        if (d.level() < s.mode.minLevelFor(com.hukhong.phaptu.PhapTu.element(p))) { stop(p, "hukhong.flight.locked", true); return; }
         if (p.tickCount % 20 == 0) {
             String ban = FlightBans.banKey(p, s.mode);
             if (ban != null) { stop(p, ban, true); return; }

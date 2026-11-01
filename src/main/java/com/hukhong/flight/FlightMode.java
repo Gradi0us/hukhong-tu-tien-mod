@@ -2,12 +2,12 @@ package com.hukhong.flight;
 
 import com.hukhong.core.Path;
 
-/** Kiểu bay theo đạo (S2 §2.1-2.4). Ngưỡng cấp từ canon: Kiếm 20, Đạo/Thể/Ma 60. */
+/** Kiểu bay theo đạo (S2 §2.1-2.4). Ngưỡng cấp từ canon: Kiếm 20, Ma 20 (hóa dơi), Đạo/Thể 40, Pháp 60 (Quang/Lôi: 1). */
 public enum FlightMode {
     KIEM(Path.KIEM, 20, 4.0, 4.0, 6.0, 0.075f, 4),      // ngự kiếm: 4 LL/s, bay nhanh 6/s, tốc x1.5
-    DAO(Path.DAO, 60, 2.5, 1.0, 2.5, 0.065f, 3),        // cánh thiên sứ: 2.5 TL/s, đứng yên 1/s
-    THE(Path.THE, 60, 1.0, 0.5, 2.0, 0.06f, 20),        // đạp không: chỉ Bá Khí (không dùng mayfly)
-    MA(Path.MA, 60, 3.0, 1.5, 3.0, 0.065f, 3),         // ma vân [GIẢ ĐỊNH 3/s]
+    DAO(Path.DAO, 40, 2.5, 1.0, 2.5, 0.065f, 3),        // cánh thiên sứ: 2.5 TL/s, đứng yên 1/s
+    THE(Path.THE, 40, 1.0, 0.5, 2.0, 0.06f, 20),        // đạp không: chỉ Bá Khí (không dùng mayfly)
+    MA(Path.MA, 20, 3.0, 1.5, 3.0, 0.065f, 3),         // ma vân [GIẢ ĐỊNH 3/s]
     PHAP(Path.PHAP, 60, 2.5, 1.0, 2.5, 0.065f, 3);      // pháp ấn: bay bằng Pháp Lực, như Đạo
 
     public final Path path;
@@ -19,6 +19,15 @@ public enum FlightMode {
     FlightMode(Path p, int lv, double cost, double hover, double fast, float speed, int startMin) {
         this.path = p; this.minLevel = lv; this.cost = cost; this.hoverCost = hover;
         this.fastCost = fast; this.speed = speed; this.startMin = startMin;
+    }
+
+    /** Pháp Tu nguyên tố Quang/Lôi bay từ cấp 1. */
+    public static final int PHAP_LIGHT_LEVEL = 1;
+
+    /** Cấp tối thiểu thực tế; element = nguyên tố Pháp (null nếu không biết / không phải Pháp). */
+    public int minLevelFor(com.hukhong.phaptu.PhapElement element) {
+        if (this == PHAP && (element == com.hukhong.phaptu.PhapElement.QUANG || element == com.hukhong.phaptu.PhapElement.LOI)) return PHAP_LIGHT_LEVEL;
+        return minLevel;
     }
 
     /** True flight (mayfly) hay chỉ nhảy bậc không. */

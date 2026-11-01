@@ -27,4 +27,35 @@ public final class TienThien {
         Aptitude b = best(chosen);
         return min(b) + r.nextInt(max(b) - min(b) + 1);
     }
+
+    public static final int CAP = 20;
+
+    /** Điểm Tiên Thiên của MỘT đạo theo tư chất: SSS 10, SS 7, S 5, A 3, B 2, C 1, D 0. */
+    public static int gradePoints(Aptitude a) {
+        return switch (a) { case SSS -> 10; case SS -> 7; case S -> 5; case A -> 3; case B -> 2; case C -> 1; case D -> 0; };
+    }
+
+    /**
+     * Thưởng Tiên Thiên đa đạo: 0 nếu 1 đạo; ngược lại tổng điểm của 2 tư chất tốt nhất, tối đa 20
+     * (2 đạo SSS+SSS = 20; tam năng chỉ tính 2 đạo tốt nhất).
+     */
+    public static int multiPathLevel(Collection<Aptitude> chosen) {
+        if (chosen.size() < 2) return 0;
+        int a = 0, b = 0;
+        for (Aptitude x : chosen) {
+            int v = gradePoints(x);
+            if (v > a) { b = a; a = v; } else if (v > b) b = v;
+        }
+        return Math.min(CAP, a + b);
+    }
+
+    /**
+     * Cấp khởi đầu = max(Tiên Thiên cũ 1..10 theo tư chất tốt nhất, thưởng đa đạo), tối đa 20.
+     * Tất định theo seed -> client (hiển thị) và server (áp dụng) tính giống nhau.
+     */
+    public static int startLevel(Collection<Aptitude> chosen, long seed) {
+        if (chosen.isEmpty()) return 1;
+        int legacy = roll(chosen, new Random(seed ^ 0x5454L));
+        return Math.max(1, Math.min(CAP, Math.max(legacy, multiPathLevel(chosen))));
+    }
 }

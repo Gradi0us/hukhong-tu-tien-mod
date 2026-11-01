@@ -139,6 +139,12 @@ public class CharCreateScreen extends Screen {
         g.drawCenteredString(font, Component.translatable("hukhong.charcreate.slots." + roll.slots())
                 .append("  ").append(Component.translatable("hukhong.charcreate.pick", selected.size(), required())),
                 width / 2, cellY() - 14, 0xFFCCCCCC);
+        if (allRevealed() && !selected.isEmpty()) { // Tiên Thiên (tất định theo seed: khớp server)
+            java.util.List<Aptitude> chosen = new java.util.ArrayList<>();
+            for (Path sp : selected) chosen.add(roll.aptitude().get(sp));
+            int tt = com.hukhong.charcreate.TienThien.startLevel(chosen, roll.seed());
+            g.drawCenteredString(font, Component.translatable("hukhong.charcreate.tienthien", tt), width / 2, cellY() + CELL_H + 8, 0xFFFFD34F);
+        }
 
         for (Path p : Path.values()) {
             int x = cellX(p.ordinal()), y = cellY();
