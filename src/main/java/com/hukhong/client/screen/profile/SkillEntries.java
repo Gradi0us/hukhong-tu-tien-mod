@@ -9,6 +9,7 @@ import com.hukhong.phaptu.PhapElement;
 import com.hukhong.phaptu.PhapMath;
 import com.hukhong.phaptu.ThiemBoMath;
 import com.hukhong.phaptu.beam.PhapBeamMath;
+import com.hukhong.tran.TranMath;
 import com.hukhong.phaptu.linhtruong.LinhTruongMath;
 import com.hukhong.skill.BanMenhSkill;
 import com.hukhong.skill.Skill;
@@ -194,6 +195,13 @@ public final class SkillEntries {
                         num(bolt * 20.0 / LinhTruongMath.COOLDOWN_TICKS)), DMG));
                 return new Entry("", t("hukhong.skills.truong.name", "Linh Trượng (đòn thường)"), ls);
             }
+            case TRAN -> {
+                ls.add(note("hukhong.skills.tran_basic.desc", "Đánh cận chiến: sau %s giây phóng Phù Văn Đạn, đánh dấu mục tiêu %s giây (+%s%% sát thương kỹ năng của bạn lên mục tiêu).",
+                        fmt(TranMath.BASIC_BOLT_DELAY_TICKS / 20.0), fmt(TranMath.MARK_TICKS / 20.0), fmt(TranMath.MARK_BONUS * 100)));
+                ls.add(l(t("hukhong.skills.tran_basic.dmg", "Sát thương: %s Phép lực x %s = %s mỗi đòn",
+                        num(x.sp()), fmt(TranMath.BASIC_COEF), num(TranMath.BASIC_COEF * x.sp())), DMG));
+                return new Entry("", t("hukhong.skills.tran_basic.name", "Phù Văn Đạn (đòn thường)"), ls);
+            }
             case DAO, THE, MA -> {
                 var lb = com.hukhong.linhbao.LinhBaoType.of(p);
                 if (lb == null) return null;
@@ -210,7 +218,8 @@ public final class SkillEntries {
 
     private static Entry baseEntry(Ctx x, Path page, String key, Skill s) {
         if (s.path == Path.PHAP) return phapEntry(x, key, s);
-        if (s.path == Path.TRAN || s.path == Path.DAN) return placeholderEntry(x, key, s); // Wave 1: khung, mô tả ở Wave 2/3
+        if (s.path == Path.TRAN) return tranEntry(x, key, s);
+        if (s.path == Path.DAN) return placeholderEntry(x, key, s); // Wave 1: khung, mô tả ở Wave 3
         int lvl = x.book().level(s.icon);
         double m = SkillBookMath.dmgMult(lvl);
         List<Line> ls = new ArrayList<>();
@@ -386,6 +395,39 @@ public final class SkillEntries {
     /** Trận Tu / Đan Tu (Wave 1): chỉ tên + phím/hồi chiêu; mô tả đầy đủ làm ở Wave 2/3. */
     private static Entry placeholderEntry(Ctx x, String key, Skill s) {
         return new Entry(key, Component.translatable(s.langKey()), List.of(meta(x, s.path, s.cost, s.cooldownTicks)));
+    }
+
+    /** Trận Tu Q/E/R/T: số liệu lấy thẳng từ TranMath (cùng hằng số với TranRuntime/TranSkills). */
+    private static Entry tranEntry(Ctx x, String key, Skill s) {
+        double sp = x.sp();
+        int cd = cdTicks(x, Path.TRAN, s.icon, s.cooldownTicks);
+        List<Line> ls = new ArrayList<>();
+        ls.add(meta(x, Path.TRAN, s.cost, cd));
+        switch (s) {
+            case TRAN_1 -> {
+                ls.add(note("hukhong.skill.tran_1.desc", "Đặt Khốn Trận tại điểm ngắm (tầm %s block, bán kính %s) trong %s giây: gây %s x Phép lực, chậm %s%% trong 2 giây, rồi choáng %s giây.",
+                        fmt(TranMath.Q_RANGE), fmt(TranMath.Q_RADIUS), fmt(TranMath.Q_TICKS / 20.0), fmt(TranMath.Q_COEF),
+                        fmt(TranMath.Q_SLOW * 100), fmt(TranMath.Q_ROOT_SEC)));
+                ls.add(l(t("hukhong.skill.tran_1.dmg", "Sát thương: %s", num(TranMath.Q_COEF * sp)), DMG));
+            }
+            case TRAN_2 -> {
+                ls.add(note("hukhong.skill.tran_2.desc", "Lập Hộ Thân Trận bán kính %s quanh mình trong %s giây: người chơi trong trận nhận -%s%% sát thương.",
+                        fmt(TranMath.WARD_RADIUS), fmt(TranMath.WARD_TICKS / 20.0), fmt(TranMath.WARD_DR * 100)));
+            }
+            case TRAN_3 -> {
+                ls.add(note("hukhong.skill.tran_3.desc", "Bày Sát Trận tại điểm ngắm (tầm %s block, bán kính %s): %s cột sáng rơi cách nhau %s giây, mỗi cột gây %s x Phép lực (bán kính %s).",
+                        fmt(TranMath.R_RANGE), fmt(TranMath.R_RADIUS), TranMath.R_HITS, fmt(TranMath.R_INTERVAL_TICKS / 20.0),
+                        fmt(TranMath.R_TICK_COEF), fmt(TranMath.R_PILLAR_RADIUS)));
+                ls.add(l(t("hukhong.skill.tran_3.dmg", "Tổng tối đa lên một mục tiêu: %s", num(TranMath.rTotalCoef() * sp)), DMG));
+            }
+            case TRAN_ULT -> {
+                ls.add(note("hukhong.skill.tran_ult.desc", "Lập Đại Trận bán kính %s quanh mình trong %s giây: kéo quái về tâm, hết giờ nổ %s x Phép lực. Đứng trong trận: hồi chiêu x%s.",
+                        fmt(TranMath.ULT_RADIUS), fmt(TranMath.ULT_TICKS / 20.0), fmt(TranMath.ULT_COEF), fmt(TranMath.ULT_CD_MULT)));
+                ls.add(l(t("hukhong.skill.tran_ult.dmg", "Sát thương nổ: %s", num(TranMath.ULT_COEF * sp)), DMG));
+            }
+            default -> { }
+        }
+        return new Entry(key, Component.translatable(s.langKey()), ls);
     }
 
     private static Entry phapEntry(Ctx x, String key, Skill s) {

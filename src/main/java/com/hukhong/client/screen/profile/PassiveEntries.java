@@ -92,7 +92,7 @@ public final class PassiveEntries {
                                 pc(MaRules.ATK_CAP_SOLO), pc(MaRules.ATK_CAP_MULTI), pc(MaRules.HH_BONUS_CAP))));
             }
             case TRAN -> l.add(e(t("hukhong.passive.tran.name", "Trận Tâm"),
-                    t("hukhong.passive.tran.desc", "Đang phát triển. Nội tại sẽ được bổ sung ở bản sau."))); // Wave 1: placeholder
+                    t("hukhong.passive.tran.desc", "Đứng trong trận của chính mình: +15% sát thương gây ra và hồi +2 Trận Lực mỗi giây.")));
             case DAN -> l.add(e(t("hukhong.passive.dan.name", "Đan Tâm"),
                     t("hukhong.passive.dan.desc", "Đang phát triển. Nội tại sẽ được bổ sung ở bản sau."))); // Wave 1: placeholder
             case PHAP -> {

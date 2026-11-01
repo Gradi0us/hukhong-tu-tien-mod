@@ -116,7 +116,7 @@ public final class SkillService {
         }
         int tbCd = r.base() == Skill.PHAP_2 ? com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, slot) : -1;
         if (tbCd < 0 && r.base() == Skill.PHAP_ULT) tbCd = com.hukhong.phaptu.ThoService.cooldownOverride(p, page, slot); // Thiên Sơn: 45s
-        st.cooldownEnd[slot] = now + (tbCd >= 0 ? tbCd : Math.round(SkillBookMath.cooldown(r.baseCooldown(), lvl) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)));
+        st.cooldownEnd[slot] = now + (tbCd >= 0 ? tbCd : Math.round(SkillBookMath.cooldown(r.baseCooldown(), lvl) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page) * com.hukhong.tran.TranRuntime.cooldownMult(p, page)));
         st.lastCombat = now;
         sync(p);
     }
@@ -136,7 +136,7 @@ public final class SkillService {
                     : r.base() == Skill.KIEM_ULT ? SkillEffects.DOMAIN_LOCK_TICKS
                     : r.base() == Skill.PHAP_ULT && com.hukhong.phaptu.ThoService.cooldownOverride(p, page, i) >= 0 ? com.hukhong.phaptu.ThoService.cooldownOverride(p, page, i)
                     : r.base() == Skill.PHAP_2 && com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, i) >= 0 ? com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, i)
-                    : (int) Math.round(SkillBookMath.cooldown(r.baseCooldown(), bd.level(r.id())) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)));
+                    : (int) Math.round(SkillBookMath.cooldown(r.baseCooldown(), bd.level(r.id())) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page) * com.hukhong.tran.TranRuntime.cooldownMult(p, page)));
         }
         PacketDistributor.sendToPlayer(p, new SkillSyncPayload(st.stance, rem, tot, st.page, st.domainOn));
     }

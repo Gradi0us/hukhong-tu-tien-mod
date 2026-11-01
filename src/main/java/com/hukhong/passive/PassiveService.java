@@ -118,6 +118,7 @@ public final class PassiveService {
         if (melee && d.paths().contains(Path.KIEM)) kiemHit(atk, target, s, d, e.getAmount());
         if (d.paths().contains(Path.DAO)) daoHit(atk, target, s, d);
         if (d.paths().contains(Path.THE)) theHit(atk, target, s, d, melee, now);
+        if (melee && d.paths().contains(Path.TRAN)) com.hukhong.tran.TranRuntime.basicHit(atk, target);
         sync(atk, s);
     }
 
