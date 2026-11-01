@@ -21,7 +21,16 @@ public enum Skill {
     PHAP_1(Path.PHAP, 0, "phap_1", 3, 14),
     PHAP_2(Path.PHAP, 1, "phap_2", 25, 160),
     PHAP_3(Path.PHAP, 2, "phap_3", 35, 400),
-    PHAP_ULT(Path.PHAP, 3, "phap_ult", 90, 1500);
+    PHAP_ULT(Path.PHAP, 3, "phap_ult", 90, 1500),
+    /** Trận Tu / Đan Tu - Wave 1: chỉ khung, hiệu ứng no-op (logic ở com.hukhong.tran / com.hukhong.dan). */
+    TRAN_1(Path.TRAN, 0, "tran_1", 4, 14),
+    TRAN_2(Path.TRAN, 1, "tran_2", 25, 400),
+    TRAN_3(Path.TRAN, 2, "tran_3", 35, 400),
+    TRAN_ULT(Path.TRAN, 3, "tran_ult", 90, 1600),
+    DAN_1(Path.DAN, 0, "dan_1", 4, 14),
+    DAN_2(Path.DAN, 1, "dan_2", 30, 500),
+    DAN_3(Path.DAN, 2, "dan_3", 35, 360),
+    DAN_ULT(Path.DAN, 3, "dan_ult", 90, 1800);
 
     /** Hệ số sát thương kỹ năng 1 (nhân Phép lực / Công lực) - dùng chung với bài test cân bằng. */
     public static final double DAO_1_COEF = 0.95, THE_1_COEF = 4.00;

@@ -91,6 +91,10 @@ public final class PassiveEntries {
                                 pc(MaRules.stateHh(30)), pc(MaRules.stateHh(60)), pc(MaRules.stateHh(80)),
                                 pc(MaRules.ATK_CAP_SOLO), pc(MaRules.ATK_CAP_MULTI), pc(MaRules.HH_BONUS_CAP))));
             }
+            case TRAN -> l.add(e(t("hukhong.passive.tran.name", "Trận Tâm"),
+                    t("hukhong.passive.tran.desc", "Đang phát triển. Nội tại sẽ được bổ sung ở bản sau."))); // Wave 1: placeholder
+            case DAN -> l.add(e(t("hukhong.passive.dan.name", "Đan Tâm"),
+                    t("hukhong.passive.dan.desc", "Đang phát triển. Nội tại sẽ được bổ sung ở bản sau."))); // Wave 1: placeholder
             case PHAP -> {
                 l.add(e(t("hukhong.passive.phap.name", "Pháp Lực Tinh Thuần"),
                         t("hukhong.passive.phap.desc", "Pháp Lực tự hồi %s/s, thiền %s/s. Mọi kỹ năng Q/E/R/T tính theo Phép lực. Linh Trượng bản mệnh: chuột trái bắn tia phép (tầm %s block, hồi %ss) gây %s Phép lực ở Phàm phẩm, tối đa %s ở Thần phẩm; kỹ năng phát ra từ đầu trượng.",

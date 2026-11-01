@@ -102,7 +102,7 @@ public final class CultivationHud {
     }
 
     private static int colorblindPath(Path p) {
-        return switch (p) { case KIEM -> 0xFF56B4E9; case DAO -> 0xFFF0E442; case THE -> 0xFFE69F00; case MA -> 0xFFCC79A7; case PHAP -> 0xFF009E73; };
+        return switch (p) { case KIEM -> 0xFF56B4E9; case DAO -> 0xFFF0E442; case THE -> 0xFFE69F00; case MA -> 0xFFCC79A7; case PHAP -> 0xFF009E73; case TRAN -> 0xFF8E7CC3; case DAN -> 0xFFD55E00; };
     }
 
     private static String roman(int n) {

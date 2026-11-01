@@ -11,7 +11,11 @@ import com.hukhong.bicanh.BiCanhRegistry;
 import com.hukhong.bicanh.BiCanhTier;
 import com.hukhong.chg.ChgRegistry;
 import com.hukhong.core.Aptitude;
+import com.hukhong.charcreate.CharCreateService;
+import com.hukhong.charcreate.CharRoll;
+import com.hukhong.charcreate.Origin;
 import com.hukhong.core.CultivationData;
+import com.hukhong.core.CultivationService;
 import com.hukhong.core.ModAttachments;
 import com.hukhong.core.Path;
 import com.hukhong.endgame.EndgameRegistry;
@@ -452,5 +456,36 @@ public final class HuKhongRuntimeGameTests {
                 else h.succeed();
             }
         });
+    }
+
+    // ------------------------------------------------------------ Trận Tu / Đan Tu (Wave 1: khung)
+
+    @GameTest(template = "empty")
+    public static void tranDanSelectable(GameTestHelper h) {
+        CharRoll r0 = CharRoll.roll(777L);
+        CharRoll roll = new CharRoll(r0.seed(), 2, r0.aptitude(), Origin.VILLAGE, r0.startAge());
+        ServerPlayer p = FakePlayerFactory.get(h.getLevel(), new com.mojang.authlib.GameProfile(UUID.randomUUID(), "hk-tran-dan"));
+        p.setData(ModAttachments.CULTIVATION, new CultivationData(1, 0, 100, 100, Set.of(), Map.of(), false, "", roll, false));
+        CharCreateService.confirm(p, (1 << Path.TRAN.ordinal()) | (1 << Path.DAN.ordinal()));
+        Set<Path> got = CultivationService.get(p).paths();
+        if (!got.contains(Path.TRAN) || !got.contains(Path.DAN)) h.fail("chon Tran+Dan khong duoc nhan: " + got);
+        h.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void tranDanSkillsNoCrash(GameTestHelper h) {
+        for (Path path : new Path[]{Path.TRAN, Path.DAN}) {
+            ServerPlayer p = fake(h, 60, Set.of(path));
+            place(h, p, 2, 1, 2);
+            SkillService.state(p).stance = true;
+            for (int slot = 0; slot < 4; slot++) {
+                try {
+                    SkillService.cast(p, slot);
+                } catch (RuntimeException ex) {
+                    h.fail(path + " phim " + slot + " nem loi: " + ex);
+                }
+            }
+        }
+        h.succeed();
     }
 }

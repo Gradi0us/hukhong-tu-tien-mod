@@ -60,6 +60,16 @@ public final class FlightTienThienGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void tranDanBayCap40(GameTestHelper h) {
+        if (FlightMode.TRAN.minLevelFor(null) != 40 || FlightMode.DAN.minLevelFor(null) != 40) h.fail("Tran/Dan minLevel != 40");
+        if (tryFly(player(h, Path.TRAN, 39, null))) h.fail("Tran lv39 bay duoc");
+        if (!tryFly(player(h, Path.TRAN, 40, null))) h.fail("Tran lv40 khong bay duoc");
+        if (tryFly(player(h, Path.DAN, 39, null))) h.fail("Dan lv39 bay duoc");
+        if (!tryFly(player(h, Path.DAN, 40, null))) h.fail("Dan lv40 khong bay duoc");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void maBayCap20(GameTestHelper h) {
         if (tryFly(player(h, Path.MA, 19, null))) h.fail("Ma lv19 bay duoc");
         ServerPlayer p = player(h, Path.MA, 20, null);

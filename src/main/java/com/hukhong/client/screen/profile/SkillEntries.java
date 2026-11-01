@@ -210,6 +210,7 @@ public final class SkillEntries {
 
     private static Entry baseEntry(Ctx x, Path page, String key, Skill s) {
         if (s.path == Path.PHAP) return phapEntry(x, key, s);
+        if (s.path == Path.TRAN || s.path == Path.DAN) return placeholderEntry(x, key, s); // Wave 1: khung, mô tả ở Wave 2/3
         int lvl = x.book().level(s.icon);
         double m = SkillBookMath.dmgMult(lvl);
         List<Line> ls = new ArrayList<>();
@@ -381,6 +382,11 @@ public final class SkillEntries {
             {"Thạch Mâu", "Thổ Tháp", "Địa Chấn", "Thiên Sơn Áp Đỉnh"},
             {"Kim Nhận", "Kim Giáp", "Kim Quang Phá", "Thiên Kim Trảm"},
     };
+
+    /** Trận Tu / Đan Tu (Wave 1): chỉ tên + phím/hồi chiêu; mô tả đầy đủ làm ở Wave 2/3. */
+    private static Entry placeholderEntry(Ctx x, String key, Skill s) {
+        return new Entry(key, Component.translatable(s.langKey()), List.of(meta(x, s.path, s.cost, s.cooldownTicks)));
+    }
 
     private static Entry phapEntry(Ctx x, String key, Skill s) {
         PhapElement el = x.element();

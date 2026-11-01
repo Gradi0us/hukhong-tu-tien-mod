@@ -14,7 +14,7 @@ public final class SkillPages {
     /** Phân Tâm: hồi chiêu chung khi đổi trang (3 giây). */
     public static final int SWITCH_COOLDOWN_TICKS = 60;
 
-    private static final Path[] ORDER = {Path.KIEM, Path.DAO, Path.THE, Path.MA, Path.PHAP};
+    private static final Path[] ORDER = {Path.KIEM, Path.DAO, Path.THE, Path.MA, Path.PHAP, Path.TRAN, Path.DAN};
 
     public static List<Path> owned(Set<Path> paths) {
         List<Path> l = new ArrayList<>(5);
@@ -29,6 +29,8 @@ public final class SkillPages {
             case THE -> "hukhong.path.body";
             case MA -> "hukhong.path.demon";
             case PHAP -> "hukhong.path.phap";
+            case TRAN -> "hukhong.path.tran";
+            case DAN -> "hukhong.path.dan";
         };
     }
 

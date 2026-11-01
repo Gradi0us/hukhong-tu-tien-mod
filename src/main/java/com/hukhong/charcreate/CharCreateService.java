@@ -25,8 +25,8 @@ import java.util.Set;
 public final class CharCreateService {
     private CharCreateService() {}
 
-    /** Mở cả 5 đạo (Kiếm, Đạo, Thể, Ma, Pháp). */
-    public static final Set<Path> UNLOCKED = Set.of(Path.KIEM, Path.DAO, Path.THE, Path.MA, Path.PHAP);
+    /** Mở cả 7 đạo (Kiếm, Đạo, Thể, Ma, Pháp, Trận, Đan). */
+    public static final Set<Path> UNLOCKED = Set.of(Path.KIEM, Path.DAO, Path.THE, Path.MA, Path.PHAP, Path.TRAN, Path.DAN);
 
     /** Bit cờ trong mask gói xác nhận: Pháp Tu đã dùng lượt reroll nguyên tố duy nhất. */
     public static final int REROLL_BIT = 1 << 8;

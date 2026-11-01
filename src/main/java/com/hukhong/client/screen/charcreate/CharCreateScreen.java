@@ -63,9 +63,16 @@ public class CharCreateScreen extends Screen {
 
     private int required() { return CharCreateService.requiredPicks(roll); }
 
+    /** Co ô theo bề rộng màn: 7 đạo ở GUI scale 3 (~427px) tràn nếu giữ 76px. */
+    private int cellW() {
+        int n = Path.values().length;
+        return Math.min(CELL_W, (width - 20 - GAP * (n - 1)) / n);
+    }
+
     private int cellX(int i) {
-        int total = Path.values().length * CELL_W + (Path.values().length - 1) * GAP;
-        return width / 2 - total / 2 + i * (CELL_W + GAP);
+        int w = cellW();
+        int total = Path.values().length * w + (Path.values().length - 1) * GAP;
+        return width / 2 - total / 2 + i * (w + GAP);
     }
 
     private int cellY() { return height / 2 - 55; }
@@ -111,7 +118,7 @@ public class CharCreateScreen extends Screen {
         if (button == 0 && allRevealed()) {
             for (Path p : Path.values()) {
                 int x = cellX(p.ordinal()), y = cellY();
-                if (mx >= x && mx < x + CELL_W && my >= y && my < y + CELL_H) {
+                if (mx >= x && mx < x + cellW() && my >= y && my < y + CELL_H) {
                     if (!CharCreateService.UNLOCKED.contains(p)) return true;
                     if (!selected.remove(p) && selected.size() < required()) selected.add(p);
                     Minecraft.getInstance().getSoundManager()
@@ -158,34 +165,34 @@ public class CharCreateScreen extends Screen {
                 int c = tierColor(a, time);
                 float pulse = 0.5f + 0.5f * Mth.sin(time * 0.35f);
                 int alpha = (int) (110 + 145 * pulse);
-                g.fill(x - 2, y - 2, x + CELL_W + 2, y + CELL_H + 2, (alpha << 24) | (c & 0xFFFFFF));
+                g.fill(x - 2, y - 2, x + cellW() + 2, y + CELL_H + 2, (alpha << 24) | (c & 0xFFFFFF));
             }
-            g.fill(x - 1, y - 1, x + CELL_W + 1, y + CELL_H + 1, border);
-            g.fill(x, y, x + CELL_W, y + CELL_H, locked ? 0xFF222222 : 0xFF111111);
-            g.fill(x, y, x + CELL_W, y + 3, p.argb);
+            g.fill(x - 1, y - 1, x + cellW() + 1, y + CELL_H + 1, border);
+            g.fill(x, y, x + cellW(), y + CELL_H, locked ? 0xFF222222 : 0xFF111111);
+            g.fill(x, y, x + cellW(), y + 3, p.argb);
 
-            g.drawCenteredString(font, Component.translatable(pathLang(p)), x + CELL_W / 2, y + 8, locked ? 0xFF777777 : p.argb);
+            g.drawCenteredString(font, Component.translatable(pathLang(p)), x + cellW() / 2, y + 8, locked ? 0xFF777777 : p.argb);
             if (locked) {
-                g.drawCenteredString(font, Component.translatable("hukhong.charcreate.locked"), x + CELL_W / 2, y + 32, 0xFF888888);
-                g.drawCenteredString(font, Component.literal("✖"), x + CELL_W / 2, y + 48, 0xFF666666);
+                g.drawCenteredString(font, Component.translatable("hukhong.charcreate.locked"), x + cellW() / 2, y + 32, 0xFF888888);
+                g.drawCenteredString(font, Component.literal("✖"), x + cellW() / 2, y + 48, 0xFF666666);
                 continue;
             }
             if (!shown) {
                 String q = ((int) (time / 2) % 2 == 0) ? "?" : "??";
                 g.pose().pushPose();
-                g.pose().translate(x + CELL_W / 2f, y + 28, 0);
+                g.pose().translate(x + cellW() / 2f, y + 28, 0);
                 g.pose().scale(2f, 2f, 1f);
                 g.drawCenteredString(font, q, 0, 0, 0xFF777777);
                 g.pose().popPose();
             } else {
                 g.pose().pushPose();
-                g.pose().translate(x + CELL_W / 2f, y + 26, 0);
+                g.pose().translate(x + cellW() / 2f, y + 26, 0);
                 float sc = a.ordinal() >= Aptitude.S.ordinal() ? 3f : 2.5f;
                 g.pose().scale(sc, sc, 1f);
                 g.drawCenteredString(font, Component.translatable("hukhong.aptitude." + a.name().toLowerCase()),
                         0, 0, tierColor(a, time));
                 g.pose().popPose();
-                if (sel) g.drawCenteredString(font, Component.literal("✔"), x + CELL_W / 2, y + 54, 0xFF55FF55);
+                if (sel) g.drawCenteredString(font, Component.literal("✔"), x + cellW() / 2, y + 54, 0xFF55FF55);
             }
         }
         super.render(g, mx, my, partial);
@@ -198,6 +205,8 @@ public class CharCreateScreen extends Screen {
             case THE -> "hukhong.path.body";
             case MA -> "hukhong.path.demon";
             case PHAP -> "hukhong.path.phap";
+            case TRAN -> "hukhong.path.tran";
+            case DAN -> "hukhong.path.dan";
         };
     }
 }

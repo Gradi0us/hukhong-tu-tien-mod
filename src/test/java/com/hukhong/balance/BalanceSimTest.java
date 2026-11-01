@@ -171,6 +171,7 @@ class BalanceSimTest {
             case THE -> (PathRules.THE_MELEE_GAIN * meleeRate(Path.THE) * MELEE_UPTIME + PathRules.THE_HIT_BIG * 0.5) * pl.regen();
             case MA -> Math.min(10, PathRules.MA_HIT_GAIN * (meleeRate(Path.MA) * MELEE_UPTIME + castsPerSec)) * pl.regen();
             case PHAP -> PathRules.PHAP_REGEN * pl.regen();
+            case TRAN, DAN -> 0; // Wave 1: chua mo hinh hoa Tran/Dan (Wave 3 bo sung balance_sim)
         };
     }
 

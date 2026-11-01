@@ -53,6 +53,8 @@ public final class StatService {
             case THE -> new double[]{3.9, 1.55, 1, 0.2, 2, 0.85, 0.03, 0.0035, 0, 0, 100, 0};
             case MA -> new double[]{3.5, 1.2, 3, 1.0, 1, 0.50, 0.05, 0.003, 0.06, 0.0004, 100, 3};
             case PHAP -> new double[]{2.5, 0.9, 7, 1.9, 0, 0.30, 0.04, 0.002, 0, 0, 110, 5};
+            case TRAN -> new double[]{2.5, 0.9, 6.5, 1.8, 1, 0.40, 0.04, 0.002, 0, 0, 110, 5};
+            case DAN -> new double[]{2.2, 0.8, 7, 1.9, 0, 0.30, 0.04, 0.002, 0, 0, 110, 5};
         };
     }
 
@@ -95,6 +97,8 @@ public final class StatService {
             case THE -> new double[]{24, 7.0, 0.0002};
             case MA -> new double[]{22, 5.0, 0.0007};
             case PHAP -> new double[]{20, 3.8, 0.0006};
+            case TRAN -> new double[]{21, 4.2, 0.0005};
+            case DAN -> new double[]{20, 3.8, 0.0006};
         };
     }
 

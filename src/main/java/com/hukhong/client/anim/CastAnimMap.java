@@ -40,6 +40,15 @@ public final class CastAnimMap {
         BASE.put(Skill.PHAP_2, PHAP_SLOT[1]);
         BASE.put(Skill.PHAP_3, PHAP_SLOT[2]);
         BASE.put(Skill.PHAP_ULT, PHAP_SLOT[3]);
+        // Trận Tu / Đan Tu (Wave 1: tạm dùng động tác có sẵn; Wave 2/3 đổi theo kỹ năng)
+        BASE.put(Skill.TRAN_1, CastAnim.HAND_SEAL);
+        BASE.put(Skill.TRAN_2, CastAnim.GUARD);
+        BASE.put(Skill.TRAN_3, CastAnim.CHANNEL);
+        BASE.put(Skill.TRAN_ULT, CastAnim.ULT_RAISE);
+        BASE.put(Skill.DAN_1, CastAnim.HAND_SEAL);
+        BASE.put(Skill.DAN_2, CastAnim.GUARD);
+        BASE.put(Skill.DAN_3, CastAnim.ROAR);
+        BASE.put(Skill.DAN_ULT, CastAnim.ULT_RAISE);
         // ---- 19 kỹ năng Bí Tịch / Công Pháp
         BOOK.put(BookSkill.PHA_KHONG_TRAM, CastAnim.SWORD_THRUST);
         BOOK.put(BookSkill.PHI_KIEM_TRUY_HON, CastAnim.HAND_SEAL);

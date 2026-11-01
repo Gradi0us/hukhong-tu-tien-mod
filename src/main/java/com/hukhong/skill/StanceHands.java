@@ -23,6 +23,7 @@ public final class StanceHands {
         return switch (path) {
             case KIEM -> s.is(com.hukhong.item.ModItems.BAN_MENH_KIEM.get()) && com.hukhong.banmenh.BanMenhKiemItem.isOwner(s, p);
             case PHAP -> id.equals("linh_truong");
+            case TRAN, DAN -> false;
             default -> false;
         };
     }

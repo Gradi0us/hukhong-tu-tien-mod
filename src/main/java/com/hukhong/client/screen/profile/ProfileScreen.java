@@ -572,7 +572,7 @@ public class ProfileScreen extends Screen {
     }
 
     private static String artifactVi(Path p) {
-        return switch (p) { case DAO -> "Pháp Bảo"; case THE -> "Bá Thể"; case MA -> "Ma Hồn"; case PHAP -> "Pháp Khí"; default -> "?"; };
+        return switch (p) { case DAO -> "Pháp Bảo"; case THE -> "Bá Thể"; case MA -> "Ma Hồn"; case PHAP -> "Pháp Khí"; case TRAN -> "Trận Bàn"; case DAN -> "Đan Lô"; default -> "?"; };
     }
 
     private void artifactTooltip(Path p) {
@@ -601,6 +601,8 @@ public class ProfileScreen extends Screen {
             case THE -> "hukhong.path.body";
             case MA -> "hukhong.path.demon";
             case PHAP -> "hukhong.path.phap";
+            case TRAN -> "hukhong.path.tran";
+            case DAN -> "hukhong.path.dan";
         };
     }
 }
