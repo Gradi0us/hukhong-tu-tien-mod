@@ -91,6 +91,14 @@ public final class EscortMover {
 
     /** Be mat di bo tai cot (bx,bz): mat dat cao nhat khong tinh la (mat nuoc = di tren mat nuoc, tranh chim chet duoi); bo qua neu lech > 24 so voi cur. */
     static double groundY(ServerLevel l, int bx, int bz, double cur) {
+        // Uu tien cho dung gan do cao hien tai (buoc len 1, xuong toi 4) de khong leo len mai nha.
+        int cy = (int) Math.floor(cur + 0.01);
+        for (int dy = 1; dy >= -4; dy--) {
+            net.minecraft.core.BlockPos f = new net.minecraft.core.BlockPos(bx, cy + dy, bz);
+            if (l.getBlockState(f.below()).isFaceSturdy(l, f.below(), net.minecraft.core.Direction.UP)
+                    && l.getBlockState(f).getCollisionShape(l, f).isEmpty()
+                    && l.getBlockState(f.above()).getCollisionShape(l, f.above()).isEmpty()) return cy + dy;
+        }
         int top = l.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
         return Math.abs(top - cur) > 24 ? cur : top;
     }
