@@ -119,6 +119,8 @@ public final class PathRules {
                 st.regenFrac = v - whole;
                 if (whole > 0) Resources.add(p, whole);
             }
+            if (d.paths().contains(Path.TRAN) || d.paths().contains(Path.DAN)) // Trận Lực / Đan Hỏa hồi như Pháp Lực
+                Resources.add(p, (int) Math.max(1, Math.round((med ? PHAP_MEDITATE_REGEN * mm : PHAP_REGEN) * rg)));
             if (the) {
                 if (med) {
                     if (d.resource() < 60) Resources.add(p, Math.min((int) Math.round(5 * rg * mm), 60 - d.resource()));
