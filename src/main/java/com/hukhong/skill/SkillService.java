@@ -103,6 +103,7 @@ public final class SkillService {
             return;
         }
         if (!com.hukhong.phaptu.PhapRuntime.consumeFree(p, page, slot)
+                && !com.hukhong.dan.DanRuntime.freeCast(p, page)
                 && !Resources.tryConsume(p, r.cost(), com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
             return;

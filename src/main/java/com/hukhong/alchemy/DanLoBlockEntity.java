@@ -134,6 +134,11 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
             ratio = Math.min(1.0, ratio + com.hukhong.society.SectBuffs.alchemyBonus(sp)); // buff Đan Đỉnh Tông
         var q = AlchemyMath.qualityFor(ratio);
         if (q == null) { notifyNear(level, pos, "hukhong.alchemy.wasted"); return; }
+        // Đan Tâm: Đan Tu đứng gần lò được +1 bậc phẩm chất (Quality.of kẹp trong [HA, CUC])
+        if (level.getNearestPlayer(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 8, false) instanceof net.minecraft.server.level.ServerPlayer brewer
+                && brewer.getData(com.hukhong.core.ModAttachments.CULTIVATION).paths().contains(com.hukhong.core.Path.DAN)) {
+            q = AlchemyMath.Quality.of(q.ordinal() + com.hukhong.dan.DanMath.DAN_LO_QUALITY_BONUS);
+        }
         var r = AlchemyRecipes.ALL.get(recipeIdx);
         ItemStack out = new ItemStack(r.result().get(), r.yield());
         out.set(AlchemyRegistry.PILL_QUALITY.get(), q.ordinal());

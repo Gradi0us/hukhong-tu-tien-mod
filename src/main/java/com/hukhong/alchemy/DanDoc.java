@@ -29,7 +29,11 @@ public final class DanDoc {
 
     /** Gọi sau khi uống thành công: cộng độc, báo trạng thái. */
     public static void consume(ServerPlayer p, double groupCoef, int tier, AlchemyMath.Quality q) {
-        double t = AlchemyMath.addToxin(get(p), AlchemyMath.toxinAdd(groupCoef, tier, q));
+        double add = AlchemyMath.toxinAdd(groupCoef, tier, q);
+        if (p.getData(com.hukhong.core.ModAttachments.CULTIVATION).paths().contains(com.hukhong.core.Path.DAN)) {
+            add *= com.hukhong.dan.DanMath.DOC_GAIN_MULT; // Đan Tâm: Đan Độc tích -50%
+        }
+        double t = AlchemyMath.addToxin(get(p), add);
         set(p, t);
         if (t > 85) p.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200));
         p.sendSystemMessage(Component.translatable("hukhong.dandoc.status", (int) t));

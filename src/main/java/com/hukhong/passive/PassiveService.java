@@ -119,6 +119,7 @@ public final class PassiveService {
         if (d.paths().contains(Path.DAO)) daoHit(atk, target, s, d);
         if (d.paths().contains(Path.THE)) theHit(atk, target, s, d, melee, now);
         if (melee && d.paths().contains(Path.TRAN)) com.hukhong.tran.TranRuntime.basicHit(atk, target);
+        if (melee && d.paths().contains(Path.DAN)) com.hukhong.dan.DanRuntime.basicHit(atk, target);
         sync(atk, s);
     }
 

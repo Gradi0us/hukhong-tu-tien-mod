@@ -1485,7 +1485,7 @@
   "hukhong.passive.tran.name": "Formation Heart",
   "hukhong.passive.tran.desc": "Standing inside your own formation: +15% damage dealt and +2 Formation Power per second.",
   "hukhong.passive.dan.name": "Pill Heart",
-  "hukhong.passive.dan.desc": "Under development. Passive will be added in a later release.",
+  "hukhong.passive.dan.desc": "Standing near a Pill Furnace: pill quality +1 tier. Pill toxin gained from taken pills is halved.",
   "hukhong.passive.el.quang.name": "Radiance",
   "hukhong.passive.el.loi.name": "Thunder Seal",
   "hukhong.passive.el.hoa.name": "Ignition",

@@ -94,7 +94,7 @@ public final class PassiveEntries {
             case TRAN -> l.add(e(t("hukhong.passive.tran.name", "Trận Tâm"),
                     t("hukhong.passive.tran.desc", "Đứng trong trận của chính mình: +15% sát thương gây ra và hồi +2 Trận Lực mỗi giây.")));
             case DAN -> l.add(e(t("hukhong.passive.dan.name", "Đan Tâm"),
-                    t("hukhong.passive.dan.desc", "Đang phát triển. Nội tại sẽ được bổ sung ở bản sau."))); // Wave 1: placeholder
+                    t("hukhong.passive.dan.desc", "Đan Lô đứng gần: phẩm chất đan +1 bậc. Đan Độc tích từ đan uống vào giảm còn 50%.")));
             case PHAP -> {
                 l.add(e(t("hukhong.passive.phap.name", "Pháp Lực Tinh Thuần"),
                         t("hukhong.passive.phap.desc", "Pháp Lực tự hồi %s/s, thiền %s/s. Mọi kỹ năng Q/E/R/T tính theo Phép lực. Linh Trượng bản mệnh: chuột trái bắn tia phép (tầm %s block, hồi %ss) gây %s Phép lực ở Phàm phẩm, tối đa %s ở Thần phẩm; kỹ năng phát ra từ đầu trượng.",

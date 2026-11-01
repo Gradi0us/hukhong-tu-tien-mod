@@ -9,6 +9,7 @@ import com.hukhong.phaptu.PhapElement;
 import com.hukhong.phaptu.PhapMath;
 import com.hukhong.phaptu.ThiemBoMath;
 import com.hukhong.phaptu.beam.PhapBeamMath;
+import com.hukhong.dan.DanMath;
 import com.hukhong.tran.TranMath;
 import com.hukhong.phaptu.linhtruong.LinhTruongMath;
 import com.hukhong.skill.BanMenhSkill;
@@ -202,6 +203,13 @@ public final class SkillEntries {
                         num(x.sp()), fmt(TranMath.BASIC_COEF), num(TranMath.BASIC_COEF * x.sp())), DMG));
                 return new Entry("", t("hukhong.skills.tran_basic.name", "Phù Văn Đạn (đòn thường)"), ls);
             }
+            case DAN -> {
+                ls.add(note("hukhong.skills.dan_basic.desc", "Đánh cận chiến: ném viên đan nổ tới mục tiêu sau %s giây, gây sát thương và +%s tầng Đan Độc (tối đa %s). Trong Cửu Chuyển Kim Đan: nổ bán kính %s, +%s tầng.",
+                        fmt(DanMath.BASIC_DELAY_TICKS / 20.0), DanMath.BASIC_STACKS, DanMath.MAX_STACKS, fmt(DanMath.BOMB_RADIUS), DanMath.BOMB_STACKS));
+                ls.add(l(t("hukhong.skills.dan_basic.dmg", "Sát thương: %s Phép lực x %s = %s mỗi viên",
+                        num(x.sp()), fmt(DanMath.BASIC_COEF), num(DanMath.BASIC_COEF * x.sp())), DMG));
+                return new Entry("", t("hukhong.skills.dan_basic.name", "Bạo Đan (đòn thường)"), ls);
+            }
             case DAO, THE, MA -> {
                 var lb = com.hukhong.linhbao.LinhBaoType.of(p);
                 if (lb == null) return null;
@@ -219,7 +227,7 @@ public final class SkillEntries {
     private static Entry baseEntry(Ctx x, Path page, String key, Skill s) {
         if (s.path == Path.PHAP) return phapEntry(x, key, s);
         if (s.path == Path.TRAN) return tranEntry(x, key, s);
-        if (s.path == Path.DAN) return placeholderEntry(x, key, s); // Wave 1: khung, mô tả ở Wave 3
+        if (s.path == Path.DAN) return danEntry(x, key, s);
         int lvl = x.book().level(s.icon);
         double m = SkillBookMath.dmgMult(lvl);
         List<Line> ls = new ArrayList<>();
@@ -392,9 +400,39 @@ public final class SkillEntries {
             {"Kim Nhận", "Kim Giáp", "Kim Quang Phá", "Thiên Kim Trảm"},
     };
 
-    /** Trận Tu / Đan Tu (Wave 1): chỉ tên + phím/hồi chiêu; mô tả đầy đủ làm ở Wave 2/3. */
-    private static Entry placeholderEntry(Ctx x, String key, Skill s) {
-        return new Entry(key, Component.translatable(s.langKey()), List.of(meta(x, s.path, s.cost, s.cooldownTicks)));
+    /** Đan Tu Q/E/R/T: số liệu lấy thẳng từ DanMath (cùng hằng số với DanRuntime/DanSkills). */
+    private static Entry danEntry(Ctx x, String key, Skill s) {
+        double sp = x.sp();
+        int cd = cdTicks(x, Path.DAN, s.icon, s.cooldownTicks);
+        List<Line> ls = new ArrayList<>();
+        ls.add(meta(x, Path.DAN, s.cost, cd));
+        switch (s) {
+            case DAN_1 -> {
+                ls.add(note("hukhong.skill.dan_1.desc", "Ném %s viên độc đan rải quanh điểm ngắm (tầm %s block, rải bán kính %s), mỗi viên gây %s x Phép lực và +%s tầng độc; xong để lại hồ độc bán kính %s trong %s giây (+%s tầng/giây).",
+                        DanMath.Q_PILLS, fmt(DanMath.Q_RANGE), fmt(DanMath.Q_SCATTER), fmt(DanMath.Q_COEF), DanMath.Q_STACKS,
+                        fmt(DanMath.POOL_RADIUS), fmt(DanMath.POOL_TICKS / 20.0), DanMath.POOL_STACKS));
+                ls.add(l(t("hukhong.skill.dan_1.dmg", "Sát thương: %s mỗi viên, %s tổng nếu trúng đủ",
+                        num(DanMath.Q_COEF * sp), num(DanMath.Q_COEF * sp * DanMath.Q_PILLS)), DMG));
+            }
+            case DAN_2 -> {
+                ls.add(note("hukhong.skill.dan_2.desc", "Hồi %s x Phép lực + %s%% Sinh lực tối đa cho mình và người chơi trong %s block, xóa mọi hiệu ứng xấu. Ma Tu chỉ hồi cho bản thân.",
+                        fmt(DanMath.HEAL_COEF), fmt(DanMath.HEAL_MAX_PCT * 100), fmt(DanMath.HEAL_RADIUS)));
+                ls.add(l(t("hukhong.skill.dan_2.dmg", "Hồi: %s + %s%% Sinh lực tối đa", num(DanMath.HEAL_COEF * sp), fmt(DanMath.HEAL_MAX_PCT * 100)), DMG));
+            }
+            case DAN_3 -> {
+                ls.add(note("hukhong.skill.dan_3.desc", "Phun nón lửa %s block (nửa góc %s độ): mỗi mục tiêu gây %s x Phép lực x (1 + %s x tầng độc), tiêu hao toàn bộ độc trên mục tiêu.",
+                        fmt(DanMath.R_RANGE), fmt(Math.toDegrees(Math.acos(DanMath.R_COS))), fmt(DanMath.R_COEF), fmt(DanMath.R_PER_STACK)));
+                ls.add(l(t("hukhong.skill.dan_3.dmg", "Sát thương tối đa (%s tầng): %s",
+                        DanMath.MAX_STACKS, num(DanMath.rDamage(sp, DanMath.MAX_STACKS))), DMG));
+            }
+            case DAN_ULT -> {
+                ls.add(note("hukhong.skill.dan_ult.desc", "Trong %s giây mọi kỹ năng Đan Tu không tốn tài nguyên; đòn thường thành bom bán kính %s: %s x Phép lực và +%s tầng độc.",
+                        fmt(DanMath.KIM_TICKS / 20.0), fmt(DanMath.BOMB_RADIUS), fmt(DanMath.ULT_BOMB_COEF), DanMath.BOMB_STACKS));
+                ls.add(l(t("hukhong.skill.dan_ult.dmg", "Sát thương mỗi bom: %s", num(DanMath.ULT_BOMB_COEF * sp)), DMG));
+            }
+            default -> { }
+        }
+        return new Entry(key, Component.translatable(s.langKey()), ls);
     }
 
     /** Trận Tu Q/E/R/T: số liệu lấy thẳng từ TranMath (cùng hằng số với TranRuntime/TranSkills). */

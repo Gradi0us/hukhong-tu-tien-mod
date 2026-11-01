@@ -201,6 +201,11 @@ class Params:
         P.PH_HOA_STACKS = int(const("phaptu/PhapMath.java", "HOA_STACKS"))
         P.PH_THO_MAXT = int(const("phaptu/PhapMath.java", "THO_MAX_TURRETS"))
         P.PH_THO_SHOT = int(const("phaptu/PhapMath.java", "THO_SHOT_TICKS"))
+        # ---- TranMath / DanMath (Trận Tu, Đan Tu): đọc trực tiếp hằng số, không chép tay
+        P.tr = {nm: const("tran/TranMath.java", nm) for nm in ("BASIC_COEF", "Q_COEF", "R_TICK_COEF", "ULT_COEF", "MARK_BONUS", "WARD_DR")}
+        P.tr["R_HITS"] = int(const("tran/TranMath.java", "R_HITS"))
+        P.dn = {nm: const("dan/DanMath.java", nm) for nm in ("BASIC_COEF", "Q_COEF", "HEAL_COEF", "R_COEF", "R_PER_STACK", "STACK_DPS_COEF", "ULT_BOMB_COEF")}
+        P.dn.update({nm: int(const("dan/DanMath.java", nm)) for nm in ("MAX_STACKS", "Q_PILLS", "BASIC_STACKS", "BOMB_STACKS")})
         # ---- HuHoa (quai)
         hh = "entity/HuHoa.java"
         P.HP_BASE, P.HP_LIN, P.HP_QUAD, P.HP_CUBE, P.THAN_HP_MUL = (const(hh, n) for n in ("HP_BASE", "HP_LIN", "HP_QUAD", "HP_CUBE", "THAN_HP_MUL"))
@@ -484,7 +489,23 @@ def base_kit(P, B, path, element):
             c = P.phap_coef[e][i]
             if c > 0:
                 k.append(mk(f"{e} {'QERT'[i]}", "sp", c, 1, S[key]["cd"], S[key]["cost"], mult=dm, cdmult=cdm))
-    if path != "PHAP" and B.lv >= P.BM_UNLOCK:
+    elif path == "TRAN":
+        # Trận Tu: không có Bản Mệnh; R = Sát Trận (phím 3, slot 2) là kỹ năng thường. Đòn thường: mode "basic" trong simulate.
+        T = P.tr
+        k.append(mk("Khon Tran (Q)", "sp", T["Q_COEF"], 1, S["TRAN_1"]["cd"], S["TRAN_1"]["cost"]))
+        k.append(mk("Ho Than Tran (E)", "sp", 0, 0, S["TRAN_2"]["cd"], S["TRAN_2"]["cost"], kind="util"))  # giảm sát thương, không gây dame
+        k.append(mk("Sat Tran (phim R)", "sp", T["R_TICK_COEF"], T["R_HITS"], S["TRAN_3"]["cd"], S["TRAN_3"]["cost"]))
+        k.append(mk("Dai Tran (T)", "sp", T["ULT_COEF"], 1, S["TRAN_ULT"]["cd"], S["TRAN_ULT"]["cost"]))  # nổ cuối trận
+    elif path == "DAN":
+        # Đan Tu: không có Bản Mệnh. Đòn thường Bạo Đan + độc (DoT) mô phỏng trong simulate.
+        D = P.dn
+        k.append(mk("Doc Dan Vu (Q)", "sp", D["Q_COEF"], D["Q_PILLS"], S["DAN_1"]["cd"], S["DAN_1"]["cost"]))
+        k.append(mk("Hoi Xuan Dan (E)", "sp", 0, 0, S["DAN_2"]["cd"], S["DAN_2"]["cost"], kind="heal", heal_sp=D["HEAL_COEF"]))
+        # R giả định đủ 10 tầng độc trên mục tiêu lúc bấm (đòn thường đánh liên tục giữ đủ tầng): x(1 + 0,15 x 10)
+        k.append(mk("Phan Thien Dan Hoa (phim R)", "sp", D["R_COEF"], 1, S["DAN_3"]["cd"], S["DAN_3"]["cost"],
+                    mult=1 + D["R_PER_STACK"] * D["MAX_STACKS"]))
+        k.append(mk("Kim Dan (T)", "sp", 0, 0, S["DAN_ULT"]["cd"], S["DAN_ULT"]["cost"], kind="util"))  # cửa sổ miễn phí: chưa mô hình hóa
+    if path not in ("PHAP", "TRAN", "DAN") and B.lv >= P.BM_UNLOCK:
         bmd = P.bm[path]
         c = P.bm_coef(path, B.lv)
         if path == "KIEM":
@@ -580,6 +601,8 @@ def simulate(P, B, kit, tgt, T=60.0, dt=0.05, stop_hp=None, mmode=None, melee=Tr
     melee_rate = P.SWORD_RATE * MELEE_UPTIME
     # phap tu bi dong
     pdps = phap_passive_dps(P, B.element, apt.get("PHAP", "B"), B.sp) * cm if "PHAP" in path_set and B.element else 0.0
+    # Đan Tu: độc DoT = MAX_STACKS x 0,05 x Phép lực mỗi giây. Giả định đủ 10 tầng suốt trận (đòn thường +1 tầng/viên, ~2 viên/s, hạn 6 giây).
+    dan_dot = P.dn["STACK_DPS_COEF"] * P.dn["MAX_STACKS"] * B.sp * cm if "DAN" in path_set else 0.0
     # Ma: tay khong (tia ma) neu co MA va khong co KIEM; neu co vu khi thi dung kiem
     ma_bolt = "MA" in path_set
     # phan tram HP muc tieu (HP that, tran 1024); boss bi chia 1/3 (PassiveMath.pctOfMaxHp)
@@ -738,6 +761,14 @@ def simulate(P, B, kit, tgt, T=60.0, dt=0.05, stop_hp=None, mmode=None, melee=Tr
                         if ma_stacks >= P.MA_EVERY:
                             ma_stacks = 0
                             add(pct_dmg(ma_pct), t_, "pass")
+            elif mmode == "basic":
+                # Đòn thường Trận/Đan (TRAN basicHit / DAN basicHit): kỹ năng phép, nhịp theo tay không
+                melee_acc += dt
+                period = 1.0 / melee_rate
+                while melee_acc >= period:
+                    melee_acc -= period
+                    coef = P.tr["BASIC_COEF"] if "TRAN" in path_set else P.dn["BASIC_COEF"]
+                    hit_skill(coef * B.sp, t_)
             else:
                 melee_acc += dt
                 period = 1.0 / melee_rate
@@ -753,6 +784,8 @@ def simulate(P, B, kit, tgt, T=60.0, dt=0.05, stop_hp=None, mmode=None, melee=Tr
                     melee_side(t_, d)
         if pdps:
             add(pdps * dt, t_, "pass")
+        if dan_dot:
+            add(dan_dot * dt, t_, "pass")
         if t_kill is not None and stop_hp is not None:
             break
     return dict(total=total, dps=total / T, burst5=burst5, heal=heal / T, skill=skill_dmg, casts=casts, ccasts=ccasts, cdmg=cdmg, tkill=t_kill, T=T, mmode=mmode, srcs=srcs)
@@ -765,6 +798,8 @@ def melee_modes(B):
         return ["hand"]            # The Tu: cam vu khi -> 0 sat thuong (DamageRules.resolve), chi dam
     if "MA" in ps:
         return ["sword", "hand"]   # Ma Tu chon: Ban Menh Kiem (sat thuong tu Cong) hoac tay khong + tia ma
+    if ps & {"TRAN", "DAN"}:
+        return ["basic"]           # Trận/Đan: đòn thường là phù văn/viên đan (kỹ năng phép), không phải vung kiếm
     return ["sword"]
 
 
@@ -908,7 +943,7 @@ def run_grid(ov, core_mode="avg", multi=False, workers=None, levels=None, apts=N
     jobs = []
     for lv in (levels or LEVELS) if singles else []:
         for apt in (apts or APTS):
-            for p in PATHS4:
+            for p in PATHS4 + ["TRAN", "DAN"]:
                 jobs.append((ov, p, None, lv, apt, core_mode, None))
             for e in ELEMENTS:
                 jobs.append((ov, "PHAP", e, lv, apt, core_mode, None))
@@ -1139,8 +1174,12 @@ def main(quick=False):
         after = index(run_grid(ov, "avg"))
         after_multi = [r for r in run_grid(ov, "avg", multi=True, singles=False) if len(r["paths"]) > 1]
     if quick:
-        for lv in LEVELS:
-            print(lv, {nm: round(ix[(nm, 'B', lv)]['dps_base']) for nm in COLS})
+        # Bảng DPS bền vững (tư chất B, kit tối ưu, không sách): Kiếm/Ma/Thể/Đạo đối chiếu, PHAP (4 nguyên tố), TRAN, DAN; lv 30/60/100
+        qcols = ["KIEM", "MA", "THE", "DAO"] + ["P-" + e for e in ELEMENTS] + ["TRAN", "DAN"]
+        print("| Cấp | " + " | ".join(qcols) + " |")
+        print("|---" * (len(qcols) + 1) + "|")
+        for lv in (30, 60, 100):
+            print(f"| {lv} | " + " | ".join(str(round(ix[(nm, 'B', lv)]['dps_base'])) for nm in qcols) + " |")
         return
     REPORT.write_text(render(P, ix, mres, sens, after, after_multi), encoding="utf-8", newline="\n")
     print(f"Đã ghi {REPORT}", flush=True)
