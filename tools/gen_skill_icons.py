@@ -377,6 +377,201 @@ def icon_slot_bg():
     return c
 
 
+# ---------------------------------------------------------------- Tran / Dan (mau bo sung)
+CYAN_L = rgba("#d4f8ff")
+CYAN = rgba("#4fd6ff")
+CYAN_D = rgba("#1b7fa6")
+PINK_L = rgba("#ffe0f0")
+PINK = rgba("#ff7fb8")
+PINK_D = rgba("#c2407f")
+POISON_L = rgba("#d8ff9a")
+POISON = rgba("#6fd13e")
+POISON_D = rgba("#2e6b1c")
+FIRE_Y = rgba("#ffe066")
+FLAME_RED = rgba("#ff4a1c")
+
+
+def _tri_edges(cx, cy, r, base_deg):
+    pts = [(cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a)))
+           for a in (base_deg, base_deg + 120, base_deg + 240)]
+    return [(pts[k], pts[(k + 1) % 3]) for k in range(3)]
+
+
+def _capsule(c, a, b, r, col_a, col_b):
+    """Vien thuoc (capsule) tu a toi b, ban kinh r; nua dau col_a, nua cuoi col_b."""
+    ax, ay = a
+    bx, by = b
+    dx, dy = bx - ax, by - ay
+    l2 = dx * dx + dy * dy
+    for y in range(SIZE):
+        for x in range(SIZE):
+            if seg_dist(x, y, ax, ay, bx, by) <= r:
+                t = ((x - ax) * dx + (y - ay) * dy) / l2
+                c.set(x, y, col_a if t < 0.5 else col_b)
+
+
+# ---------------------------------------------------------------- tran_1
+def icon_tran_1():
+    """Khon Tran: vong phu van vang-lam xen ke, tam tam giac sang."""
+    c = Canvas()
+    cx = cy = 7.5
+    edges = _tri_edges(cx, cy, 4.2, -90)
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            ang = math.degrees(math.atan2(y - cy, x - cx)) % 360
+            if 5.2 <= d <= 6.6:
+                c.set(x, y, GOLD if int(ang // 45) % 2 == 0 else CYAN)
+            elif any(seg_dist(x, y, *p, *q) <= 0.5 for p, q in edges):
+                c.set(x, y, CYAN_L)
+            elif d <= 0.9:
+                c.set(x, y, WHITE)
+    c.add_outline()
+    return c
+
+
+# ---------------------------------------------------------------- tran_2
+def icon_tran_2():
+    """Ho Than Tran: khien tron lam lam, vong sang lam va tam vang."""
+    c = Canvas()
+    cx = cy = 7.5
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            if d <= 6.2:
+                if 5.2 <= d:
+                    c.set(x, y, CYAN_L)
+                elif 3.6 <= d <= 4.3:
+                    c.set(x, y, CYAN)
+                elif d <= 1.4:
+                    c.set(x, y, GOLD)
+                else:
+                    c.set(x, y, CYAN_D)
+    for x, y in [(7, 2), (8, 2), (2, 7), (2, 8), (13, 7), (13, 8), (7, 13), (8, 13)]:
+        c.set(x, y, WHITE)  # 4 diem sang tren vong
+    c.add_outline()
+    return c
+
+
+# ---------------------------------------------------------------- tran_3
+def icon_tran_3():
+    """Sat Tran: ba cot sang trang-vang doc, goc de tren nen rune."""
+    c = Canvas()
+    for col_x in (4, 8, 12):
+        for y in range(2, 14):
+            for x in (col_x - 1, col_x, col_x + 1):
+                if x == col_x:
+                    c.set(x, y, WHITE)
+                elif y < 4:
+                    c.set(x, y, YEL_L)
+                else:
+                    c.set(x, y, GOLD)
+        c.set(col_x, 1, WHITE)  # dau cot
+    for x in range(2, 14):
+        c.set(x, 14, GOLD_D)  # vach nen
+    for x, y in [(2, 6), (14, 9), (6, 2), (10, 2)]:
+        c.set(x, y, WHITE)  # tia sang nho
+    c.add_outline()
+    return c
+
+
+# ---------------------------------------------------------------- tran_ult
+def icon_tran_ult():
+    """Dai Tran: dai phu van lon, vong ngoai vang-lam, sao sau cung, tam sang."""
+    c = Canvas()
+    cx = cy = 7.5
+    up = _tri_edges(cx, cy, 4.8, -90)
+    down = _tri_edges(cx, cy, 4.8, 90)
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            ang = math.degrees(math.atan2(y - cy, x - cx)) % 360
+            if 5.6 <= d <= 6.4:
+                c.set(x, y, GOLD if int(ang // 30) % 2 == 0 else CYAN)
+            elif any(seg_dist(x, y, *p, *q) <= 0.45 for p, q in up + down):
+                c.set(x, y, CYAN_L)
+            elif d <= 1.6:
+                c.set(x, y, WHITE)
+            elif d <= 2.6 and (x + y) % 2 == 0:
+                c.set(x, y, GOLD_D)
+    c.add_outline()
+    return c
+
+
+# ---------------------------------------------------------------- dan_1
+def icon_dan_1():
+    """Doc Dan Vu: ba vien thuoc doc xanh roi cheo, vet loang duoi dat."""
+    c = Canvas()
+    _capsule(c, (3, 2), (6, 5), 1.2, POISON_L, POISON)
+    _capsule(c, (9, 3), (12, 6), 1.2, POISON_L, POISON)
+    _capsule(c, (5, 8), (8, 11), 1.2, POISON_L, POISON)
+    for x in range(2, 14, 2):
+        c.set(x, 14, POISON_D)  # vet doc loang
+    c.set(11, 12, POISON_D)
+    c.add_outline()
+    return c
+
+
+# ---------------------------------------------------------------- dan_2
+def icon_dan_2():
+    """Hoi Xuan Dan: vien hong nhat duong cheo, dau thap trang goc phai duoi."""
+    c = Canvas()
+    _capsule(c, (2, 12), (12, 2), 2.4, PINK_L, PINK)
+    for x, y in [(11, 11), (12, 11), (13, 11), (12, 10), (12, 12), (11, 12), (13, 12), (12, 13), (13, 13)]:
+        c.set(x, y, WHITE)
+    c.set(12, 11, PINK_D)
+    c.add_outline()
+    return c
+
+
+# ---------------------------------------------------------------- dan_3
+def icon_dan_3():
+    """Dan Hoa Phan Thien: non lua tu goc duoi trai toa len, loi trang-vang-do."""
+    c = Canvas()
+    origin = (1.0, 14.0)
+    poly = [(1, 12), (15, 2), (15, 14), (1, 15)]
+    for y in range(SIZE):
+        for x in range(SIZE):
+            if not in_poly(x, y, poly):
+                continue
+            d = math.hypot(x - origin[0], y - origin[1])
+            if d <= 3.2:
+                c.set(x, y, WHITE if d <= 1.6 else FIRE_Y)
+            elif d <= 6.5:
+                c.set(x, y, ORANGE if (x + y) % 3 else ORANGE_L)
+            else:
+                c.set(x, y, FLAME_RED if (x * y) % 4 else RED_D)
+    for x, y in [(13, 1), (14, 1), (11, 13)]:
+        c.set(x, y, ORANGE_L)  # tan lua bay len
+    c.add_outline()
+    return c
+
+
+# ---------------------------------------------------------------- dan_ult
+def icon_dan_ult():
+    """Cuu Chuyen Kim Dan: vien dan vang lon, vanh sang quanh, tia tru trang."""
+    c = Canvas()
+    cx = cy = 7.5
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            if 6.0 <= d <= 6.6 and (x + y) % 2 == 0:
+                c.set(x, y, YEL_L)  # vanh hao quang rải điểm
+            elif d <= 4.9:
+                if d >= 4.0:
+                    c.set(x, y, GOLD_D)
+                elif (x - y) % 3 == 0:
+                    c.set(x, y, YEL_L)
+                else:
+                    c.set(x, y, GOLD)
+    for x in range(5, 11):
+        c.set(x, 7, WHITE if x in (6, 7, 8) else GOLD_D)  # tia ngang trang
+    for y in range(5, 11):
+        c.set(7, y, WHITE if y in (6, 7, 8) else GOLD_D)  # tia doc trang
+    c.add_outline()
+    return c
+
+
 ICONS = {
     "dao_1.png": icon_dao_1,
     "dao_2.png": icon_dao_2,
@@ -384,6 +579,14 @@ ICONS = {
     "the_1.png": icon_the_1,
     "the_2.png": icon_the_2,
     "the_ult.png": icon_the_ult,
+    "tran_1.png": icon_tran_1,
+    "tran_2.png": icon_tran_2,
+    "tran_3.png": icon_tran_3,
+    "tran_ult.png": icon_tran_ult,
+    "dan_1.png": icon_dan_1,
+    "dan_2.png": icon_dan_2,
+    "dan_3.png": icon_dan_3,
+    "dan_ult.png": icon_dan_ult,
     "locked.png": icon_locked,
     "slot_bg.png": icon_slot_bg,
 }

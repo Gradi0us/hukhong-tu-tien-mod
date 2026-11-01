@@ -24,7 +24,13 @@ public final class DanSkills {
     public static void run(int slot, ServerPlayer p) {
         if (!(p.level() instanceof ServerLevel lv)) return;
         double sp = StatService.spellPower(p);
-        lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BREWING_STAND_BREW, SoundSource.PLAYERS, 0.8f, 1.2f - slot * 0.1f);
+        switch (slot) {
+            case 0 -> lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BREWING_STAND_BREW, SoundSource.PLAYERS, 0.9f, 1.2f);
+            case 1 -> lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.GENERIC_DRINK, SoundSource.PLAYERS, 0.9f, 1.1f);
+            case 2 -> lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.9f, 0.9f);
+            case 3 -> lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.8f, 1.0f);
+            default -> { }
+        }
         switch (slot) {
             case 0 -> doc(lv, p, sp);
             case 1 -> hoiXuan(lv, p, sp);
@@ -37,12 +43,14 @@ public final class DanSkills {
     /** Q Độc Đan Vũ: 5 viên rơi ngẫu nhiên quanh điểm ngắm (r=3), mỗi viên 0,4 x Phép lực + 2 tầng độc; xong để lại hồ độc r=2 trong 4 giây (+1 tầng/giây). */
     private static void doc(ServerLevel lv, ServerPlayer p, double sp) {
         Vec3 c = DanRuntime.aim(lv, p, DanMath.Q_RANGE);
+        DanVfx.aimRing(lv, p, c.add(0, 0.05, 0), DanMath.Q_SCATTER); // vòng ngắm: viên đan sẽ rơi trong vòng này
         for (int i = 0; i < DanMath.Q_PILLS; i++) {
             double a = lv.random.nextDouble() * Math.PI * 2;
             double rr = DanMath.Q_SCATTER * Math.sqrt(lv.random.nextDouble());
             Vec3 at = DanRuntime.ground(lv, c.add(Math.cos(a) * rr, 0, Math.sin(a) * rr));
             SkillScheduler.later(DanMath.Q_PILL_GAP_TICKS * (i + 1), () -> {
                 if (p.isAlive() && !p.hasDisconnected()) {
+                    DanVfx.throwArc(lv, at.add(0, 4, 0), at); // viên đan rơi từ trên cao xuống
                     DanRuntime.burst(lv, p, at, DanMath.Q_PILL_RADIUS, DanMath.Q_COEF * sp, DanMath.Q_STACKS);
                 }
             });
@@ -67,7 +75,7 @@ public final class DanSkills {
             for (MobEffectInstance e : new ArrayList<>(o.getActiveEffects())) {
                 if (!e.getEffect().value().isBeneficial()) o.removeEffect(e.getEffect());
             }
-            DanVfx.goldRing(lv, o.position(), 1.2);
+            DanVfx.goldRing(lv, p, o.position(), 1.2);
         }
     }
 
@@ -84,7 +92,7 @@ public final class DanSkills {
     /** T Cửu Chuyển Kim Đan: 10 giây mọi kỹ năng không tốn tài nguyên; đòn thường thành bom (r=3, 1,0 x Phép lực, +2 tầng). */
     private static void kimDan(ServerLevel lv, ServerPlayer p) {
         DanRuntime.startKim(lv, p);
-        DanVfx.goldRing(lv, p.position(), 2.5);
+        DanVfx.goldRing(lv, p, p.position(), 2.5);
     }
 
     /** Hình nón trước mặt người chơi: trong {@code range}, lệch góc tối đa theo {@code cosHalf} (gần sát thì luôn trúng). */

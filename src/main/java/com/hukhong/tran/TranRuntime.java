@@ -13,6 +13,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
@@ -60,6 +62,7 @@ public final class TranRuntime {
     static void addZone(ServerLevel lv, ServerPlayer p, Kind kind, Vec3 c, double r, int ticks) {
         long now = lv.getServer().getTickCount();
         ZONES.add(new Zone(p.getUUID(), p, lv.dimension(), c, r, now + ticks, kind));
+        TranVfx.zoneDecal(lv, p, c, r, ticks); // vòng Fx bền suốt thời gian trận
     }
 
     /** Đòn thường Trận Tu: tia phù văn trễ 3 tick + đánh dấu mục tiêu 5 giây. Chỉ gọi từ PassiveService cho đòn cận chiến. */
@@ -68,6 +71,7 @@ public final class TranRuntime {
         long now = lv.getServer().getTickCount();
         MARKS.put(target.getUUID(), new Mark(atk.getUUID(), now + TranMath.MARK_TICKS));
         double dmg = TranMath.BASIC_COEF * StatService.spellPower(atk);
+        lv.playSound(null, atk.getX(), atk.getY(), atk.getZ(), SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.PLAYERS, 0.7f, 1.3f);
         Vec3 from = atk.getEyePosition().subtract(0, 0.25, 0);
         TranVfx.bolt(lv, from, target.position().add(0, target.getBbHeight() * 0.5, 0));
         SkillScheduler.later(TranMath.BASIC_BOLT_DELAY_TICKS, () -> {
@@ -147,8 +151,7 @@ public final class TranRuntime {
             }
             if (owner == null) continue;
             if (z.kind() == Kind.ULT && now % TranMath.ULT_PULL_INTERVAL_TICKS == 0) pull(lv, owner, z);
-            int every = z.kind() == Kind.TRAP ? 10 : 20;
-            if (now % every == 0) TranVfx.rune(lv, z.c().add(0, 0.05, 0), z.r());
+            if (now % 5 == 0) TranVfx.rune(lv, z.c().add(0, 0.05, 0), z.r()); // vẽ lại mỗi 5 tick suốt thời gian trận
             if (now % 20 == 0 && owner.position().distanceTo(z.c()) <= z.r()) regen.add(owner);
         }
         for (ServerPlayer p : regen) Resources.add(p, TranMath.REGEN_PER_SEC);

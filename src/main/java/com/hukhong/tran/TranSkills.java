@@ -23,7 +23,13 @@ public final class TranSkills {
     public static void run(int slot, ServerPlayer p) {
         if (!(p.level() instanceof ServerLevel lv)) return;
         double sp = StatService.spellPower(p);
-        lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8f, 1.1f - slot * 0.12f);
+        switch (slot) {
+            case 0 -> lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.9f, 1.1f);
+            case 1 -> lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.9f, 1.0f);
+            case 2 -> lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8f, 1.2f);
+            case 3 -> lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.9f, 0.9f);
+            default -> { }
+        }
         switch (slot) {
             case 0 -> khonTran(lv, p, sp);
             case 1 -> hoThanTran(lv, p);
@@ -37,6 +43,8 @@ public final class TranSkills {
     private static void khonTran(ServerLevel lv, ServerPlayer p, double sp) {
         Vec3 c = TranRuntime.aim(lv, p, TranMath.Q_RANGE);
         TranRuntime.addZone(lv, p, TranRuntime.Kind.TRAP, c, TranMath.Q_RADIUS, TranMath.Q_TICKS);
+        TranVfx.burst(lv, c.add(0, 0.1, 0), TranMath.Q_RADIUS);
+        TranVfx.rune(lv, c.add(0, 0.05, 0), TranMath.Q_RADIUS);
         float dmg = (float) (TranMath.Q_COEF * sp);
         // Chốt danh sách mục tiêu lúc đặt trận: đòn trúng có thể đẩy quái ra khỏi bán kính, nên không tính lại theo vị trí khi choáng.
         List<LivingEntity> caught = TranRuntime.around(lv, p, c, TranMath.Q_RADIUS);
@@ -56,12 +64,14 @@ public final class TranSkills {
     private static void hoThanTran(ServerLevel lv, ServerPlayer p) {
         Vec3 c = p.position();
         TranRuntime.addZone(lv, p, TranRuntime.Kind.WARD, c, TranMath.WARD_RADIUS, TranMath.WARD_TICKS);
+        TranVfx.burst(lv, c.add(0, 0.1, 0), TranMath.WARD_RADIUS);
         TranVfx.rune(lv, c.add(0, 0.05, 0), TranMath.WARD_RADIUS);
     }
 
     /** R Sát Trận: 8 cột sáng cách nhau 10 tick, mỗi cột rơi ngẫu nhiên trong r=6 quanh điểm ngắm, đánh 0,55 x Phép lực (r=1,5). */
     private static void satTran(ServerLevel lv, ServerPlayer p, double sp) {
         Vec3 c = TranRuntime.aim(lv, p, TranMath.R_RANGE);
+        TranVfx.burst(lv, c.add(0, 0.1, 0), TranMath.R_RADIUS);
         TranVfx.rune(lv, c.add(0, 0.05, 0), TranMath.R_RADIUS);
         float dmg = (float) (TranMath.R_TICK_COEF * sp);
         for (int i = 0; i < TranMath.R_HITS; i++) {
@@ -88,6 +98,7 @@ public final class TranSkills {
     private static void daiTran(ServerLevel lv, ServerPlayer p) {
         Vec3 c = p.position();
         TranRuntime.addZone(lv, p, TranRuntime.Kind.ULT, c, TranMath.ULT_RADIUS, TranMath.ULT_TICKS);
+        TranVfx.burst(lv, c.add(0, 0.1, 0), TranMath.ULT_RADIUS);
         TranVfx.rune(lv, c.add(0, 0.05, 0), TranMath.ULT_RADIUS);
         TranVfx.pillar(lv, c);
     }

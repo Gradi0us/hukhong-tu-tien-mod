@@ -10,6 +10,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -96,6 +98,7 @@ public final class DanRuntime {
     public static void basicHit(ServerPlayer atk, LivingEntity target) {
         if (!(atk.level() instanceof ServerLevel lv)) return;
         boolean bomb = kimActive(atk);
+        lv.playSound(null, atk.getX(), atk.getY(), atk.getZ(), SoundEvents.SLIME_SQUISH, SoundSource.PLAYERS, 0.8f, 1.2f);
         Vec3 from = atk.getEyePosition().subtract(0, 0.25, 0);
         DanVfx.throwArc(lv, from, target.position().add(0, target.getBbHeight() * 0.5, 0));
         double sp = StatService.spellPower(atk);
@@ -107,7 +110,7 @@ public final class DanRuntime {
                 target.invulnerableTime = 0;
                 DamageRules.hurtBySkill(atk, target, (float) (DanMath.BASIC_COEF * sp));
                 addPoison(atk, target, DanMath.BASIC_STACKS);
-                DanVfx.burst(lv, target.position().add(0, 0.2, 0), DanMath.BASIC_RADIUS);
+                DanVfx.burst(lv, atk, target.position().add(0, 0.2, 0), DanMath.BASIC_RADIUS);
             }
         });
     }
@@ -117,12 +120,13 @@ public final class DanRuntime {
     static void addPool(ServerLevel lv, ServerPlayer p, Vec3 c) {
         long now = lv.getServer().getTickCount();
         POOLS.add(new Pool(p, lv.dimension(), c, now));
+        DanVfx.poolDecal(lv, p, c, DanMath.POOL_RADIUS, DanMath.POOL_TICKS); // vũng xanh bền suốt 4 giây hồ
         DanVfx.pool(lv, c, DanMath.POOL_RADIUS);
     }
 
     /** Nổ đan trên một điểm: sát thương {@code dmg} + {@code stacks} tầng cho mọi mục tiêu trong bán kính. */
     static void burst(ServerLevel lv, ServerPlayer p, Vec3 at, double r, double dmg, int stacks) {
-        DanVfx.burst(lv, at, r);
+        DanVfx.burst(lv, p, at, r);
         for (LivingEntity v : around(lv, p, at, r)) {
             v.invulnerableTime = 0;
             DamageRules.hurtBySkill(p, v, (float) dmg);
