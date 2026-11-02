@@ -137,10 +137,10 @@ public final class TranSkills {
      * mọi địch trong bán kính nhận (hệ số) x Phép lực, rồi người thi triển Kiệt Sức 3 giây.
      */
     static void chargeStrike(ServerLevel lv, ServerPlayer p, Vec3 c, double f) {
-        Vec3 at = TranRuntime.ground(lv, c);
+        Vec3 at = c; // c đã ở mặt đất (TranRuntime.aimGround): cột giáng đúng tâm pháp trận đang hiện
         double r = TranMath.chargeRadius(f);
         float dmg = (float) (TranMath.chargeCoef(f) * StatService.spellPower(p));
-        TranVfx.giantPillar(lv, at, r);
+        TranVfx.giantPillar(lv, p, at, r);
         for (LivingEntity v : TranRuntime.around(lv, p, at, r)) {
             v.invulnerableTime = 0;
             DamageRules.hurtBySkill(p, v, dmg);

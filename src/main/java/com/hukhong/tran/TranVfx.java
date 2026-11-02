@@ -148,12 +148,71 @@ final class TranVfx {
         sound(lv, at, SoundEvents.BEACON_POWER_SELECT, 1f, 1.2f);
     }
 
+    /**
+     * Hiệu ứng khi vận Sát Trận (gọi mỗi tick): pháp trận decal sáng nở dần theo r, vòng phù văn xoay, tia linh lực từ tay
+     * người chơi xuống tâm, hạt tụ vào người, âm thanh cao dần; đầy lực thì chớp sáng.
+     */
+    static void chargeTick(ServerLevel lv, ServerPlayer p, Vec3 c, double r, double f, int held) {
+        Vec3 g = c.add(0, 0.06, 0);
+        if (held % 2 == 0) {
+            Fx.rune(lv, p, g, (float) r, Fx.GOLD, 5, 3 + (int) Math.round(f * 5));
+            Fx.groundRing(lv, p, g.add(0, 0.01, 0), (float) r, Fx.CYAN, 5);
+        }
+        if (held % 4 == 0) {
+            rune(lv, g.add(0, 0.25, 0), r);
+            ring(lv, c, r, 0.4 + 0.2 * Math.sin(held * 0.3), 48, spin(lv, 0.15), GOLD_HOT);
+            Vec3 hand = p.getEyePosition().add(p.getLookAngle().scale(0.6)).subtract(0, 0.4, 0);
+            Fx.ribbon(lv, p, hand, c.add(0, 0.5, 0), 0, 4, 0, 0.05f + 0.1f * (float) f, Fx.GOLD);
+            lv.sendParticles(ParticleTypes.ENCHANT, p.getX(), p.getY() + 1.2, p.getZ(), 12, 0.8, 0.8, 0.8, 0.6);
+            for (int k = 0; k < 6; k++) {                       // cột hạt mảnh dọc theo mép trận
+                double a = spin(lv, 0.1) + Math.PI * 2 * k / 6;
+                Vec3 q = onRing(c, r, 0, a);
+                lv.sendParticles(ParticleTypes.END_ROD, q.x, q.y + 0.2 + f * 2, q.z, 1, 0, 0.3, 0, 0.01);
+            }
+        }
+        if (held % 10 == 0) sound(lv, p.position(), SoundEvents.BEACON_AMBIENT, 0.8f, 0.6f + (float) f);
+        if (held == TranMath.CHARGE_TICKS) {
+            lv.sendParticles(ParticleTypes.FLASH, c.x, c.y + 1, c.z, 1, 0, 0, 0, 0);
+            sound(lv, c, SoundEvents.BEACON_POWER_SELECT, 1.2f, 1.6f);
+        }
+    }
+
     /** Cột sáng khổng lồ: trụ sáng lớn + vành sóng xung kích + rung màn hình. */
     static void giantPillar(ServerLevel lv, Vec3 at, double r) {
-        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, (float) (r * 0.7), Fx.GOLD, 50); // cột theo cỡ vòng tụ lực
-        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, (float) (r * 0.4), Fx.WHITE, 40);
-        for (double y = 0; y <= 30; y += 0.5)
-            lv.sendParticles(ParticleTypes.END_ROD, at.x, at.y + y, at.z, 3, 0.6, 0, 0.6, 0.02);
+        giantPillar(lv, null, at, r);
+    }
+
+    /**
+     * Cột sáng khổng lồ rộng bằng pháp trận, dọi thẳng từ trời xuống: dải sáng dày ở tâm + vòng dải sáng ở mép trận +
+     * sao sáng phủ kín đĩa (FxType.LIGHT_PILLAR với scale = đường kính), hạt dọc thân cột trong 10 tick, sóng xung kích, rung màn hình.
+     */
+    static void giantPillar(ServerLevel lv, ServerPlayer owner, Vec3 at, double r) {
+        double top = 32;
+        if (owner != null) {
+            Fx.ribbon(lv, owner, at.add(0, top, 0), at, 0, 5, 0, (float) Math.max(0.6, r * 0.45), Fx.WHITE);
+            Fx.ribbon(lv, owner, at.add(0, top, 0), at, 0, 5, 0, (float) Math.max(0.9, r * 0.75), Fx.GOLD);
+            int n = Math.max(8, (int) Math.round(r * 3));
+            for (int k = 0; k < n; k++) {
+                double a = Math.PI * 2 * k / n;
+                Vec3 q = at.add(Math.cos(a) * r * 0.85, 0, Math.sin(a) * r * 0.85);
+                Fx.ribbon(lv, owner, q.add(0, top, 0), q, 0, 5, k % 3, 0.35f, k % 2 == 0 ? Fx.GOLD : Fx.WHITE);
+            }
+            Fx.groundRing(lv, owner, at.add(0, 0.06, 0), (float) r, Fx.GOLD, 30);
+            Fx.groundCrack(lv, owner, at.add(0, 0.05, 0), (float) r, Fx.GOLD, 8, 40);
+        }
+        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, (float) (r * 2), Fx.GOLD, 40);
+        Fx.play(lv, FxType.SHOCKWAVE, at.add(0, 0.2, 0), Vec3.ZERO, (float) (r * 1.6), Fx.GOLD, 20);
+        for (int t = 0; t < 10; t++) {
+            final int tt = t;
+            com.hukhong.skill.SkillScheduler.later(t, () -> {
+                for (int i = 0; i < 40; i++) {
+                    double a = lv.random.nextDouble() * Math.PI * 2, rr = r * Math.sqrt(lv.random.nextDouble());
+                    double y = lv.random.nextDouble() * top;
+                    lv.sendParticles(ParticleTypes.END_ROD, at.x + Math.cos(a) * rr, at.y + y, at.z + Math.sin(a) * rr, 1, 0, -0.6, 0, 0.3);
+                }
+                ring(lv, at, r * (0.3 + 0.07 * tt), 0.15, 40, spin(lv, 0.3), GOLD_HOT);
+            });
+        }
         for (double rr = 1; rr <= r; rr += 1) ring(lv, at, rr, 0.15, 40, spin(lv, 0.3), GOLD_HOT);
         lv.sendParticles(ParticleTypes.FLASH, at.x, at.y + 1, at.z, 2, 0, 0, 0, 0);
         lv.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y + 0.5, at.z, 1, 0, 0, 0, 0);

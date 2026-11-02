@@ -214,10 +214,11 @@ public final class TranRuntime {
                     && Skill.skillPath(p.getData(ModAttachments.CULTIVATION), SkillService.state(p).page) == Path.TRAN;
             if (!valid) { it.remove(); continue; }
             if (c.held >= TranMath.CHARGE_TICKS + TranMath.CHARGE_EXTRA_TICKS) { it.remove(); fire(c); continue; }
-            c.c = aim(c.lv, p, TranMath.CHARGE_RANGE);
-            double r = TranMath.chargeRadius(TranMath.chargeFraction(c.held));
+            c.c = aimGround(c.lv, p, TranMath.CHARGE_RANGE);
+            double f = TranMath.chargeFraction(c.held);
+            double r = TranMath.chargeRadius(f);
+            TranVfx.chargeTick(c.lv, p, c.c, r, f, c.held);
             if (c.held % TranMath.CHARGE_REFRESH_TICKS == 0) {
-                TranVfx.rune(c.lv, c.c.add(0, 0.05, 0), r);
                 for (LivingEntity v : around(c.lv, p, c.c, r)) {
                     v.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, TranMath.CHARGE_SLOW_TICKS, TranMath.CHARGE_SLOW_AMP, false, true));
                 }
@@ -498,6 +499,16 @@ public final class TranRuntime {
         if (ehr != null) return ehr.getEntity().position();
         BlockHitResult r = lv.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
         return ground(lv, r.getType() == HitResult.Type.MISS ? end : r.getLocation());
+    }
+
+    /** Điểm ngắm luôn nằm trên mặt đất: tia nhìn chạm khối -> điểm đó; trúng quái -> chân quái; nhìn trời -> rơi thẳng xuống đất (tối đa 64 khối). */
+    static Vec3 aimGround(ServerLevel lv, ServerPlayer p, double range) {
+        Vec3 eye = p.getEyePosition(), look = p.getLookAngle(), end = eye.add(look.scale(range));
+        BlockHitResult r = lv.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
+        Vec3 hit = r.getType() == HitResult.Type.MISS ? end : r.getLocation().subtract(look.scale(0.05));
+        var down = lv.clip(new ClipContext(hit.add(0, 0.5, 0), hit.add(0, -64, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY,
+                net.minecraft.world.phys.shapes.CollisionContext.empty()));
+        return down.getType() == HitResult.Type.MISS ? new Vec3(hit.x, p.getY(), hit.z) : down.getLocation();
     }
 
     static Vec3 ground(ServerLevel lv, Vec3 v) {
