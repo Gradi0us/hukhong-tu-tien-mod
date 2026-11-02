@@ -5,7 +5,10 @@ import com.hukhong.core.Aptitude;
 import com.hukhong.core.CultivationData;
 import com.hukhong.core.ModAttachments;
 import com.hukhong.core.Path;
+import com.hukhong.skill.Skill;
 import com.hukhong.skill.SkillService;
+import com.hukhong.skillbook.SkillBook;
+import com.hukhong.skillbook.SkillBookService;
 import com.hukhong.stats.StatService;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
@@ -13,6 +16,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Zombie;
@@ -28,12 +32,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/** Trận Tu: Q khống chế, E giảm sát thương, T kéo + hồi chiêu, qua đúng đường SkillService.cast (phím thật). */
+/** Trận Tu: thế (T + Q/E/R), khoá 4 phím, Giam Cầm, Kiệt Sức, Hồi Linh; qua đúng đường SkillService.cast. */
 @GameTestHolder(HuKhong.MODID)
 @PrefixGameTestTemplate(false)
 public final class TranGameTests {
     private TranGameTests() {}
 
+    /** Người chơi giả: giữ tham chiếu (không nằm trong PlayerList), nhìn +Z. */
     static ServerPlayer player(GameTestHelper h) {
         ServerPlayer p = FakePlayerFactory.get(h.getLevel(), new com.mojang.authlib.GameProfile(UUID.randomUUID(), "hk-tran"));
         p.getInventory().clearContent();
@@ -43,11 +48,11 @@ public final class TranGameTests {
         p.setData(ModAttachments.CULTIVATION, cd.withResource(cd.resourceMax()));
         SkillService.state(p).stance = true;
         Vec3 b = h.absoluteVec(new Vec3(2.5, 2.0, 2.5));
-        p.moveTo(b.x, b.y, b.z, 0f, 0f); // yaw 0 = nhìn +Z
+        p.moveTo(b.x, b.y, b.z, 0f, 0f);
         return p;
     }
 
-    /** Zombie đứng yên (tốc độ 0, không AI) cách người chơi {@code ahead} block phía trước. */
+    /** Quái đứng yên, không AI di chuyển, máu rất lớn, cách người chơi {@code ahead} block phía trước. */
     static Zombie zombie(GameTestHelper h, ServerPlayer p, double ahead) {
         Zombie z = EntityType.ZOMBIE.create(h.getLevel());
         Vec3 at = p.position().add(0, 0.7, ahead);
@@ -61,15 +66,67 @@ public final class TranGameTests {
         return z;
     }
 
+    /** Vào thế: T (chọn thế) rồi phím đúng. Trả về thế sau khi bấm. */
+    static void enterStance(ServerPlayer p, int slot) {
+        SkillService.cast(p, 3);
+        SkillService.cast(p, slot);
+    }
+
+    /** Hồi chiêu được reset giữa các lần bấm để test không phụ thuộc thời gian. */
+    static void castReset(ServerPlayer p, int slot) {
+        SkillService.state(p).cooldownEnd[slot] = 0;
+        SkillService.cast(p, slot);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void stanceEnterAndReset(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        SkillService.cast(p, 3); // T: chọn thế
+        if (TranRuntime.stance(p) != TranStance.BASE) h.fail("T khong duoc doi thanh chon the, dang o " + TranRuntime.stance(p));
+        SkillService.cast(p, 0); // Q khi đang chọn thế: vào Khống Chế (không cast Khốn Trận)
+        if (TranRuntime.stance(p) != TranStance.KHONG_CHE) h.fail("Q khong vao the Khong Che: " + TranRuntime.stance(p));
+        if (SkillService.state(p).cooldownEnd[0] > h.getLevel().getGameTime()) h.fail("Q chon the khong duoc cast ngay: hoi chieu bi dat");
+        SkillService.cast(p, 3); // T trong thế: về BASE
+        if (TranRuntime.stance(p) != TranStance.BASE) h.fail("T trong the khong ve BASE: " + TranRuntime.stance(p));
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void stanceResetPreventsImmediateRearm(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        enterStance(p, 2); // PHONG_NGU
+        SkillService.cast(p, 3); // về BASE, bắt đầu hồi 1 giây
+        SkillService.cast(p, 3); // bấm lại ngay: chưa được chọn thế
+        if (TranRuntime.stance(p) != TranStance.BASE) h.fail("T lap tuc sau khi ve BASE van chon the");
+        if (TranRuntime.st(p).armedUntil >= h.getLevel().getGameTime()) h.fail("the duoc chon khi chua het hoi 1 giay");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void tranSlotsLockedAgainstBooks(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        var bd = SkillBookService.data(p);
+        for (int slot = 0; slot < 4; slot++) {
+            SkillBook.Resolved r = SkillBook.resolve(bd, Path.TRAN, slot, 60, TranMath.LOCK_MASK);
+            Skill want = Skill.of(Path.TRAN, slot);
+            if (r == null || r.base() != want) h.fail("Phim " + slot + " Tran khong bi khoa: " + (r == null ? "null" : r.id()) + " ky vong " + (want == null ? null : want.icon));
+        }
+        if (SkillBook.fixedId(Path.TRAN, TranMath.LOCK_MASK, Skill.TRAN_CAGE.icon)) {
+            // kỹ năng của thế không phải phím cố định của trang: không được coi là khoá gán
+            h.fail("kỹ năng thế không được coi là phím cố định của trang");
+        }
+        h.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 100, batch = "tran_pull")
     public static void khonTranRoots(GameTestHelper h) {
         ServerPlayer p = player(h);
         Zombie z = zombie(h, p, 6);
-        SkillService.cast(p, 0); // Q
+        SkillService.cast(p, 0); // Q (BASE): Khốn Trận
         if (SkillService.state(p).cooldownEnd[0] <= h.getLevel().getGameTime()) h.fail("Q khong thuc thi (khong dat hoi chieu)");
         h.runAfterDelay(45, () -> {
             if (z.getHealth() >= 1.0E8f) h.fail("Khon Tran khong gay sat thuong");
-            if (!z.isNoAi()) h.fail("Khon Tran khong choang muc tieu sau 45 tick (hp=" + z.getHealth() + ", pos=" + z.position() + ", ky vong gan " + p.position().add(0, 0.7, 6) + ")");
+            if (!z.isNoAi()) h.fail("Khon Tran khong choang muc tieu sau 45 tick (hp=" + z.getHealth() + ")");
             h.succeed();
         });
     }
@@ -77,9 +134,9 @@ public final class TranGameTests {
     @GameTest(template = "empty", timeoutTicks = 40)
     public static void hoThanReduces(GameTestHelper h) {
         ServerPlayer p = player(h);
-        SkillService.cast(p, 1); // E: lập Hộ Thân Trận quanh người chơi
+        SkillService.cast(p, 2); // R (BASE): Hộ Thân Trận quanh người chơi
         var holder = h.getLevel().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.GENERIC);
-        // FakePlayer.hurt luôn bị chặn nên phát sự kiện đầu vào trực tiếp (cùng cách DongDaoGameTests)
+        // FakePlayer.hurt luôn bị chặn nên phát sự kiện đầu vào trực tiếp
         var ev = new LivingIncomingDamageEvent(p, new DamageContainer(new DamageSource(holder), 10f));
         NeoForge.EVENT_BUS.post(ev);
         float out = ev.getAmount();
@@ -87,36 +144,65 @@ public final class TranGameTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 100, batch = "tran_pull")
-    public static void daiTranPulls(GameTestHelper h) {
+    @GameTest(template = "empty", timeoutTicks = 100, batch = "tran_cage")
+    public static void cageKeepsMobInside(GameTestHelper h) {
         ServerPlayer p = player(h);
-        Zombie z = zombie(h, p, 10);
-        double d0 = z.position().distanceTo(p.position());
-        SkillService.cast(p, 3); // T: Đại Trận, kéo quái về tâm
-        int zones = TranRuntime.zoneCount();
-        h.runAfterDelay(6, () -> {
-            if (TranRuntime.zoneCount() == 0) h.fail("Dai Tran khong duoc tao (zones=" + zones + ")");
+        Zombie z = zombie(h, p, 6);
+        enterStance(p, 0); // KHONG_CHE
+        SkillService.cast(p, 0); // Giam Cầm Trận tại quái
+        h.runAfterDelay(5, () -> {
+            if (TranRuntime.countOwned(TranRuntime.Kind.CAGE, p) != 1) h.fail("Giam Cam Tran khong duoc tao");
+            Vec3 c = z.position();
+            z.setPos(c.x + TranMath.CAGE_RADIUS + 3, c.y, c.z); // thử đẩy quái ra ngoài lồng
         });
-        h.runAfterDelay(40, () -> {
-            double d1 = z.position().distanceTo(p.position());
-            if (d0 - d1 < 1.5) h.fail("Dai Tran khong keo quai: khoang cach " + d0 + " -> " + d1 + ", zones=" + TranRuntime.zoneCount() + ", pulls=" + TranRuntime.pullCount() + ", vel=" + z.getDeltaMovement() + ", hp=" + z.getHealth());
+        h.runAfterDelay(12, () -> {
+            var cage = TranRuntime.ownedZone(TranRuntime.Kind.CAGE, p);
+            if (cage == null) h.fail("Long vo qua som");
+            double d = Math.hypot(z.getX() - cage.c.x, z.getZ() - cage.c.z);
+            if (d > TranMath.CAGE_RADIUS + 0.01) h.fail("Quai thoat long: khoang cach " + d);
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200, batch = "tran_cage")
+    public static void cageBreaksAfterHits(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        zombie(h, p, 6);
+        zombie(h, p, 6.5);
+        enterStance(p, 0);
+        SkillService.cast(p, 0); // lồng với 2 quái: giới hạn đập = 6 + 2*2 = 10, mỗi giây 2 đập -> vỡ ~100 tick
+        h.runAfterDelay(60, () -> {
+            if (TranRuntime.countOwned(TranRuntime.Kind.CAGE, p) != 1) h.fail("Long vo qua som (60 tick)");
+        });
+        h.runAfterDelay(130, () -> {
+            if (TranRuntime.countOwned(TranRuntime.Kind.CAGE, p) != 0) h.fail("Long khong vo sau 10 lan dap (con " + TranRuntime.countOwned(TranRuntime.Kind.CAGE, p) + ")");
             h.succeed();
         });
     }
 
     @GameTest(template = "empty", timeoutTicks = 60)
-    public static void daiTranCooldownHalf(GameTestHelper h) {
+    public static void kietSucAtFiveCasts(GameTestHelper h) {
         ServerPlayer p = player(h);
-        long now = h.getLevel().getGameTime();
-        SkillService.cast(p, 0); // Q ngoài Đại Trận
-        long outside = SkillService.state(p).cooldownEnd[0] - now;
-        SkillService.state(p).cooldownEnd[0] = 0;
-        SkillService.cast(p, 3); // T: lập Đại Trận quanh người chơi
-        SkillService.state(p).cooldownEnd[0] = 0;
-        SkillService.cast(p, 0); // Q trong Đại Trận
-        long inside = SkillService.state(p).cooldownEnd[0] - now;
-        if (outside <= 0) h.fail("Q ngoai tran khong co hoi chieu: " + outside);
-        if (inside >= outside || inside > outside * 0.5 + 1) h.fail("Hoi chieu trong Dai Tran = " + inside + ", ngoai = " + outside + " (ky vong x0,5)");
+        enterStance(p, 1); // SAT_THUONG
+        for (int i = 0; i < 4; i++) castReset(p, 0); // 4 Kiệt Lực: chưa Kiệt Sức
+        if (TranRuntime.exhausted(p)) h.fail("Kiet Suc qua som (4 lan)");
+        castReset(p, 0); // lần thứ 5
+        if (!TranRuntime.exhausted(p)) h.fail("Chua Kiet Suc sau 5 lan cast");
+        if (!p.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) || !p.hasEffect(MobEffects.WEAKNESS)) h.fail("Thieu Slowness/Weakness khi Kiet Suc");
+        if (TranRuntime.st(p).stacks != 0) h.fail("Kiet Luc khong reset sau Kiet Suc: " + TranRuntime.st(p).stacks);
         h.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 60, batch = "tran_heal")
+    public static void healingFormationHeals(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        enterStance(p, 2); // PHONG_NGU
+        p.setHealth(p.getMaxHealth() / 2);
+        float before = p.getHealth();
+        castReset(p, 1); // E: Hồi Linh Trận
+        h.runAfterDelay(25, () -> {
+            if (p.getHealth() <= before) h.fail("Hoi Linh Tran khong hoi mau: " + before + " -> " + p.getHealth());
+            h.succeed();
+        });
     }
 }

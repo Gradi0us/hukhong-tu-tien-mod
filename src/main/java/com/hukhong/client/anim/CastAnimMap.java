@@ -45,6 +45,16 @@ public final class CastAnimMap {
         BASE.put(Skill.TRAN_2, CastAnim.GUARD);
         BASE.put(Skill.TRAN_3, CastAnim.CHANNEL);
         BASE.put(Skill.TRAN_ULT, CastAnim.ULT_RAISE);
+        // Trận Tu theo thế (Khống Chế / Sát Thương / Phòng Ngự): cùng động tác theo phím Q/E/R
+        BASE.put(Skill.TRAN_CAGE, CastAnim.HAND_SEAL);
+        BASE.put(Skill.TRAN_SLOW, CastAnim.CHANNEL);
+        BASE.put(Skill.TRAN_SUPPRESS, CastAnim.GUARD);
+        BASE.put(Skill.TRAN_PILLAR, CastAnim.HAND_SEAL);
+        BASE.put(Skill.TRAN_BLADES, CastAnim.SWORD_OVERHEAD);
+        BASE.put(Skill.TRAN_DOOM, CastAnim.ROAR);
+        BASE.put(Skill.TRAN_WARD, CastAnim.GUARD);
+        BASE.put(Skill.TRAN_HEAL, CastAnim.CHANNEL);
+        BASE.put(Skill.TRAN_SHIELD, CastAnim.GUARD);
         BASE.put(Skill.DAN_1, CastAnim.HAND_SEAL);
         BASE.put(Skill.DAN_2, CastAnim.GUARD);
         BASE.put(Skill.DAN_3, CastAnim.ROAR);

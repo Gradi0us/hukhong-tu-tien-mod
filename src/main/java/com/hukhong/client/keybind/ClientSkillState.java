@@ -1,6 +1,7 @@
 package com.hukhong.client.keybind;
 
 import com.hukhong.network.SkillSyncPayload;
+import com.hukhong.network.TranSyncPayload;
 
 /** Bản sao client: thế tu luyện + hồi chiêu (đếm lùi cục bộ mỗi tick). */
 public final class ClientSkillState {
@@ -22,7 +23,24 @@ public final class ClientSkillState {
         }
     }
 
+    private static volatile int tranStance = 0, tranArmed = 0, tranStacks = 0, tranExhaust = 0;
+
+    /** Trận Tu: thế (ordinal TranStance), tick còn lại của chọn thế, Kiệt Lực, tick còn lại của Kiệt Sức. */
+    public static void updateTran(TranSyncPayload p) {
+        tranStance = p.stance();
+        tranArmed = p.armedTicks();
+        tranStacks = p.stacks();
+        tranExhaust = p.exhaustTicks();
+    }
+
+    public static int tranStance() { return tranStance; }
+    public static int tranArmed() { return tranArmed; }
+    public static int tranStacks() { return tranStacks; }
+    public static int tranExhaust() { return tranExhaust; }
+
     public static void tick() {
+        if (tranArmed > 0) tranArmed--;
+        if (tranExhaust > 0) tranExhaust--;
         for (int i = 0; i < 4; i++) if (REMAINING[i] > 0) REMAINING[i]--;
     }
 

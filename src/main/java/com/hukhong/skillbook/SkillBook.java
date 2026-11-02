@@ -72,7 +72,7 @@ public final class SkillBook {
 
     /** Nhiều phím cố định cùng lúc (Thổ: E + T). lockMask = 0 => như resolve thường. */
     public static Resolved resolve(SkillBookData d, Path page, int slot, int playerLevel, int lockMask) {
-        if (lockMask == 0 || page != Path.PHAP) return resolve(d, page, slot, playerLevel);
+        if (lockMask == 0 || (page != Path.PHAP && page != Path.TRAN)) return resolve(d, page, slot, playerLevel);
         if (slot < 0 || slot > 3) return null;
         if ((lockMask >> slot & 1) != 0) {
             Skill f = Skill.of(page, slot);

@@ -96,6 +96,7 @@ public final class DanGameTests {
         ServerPlayer p = player(h);
         Zombie full = zombie(h, p, 4, 0, 10000);     // 5 tầng độc: hệ số 1 + 0,15 x 5 = 1,75
         Zombie none = zombie(h, p, 4, 1.5, 10000);   // không có độc: hệ số 1 (vẫn trong nón)
+        com.hukhong.gametest.GameTestSupport.noCrit(p); // bạo kích ngẫu nhiên làm lệch tỉ lệ
         DanRuntime.addPoison(p, full, 5);
         float hf = full.getHealth(), hn = none.getHealth();
         SkillService.cast(p, 2); // R Đan Hỏa Phần Thiên

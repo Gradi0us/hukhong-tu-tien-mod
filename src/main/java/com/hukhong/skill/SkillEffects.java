@@ -52,7 +52,8 @@ public final class SkillEffects {
             case MA_2 -> maKhiHoThe(lv, p);
             case MA_ULT -> maThanGiangThe(lv, p);
             case PHAP_1, PHAP_2, PHAP_3, PHAP_ULT -> com.hukhong.phaptu.PhapSkills.run(s.slot, p);
-            case TRAN_1, TRAN_2, TRAN_3, TRAN_ULT -> com.hukhong.tran.TranSkills.run(s.slot, p);
+            case TRAN_1, TRAN_2, TRAN_3, TRAN_ULT, TRAN_CAGE, TRAN_SLOW, TRAN_SUPPRESS, TRAN_PILLAR, TRAN_BLADES, TRAN_DOOM,
+                 TRAN_WARD, TRAN_HEAL, TRAN_SHIELD -> com.hukhong.tran.TranSkills.run(s, p);
             case DAN_1, DAN_2, DAN_3, DAN_ULT -> com.hukhong.dan.DanSkills.run(s.slot, p);
         }
     }

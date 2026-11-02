@@ -119,7 +119,7 @@ public final class PathRules {
                 st.regenFrac = v - whole;
                 if (whole > 0) Resources.add(p, whole);
             }
-            if (d.paths().contains(Path.TRAN) || d.paths().contains(Path.DAN)) // Trận Lực / Đan Hỏa hồi như Pháp Lực
+            if ((d.paths().contains(Path.TRAN) && !com.hukhong.tran.TranRuntime.exhausted(p)) || d.paths().contains(Path.DAN)) // Trận Lực / Đan Hỏa hồi như Pháp Lực (Trận Lực ngừng khi Kiệt Sức)
                 Resources.add(p, (int) Math.max(1, Math.round((med ? PHAP_MEDITATE_REGEN * mm : PHAP_REGEN) * rg)));
             if (the) {
                 if (med) {

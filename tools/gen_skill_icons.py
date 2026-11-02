@@ -572,6 +572,235 @@ def icon_dan_ult():
     return c
 
 
+# ---------------------------------------------------------------- tran_* (bo moi Trận Tu)
+PURP = rgba("#a060ff")
+PURP_D = rgba("#5b2e9e")
+RED_BR = rgba("#ff3b2e")
+
+
+def _hex_edges(cx, cy, r):
+    pts = [(cx + r * math.cos(math.radians(a)), cy + r * math.sin(math.radians(a)))
+           for a in range(0, 360, 60)]
+    return [(pts[k], pts[(k + 1) % 6]) for k in range(6)]
+
+
+def icon_tran_khon():
+    """Khon Tran: vong vang chia cung khuc, 8 nan lam tu tam ra, hat trang o tam."""
+    c = Canvas()
+    cx = cy = 7.5
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            ang = math.degrees(math.atan2(y - cy, x - cx)) % 360
+            if 5.4 <= d <= 6.4:
+                if int(ang // 30) % 2 == 0:
+                    c.set(x, y, GOLD)
+            elif 1.6 <= d <= 4.2 and min(ang % 45, 45 - ang % 45) <= 4:
+                c.set(x, y, CYAN_L)
+            elif d <= 1.0:
+                c.set(x, y, WHITE)
+    c.add_outline()
+    return c
+
+
+def icon_tran_sat():
+    """Sat Tran: kiem phu van cheo, chuoi vang, tia do dau mui."""
+    c = Canvas()
+    _seg_fill(c, (2, 2), (5, 5), 0.8, GOLD_D)
+    _seg_fill(c, (3, 7), (7, 3), 0.7, GOLD)
+    _seg_fill(c, (5, 5), (11, 11), 0.7, PALE)
+    c.set(12, 12, RED_BR)
+    c.set(11, 12, RED_D)
+    c.add_outline()
+    return c
+
+
+def _seg_fill(c, a, b, r, col):
+    for y in range(SIZE):
+        for x in range(SIZE):
+            if seg_dist(x, y, a[0], a[1], b[0], b[1]) <= r:
+                c.set(x, y, col)
+
+
+def icon_tran_ho():
+    """Ho Tran: vom che hinh vom cung, vong lam ngoai, vong vang trong, tam trang."""
+    c = Canvas()
+    cx, cy = 7.5, 11.5
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            if y > 12:
+                continue
+            if 4.6 <= d <= 5.8:
+                c.set(x, y, CYAN_L)
+            elif 2.6 <= d <= 3.4:
+                c.set(x, y, GOLD)
+            elif d <= 1.0:
+                c.set(x, y, WHITE)
+    _seg_fill(c, (1, 12), (14, 12), 0.5, GOLD_D)
+    c.add_outline()
+    return c
+
+
+def icon_tran_stance():
+    """Tu the: bon hinh thoi goc, moi goc mot mau: trang, lam, do, vang."""
+    c = Canvas()
+    quads = [((4, 4), WHITE), ((11, 4), CYAN), ((4, 11), RED_BR), ((11, 11), GOLD)]
+    for (qx, qy), col in quads:
+        for y in range(SIZE):
+            for x in range(SIZE):
+                if abs(x - qx) + abs(y - qy) <= 2:
+                    c.set(x, y, col)
+    c.add_outline()
+    return c
+
+
+def icon_tran_cage():
+    """Lo Tran: khung song sat vang, noc tren, day duoi, mot vet nut do."""
+    c = Canvas()
+    for bx in (3, 6, 9, 12):
+        for y in range(3, 14):
+            c.set(bx, y, GOLD)
+    _seg_fill(c, (2, 2), (13, 2), 0.5, GOLD_D)
+    _seg_fill(c, (2, 13), (13, 13), 0.5, GOLD_D)
+    _seg_fill(c, (7, 6), (9, 9), 0.5, RED_BR)
+    _seg_fill(c, (9, 9), (8, 11), 0.5, RED_BR)
+    c.add_outline()
+    return c
+
+
+def icon_tran_slow():
+    """Lam Tran: xoay xoan lam, hai nhanh xoan ngoc, tam trang."""
+    c = Canvas()
+    cx = cy = 7.5
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            ang = math.degrees(math.atan2(y - cy, x - cx)) % 360
+            if 1.2 < d <= 6.2:
+                off = (ang - d * 70) % 360
+                if off < 80:
+                    c.set(x, y, CYAN)
+                elif off < 110:
+                    c.set(x, y, CYAN_L)
+            elif d <= 1.0:
+                c.set(x, y, WHITE)
+    c.add_outline()
+    return c
+
+
+def icon_tran_suppress():
+    """Trấn Ap: con dau tim-vang nang ep xuong, mui ten chi xuong."""
+    c = Canvas()
+    for y in range(2, 8):
+        for x in range(3, 13):
+            c.set(x, y, PURP_D if 3 < y < 7 and 4 <= x <= 11 else GOLD)
+    for y in range(8, 11):
+        for x in (7, 8):
+            c.set(x, y, PURP)
+    for y in range(10, 14):
+        for x in range(2, 14):
+            if abs(x - 7.5) <= (13.5 - y) * 1.1:
+                c.set(x, y, GOLD)
+    c.add_outline()
+    return c
+
+
+def icon_tran_pillar():
+    """Tru Sang Tran: cot anh sang trang-vang dung thang, de tron phat sang."""
+    c = Canvas()
+    for y in range(1, 13):
+        for x in range(6, 10):
+            c.set(x, y, WHITE if x in (7, 8) else YEL_L)
+    for x in range(3, 13):
+        c.set(x, 13, GOLD)
+    for x, y in [(3, 5), (12, 7), (4, 10), (11, 2)]:
+        c.set(x, y, WHITE)
+    c.add_outline()
+    return c
+
+
+def icon_tran_blades():
+    """Kiem Tran: ba thanh kiem lam roi xuong, chuoi vang, mui trang."""
+    c = Canvas()
+    for x0 in (3, 7, 11):
+        _seg_fill(c, (x0, 2), (x0 + 1, 11), 0.6, CYAN_L)
+        c.set(x0 + 1, 12, WHITE)
+        _seg_fill(c, (x0 - 2, 4), (x0 + 2, 4), 0.5, GOLD)
+    c.add_outline()
+    return c
+
+
+def icon_tran_doom():
+    """Dai Diet Tran: loi tim toi, hai vong co lai, vong vang ngoai, tam trang."""
+    c = Canvas()
+    cx = cy = 7.5
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            ang = math.degrees(math.atan2(y - cy, x - cx)) % 360
+            if 5.6 <= d <= 6.5:
+                c.set(x, y, GOLD if int(ang // 30) % 2 == 0 else GOLD_D)
+            elif 3.8 <= d <= 4.5:
+                c.set(x, y, PURP)
+            elif d <= 2.4:
+                c.set(x, y, PURP_D)
+            elif d <= 0.8:
+                c.set(x, y, WHITE)
+    c.add_outline()
+    return c
+
+
+def icon_tran_ward():
+    """Ho Vuc Tran: luc giac lam ngoai, luc giac nho ben trong, tam sang."""
+    c = Canvas()
+    cx = cy = 7.5
+    outer = _hex_edges(cx, cy, 6.0)
+    inner = _hex_edges(cx, cy, 3.4)
+    for y in range(SIZE):
+        for x in range(SIZE):
+            if any(seg_dist(x, y, *p, *q) <= 0.5 for p, q in outer):
+                c.set(x, y, CYAN_L)
+            elif any(seg_dist(x, y, *p, *q) <= 0.5 for p, q in inner):
+                c.set(x, y, CYAN)
+            elif math.hypot(x - cx, y - cy) <= 1.0:
+                c.set(x, y, WHITE)
+    c.add_outline()
+    return c
+
+
+def icon_tran_heal():
+    """Hoi Phuc Tran: chu thap xanh la, loi sang vang, vai hat bay quanh."""
+    c = Canvas()
+    for y in range(SIZE):
+        for x in range(SIZE):
+            dx, dy = abs(x - 7.5), abs(y - 7.5)
+            if (dx <= 1.5 and dy <= 5) or (dy <= 1.5 and dx <= 5):
+                c.set(x, y, GREEN_L if dx <= 0.5 or dy <= 0.5 else GREEN)
+    for x, y in [(2, 3), (13, 2), (12, 13), (2, 12)]:
+        c.set(x, y, GOLD)
+    c.add_outline()
+    return c
+
+
+def icon_tran_shield():
+    """Ho Than Tran (Tran): khien tron vang, vanh sang, vet sang chu thap."""
+    c = Canvas()
+    cx = cy = 7.5
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = math.hypot(x - cx, y - cy)
+            if d <= 6.2:
+                if d >= 5.0:
+                    c.set(x, y, YEL_L)
+                elif abs(x - cx) < 0.7 or abs(y - cy) < 0.7:
+                    c.set(x, y, PALE)
+                else:
+                    c.set(x, y, GOLD)
+    c.add_outline()
+    return c
+
+
 ICONS = {
     "dao_1.png": icon_dao_1,
     "dao_2.png": icon_dao_2,
@@ -583,6 +812,19 @@ ICONS = {
     "tran_2.png": icon_tran_2,
     "tran_3.png": icon_tran_3,
     "tran_ult.png": icon_tran_ult,
+    "tran_khon.png": icon_tran_khon,
+    "tran_sat.png": icon_tran_sat,
+    "tran_ho.png": icon_tran_ho,
+    "tran_stance.png": icon_tran_stance,
+    "tran_cage.png": icon_tran_cage,
+    "tran_slow.png": icon_tran_slow,
+    "tran_suppress.png": icon_tran_suppress,
+    "tran_pillar.png": icon_tran_pillar,
+    "tran_blades.png": icon_tran_blades,
+    "tran_doom.png": icon_tran_doom,
+    "tran_ward.png": icon_tran_ward,
+    "tran_heal.png": icon_tran_heal,
+    "tran_shield.png": icon_tran_shield,
     "dan_1.png": icon_dan_1,
     "dan_2.png": icon_dan_2,
     "dan_3.png": icon_dan_3,

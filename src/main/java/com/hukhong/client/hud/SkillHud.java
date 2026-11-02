@@ -54,8 +54,18 @@ public final class SkillHud {
         int y = g.guiHeight() - SIZE - 2;
         boolean stance = ClientSkillState.stance();
 
-        g.drawString(mc.font, Component.translatable(stance ? "hukhong.hud.stance_on" : "hukhong.hud.stance_off"),
-                x0, y - 11, stance ? 0xFFFFD34F : 0xFF888888, true);
+        if (sp == Path.TRAN) { // Trận Tu: tên thế hiện tại (hoặc đếm lùi chọn thế), kèm Kiệt Lực ở Sát Thương
+            com.hukhong.tran.TranStance ts = com.hukhong.tran.TranStance.of(ClientSkillState.tranStance());
+            String label = ClientSkillState.tranArmed() > 0
+                    ? "Chọn thế: Q Khống chế · E Sát thương · R Phòng ngự (" + (ClientSkillState.tranArmed() + 19) / 20 + "s)"
+                    : Component.translatable(ts.langKey()).getString()
+                      + (ts == com.hukhong.tran.TranStance.SAT_THUONG ? " · Kiệt Lực " + ClientSkillState.tranStacks() + "/5" : "")
+                      + (ClientSkillState.tranExhaust() > 0 ? " · Kiệt Sức " + (ClientSkillState.tranExhaust() + 19) / 20 + "s" : "");
+            g.drawString(mc.font, label, x0, y - 11, ts == com.hukhong.tran.TranStance.BASE ? 0xFFBBBBBB : 0xFFFFD34F, true);
+        } else {
+            g.drawString(mc.font, Component.translatable(stance ? "hukhong.hud.stance_on" : "hukhong.hud.stance_off"),
+                    x0, y - 11, stance ? 0xFFFFD34F : 0xFF888888, true);
+        }
 
         // Đa đạo: tên trang (màu đạo) phía trên cùng hàng chữ thế; mỗi đạo 1 thanh mảnh dưới ô kỹ năng.
         java.util.List<Path> owned = com.hukhong.skill.SkillPages.owned(d.paths());
@@ -73,11 +83,15 @@ public final class SkillHud {
             }
         }
 
-        int lockMask = sp == Path.PHAP ? com.hukhong.phaptu.PhapMath.lockMask(com.hukhong.phaptu.PhapTu.rawElement(mc.player)) : 0;
+        int lockMask = sp == Path.PHAP ? com.hukhong.phaptu.PhapMath.lockMask(com.hukhong.phaptu.PhapTu.rawElement(mc.player))
+                : sp == Path.TRAN ? com.hukhong.tran.TranMath.LOCK_MASK : 0;
         boolean lockT = lockMask == 8; // chỉ Quang/Lôi/Hỏa/Thủy dùng tia; Thổ khoá E+T nhưng T vẫn cast tức thời
+        com.hukhong.tran.TranStance tranStance = com.hukhong.tran.TranStance.of(ClientSkillState.tranStance());
         for (int i = 0; i < 4; i++) {
             int x = x0 + i * (SIZE + GAP);
-            com.hukhong.skillbook.SkillBook.Resolved rs = com.hukhong.skillbook.SkillBook.resolve(com.hukhong.skillbook.ClientSkillBook.get(), sp, i, d.level(), lockMask);
+            com.hukhong.skillbook.SkillBook.Resolved rs = sp == Path.TRAN
+                    ? new com.hukhong.skillbook.SkillBook.Resolved(com.hukhong.tran.TranStance.skillOf(tranStance, i), null)
+                    : com.hukhong.skillbook.SkillBook.resolve(com.hukhong.skillbook.ClientSkillBook.get(), sp, i, d.level(), lockMask);
             Skill s = rs != null ? rs.base() : null;
             g.fill(x, y, x + SIZE, y + SIZE, stance ? 0xCC000000 : 0x88000000);
             com.hukhong.skill.BanMenhSkill bm = i == 2 && rs == null ? com.hukhong.skill.BanMenhSkill.of(sp, d.level()) : null;

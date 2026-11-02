@@ -23,6 +23,8 @@ public final class SkillNet {
         com.hukhong.phaptu.ThiemBoService.register(r);
         com.hukhong.client.ambient.AmbientSyncPayload.register(r);
         com.hukhong.client.anim.CastAnimPayload.register(r);
+        r.playToClient(TranSyncPayload.TYPE, TranSyncPayload.STREAM_CODEC,
+                (pl, ctx) -> ctx.enqueueWork(() -> ClientSkillState.updateTran(pl)));
         r.playToClient(SkillSyncPayload.TYPE, SkillSyncPayload.STREAM_CODEC,
                 (pl, ctx) -> ctx.enqueueWork(() -> ClientSkillState.update(pl)));
         r.playToClient(FxPayload.TYPE, FxPayload.STREAM_CODEC, FxPayload::handle);
