@@ -106,16 +106,15 @@ public final class FlightTienThienGameTests {
                 .withCharacter(Set.of(Path.KIEM, Path.MA), apt, "", null);
         int lv = TienThien.startLevel(apt.values(), 12345L);
         CultivationData nd = CharCreateService.applyStartLevel(fresh, lv);
-        if (nd.level() != 20) h.fail("level=" + nd.level());
-        if (nd.milestoneLocked()) h.fail("soft-lock: mốc 20 van khoa");
-        if (FlowSteps.chapterFor(nd.level(), nd.milestoneLocked()) != 3) h.fail("chapter=" + FlowSteps.chapterFor(nd.level(), nd.milestoneLocked()));
-        if (CultivationService.applyExp(nd, 50).exp() <= 0 && CultivationService.applyExp(nd, 50).level() == 20) h.fail("EXP khong chay o cap 20");
+        // Tien Thien 20 dung o moc 10 (khoa, chon loi xong moi len tiep)
+        if (nd.level() != 10 || !nd.milestoneLocked()) h.fail("level=" + nd.level() + " locked=" + nd.milestoneLocked());
+        if (TienThien.firstStop(10, 20) != 20 || TienThien.firstStop(10, 15) != 15 || TienThien.firstStop(1, 7) != 7) h.fail("firstStop sai");
         // don dao khong thuong da dao: khoi dau theo Tien Thien cu (1..10)
         int single = TienThien.startLevel(List.of(Aptitude.SSS), 1L);
         if (single != 10) h.fail("don dao SSS=" + single);
-        // cap 15 (khong tren moc): khong khoa, khong bi mo khoa gia
+        // cap 15: dung o 10 cho chon loi
         CultivationData n15 = CharCreateService.applyStartLevel(fresh, 15);
-        if (n15.level() != 15 || n15.milestoneLocked()) h.fail("cap 15 sai");
+        if (n15.level() != 10 || !n15.milestoneLocked()) h.fail("cap 15 sai");
         h.succeed();
     }
 }

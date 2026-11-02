@@ -30,6 +30,12 @@ public final class TienThien {
 
     public static final int CAP = 20;
 
+    /** Mốc 10/20 đầu tiên trong (from, target]: Tiên Thiên phải dừng ở đó chờ chọn lõi; không có thì về target. */
+    public static int firstStop(int from, int target) {
+        for (int m = 10; m <= CAP; m += 10) if (m > from && m <= target) return m;
+        return target;
+    }
+
     /** Điểm Tiên Thiên của MỘT đạo theo tư chất: SSS 10, SS 7, S 5, A 3, B 2, C 1, D 0. */
     public static int gradePoints(Aptitude a) {
         return switch (a) { case SSS -> 10; case SS -> 7; case S -> 5; case A -> 3; case B -> 2; case C -> 1; case D -> 0; };

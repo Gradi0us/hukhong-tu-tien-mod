@@ -92,7 +92,17 @@ public final class CultivationService {
             com.hukhong.trial.TrialService.begin(p);
             return true;
         }
-        update(p, d.withMilestoneUnlocked(true));
+        CultivationData u = d.withMilestoneUnlocked(true);
+        // Tiên Thiên còn dư (song/tam năng): chọn lõi xong lên tiếp tới mốc kế hoặc cấp Tiên Thiên đúng.
+        if (d.exp() == 0 && d.level() < com.hukhong.charcreate.TienThien.CAP && d.roll() != null && d.paths().size() >= 2) {
+            int target = com.hukhong.charcreate.TienThien.startLevel(d.aptitude().values(), d.roll().seed());
+            if (target > d.level()) {
+                int stop = com.hukhong.charcreate.TienThien.firstStop(d.level(), target);
+                u = d.withLevel(stop).withMilestoneUnlocked(false);
+                if (!CultivationData.isMilestoneLevel(stop)) u = u.withMilestoneUnlocked(true);
+            }
+        }
+        update(p, u);
         return true;
     }
 

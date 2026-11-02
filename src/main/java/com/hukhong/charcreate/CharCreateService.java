@@ -94,7 +94,9 @@ public final class CharCreateService {
      */
     public static CultivationData applyStartLevel(CultivationData nd, int level) {
         if (level <= nd.level()) return nd;
-        CultivationData r = nd.withLevel(level);
-        return CultivationData.isMilestoneLevel(level) ? r.withMilestoneUnlocked(true) : r;
+        // Tiên Thiên vượt mốc 10: dừng ở mốc đầu tiên (khóa, phải chọn lõi); chọn lõi xong mới lên tiếp (CultivationService.unlockMilestone).
+        int stop = TienThien.firstStop(nd.level(), level);
+        CultivationData r = nd.withLevel(stop);
+        return stop == level && CultivationData.isMilestoneLevel(level) && level < 10 ? r.withMilestoneUnlocked(true) : r;
     }
 }
