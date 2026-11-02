@@ -9,7 +9,7 @@ public final class TranMath {
 
     // Thế: chọn thế bằng T rồi Q/E/R
     public static final int ARM_TICKS = 60;            // 3 giây chờ chọn thế
-    public static final int T_RETURN_CD_TICKS = 20;    // 1 giây sau khi về BASE mới bấm T lại được
+    public static final int T_RETURN_CD_TICKS = 4;     // 0,2 giây sau khi về BASE mới bấm T lại được
 
     // Phù Văn Đạn (đòn thường)
     public static final double BASIC_COEF = 0.6;
@@ -73,14 +73,16 @@ public final class TranMath {
     public static final int KL_EXHAUST_TICKS = 100;   // Kiệt Sức 5 giây
     public static final int KL_SLOW_AMP = 1;          // Slowness II
     public static final int KL_WEAK_AMP = 0;          // Weakness I
-    public static final double PILLAR_RANGE = 16;
-    public static final double PILLAR_RADIUS = 5;
-    public static final double PILLAR_COEF = 0.7;
-    public static final int PILLAR_HITS = 8;
-    public static final int PILLAR_INTERVAL_TICKS = 7; // 8 cột trong ~3 giây
-    /** Kết thúc Sát Trận: 1 cột sáng khổng lồ ở tâm, sát thương cực lớn, rồi Kiệt Sức ngay 3 giây. */
-    public static final double GIANT_COEF = 6.0, GIANT_RADIUS = 5.0;
-    public static final int GIANT_EXHAUST_TICKS = 60;
+    /** Sát Trận (Q, giữ để nạp): vòng tròn tụ lực tại điểm ngắm; thả Q (hoặc đủ tối đa + 1 giây) thì cột sáng khổng lồ. */
+    public static final double CHARGE_RANGE = 16;
+    public static final double CHARGE_MIN_R = 2, CHARGE_MAX_R = 7;
+    public static final int CHARGE_TICKS = 60;          // 3 giây giữ để đạt bán kính tối đa
+    public static final int CHARGE_EXTRA_TICKS = 20;    // giữ thêm 1 giây ở tối đa thì tự thả
+    public static final double CHARGE_MIN_COEF = 2.0, CHARGE_MAX_COEF = 8.0;
+    public static final int CHARGE_SLOW_AMP = 4;        // MOVEMENT_SLOWDOWN amp 4 (~-75%, gần -80% nhất) cho quái trong vòng tụ lực
+    public static final int CHARGE_SLOW_TICKS = 10;     // mỗi lần làm mới kéo dài 0,5 giây
+    public static final int CHARGE_REFRESH_TICKS = 4;   // vẽ lại vòng và làm chậm mỗi 4 tick
+    public static final int GIANT_EXHAUST_TICKS = 60;   // Kiệt Sức 3 giây sau cột sáng
     public static final double BLADE_RANGE = 14;
     public static final double BLADE_RADIUS = 4;
     public static final int BLADE_COUNT = 12;
@@ -107,6 +109,17 @@ public final class TranMath {
     public static int cageHitLimit(int mobsAtPlace) {
         return CAGE_HIT_BASE + CAGE_HIT_PER_MOB * Math.min(Math.max(0, mobsAtPlace), CAGE_MOB_CAP);
     }
+
+    /** Tỉ lệ tụ lực (0..1) sau {@code held} tick giữ Q. */
+    public static double chargeFraction(int held) {
+        return Math.min(1.0, Math.max(0, held) / (double) CHARGE_TICKS);
+    }
+
+    /** Bán kính vòng tụ lực / cột sáng theo tỉ lệ tụ lực. */
+    public static double chargeRadius(double f) { return CHARGE_MIN_R + (CHARGE_MAX_R - CHARGE_MIN_R) * f; }
+
+    /** Hệ số sát thương (nhân Phép lực) theo tỉ lệ tụ lực. */
+    public static double chargeCoef(double f) { return CHARGE_MIN_COEF + (CHARGE_MAX_COEF - CHARGE_MIN_COEF) * f; }
 
     /** Tổng hệ số R lên một mục tiêu nếu trúng đủ 8 nhịp (chỉ để hiển thị/kiểm thử). */
     public static double rTotalCoef() { return R_TICK_COEF * R_HITS; }

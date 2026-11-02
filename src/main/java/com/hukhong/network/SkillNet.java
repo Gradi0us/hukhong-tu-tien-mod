@@ -36,6 +36,12 @@ public final class SkillNet {
         r.playToServer(CastSkillPayload.TYPE, CastSkillPayload.STREAM_CODEC, (pl, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> SkillService.cast(sp, pl.slot()));
         });
+        r.playToServer(TranChargePayload.TYPE, TranChargePayload.STREAM_CODEC, (pl, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> {
+                if (pl.action() == TranChargePayload.PRESS) com.hukhong.tran.TranRuntime.chargeStart(sp);
+                else com.hukhong.tran.TranRuntime.chargeRelease(sp);
+            });
+        });
         r.playToServer(CyclePagePayload.TYPE, CyclePagePayload.STREAM_CODEC, (pl, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) ctx.enqueueWork(() -> SkillService.cyclePage(sp));
         });

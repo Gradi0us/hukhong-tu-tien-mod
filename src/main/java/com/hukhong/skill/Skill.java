@@ -26,7 +26,7 @@ public enum Skill {
     TRAN_1(Path.TRAN, 0, "tran_khon", 4, 14),
     TRAN_2(Path.TRAN, 1, "tran_sat", 25, 400),
     TRAN_3(Path.TRAN, 2, "tran_ho", 35, 400),
-    TRAN_ULT(Path.TRAN, 3, "tran_stance", 0, 20),
+    TRAN_ULT(Path.TRAN, 3, "tran_stance", 0, 4),
     TRAN_CAGE(Path.TRAN, 0, "tran_cage", 30, 600),
     TRAN_SLOW(Path.TRAN, 1, "tran_slow", 25, 400),
     TRAN_SUPPRESS(Path.TRAN, 2, "tran_suppress", 35, 500),

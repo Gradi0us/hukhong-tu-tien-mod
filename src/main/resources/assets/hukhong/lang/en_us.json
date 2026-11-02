@@ -1282,6 +1282,8 @@
   "hukhong.skill.tran_slow": "Ensnaring Formation",
   "hukhong.skill.tran_suppress": "Suppression Formation",
   "hukhong.skill.tran_pillar": "Slaughter Formation (stance)",
+  "hukhong.skill.tran_pillar.desc": "[Damage] Slaughter Formation (hold Q): gather power at the aim point. A circle grows from radius %s to %s over %s seconds, and enemies inside it are heavily slowed. Release Q (or hold 1 extra second at max) to bring down a giant light pillar: %s to %s x Spell Power to every enemy in the radius, then Exhaustion for %s seconds.",
+  "hukhong.skill.tran_stance.desc": "Stance key: press T to choose a stance within 3 seconds, then Q/E/R to enter it. Press T inside a stance to return to Base (only a 0.2 second wait). Changing stance is free.",
   "hukhong.skill.tran_blades": "Ten Thousand Blades Formation",
   "hukhong.skill.tran_doom": "Doom Formation",
   "hukhong.skill.tran_ward": "Protective Formation (stance)",

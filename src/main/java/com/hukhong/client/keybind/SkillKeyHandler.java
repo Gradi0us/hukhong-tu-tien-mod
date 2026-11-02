@@ -60,12 +60,16 @@ public final class SkillKeyHandler {
         boolean thoKeys = thiemBo && com.hukhong.phaptu.PhapTu.rawElement(mc.player) == com.hukhong.phaptu.PhapElement.THO;
         com.hukhong.client.fx.ThiemBoClient.tickKeys(mc, thiemBo, thoKeys);
         com.hukhong.client.fx.ThoClient.tickKeys(mc, thoKeys); // Thổ: giữ T sau 3 đợt = dẫn nổ
+        boolean trCharge = on && Skill.skillPath(com.hukhong.client.ClientCache.cultivation(), ClientSkillState.page()) == com.hukhong.core.Path.TRAN
+                && ClientSkillState.tranStance() == com.hukhong.tran.TranStance.SAT_THUONG.ordinal(); // Sát Trận: Q giữ để nạp (TranChargeKeys)
         for (int i = 0; i < 4; i++) {
             while (SkillKeys.SKILL[i].consumeClick()) {
                 if (i == 1 && thiemBo) continue; // Quang/Lôi/Thổ E: giữ/bấm nhanh do ThiemBoClient + server phân biệt
+                if (i == 0 && trCharge) continue; // Sát Trận Q: gửi nhấn/nhả qua TranChargeKeys
                 if (on && !(i == 3 && beamT)) PacketDistributor.sendToServer(new CastSkillPayload(i)); // T của Quang/Lôi/Hỏa/Thủy: giữ để nạp (PhapBeamClient)
             }
         }
         com.hukhong.client.fx.PhapBeamClient.tickKeys(mc, beamT);
+        com.hukhong.client.keybind.TranChargeKeys.tick(mc, trCharge);
     }
 }

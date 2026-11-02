@@ -7,8 +7,12 @@ import com.hukhong.core.Path;
 import com.hukhong.gates.DamageRules;
 import com.hukhong.gates.Resources;
 import com.hukhong.network.TranSyncPayload;
+import com.hukhong.client.anim.CastAnimHook;
 import com.hukhong.phaptu.PhapRuntime;
+import com.hukhong.skill.Skill;
 import com.hukhong.skill.SkillScheduler;
+import com.hukhong.skill.SkillService;
+import com.hukhong.skill.SkillState;
 import com.hukhong.stats.StatService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -87,9 +91,19 @@ public final class TranRuntime {
 
     record Mark(UUID owner, long end) {}
 
+    /** Sát Trận đang giữ Q để nạp. {@code who} giữ tham chiếu người chơi (tick đọc lại trạng thái sống/thế). */
+    static final class Charge {
+        final ServerPlayer who;
+        final ServerLevel lv;
+        int held;
+        Vec3 c = Vec3.ZERO;
+        Charge(ServerPlayer who, ServerLevel lv) { this.who = who; this.lv = lv; }
+    }
+
     private static final List<Zone> ZONES = new ArrayList<>();
     private static final Map<UUID, St> STATES = new HashMap<>();
     private static final Map<UUID, Mark> MARKS = new HashMap<>();
+    private static final Map<UUID, Charge> CHARGES = new HashMap<>();
 
     static long now(ServerPlayer p) { return p.level().getGameTime(); }
 
@@ -114,6 +128,7 @@ public final class TranRuntime {
         long now = now(p);
         if (slot == 3) {
             if (s.stance != TranStance.BASE) {
+                CHARGES.remove(p.getUUID()); // đổi thế: huỷ tụ lực Sát Trận (không trừ chi phí)
                 s.stance = TranStance.BASE;
                 s.tCdEnd = now + TranMath.T_RETURN_CD_TICKS;
                 s.armedUntil = -1;
@@ -139,6 +154,77 @@ public final class TranRuntime {
     }
 
     private static ServerLevel lvOf(ServerPlayer p) { return (ServerLevel) p.level(); }
+
+    // ------------------------------------------------------------------ Sát Trận giữ-để-nạp (Q, thế Sát Thương)
+
+    /** Q nhấn xuống trong thế Sát Thương: bắt đầu tụ lực. Chỉ kiểm tra hồi chiêu và chi phí; chi phí trừ khi thả. */
+    public static void chargeStart(ServerPlayer p) {
+        if (!(p.level() instanceof ServerLevel lv) || !p.isAlive() || p.isSpectator()) return;
+        SkillState ss = SkillService.state(p);
+        if (st(p).stance != TranStance.SAT_THUONG || !ss.stance || CHARGES.containsKey(p.getUUID())) return;
+        if (ss.cooldownEnd[0] > now(p)) return;
+        CultivationData d = p.getData(ModAttachments.CULTIVATION);
+        if (d.resource() < Resources.costFor(d, chargeSkill().cost, 1.0)) {
+            p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
+            return;
+        }
+        CHARGES.put(p.getUUID(), new Charge(p, lv));
+    }
+
+    /** Q nhả: thả cột sáng nếu đang tụ lực. */
+    public static void chargeRelease(ServerPlayer p) {
+        Charge c = CHARGES.remove(p.getUUID());
+        if (c != null) fire(c);
+    }
+
+    /** Huỷ tụ lực (chết, thoát, đổi thế): không trừ chi phí, không hồi chiêu. */
+    static void chargeCancel(ServerPlayer p) { CHARGES.remove(p.getUUID()); }
+
+    private static Skill chargeSkill() { return TranStance.skillOf(TranStance.SAT_THUONG, 0); }
+
+    /** Thả Sát Trận: trả chi phí, đặt hồi chiêu, tính Kiệt Lực như một đòn, rồi gây cột sáng. */
+    private static void fire(Charge c) {
+        ServerPlayer p = c.who;
+        if (!p.isAlive() || p.hasDisconnected()) return;
+        Skill k = chargeSkill();
+        SkillState ss = SkillService.state(p);
+        long now = now(p);
+        if (ss.cooldownEnd[0] > now) return;
+        if (!Resources.tryConsume(p, k.cost, 1.0)) {
+            p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
+            return;
+        }
+        ss.cooldownEnd[0] = now + k.cooldownTicks;
+        ss.lastCombat = now;
+        CastAnimHook.play(p, k, null, 0);
+        addKietLuc(p);
+        TranSkills.chargeStrike(c.lv, p, c.c, TranMath.chargeFraction(c.held));
+        SkillService.sync(p);
+        sendSync(p);
+    }
+
+    /** Mỗi tick: giữ tụ lực -> cập nhật điểm ngắm và bán kính, làm chậm + vẽ vòng mỗi 4 tick; tối đa + 1 giây thì tự thả; mất điều kiện thì huỷ. */
+    private static void tickCharges() {
+        if (CHARGES.isEmpty()) return;
+        for (Iterator<Charge> it = CHARGES.values().iterator(); it.hasNext(); ) {
+            Charge c = it.next();
+            ServerPlayer p = c.who;
+            boolean valid = p.isAlive() && !p.hasDisconnected() && !p.isSpectator()
+                    && SkillService.state(p).stance && st(p).stance == TranStance.SAT_THUONG
+                    && Skill.skillPath(p.getData(ModAttachments.CULTIVATION), SkillService.state(p).page) == Path.TRAN;
+            if (!valid) { it.remove(); continue; }
+            if (c.held >= TranMath.CHARGE_TICKS + TranMath.CHARGE_EXTRA_TICKS) { it.remove(); fire(c); continue; }
+            c.c = aim(c.lv, p, TranMath.CHARGE_RANGE);
+            double r = TranMath.chargeRadius(TranMath.chargeFraction(c.held));
+            if (c.held % TranMath.CHARGE_REFRESH_TICKS == 0) {
+                TranVfx.rune(c.lv, c.c.add(0, 0.05, 0), r);
+                for (LivingEntity v : around(c.lv, p, c.c, r)) {
+                    v.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, TranMath.CHARGE_SLOW_TICKS, TranMath.CHARGE_SLOW_AMP, false, true));
+                }
+            }
+            c.held++;
+        }
+    }
 
     /** Kiệt Lực: mỗi đòn trong thế Sát Thương +1; đủ 5 -> Kiệt Sức 5 giây. */
     static void addKietLuc(ServerPlayer p) {
@@ -273,6 +359,7 @@ public final class TranRuntime {
         long now = srv.getTickCount();
         if (!MARKS.isEmpty() && now % 10 == 0) MARKS.values().removeIf(m -> m.end() < now);
         if (!STATES.isEmpty()) tickStates(now);
+        tickCharges();
         if (ZONES.isEmpty()) return;
         Set<ServerPlayer> regen = new HashSet<>();
         for (Iterator<Zone> it = ZONES.iterator(); it.hasNext(); ) {
@@ -447,7 +534,7 @@ public final class TranRuntime {
 
     @SubscribeEvent
     public static void onLogout(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p) STATES.remove(p.getUUID());
+        if (e.getEntity() instanceof ServerPlayer p) { STATES.remove(p.getUUID()); CHARGES.remove(p.getUUID()); }
     }
 
     @SubscribeEvent
@@ -455,5 +542,6 @@ public final class TranRuntime {
         ZONES.clear();
         MARKS.clear();
         STATES.clear();
+        CHARGES.clear();
     }
 }

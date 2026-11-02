@@ -150,8 +150,8 @@ final class TranVfx {
 
     /** Cột sáng khổng lồ: trụ sáng lớn + vành sóng xung kích + rung màn hình. */
     static void giantPillar(ServerLevel lv, Vec3 at, double r) {
-        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, 5.0f, Fx.GOLD, 50);
-        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, 3.0f, Fx.WHITE, 40);
+        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, (float) (r * 0.7), Fx.GOLD, 50); // cột theo cỡ vòng tụ lực
+        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, (float) (r * 0.4), Fx.WHITE, 40);
         for (double y = 0; y <= 30; y += 0.5)
             lv.sendParticles(ParticleTypes.END_ROD, at.x, at.y + y, at.z, 3, 0.6, 0, 0.6, 0.02);
         for (double rr = 1; rr <= r; rr += 1) ring(lv, at, rr, 0.15, 40, spin(lv, 0.3), GOLD_HOT);

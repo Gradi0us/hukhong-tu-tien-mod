@@ -431,9 +431,9 @@ public final class SkillEffects {
             pullNear(lv, p, e, 1.6);
             com.hukhong.phaptu.PhapRuntime.stun(e, 1.5);
         }
-        clawHit(lv, p, targets, false);
-        SkillScheduler.later(6, () -> clawHit(lv, p, targets, false));
-        SkillScheduler.later(12, () -> clawHit(lv, p, targets, true));
+        clawHit(lv, p, targets, 0);
+        SkillScheduler.later(6, () -> clawHit(lv, p, targets, 1));
+        SkillScheduler.later(12, () -> clawHit(lv, p, targets, 2));
         layer(lv, p.position(), SoundEvents.RAVAGER_ATTACK, 0.5f, 1.4f);
         layer(lv, p.position(), SoundEvents.WITHER_SHOOT, 0.25f, 1.9f);
     }
@@ -455,8 +455,9 @@ public final class SkillEffects {
     }
 
     /** Một nhát móng lên các mục tiêu còn sống trong 12 block; {@code finisher}: bạo kích chắc chắn (x Bạo Thương). */
-    private static void clawHit(ServerLevel lv, ServerPlayer p, List<LivingEntity> targets, boolean finisher) {
+    private static void clawHit(ServerLevel lv, ServerPlayer p, List<LivingEntity> targets, int hit) {
         if (!p.isAlive()) return;
+        boolean finisher = hit == 2;
         float per = (float) (Skill.MA_1_COEF / 3 * com.hukhong.stats.StatService.attackPower(p));
         for (LivingEntity e : targets) {
             if (!e.isAlive() || e.isRemoved() || e.distanceToSqr(p) > 144) continue;
@@ -465,7 +466,11 @@ public final class SkillEffects {
             else DamageRules.hurtBySkill(p, e, per);
             MaClawFx.burst(lv, e.position().add(0, e.getBbHeight() * 0.5, 0));
         }
-        MaClawFx.arc(lv, p, finisher ? 4.6 : 4.0, 0.9);
+        // Hit 1: xiềng máu + vòng choáng; hit 2: trảm từ trái; hit 3: trảm từ phải, bạo kích.
+        for (LivingEntity e : targets) {
+            if (hit == 0) MaClawFx.qPull(lv, p, e);
+            else MaClawFx.qSlash(lv, p, e, hit == 1, finisher);
+        }
         lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, finisher ? 0.5f : 0.7f);
     }
 

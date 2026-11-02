@@ -203,8 +203,8 @@ class Params:
         P.PH_THO_SHOT = int(const("phaptu/PhapMath.java", "THO_SHOT_TICKS"))
         # ---- TranMath / DanMath (Trận Tu, Đan Tu): đọc trực tiếp hằng số, không chép tay
         P.tr = {nm: const("tran/TranMath.java", nm) for nm in ("BASIC_COEF", "Q_COEF", "R_TICK_COEF", "MARK_BONUS", "WARD_DR",
-                                                                "PILLAR_COEF", "BLADE_COEF", "DOOM_COEF", "SNARE_DOT_COEF")}
-        P.tr.update({nm: int(const("tran/TranMath.java", nm)) for nm in ("R_HITS", "PILLAR_HITS", "BLADE_COUNT")})
+                                                                "CHARGE_MAX_COEF", "BLADE_COEF", "DOOM_COEF", "SNARE_DOT_COEF")}
+        P.tr.update({nm: int(const("tran/TranMath.java", nm)) for nm in ("R_HITS", "BLADE_COUNT")})
         P.dn = {nm: const("dan/DanMath.java", nm) for nm in ("BASIC_COEF", "Q_COEF", "HEAL_COEF", "R_COEF", "R_PER_STACK", "STACK_DPS_COEF", "ULT_BOMB_COEF")}
         P.dn.update({nm: int(const("dan/DanMath.java", nm)) for nm in ("MAX_STACKS", "Q_PILLS", "BASIC_STACKS", "BOMB_STACKS")})
         # ---- HuHoa (quai)
@@ -494,7 +494,7 @@ def base_kit(P, B, path, element):
         # Trận Tu: không có Bản Mệnh. Kit mô phỏng = thế SÁT THƯƠNG (T + E): Q Sát Trận, E Vạn Kiếm, R Diệt Thế.
         # Đòn thường: mode "basic" trong simulate. Thế khác (Khống Chế/Phòng Ngự) không gây sát thương chính nên không tính DPS.
         T = P.tr
-        k.append(mk("Sat Tran (Q, the Sat Thuong)", "sp", T["PILLAR_COEF"], T["PILLAR_HITS"], S["TRAN_PILLAR"]["cd"], S["TRAN_PILLAR"]["cost"]))
+        k.append(mk("Sat Tran (Q, the Sat Thuong)", "sp", T["CHARGE_MAX_COEF"], 1, S["TRAN_PILLAR"]["cd"], S["TRAN_PILLAR"]["cost"]))
         k.append(mk("Van Kiem Tran (E, the Sat Thuong)", "sp", T["BLADE_COEF"], T["BLADE_COUNT"], S["TRAN_BLADES"]["cd"], S["TRAN_BLADES"]["cost"]))
         k.append(mk("Diet The Tran (R, the Sat Thuong)", "sp", T["DOOM_COEF"], 1, S["TRAN_DOOM"]["cd"], S["TRAN_DOOM"]["cost"]))
     elif path == "DAN":

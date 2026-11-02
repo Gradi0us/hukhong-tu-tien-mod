@@ -184,13 +184,39 @@ public final class TranGameTests {
     public static void kietSucAtFiveCasts(GameTestHelper h) {
         ServerPlayer p = player(h);
         enterStance(p, 1); // SAT_THUONG
-        for (int i = 0; i < 4; i++) castReset(p, 0); // 4 Kiệt Lực: chưa Kiệt Sức
+        for (int i = 0; i < 4; i++) castReset(p, 1); // 4 Kiệt Lực (E Vạn Kiếm): chưa Kiệt Sức; Q là Sát Trận giữ-để-nạp
         if (TranRuntime.exhausted(p)) h.fail("Kiet Suc qua som (4 lan)");
-        castReset(p, 0); // lần thứ 5
+        castReset(p, 1); // lần thứ 5
         if (!TranRuntime.exhausted(p)) h.fail("Chua Kiet Suc sau 5 lan cast");
         if (!p.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) || !p.hasEffect(MobEffects.WEAKNESS)) h.fail("Thieu Slowness/Weakness khi Kiet Suc");
         if (TranRuntime.st(p).stacks != 0) h.fail("Kiet Luc khong reset sau Kiet Suc: " + TranRuntime.st(p).stacks);
         h.succeed();
+    }
+
+    /** Sát Trận giữ-để-nạp: quái trong vòng tụ lực bị làm chậm; giữ 3 giây gây nhiều hơn nhả ngay; thả xong Kiệt Sức. */
+    @GameTest(template = "empty", timeoutTicks = 160, batch = "tran_charge")
+    public static void chargeFormation(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        enterStance(p, 1); // SAT_THUONG
+        Zombie quick = zombie(h, p, 6);
+        TranRuntime.chargeStart(p);
+        h.runAfterDelay(2, () -> {
+            TranRuntime.chargeRelease(p); // thả gần như ngay: cột sáng nhỏ nhất
+            double shortDmg = 1.0E8 - quick.getHealth();
+            if (shortDmg <= 0) h.fail("Tu hoa ngan khong gay sat thuong");
+            quick.discard();
+            SkillService.state(p).cooldownEnd[0] = 0; // bỏ hồi chiêu để kiểm lần giữ thứ hai
+            Zombie held = zombie(h, p, 6);
+            TranRuntime.chargeStart(p);
+            h.runAfterDelay(60, () -> {
+                if (!held.hasEffect(MobEffects.MOVEMENT_SLOWDOWN)) h.fail("Quai trong vong tu luc khong bi lam cham");
+                TranRuntime.chargeRelease(p); // giữ đủ 3 giây: cột sáng tối đa
+                double longDmg = 1.0E8 - held.getHealth();
+                if (longDmg <= shortDmg) h.fail("Giu 3 giay khong gay hon nha ngay: " + longDmg + " <= " + shortDmg);
+                if (!TranRuntime.exhausted(p)) h.fail("Chua Kiet Suc sau cot sang Sat Tran");
+                h.succeed();
+            });
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 60, batch = "tran_heal")

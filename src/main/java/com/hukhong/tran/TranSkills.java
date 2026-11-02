@@ -30,6 +30,7 @@ public final class TranSkills {
         long now = p.level().getGameTime();
         TranStance s = TranRuntime.stance(p);
         Skill k = TranStance.skillOf(s, slot);
+        if (k == Skill.TRAN_PILLAR) return; // Sát Trận giữ-để-nạp: TranRuntime.chargeStart/chargeRelease
         if (k == null || st.cooldownEnd[slot] > now) return;
         if (!Resources.tryConsume(p, k.cost, 1.0)) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
@@ -53,7 +54,6 @@ public final class TranSkills {
             case TRAN_CAGE -> cage(lv, p);
             case TRAN_SLOW -> snare(lv, p, sp);
             case TRAN_SUPPRESS -> suppress(lv, p);
-            case TRAN_PILLAR -> pillars(lv, p, sp);
             case TRAN_BLADES -> blades(lv, p, sp);
             case TRAN_DOOM -> doom(lv, p, sp);
             case TRAN_WARD -> wardPn(lv, p);
@@ -132,27 +132,16 @@ public final class TranSkills {
 
     // ------------------------------------------------------------------ SÁT THƯƠNG
 
-    /** Q Sát Trận: 8 cột sáng trong 3 giây quanh điểm ngắm, mỗi cột 0,7 x Phép lực. */
-    private static void pillars(ServerLevel lv, ServerPlayer p, double sp) {
-        Vec3 c = TranRuntime.aim(lv, p, TranMath.PILLAR_RANGE);
-        TranVfx.burst(lv, c.add(0, 0.1, 0), TranMath.PILLAR_RADIUS);
-        float dmg = (float) (TranMath.PILLAR_COEF * sp);
-        for (int i = 0; i < TranMath.PILLAR_HITS; i++) {
-            SkillScheduler.later(TranMath.PILLAR_INTERVAL_TICKS * (i + 1),
-                    () -> pillarStrike(lv, p, c, dmg, TranMath.PILLAR_RADIUS, TranMath.R_PILLAR_RADIUS));
-        }
-        SkillScheduler.later(TranMath.PILLAR_INTERVAL_TICKS * (TranMath.PILLAR_HITS + 2), () -> giantPillar(lv, p, c, sp));
-    }
-
-    /** Cột sáng khổng lồ: sát thương GIANT_COEF x Phép lực trong bán kính GIANT_RADIUS, người thi triển Kiệt Sức ngay 3 giây. */
-    static void giantPillar(ServerLevel lv, ServerPlayer p, Vec3 c, double sp) {
-        if (!p.isAlive() || p.hasDisconnected()) return;
+    /**
+     * Sát Trận (Q giữ để nạp) khi thả: cột sáng khổng lồ tại điểm rơi, bán kính và hệ số theo tỉ lệ tụ lực f;
+     * mọi địch trong bán kính nhận (hệ số) x Phép lực, rồi người thi triển Kiệt Sức 3 giây.
+     */
+    static void chargeStrike(ServerLevel lv, ServerPlayer p, Vec3 c, double f) {
         Vec3 at = TranRuntime.ground(lv, c);
-        TranVfx.giantPillar(lv, at, TranMath.GIANT_RADIUS);
-        float dmg = (float) (TranMath.GIANT_COEF * sp);
-        double r = TranMath.GIANT_RADIUS;
-        for (LivingEntity v : lv.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(r, 4, r),
-                e -> PhapRuntime.valid(p, e) && e.position().distanceTo(at) <= r + e.getBbWidth() / 2)) {
+        double r = TranMath.chargeRadius(f);
+        float dmg = (float) (TranMath.chargeCoef(f) * StatService.spellPower(p));
+        TranVfx.giantPillar(lv, at, r);
+        for (LivingEntity v : TranRuntime.around(lv, p, at, r)) {
             v.invulnerableTime = 0;
             DamageRules.hurtBySkill(p, v, dmg);
         }

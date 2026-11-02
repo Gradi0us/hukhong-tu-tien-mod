@@ -1282,6 +1282,8 @@
   "hukhong.skill.tran_slow": "Khốn Linh Trận",
   "hukhong.skill.tran_suppress": "Trấn Áp Trận",
   "hukhong.skill.tran_pillar": "Sát Trận (thế)",
+  "hukhong.skill.tran_pillar.desc": "[Sát thương] Sát Trận (giữ Q): tụ lực tại điểm ngắm, vòng tròn lớn dần từ bán kính %s đến %s trong %s giây; kẻ địch trong vòng bị làm chậm mạnh. Nhả Q (hoặc giữ thêm 1 giây ở tối đa) để cột sáng khổng lồ đánh xuống: %s đến %s x Phép lực cho mọi địch trong bán kính, rồi Kiệt Sức %s giây.",
+  "hukhong.skill.tran_stance.desc": "Phím Thế: bấm T để chọn thế trong 3 giây, rồi Q/E/R để vào thế. Bấm T trong thế để về Cơ bản (chỉ chờ 0,2 giây). Đổi thế miễn phí.",
   "hukhong.skill.tran_blades": "Vạn Kiếm Trận",
   "hukhong.skill.tran_doom": "Diệt Thế Trận",
   "hukhong.skill.tran_ward": "Hộ Thân Trận (thế)",
