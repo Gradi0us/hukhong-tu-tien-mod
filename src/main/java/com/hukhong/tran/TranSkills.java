@@ -141,6 +141,22 @@ public final class TranSkills {
             SkillScheduler.later(TranMath.PILLAR_INTERVAL_TICKS * (i + 1),
                     () -> pillarStrike(lv, p, c, dmg, TranMath.PILLAR_RADIUS, TranMath.R_PILLAR_RADIUS));
         }
+        SkillScheduler.later(TranMath.PILLAR_INTERVAL_TICKS * (TranMath.PILLAR_HITS + 2), () -> giantPillar(lv, p, c, sp));
+    }
+
+    /** Cột sáng khổng lồ: sát thương GIANT_COEF x Phép lực trong bán kính GIANT_RADIUS, người thi triển Kiệt Sức ngay 3 giây. */
+    static void giantPillar(ServerLevel lv, ServerPlayer p, Vec3 c, double sp) {
+        if (!p.isAlive() || p.hasDisconnected()) return;
+        Vec3 at = TranRuntime.ground(lv, c);
+        TranVfx.giantPillar(lv, at, TranMath.GIANT_RADIUS);
+        float dmg = (float) (TranMath.GIANT_COEF * sp);
+        double r = TranMath.GIANT_RADIUS;
+        for (LivingEntity v : lv.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(r, 4, r),
+                e -> PhapRuntime.valid(p, e) && e.position().distanceTo(at) <= r + e.getBbWidth() / 2)) {
+            v.invulnerableTime = 0;
+            DamageRules.hurtBySkill(p, v, dmg);
+        }
+        TranRuntime.forceExhaust(p, TranMath.GIANT_EXHAUST_TICKS);
     }
 
     /** E Vạn Kiếm Trận: 12 lưỡi kiếm rơi trong 2 giây quanh điểm ngắm (r4), mỗi lưỡi 0,45 x Phép lực. */

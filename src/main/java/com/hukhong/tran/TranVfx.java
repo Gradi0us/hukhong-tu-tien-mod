@@ -148,6 +148,21 @@ final class TranVfx {
         sound(lv, at, SoundEvents.BEACON_POWER_SELECT, 1f, 1.2f);
     }
 
+    /** Cột sáng khổng lồ: trụ sáng lớn + vành sóng xung kích + rung màn hình. */
+    static void giantPillar(ServerLevel lv, Vec3 at, double r) {
+        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, 5.0f, Fx.GOLD, 50);
+        Fx.play(lv, FxType.LIGHT_PILLAR, at, Vec3.ZERO, 3.0f, Fx.WHITE, 40);
+        for (double y = 0; y <= 30; y += 0.5)
+            lv.sendParticles(ParticleTypes.END_ROD, at.x, at.y + y, at.z, 3, 0.6, 0, 0.6, 0.02);
+        for (double rr = 1; rr <= r; rr += 1) ring(lv, at, rr, 0.15, 40, spin(lv, 0.3), GOLD_HOT);
+        lv.sendParticles(ParticleTypes.FLASH, at.x, at.y + 1, at.z, 2, 0, 0, 0, 0);
+        lv.sendParticles(ParticleTypes.EXPLOSION_EMITTER, at.x, at.y + 0.5, at.z, 1, 0, 0, 0, 0);
+        lv.sendParticles(ParticleTypes.ENCHANT, at.x, at.y + 2, at.z, 150, r * 0.5, 4, r * 0.5, 0.5);
+        Fx.shake(lv, at, 0.8f, 12, 24f);
+        sound(lv, at, SoundEvents.LIGHTNING_BOLT_THUNDER, 1.2f, 0.7f);
+        sound(lv, at, SoundEvents.BEACON_ACTIVATE, 1.2f, 0.6f);
+    }
+
     /** Tia phù văn từ tay tới mục tiêu (đòn thường): hạt dọc tia + tia Fx BEAM bền 6 tick. */
     static void bolt(ServerLevel lv, Vec3 from, Vec3 to) {
         Vec3 d = to.subtract(from);

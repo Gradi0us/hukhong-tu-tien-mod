@@ -160,6 +160,18 @@ public final class TranRuntime {
         sendSync(p);
     }
 
+    /** Kiệt Sức ngay lập tức (cột sáng khổng lồ), bỏ qua tầng Kiệt Lực. */
+    static void forceExhaust(ServerPlayer p, int ticks) {
+        St s = st(p);
+        s.stacks = 0;
+        s.exhaustEnd = Math.max(s.exhaustEnd, now(p) + ticks);
+        p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, ticks, TranMath.KL_SLOW_AMP, false, true));
+        p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ticks, TranMath.KL_WEAK_AMP, false, true));
+        p.displayClientMessage(Component.translatable("hukhong.tran.exhaust"), true);
+        TranVfx.exhaust(lvOf(p), p);
+        sendSync(p);
+    }
+
     /** Đồng bộ thế/Kiệt Lực/Kiệt Sức/chọn thế sang HUD client. */
     public static void sendSync(ServerPlayer p) {
         St s = st(p);

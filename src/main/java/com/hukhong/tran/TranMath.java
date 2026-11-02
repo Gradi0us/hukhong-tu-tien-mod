@@ -78,6 +78,9 @@ public final class TranMath {
     public static final double PILLAR_COEF = 0.7;
     public static final int PILLAR_HITS = 8;
     public static final int PILLAR_INTERVAL_TICKS = 7; // 8 cột trong ~3 giây
+    /** Kết thúc Sát Trận: 1 cột sáng khổng lồ ở tâm, sát thương cực lớn, rồi Kiệt Sức ngay 3 giây. */
+    public static final double GIANT_COEF = 6.0, GIANT_RADIUS = 5.0;
+    public static final int GIANT_EXHAUST_TICKS = 60;
     public static final double BLADE_RANGE = 14;
     public static final double BLADE_RADIUS = 4;
     public static final int BLADE_COUNT = 12;
