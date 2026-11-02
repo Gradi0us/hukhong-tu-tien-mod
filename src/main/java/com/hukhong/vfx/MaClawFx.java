@@ -77,15 +77,33 @@ public final class MaClawFx {
      */
     public static void qSlash(ServerLevel lv, ServerPlayer p, LivingEntity target, boolean fromLeft, boolean crit) {
         double roll = fromLeft ? 60 : -60;
-        Fx.slash(lv, p, roll, crit ? 4.6 : 3.6, 0, crit ? 5 : 7, crit ? 3.2f : 2.4f);
-        Vec3 c = target.position().add(0, target.getBbHeight() * 0.5, 0);
+        qSlashAt(lv, p, target.position().add(0, target.getBbHeight() * 0.5, 0), fromLeft, crit);
+    }
+
+    /** Q đòn 1 tại điểm trước mặt: vòng sóng máu dưới chân + xích máu phóng ra (hiện cả khi không trúng ai). */
+    public static void qPullAt(ServerLevel lv, ServerPlayer p, Vec3 at) {
+        Fx.groundRing(lv, p, p.position().add(0, 0.05, 0), 3.0f, BLOOD_RGB, 16);
+        Vec3 from = p.position().add(0, p.getBbHeight() * 0.6, 0);
+        for (int s = -1; s <= 1; s++) {
+            Vec3 side = new Vec3(-(at.z - from.z), 0, at.x - from.x).normalize().scale(s * 1.2);
+            Fx.ribbonWave(lv, p, at.add(side).add(at.subtract(from).scale(1.5)), from, 0.4, 0.5, 8, 0, 0.14f, BLOOD_RGB);
+        }
+        lv.sendParticles(DARK_RED, at.x, at.y, at.z, 30, 1.2, 0.5, 1.2, 0);
+        lv.sendParticles(ParticleTypes.SOUL, at.x, at.y, at.z, 10, 1.0, 0.4, 1.0, 0.02);
+        lv.playSound(null, p.blockPosition(), SoundEvents.CHAIN_BREAK, SoundSource.PLAYERS, 1.0f, 0.5f);
+    }
+
+    /** Q đòn 2/3 tại điểm c: lưỡi liềm huyết khí lớn chém từ trái/phải. */
+    public static void qSlashAt(ServerLevel lv, ServerPlayer p, Vec3 c, boolean fromLeft, boolean crit) {
+        double roll = fromLeft ? 60 : -60;
         Vec3 look = p.getLookAngle();
         Vec3 flat = new Vec3(look.x, 0, look.z);
         flat = flat.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : flat.normalize();
         Vec3 right = new Vec3(-flat.z, 0, flat.x);
         Vec3 side = right.scale(fromLeft ? -1 : 1);
         Vec3 origin = c.add(side.scale(crit ? 2.6 : 2.0)).add(0, 0.4, 0);
-        Fx.qi(lv, origin, c.subtract(origin), crit ? 2.6f : 2.0f, BLOOD_RGB, roll, crit ? 12 : 10);
+        Fx.qi(lv, origin, c.subtract(origin).scale(2), crit ? 3.4f : 2.6f, BLOOD_RGB, roll, crit ? 12 : 10);
+        Fx.qi(lv, origin.add(0, 0.3, 0), c.subtract(origin).scale(2), crit ? 2.6f : 1.9f, crit ? 0xFF2A3A : 0x6A0A8A, roll * 0.8, crit ? 10 : 8);
         // vệt bụi đỏ thẫm vẽ cung cắt qua mục tiêu
         int n = crit ? 14 : 10;
         for (int i = 0; i <= n; i++) {
@@ -97,7 +115,7 @@ public final class MaClawFx {
             lv.sendParticles(ParticleTypes.CRIT, c.x, c.y, c.z, 16, 0.3, 0.3, 0.3, 0.2);
             lv.sendParticles(ParticleTypes.DAMAGE_INDICATOR, c.x, c.y, c.z, 4, 0.2, 0.2, 0.2, 0.1);
             lv.sendParticles(BRIGHT_RED, c.x, c.y, c.z, 12, 0.4, 0.4, 0.4, 0);
-            lv.playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 0.8f);
+            lv.playSound(null, net.minecraft.core.BlockPos.containing(c), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 0.8f);
         }
     }
 }

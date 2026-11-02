@@ -467,7 +467,12 @@ public final class SkillEffects {
             MaClawFx.burst(lv, e.position().add(0, e.getBbHeight() * 0.5, 0));
         }
         // Hit 1: xiềng máu + vòng choáng; hit 2: trảm từ trái; hit 3: trảm từ phải, bạo kích.
+        // Luôn có VFX trước mặt (kể cả khi chém trượt), thêm VFX trên từng mục tiêu trúng.
+        Vec3 front = p.position().add(p.getLookAngle().multiply(1, 0, 1).normalize().scale(2.2)).add(0, 1.0, 0);
+        if (hit == 0) MaClawFx.qPullAt(lv, p, front);
+        else MaClawFx.qSlashAt(lv, p, front, hit == 1, finisher);
         for (LivingEntity e : targets) {
+            if (!e.isAlive()) continue;
             if (hit == 0) MaClawFx.qPull(lv, p, e);
             else MaClawFx.qSlash(lv, p, e, hit == 1, finisher);
         }
