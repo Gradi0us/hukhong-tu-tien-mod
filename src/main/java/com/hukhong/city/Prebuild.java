@@ -185,7 +185,7 @@ public final class Prebuild {
     @SubscribeEvent
     public static void onTick(ServerTickEvent.Post e) {
         MinecraftServer server = e.getServer();
-        if (state == State.DONE || blocking) return;
+        if (state == State.DONE || blocking || skipped()) return;
         ServerLevel ow = server.getLevel(Level.OVERWORLD);
         if (ow == null) return;
         if (state == State.UNINIT) {

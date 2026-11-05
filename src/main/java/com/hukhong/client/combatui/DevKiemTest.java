@@ -87,10 +87,12 @@ public final class DevKiemTest {
             }
         });
         if (t == 110) mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
-        if (t == 112) server.execute(() -> { sp.setYRot(0); sp.setXRot(15); sp.connection.teleport(sp.getX(), sp.getY(), sp.getZ(), 0, 15); });
+        if (t == 112) server.execute(() -> { sp.setYRot(0); sp.setXRot(40); sp.connection.teleport(sp.getX(), sp.getY(), sp.getZ(), 0, 40); });
         if (t == 130) server.execute(() -> { hpMark(); com.hukhong.skill.SkillService.cast(sp, 3);
             LOG.info("KIEMTEST domain on={}", com.hukhong.skill.SkillService.state(sp).domainOn); });
-        if (t == 150 || t == 162 || t == 175) shot("01_back_" + t);
+        if (t == 150) shot("01_back_150");
+        if (t == 152) server.execute(() -> { sp.setYRot(90); sp.setXRot(20); sp.connection.teleport(sp.getX(), sp.getY(), sp.getZ(), 90, 20); });
+        if (t == 156) shot("01_side_156");
         if (t == 176) server.execute(() -> LOG.info("KIEMTEST y={} baThe={} dmg={} rend={}", sp.getY(), com.hukhong.skill.KiemRend.inBaThe(sp), hpDelta(),
                 mobs.isEmpty() ? -1 : com.hukhong.skill.KiemRend.stacks(firstAlive())));
         if (t == 180) mc.options.setCameraType(CameraType.THIRD_PERSON_FRONT);

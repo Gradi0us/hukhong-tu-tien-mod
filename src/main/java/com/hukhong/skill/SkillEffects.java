@@ -394,7 +394,6 @@ public final class SkillEffects {
         KiemRend.baThe(p, lv.getGameTime() + KiemRend.BA_THE_AFTER); // Bá Thể khi thi triển + 3s sau khi kết thúc
         hover(lv, p, 2.0);
         if (n % DOMAIN_PULSE_TICKS == 0) {
-            Fx.domain(lv, p, (float) (5 * qiRange(p)), 26);
             kiemVucPulse(p, lv, n / DOMAIN_PULSE_TICKS);
         }
     }
@@ -417,27 +416,35 @@ public final class SkillEffects {
         return hit.getType() == HitResult.Type.MISS ? y : hit.getLocation().y;
     }
 
+    /** Vạn Kiếm Quy Tông: mưa kiếm lao chéo 45° mũi chúc xuống, phủ vùng trước mặt theo hướng nhìn (không tự nhắm). */
+    public static final double VK_LENGTH = 10, VK_HALF_WIDTH = 3.5;
+    public static final int VK_SWORDS = 14;
+
     private static void kiemVucPulse(ServerPlayer p, ServerLevel lv, int n) {
-        double r = 5 * qiRange(p);
+        double len = VK_LENGTH * qiRange(p), half = VK_HALF_WIDTH * qiRange(p);
         int lvl = com.hukhong.skillbook.SkillBookService.data(p).level(Skill.KIEM_ULT.icon);
         com.hukhong.skillbook.SkillBookRuntime.begin(p, com.hukhong.skillbook.SkillBookMath.dmgMult(lvl), 30);
-        List<LivingEntity> in = lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(r, 2, r),
-                e -> valid(p, e) && e.distanceToSqr(p) <= r * r);
-        for (LivingEntity e : in) slash(p, e, Skill.KIEM_ULT_COEF);
-        // Vạn Kiếm Quy Tông: kiếm hiện sau lưng (hai bên vai, cao trên đầu) rồi lao chéo về phía trước vào kẻ địch
         Vec3 fwd = p.getLookAngle().multiply(1, 0, 1);
         if (fwd.lengthSqr() < 1e-4) fwd = new Vec3(0, 0, 1);
-        fwd = fwd.normalize();
-        Vec3 side = new Vec3(-fwd.z, 0, fwd.x);
-        for (int i = 0; i < DOMAIN_SWORDS; i++) {
-            double sd = (i % 2 == 0 ? 1 : -1) * (1.2 + (i / 2) * 0.55), up = 1.8 + (i / 2) * 0.45;
-            Vec3 from = p.position().subtract(fwd.scale(1.6 + (i / 2) * 0.3)).add(side.scale(sd)).add(0, up, 0);
-            Vec3 to;
-            if (!in.isEmpty()) {
-                LivingEntity e = in.get((i + n) % in.size());
-                to = e.getBoundingBox().getCenter().add((lv.random.nextDouble() - 0.5) * 0.8, (lv.random.nextDouble() - 0.5) * 0.6, (lv.random.nextDouble() - 0.5) * 0.8);
-            } else to = p.position().add(fwd.scale(r * (0.6 + 0.4 * lv.random.nextDouble()))).add(side.scale(sd * 0.8)).add(0, 0.4, 0);
-            Fx.swordFly(lv, from, to, 6, i, 1.3f);
+        final Vec3 f = fwd.normalize();
+        final Vec3 side = new Vec3(-f.z, 0, f.x);
+        Vec3 o = p.position();
+        // sát thương: mọi kẻ địch trong vùng chữ nhật trước mặt
+        List<LivingEntity> in = lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(len + 1, 4, len + 1), e -> {
+            if (!valid(p, e)) return false;
+            Vec3 d = e.position().subtract(o);
+            double along = d.x * f.x + d.z * f.z, lat = Math.abs(d.x * side.x + d.z * side.z);
+            return along >= 0.5 && along <= len && lat <= half + e.getBbWidth() / 2 && Math.abs(d.y) < 5;
+        });
+        // kiếm cắm xuống, sát thương khi cắm (trễ ~ thời gian bay)
+        SkillScheduler.later(5, () -> { for (LivingEntity e : in) if (e.isAlive()) slash(p, e, Skill.KIEM_ULT_COEF); });
+        double h = 7;
+        for (int i = 0; i < VK_SWORDS; i++) {
+            double along = 1.5 + lv.random.nextDouble() * (len - 1.5), lat = (lv.random.nextDouble() * 2 - 1) * half;
+            Vec3 base = o.add(f.scale(along)).add(side.scale(lat));
+            Vec3 land = new Vec3(base.x, groundY(lv, base.x, o.y + 1, base.z) + 0.2, base.z);
+            Vec3 from = land.subtract(f.scale(h)).add(0, h, 0); // từ sau-trên lao chéo 45° về phía trước
+            Fx.swordStab(lv, from, land, 5, i / 2, 1.3f);
         }
         if (n % 2 == 0) lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 0.9f);
     }
