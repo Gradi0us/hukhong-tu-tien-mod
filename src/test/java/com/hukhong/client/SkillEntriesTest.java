@@ -43,7 +43,7 @@ class SkillEntriesTest {
         assertEquals(Skill.KIEM_2_COEF * 100 * 1.4, SkillEntries.baseHit(Skill.KIEM_2, 100, 0, 6), EPS); // Cuong Hoa lv6 = x1.4
         assertEquals(Skill.THE_1_COEF * 50, SkillEntries.baseHit(Skill.THE_1, 50, 0, 1), EPS);       // 200
         assertEquals(Skill.MA_1_COEF * 80, SkillEntries.baseHit(Skill.MA_1, 80, 0, 1), EPS);         // 100
-        assertEquals(0.95 * 1.12 * 100, SkillEntries.baseHit(Skill.DAO_1, 0, 100, 1), EPS);          // 106.4 (Dao Tu x1.12)
+        assertEquals(1.10 * 1.12 * 100, SkillEntries.baseHit(Skill.DAO_1, 0, 100, 1), EPS);          // 123.2 (Dao Tu x1.12)
         assertEquals(0, SkillEntries.baseHit(Skill.THE_2, 100, 100, 1), EPS);
     }
 
@@ -65,7 +65,7 @@ class SkillEntriesTest {
         assertFalse(e.contains("Sát thương/mục tiêu"), e);
         // T = Tinh Ha Quang Tru: 20 nhip, moi nhip sp x coef x 0.105 x aptMult(A)
         double pulse = PhapBeamMath.pulseDamage(PhapElement.QUANG, Aptitude.A, 20);
-        assertEquals(20 * 7.3 * PhapBeamMath.PULSE_RATIO * 1.0, pulse, 1e-9); // A: t = 3/6 -> aptMult 1.0
+        assertEquals(20 * 18.25 * PhapBeamMath.PULSE_RATIO * 1.0, pulse, 1e-9); // A: t = 3/6 -> aptMult 1.0
         String t = text(key(pg, "T"));
         assertTrue(t.contains(SkillEntries.num(pulse)), t);
         assertTrue(t.contains(SkillEntries.num(pulse * 20)), t);
@@ -76,7 +76,7 @@ class SkillEntriesTest {
     @Test
     void beamPulseScalesWithSkillLevel() {
         double base = PhapBeamMath.pulseDamage(PhapElement.LOI, Aptitude.SSS, 100); // sp x coefT x PULSE_RATIO x aptMult(SSS)=1.3
-        assertEquals(100 * 8.1 * PhapBeamMath.PULSE_RATIO * 1.3, base, 1e-9);
+        assertEquals(100 * 20.25 * PhapBeamMath.PULSE_RATIO * 1.3, base, 1e-9);
         assertEquals(base * 1.72, SkillEntries.beamPulse(PhapElement.LOI, Aptitude.SSS, 100, 10), 1e-9);
     }
 

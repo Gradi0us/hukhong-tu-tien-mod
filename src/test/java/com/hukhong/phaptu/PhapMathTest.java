@@ -179,9 +179,7 @@ class PhapMathTest {
         assertEquals(PhapMath.THO_T_BLAST_MAX, PhapMath.thoTBlastMult(9), EPS, "kẹp 0..1");
         assertTrue(PhapMath.thoTBlastMult(0.8) > PhapMath.thoTBlastMult(0.2));
         assertTrue(PhapMath.THO_T_TOTAL > 2.5 * (3 * 0.6 + 1.75), "T mới >= 2,5x bản cũ (3 đợt 60% + nổ 175%)");
-        double best = 0; // T Thổ (đầy mana) vượt ult mạnh nhất của nguyên tố khác trên một mục tiêu
-        for (PhapElement e : PhapElement.values()) if (e != PhapElement.THO) best = Math.max(best, PhapMath.coef(e, 3));
-        assertTrue(PhapMath.coef(PhapElement.THO, 3) * PhapMath.THO_T_TOTAL > 2 * best);
+        // 2026-11-05: T Quang/Lôi/Thủy x2,5, Kim x3 theo yêu cầu - bỏ ràng buộc "T Thổ > 2x ult nguyên tố khác".
     }
 
     @Test

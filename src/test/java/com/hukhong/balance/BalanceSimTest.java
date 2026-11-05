@@ -46,6 +46,8 @@ class BalanceSimTest {
     static final double[] REGEN_CORE = {0.4, 0.6, 1.0, 1.5, 2.2};
     static final double MELEE_RATE_SWORD = 1.6, MELEE_RATE_FIST = 1.6;
     static final double MELEE_UPTIME = 0.55, SKILL_UPTIME = 0.85;
+    /** 2026-11-05 (yêu cầu người chơi): T Quang/Lôi/Thủy x2,5, Kim x3, buff Q Đạo -> nới trần cho Pháp và Đạo. */
+    static final double PHAP_HI = 1.35, DAO_HI = 1.35;
     static final double AURA_AVG = 0.5;           // Bá Khí trung bình của Thể
     static final double MA_ATK_BONUS = 0.10;      // Ác Tính/Huyết Tế điển hình (MaRules)
     static final double SEEK_SECONDS = 30;        // thời gian tìm/chạy giữa hai quái khi cày EXP
@@ -325,7 +327,7 @@ class BalanceSimTest {
                     double dps = dpsAt(pl, 180, 15, 1, false)[0];
                     row.append(String.format(" %.0f (%.2f) |", dps, dps / mean));
                     double lo = phapSupport(e) ? 0.75 : 0.85;
-                    if (lv >= 10 && (dps / mean < lo || dps / mean > 1.15)) fails.add("phap dps ratio " + e + " L" + lv + " = " + dps / mean);
+                    if (lv >= 10 && (dps / mean < lo || dps / mean > PHAP_HI)) fails.add("phap dps ratio " + e + " L" + lv + " = " + dps / mean);
                     double sus = sustain(pl);
                     if (sus < 20) fails.add("phap sustain<20s " + e + " L" + lv + " = " + sus);
                     for (Mob m : MOBS) {
@@ -423,7 +425,7 @@ class BalanceSimTest {
             System.out.println("SUGGEST " + b.name() + " " + Math.round(sug));
             for (int i = 0; i < PATHS.length; i++) {
                 double r = dpsBy[i] / mean;
-                if (PATHS[i] == Path.DAO ? (r < 0.55 || r > 1.15) : (r < 0.85 || r > 1.15)) fails.add("path dps ratio " + b.name() + " " + PATHS[i] + " = " + r);
+                if (PATHS[i] == Path.DAO ? (r < 0.55 || r > DAO_HI) : (r < 0.85 || r > 1.15)) fails.add("path dps ratio " + b.name() + " " + PATHS[i] + " = " + r);
             }
         }
 
@@ -437,7 +439,7 @@ class BalanceSimTest {
             md.append(String.format("| %d | %.0f (%.2f) | %.0f (%.2f) | %.0f | %.0f | %.2f | %.0f%% |%n", lv, r[0][0], r[0][1], r[1][0], r[1][1], r[2][0], r[3][0], r[1][0] / mean, spread * 100));
             if (lv >= 10 && spread > 0.20) fails.add("DPS spread " + lv + " = " + spread);
             // Đạo: 100% sát thương là kỹ năng nên hưởng Cường Hóa nhiều nhất (cận chiến Kiếm/Thể/Ma không nhân) -> cho phép tới +5% so với trung bình
-            if (lv >= 10 && (r[1][0] / mean < 0.6 || r[1][0] / mean > 1.05)) fails.add("DPS Dao/mean " + lv + " = " + r[1][0] / mean);
+            if (lv >= 10 && (r[1][0] / mean < 0.6 || r[1][0] / mean > DAO_HI)) fails.add("DPS Dao/mean " + lv + " = " + r[1][0] / mean);
         }
 
         // --- 5. Bí Cảnh
