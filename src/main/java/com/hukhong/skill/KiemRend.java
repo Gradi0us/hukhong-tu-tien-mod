@@ -72,7 +72,17 @@ public final class KiemRend {
         long now = lv.getGameTime();
         Rend r = REND.computeIfAbsent(t.getUUID(), k -> new Rend());
         if (now > r.expire) r.stacks = 0;
+        int before = r.stacks;
         r.stacks = Math.min(MAX_STACKS, r.stacks + 1);
+        if (before < MAX_STACKS && r.stacks == MAX_STACKS) { // đủ 50 tầng: R (kích nổ Xé Toạc) hồi ngay
+            SkillState st = SkillService.state(p);
+            if (st.cooldownEnd[2] > now) {
+                st.cooldownEnd[2] = now;
+                SkillService.sync(p);
+            }
+            p.displayClientMessage(Component.translatable("hukhong.kiem.rend.ready").withColor(0xFF4050), true);
+            lv.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8f, 1.6f);
+        }
         r.expire = now + EXPIRE_TICKS;
         r.owner = p.getUUID();
         lv.sendParticles(RED, t.getX(), t.getY() + t.getBbHeight() * 0.6, t.getZ(), 2 + r.stacks / 10, 0.25, 0.3, 0.25, 0.02);

@@ -2616,5 +2616,6 @@
   "hukhong.ma.domain.detonate": "Demon Domain detonates! (%s enemies)",
   "hukhong.ma.domain.lowhp": "Demon Domain fades: HP below 40%%",
   "hukhong.kiem.rend.stack": "Rend %s/%s stacks",
-  "hukhong.kiem.rend.detonate": "Rend detonated! (%s targets)"
+  "hukhong.kiem.rend.detonate": "Rend detonated! (%s targets)",
+  "hukhong.kiem.rend.ready": "Rend at 50 stacks - R is ready!"
 }

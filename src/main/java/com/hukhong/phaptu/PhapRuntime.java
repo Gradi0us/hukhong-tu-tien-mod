@@ -68,7 +68,7 @@ public final class PhapRuntime {
     }
 
     private static final class Burn {
-        int stacks;
+        int stacks, pctTimer;
         long expire, nextSpread;
         UUID owner;
         ResourceKey<Level> dim;
@@ -257,10 +257,15 @@ public final class PhapRuntime {
                 it.remove();
                 continue;
             }
-            double pct = Math.min(PhapMath.HOA_PCT_MAX, PhapMath.HOA_PCT_PER_STACK * b.stacks) * t.getHealth();
-            pct = Math.min(pct, PhapMath.HOA_PCT_CAP_SP * StatService.spellPower(o));
-            float dmg = (float) ((PhapMath.hoaBurnPerSecond(PhapTu.aptitude(o), b.stacks, StatService.spellPower(o)) + pct)
-                    * PhapMath.HOA_TICK / 20.0);
+            float dmg = (float) (PhapMath.hoaBurnPerSecond(PhapTu.aptitude(o), b.stacks, StatService.spellPower(o)) * PhapMath.HOA_TICK / 20.0);
+            b.pctTimer += PhapMath.HOA_TICK;
+            if (b.pctTimer >= PhapMath.HOA_PCT_EVERY) { // cứ 4s: bùng lửa đốt theo % máu hiện tại
+                b.pctTimer = 0;
+                double pct = Math.min(PhapMath.HOA_PCT_MAX, PhapMath.HOA_PCT_PER_STACK * b.stacks) * t.getHealth();
+                dmg += (float) Math.min(pct, PhapMath.HOA_PCT_CAP_SP * StatService.spellPower(o));
+                Fx.elem(sl, o, Fx.E_TONGUES, t.position(), Vec3.ZERO, 1.0f + 0.15f * b.stacks, PhapElement.HOA.rgb, 20);
+                sl.sendParticles(ParticleTypes.LAVA, t.getX(), t.getY() + 1, t.getZ(), 6, 0.5, 0.4, 0.5, 0.1);
+            }
             t.invulnerableTime = 0;
             boolean was = busy;
             busy = true;

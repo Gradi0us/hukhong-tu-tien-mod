@@ -269,6 +269,11 @@ public final class HuKhongRuntimeGameTests {
         SkillService.cast(p, 2);
         if (com.hukhong.skill.KiemRend.stacks(z) != 0) h.fail("R phai kich no va xoa tang");
         if (z.getHealth() >= hp) h.fail("R khong gay sat thuong");
+        // R đang hồi chiêu; đánh đủ 50 tầng thì R hồi ngay
+        if (SkillService.state(p).cooldownEnd[2] <= h.getLevel().getGameTime()) h.fail("R phai dang hoi chieu sau khi dung");
+        for (int i = 0; i < 50; i++) { z.invulnerableTime = 0; com.hukhong.gates.DamageRules.hurtBySkill(p, z, 1f); }
+        if (com.hukhong.skill.KiemRend.stacks(z) != 50) h.fail("phai du 50 tang: " + com.hukhong.skill.KiemRend.stacks(z));
+        if (SkillService.state(p).cooldownEnd[2] > h.getLevel().getGameTime()) h.fail("du 50 tang Xe Toac thi R phai hoi ngay");
         h.succeed();
     }
 

@@ -2616,5 +2616,6 @@
   "hukhong.ma.domain.detonate": "Quỷ Vực bạo phát! (%s kẻ địch)",
   "hukhong.ma.domain.lowhp": "Ma Vực tan biến vì máu dưới 40%%",
   "hukhong.kiem.rend.stack": "Xé Toạc %s/%s tầng",
-  "hukhong.kiem.rend.detonate": "Xé Toạc bùng nổ! (%s mục tiêu)"
+  "hukhong.kiem.rend.detonate": "Xé Toạc bùng nổ! (%s mục tiêu)",
+  "hukhong.kiem.rend.ready": "Xé Toạc đủ 50 tầng - R đã hồi!"
 }

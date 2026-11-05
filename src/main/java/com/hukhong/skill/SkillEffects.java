@@ -437,7 +437,7 @@ public final class SkillEffects {
             return along >= 0.5 && along <= len && lat <= half + e.getBbWidth() / 2 && Math.abs(d.y) < 5;
         });
         // kiếm cắm xuống, sát thương khi cắm (trễ ~ thời gian bay)
-        SkillScheduler.later(5, () -> { for (LivingEntity e : in) if (e.isAlive()) slash(p, e, Skill.KIEM_ULT_COEF); });
+        for (LivingEntity e : in) slash(p, e, Skill.KIEM_ULT_COEF);
         double h = 7;
         for (int i = 0; i < VK_SWORDS; i++) {
             double along = 1.5 + lv.random.nextDouble() * (len - 1.5), lat = (lv.random.nextDouble() * 2 - 1) * half;
