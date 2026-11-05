@@ -159,7 +159,7 @@ public class PhapTurret extends PathfinderMob {
         Vec3 from = position().add(0, 1.55 * PhapMath.THO_MERGED_SCALE, 0), to = t.getBoundingBox().getCenter();
         float dmg = PhapMath.thoLaserPulse(shotDamage * (empowered > 0 ? 2f : 1f), shotTicks, lockTicks);
         t.invulnerableTime = 0;
-        DamageRules.hurtBySkill(o, t, dmg);
+        hitNoKnock(o, t, dmg, 10, 2);
         int core = lerpRgb(0xC49A5C, 0xFFE9A0, k);
         Fx.ribbon(sl, o, from, to, 0, 5, 0, 0.10f + 0.42f * k, core);                 // tia dày dần theo độ nạp
         Fx.ribbon(sl, o, from, to, 0, 5, 0, 0.04f + 0.14f * k, 0xFFFFFF);              // lõi trắng
@@ -238,6 +238,15 @@ public class PhapTurret extends PathfinderMob {
         }
         if (isMerged()) laser(sl, o);
         else if (tickCount % shotTicks == 0) shoot(sl, o);
+    }
+
+    /** Trúng đạn trụ: không đẩy lùi, thay bằng làm chậm (amp 1 = -30%, amp 2 = -45%). */
+    private static void hitNoKnock(ServerPlayer o, LivingEntity t, float dmg, int slowTicks, int amp) {
+        Vec3 v = t.getDeltaMovement();
+        DamageRules.hurtBySkill(o, t, dmg);
+        t.setDeltaMovement(v.x * 0.3, Math.min(v.y, 0), v.z * 0.3);
+        t.hurtMarked = true;
+        t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, slowTicks, amp, false, false, true));
     }
 
     private float scaleK() { return isMerged() ? (float) PhapMath.THO_MERGED_SCALE : 1f; }
@@ -354,7 +363,7 @@ public class PhapTurret extends PathfinderMob {
         Vec3 from = position().add(0, 1.8, 0), to = best.getBoundingBox().getCenter();
         float dmg = shotDamage * (empowered > 0 ? 2f : 1f);
         best.invulnerableTime = 0;
-        DamageRules.hurtBySkill(o, best, dmg);
+        hitNoKnock(o, best, dmg, 30, 1);
         Vec3 core = position().add(0, 2.3, 0);
         Vec3 dir = to.subtract(core).normalize();
         Fx.qi(sl, core.add(dir.scale(0.5)), dir, 0.55f, 0xFFC36A, 0, 6);                     // chớp nạp ở lõi
