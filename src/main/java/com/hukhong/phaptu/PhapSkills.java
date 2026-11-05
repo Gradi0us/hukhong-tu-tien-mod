@@ -467,6 +467,8 @@ public final class PhapSkills {
     // ------------------------------------------------------------------ THỔ: tank + khống chế + triệu hồi
 
     private static void tho(ServerLevel lv, ServerPlayer p, int slot, double c) {
+        if (slot != 1 && ThoTitan.controlling(p)) { ThoTitan.skill(lv, p, slot, c); return; } // nhập trụ cấp 3: Q/R/T là kỹ năng của trụ
+        if (slot == 1 && ThoTitan.onE(lv, p)) return; // E: nâng / nhập / rời trụ cấp 3
         int col = PhapElement.THO.rgb;
         Vec3 o = p.position(), f = flat(p);
         switch (slot) {

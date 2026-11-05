@@ -90,6 +90,14 @@ public final class PhapMath {
 
     // ---- Thổ: Hợp Thể (hai trụ cùng chủ cách <= 5 block gộp thành một trụ laser đơn mục tiêu kiểu Inferno Tower)
     public static final double THO_MERGE_RADIUS = 5.0;
+    /** Trụ cấp 3 (Thái Sơn Thần Tháp). */
+    public static final double THO_TITAN_SCALE = 2.6, THO_TITAN_HP_MULT = 1.5, THO_TITAN_SEAT_Y = 6.4, THO_TITAN_ENTER_RANGE = 12, THO_TITAN_RANGE = 32;
+    public static final int THO_TITAN_LIFE_TICKS = 1800, THO_TITAN_AUTO_TICKS = 12, THO_TITAN_CTRL_TICKS = 8, THO_TITAN_ESCAPE_TICKS = 60;
+    /** Đạn tự động / điều khiển = hệ số x một phát trụ thường, nổ lan bán kính. */
+    public static final double THO_TITAN_AUTO_MULT = 3.0, THO_TITAN_CTRL_MULT = 4.5, THO_TITAN_SPLASH = 2.5;
+    /** Kỹ năng khi nhập trụ (x hệ số kỹ năng): Q 3 phát pháo, R sóng chấn, T 10 thiên thạch. */
+    public static final double THO_TITAN_Q_COEF = 1.2, THO_TITAN_R_COEF = 1.6, THO_TITAN_R_RADIUS = 9, THO_TITAN_T_COEF = 0.45, THO_TITAN_T_AREA = 6;
+    public static final int THO_TITAN_R_STUN_TICKS = 30, THO_TITAN_T_METEORS = 10;
     /** Trụ vỡ: hút kẻ địch trong THO_BURST_PULL ô vào rồi nổ bán kính THO_BURST_RADIUS, sát thương = hệ số x một phát (Hợp Thể x THO_BURST_MERGED). */
     public static final double THO_BURST_PULL = 2.0, THO_BURST_RADIUS = 3.0, THO_BURST_COEF = 6.0, THO_BURST_MERGED = 1.8;
     /** Trong Địa Thứ Lĩnh Vực: máu ảo = % máu tối đa trụ (nạp lại mỗi giây), giáp ảo giảm % sát thương nhận. */

@@ -87,11 +87,12 @@ public final class PhapClient {
             int glow = LightTexture.pack(15, 15);
             ps.pushPose();
             ps.translate(0, -2.4 * (1 - ease), 0);
-            if (t.isMerged()) merged(t, age, ps, buf, light, glow);
+            if (t.isTitan()) titan(t, age, ps, buf, light, glow);
+            else if (t.isMerged()) merged(t, age, ps, buf, light, glow);
             else single(t, age, ps, buf, light, glow);
             float sh = t.shieldFraction();
             if (sh > 0) { // máu ảo + giáp ảo: vỏ kính hổ phách bao trụ, co lại theo lượng máu ảo
-                float k = t.isMerged() ? (float) com.hukhong.phaptu.PhapMath.THO_MERGED_SCALE : 1f;
+                float k = t.isTitan() ? (float) com.hukhong.phaptu.PhapMath.THO_TITAN_SCALE : t.isMerged() ? (float) com.hukhong.phaptu.PhapMath.THO_MERGED_SCALE : 1f;
                 float s = (1.55f + 0.35f * sh) * k + (float) Math.sin(age * 0.25) * 0.04f;
                 block(ps, buf, GLASS, 0, 0.05, 0, s, age * 2f, glow);
                 for (int i = 0; i < 4; i++) { // 4 phiến giáp xoay quanh
@@ -124,6 +125,60 @@ public final class PhapClient {
             for (int i = 0; i < 3; i++) {
                 double a = age * 0.09 + Math.PI * 2 / 3 * i;
                 block(ps, buf, DS_BRICK, Math.cos(a) * 0.75, 2.2 + bob + Math.sin(age * 0.15 + i) * 0.15, Math.sin(a) * 0.75, 0.22f, spin, light);
+            }
+        }
+
+        private static final net.minecraft.world.level.block.state.BlockState
+                MAGMA = bs(net.minecraft.world.level.block.Blocks.MAGMA_BLOCK), OBSID = bs(net.minecraft.world.level.block.Blocks.OBSIDIAN),
+                POL_BS = bs(net.minecraft.world.level.block.Blocks.POLISHED_BLACKSTONE_BRICKS), LODE = bs(net.minecraft.world.level.block.Blocks.LODESTONE),
+                RAW_GOLD = bs(net.minecraft.world.level.block.Blocks.RAW_GOLD_BLOCK), PEARL = bs(net.minecraft.world.level.block.Blocks.PEARLESCENT_FROGLIGHT);
+
+        /** Trụ cấp 3 - Thái Sơn Thần Tháp: pháo đài đá khổng lồ ~6 khối: bệ 3 tầng, 4 tháp canh có dung nham, thân đài, đỉnh có ghế điều khiển,
+         *  lõi núi lửa xoay + 12 tảng đá bay vòng quanh. Có người nhập: lõi chuyển đỏ rực, vòng đá quay nhanh. */
+        private void titan(PhapTurret t, float age, PoseStack ps, MultiBufferSource buf, int light, int glow) {
+            boolean ctl = t.isControlled();
+            // bệ 3 tầng
+            for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) block(ps, buf, (x + z) % 2 == 0 ? DS_TILE : TUFF, x * 1.4, 0, z * 1.4, 1.4f, 0, light);
+            block(ps, buf, POL_BS, 0, 1.3, 0, 3.0f, 0, light);
+            block(ps, buf, CH_DS, 0, 4.2, 0, 2.0f, 45, light);
+            // 4 tháp canh góc: đá đen + mạch dung nham + đèn đỉnh
+            for (int i = 0; i < 4; i++) {
+                double a = Math.PI / 2 * i + Math.PI / 4, x = Math.cos(a) * 2.6, z = Math.sin(a) * 2.6;
+                block(ps, buf, BASALT, x, 0, z, 1.0f, 0, light);
+                block(ps, buf, MAGMA, x, 1.0, z, 0.9f, 0, glow);
+                block(ps, buf, BASALT, x, 1.9, z, 0.9f, 0, light);
+                block(ps, buf, GILD, x, 2.8, z, 0.85f, 45, light);
+                block(ps, buf, OBSID, x, 3.6, z, 0.5f, 45, light);
+                block(ps, buf, ctl ? MAGMA : LANTERN, x, 4.15 + Math.sin(age * 0.15 + i) * 0.08, z, 0.42f, age * 4f, glow);
+                for (int j = 0; j < 2; j++) { // gai đá chĩa ra ngoài
+                    ps.pushPose();
+                    ps.translate(x * 1.18, 0.2 + j * 1.4, z * 1.18);
+                    ps.mulPose(com.mojang.math.Axis.YP.rotation((float) -a));
+                    ps.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-35));
+                    block(ps, buf, SPIKE, 0, 0, 0, 1.1f, 0, light);
+                    ps.popPose();
+                }
+            }
+            // thân đài + vành vàng
+            block(ps, buf, LODE, 0, 5.5, 0, 1.3f, age * 0.5f, light);
+            for (int i = 0; i < 8; i++) {
+                double a = Math.PI / 4 * i;
+                block(ps, buf, GILD, Math.cos(a) * 1.5, 5.6, Math.sin(a) * 1.5, 0.45f, (float) Math.toDegrees(-a), light);
+            }
+            // lõi núi lửa lơ lửng trên đỉnh
+            double bob = Math.sin(age * 0.07) * 0.18;
+            float spin = age * (ctl ? 9f : 3f);
+            float cs = 1.5f + (float) Math.sin(age * 0.2) * 0.06f;
+            block(ps, buf, ctl ? MAGMA : RAW_GOLD, 0, 7.6 + bob, 0, cs, spin, glow);
+            block(ps, buf, ctl ? AMBER : PEARL, 0, 7.85 + bob, 0, cs * 0.62f, -spin * 1.5f, glow);
+            block(ps, buf, CRYING, 0, 8.0 + bob, 0, cs * 0.3f, spin * 2.2f, glow);
+            int n = 12;
+            for (int i = 0; i < n; i++) { // 2 vòng tảng đá bay ngược chiều
+                boolean inner = i % 2 == 0;
+                double a = age * (ctl ? 0.11 : 0.04) * (inner ? 1 : -1) + Math.PI * 2 / n * i;
+                double r = inner ? 2.6 : 3.6;
+                block(ps, buf, inner ? DS_BRICK : GILD, Math.cos(a) * r, 7.4 + bob + Math.sin(a * 3 + age * 0.05) * 0.4, Math.sin(a) * r,
+                        inner ? 0.55f : 0.4f, (float) Math.toDegrees(a) * 2, light);
             }
         }
 

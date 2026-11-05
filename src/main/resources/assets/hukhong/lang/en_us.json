@@ -2591,5 +2591,14 @@
   "hukhong.skills.tho.r.drain": "Drains %s%% of max %s per second per block of radius: radius %s ~%s/s, radius %s ~%s/s. A full %ss run costs about %s%% of your bar.",
   "hukhong.skills.tho.r.total": "Total if one target stays in the field for %ss: about %s x Spell Power = %s.",
   "hukhong.skills.tho.t.blast2": "After wave 3, hold T for %ss to detonate: %s%% (nearly empty mana) to %s%% (full mana) of T damage = %s to %s, radius %s, drains %s%% of your current mana. Not detonated within %ss and it is lost.",
-  "hukhong.skills.tho.t.total2": "Total if all 3 waves + a full-mana blast hit: %s%% of T damage = %s. The more mana you burn, the harder the blast. Earth E and T are fixed and cannot be reassigned."
+  "hukhong.skills.tho.t.total2": "Total if all 3 waves + a full-mana blast hit: %s%% of T damage = %s. The more mana you burn, the harder the blast. Earth E and T are fixed and cannot be reassigned.",
+  "hukhong.phap.tho.titan.create": "Mount Tai Titan Tower rises! (auto: -1/2 Mana, no regen) - press E to enter",
+  "hukhong.phap.tho.titan.far": "Too far from the Titan Tower to enter",
+  "hukhong.phap.tho.titan.enter": "Inside the Titan Tower: aim to fire, Q Earth Dragon Cannon · R Mountain Quake · T Meteor Rain · E to leave",
+  "hukhong.phap.tho.titan.auto": "Titan Tower back to auto (-1/2 Mana, no regen)",
+  "hukhong.phap.tho.titan.broken": "The Titan Tower collapses!",
+  "hukhong.phap.tho.titan.expired": "The Titan Tower sinks into the earth",
+  "hukhong.phap.tho.titan.q": "Earth Dragon Cannon!",
+  "hukhong.phap.tho.titan.r": "Mountain Quake!",
+  "hukhong.phap.tho.titan.t": "Meteor Rain!"
 }

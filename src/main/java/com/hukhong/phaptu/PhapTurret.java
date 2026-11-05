@@ -40,6 +40,11 @@ public class PhapTurret extends PathfinderMob {
     /** Máu ảo (từ Địa Thứ Lĩnh Vực) x1000 / máu tối đa, đồng bộ để client vẽ khiên. */
     private static final EntityDataAccessor<Integer> SHIELD = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.INT);
     private static final double RANGE = 14;
+    /** Trụ cấp 3 (Thái Sơn Thần Tháp) / đang có người nhập điều khiển. */
+    private static final EntityDataAccessor<Boolean> TITAN = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> CONTROL = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.BOOLEAN);
+    private boolean ended;
+    private int riseFrom;
     private float shield;
     private int shieldTicks;
     /** Tick client bắt đầu hiệu ứng trồi lên (khi sinh ra / khi Hợp Thể). */
@@ -72,6 +77,8 @@ public class PhapTurret extends PathfinderMob {
         b.define(MERGED, false);
         b.define(RAMP, 0);
         b.define(SHIELD, 0);
+        b.define(TITAN, false);
+        b.define(CONTROL, false);
     }
 
     public PhapElement element() { return PhapElement.values()[Math.floorMod(entityData.get(ELEM), PhapElement.values().length)]; }
@@ -111,16 +118,41 @@ public class PhapTurret extends PathfinderMob {
 
     public UUID laserTargetId() { return laserTarget; }
 
+    public boolean isTitan() { return entityData.get(TITAN); }
+
+    public boolean isControlled() { return entityData.get(CONTROL); }
+
+    void setControlled(boolean v) { entityData.set(CONTROL, v); }
+
+    /** Nâng thành trụ cấp 3: máu hp, sống life tick, trồi lên lại. */
+    void makeTitan(float hp, int life) {
+        entityData.set(MERGED, false);
+        entityData.set(TITAN, true);
+        entityData.set(RAMP, 0);
+        var inst = getAttribute(Attributes.MAX_HEALTH);
+        if (inst != null) inst.setBaseValue(hp);
+        setHealth(hp);
+        this.life = life;
+        laserTarget = null;
+        riseFrom = tickCount;
+        refreshDimensions();
+    }
+
+    /** Gỡ trụ không nổ, không báo. */
+    void discardQuiet() { ended = true; discard(); }
+
+    public boolean isEnemy(LivingEntity e) { return enemy(e); }
+
     @Override
     protected net.minecraft.world.entity.EntityDimensions getDefaultDimensions(net.minecraft.world.entity.Pose pose) {
         var d = super.getDefaultDimensions(pose);
-        return isMerged() ? d.scale((float) PhapMath.THO_MERGED_SCALE) : d;
+        return isTitan() ? d.scale((float) PhapMath.THO_TITAN_SCALE) : isMerged() ? d.scale((float) PhapMath.THO_MERGED_SCALE) : d;
     }
 
     @Override
     public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
         super.onSyncedDataUpdated(key);
-        if (MERGED.equals(key)) { refreshDimensions(); riseStart = tickCount; }
+        if ((MERGED.equals(key) || TITAN.equals(key)) && (isMerged() || isTitan())) { refreshDimensions(); riseStart = tickCount; }
     }
 
     /**
@@ -226,22 +258,24 @@ public class PhapTurret extends PathfinderMob {
         if (o == null || !o.isAlive() || !o.getData(com.hukhong.core.ModAttachments.CULTIVATION).paths().contains(Path.PHAP)
                 || --life <= 0) {
             sl.sendParticles(ParticleTypes.POOF, getX(), getY() + 0.6, getZ(), 12, 0.3, 0.4, 0.3, 0.02);
+            if (isTitan() && o != null && !ended) { ended = true; ThoTitan.onEnd(sl, o, false); }
             discard();
             return;
         }
         if (empowered > 0) empowered--;
-        if (tickCount < 14) rising(sl);
+        if (tickCount - riseFrom < 14) rising(sl, tickCount - riseFrom);
         tickFieldShield(sl, o);
         if (tickCount % 20 == 0) {
             taunt(sl);
             if (getHealth() < getMaxHealth() && o.distanceToSqr(this) < 16 * 16) heal(getMaxHealth() * 0.02f); // chủ ở gần thì tháp tự phục hồi 2%/s
         }
-        if (isMerged()) laser(sl, o);
+        if (isTitan()) titanTick(sl, o);
+        else if (isMerged()) laser(sl, o);
         else if (tickCount % shotTicks == 0) shoot(sl, o);
     }
 
     /** Trúng đạn trụ: không đẩy lùi, thay bằng làm chậm (amp 1 = -30%, amp 2 = -45%). */
-    private static void hitNoKnock(ServerPlayer o, LivingEntity t, float dmg, int slowTicks, int amp) {
+    static void hitNoKnock(ServerPlayer o, LivingEntity t, float dmg, int slowTicks, int amp) {
         Vec3 v = t.getDeltaMovement();
         DamageRules.hurtBySkill(o, t, dmg);
         t.setDeltaMovement(v.x * 0.3, Math.min(v.y, 0), v.z * 0.3);
@@ -249,7 +283,30 @@ public class PhapTurret extends PathfinderMob {
         t.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, slowTicks, amp, false, false, true));
     }
 
-    private float scaleK() { return isMerged() ? (float) PhapMath.THO_MERGED_SCALE : 1f; }
+    private float scaleK() { return isTitan() ? (float) PhapMath.THO_TITAN_SCALE : isMerged() ? (float) PhapMath.THO_MERGED_SCALE : 1f; }
+
+    /** Trụ cấp 3: tự động bắn pháo đá vào kẻ địch gần nhất; có người nhập thì bắn theo tâm ngắm của họ (nhanh + mạnh hơn). */
+    private void titanTick(ServerLevel sl, ServerPlayer o) {
+        float emp = empowered > 0 ? 2f : 1f;
+        if (isControlled()) {
+            if (!ThoTitan.controlling(o)) { setControlled(false); return; }
+            ThoTitan.lockSeat(o, this);
+            if (tickCount % PhapMath.THO_TITAN_CTRL_TICKS == 0) {
+                LivingEntity[] h = new LivingEntity[1];
+                Vec3 to = ThoTitan.aimPoint(sl, o, this, h);
+                boolean any = h[0] != null || !sl.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(to, to).inflate(PhapMath.THO_TITAN_SPLASH), this::enemy).isEmpty();
+                if (any) ThoTitan.cannon(sl, o, this, to, (float) (shotDamage * PhapMath.THO_TITAN_CTRL_MULT * emp), PhapMath.THO_TITAN_SPLASH, 1f);
+            }
+        } else if (tickCount % PhapMath.THO_TITAN_AUTO_TICKS == 0) {
+            LivingEntity t = sl.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(PhapMath.THO_TITAN_RANGE * 0.7, 8, PhapMath.THO_TITAN_RANGE * 0.7), this::enemy).stream()
+                    .min(Comparator.comparingDouble(e -> e.distanceToSqr(this))).orElse(null);
+            if (t != null) ThoTitan.cannon(sl, o, this, t.getBoundingBox().getCenter(), (float) (shotDamage * PhapMath.THO_TITAN_AUTO_MULT * emp), PhapMath.THO_TITAN_SPLASH, 1f);
+        }
+        if (tickCount % 30 == 0) {
+            Fx.groundRing(sl, null, position().add(0, 0.06, 0), 4.5f, isControlled() ? 0xFF8A2A : 0xFFD27A, 20);
+            sl.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, getX(), getY() + 0.3, getZ(), 3, 2.0, 0.1, 2.0, 0.01);
+        }
+    }
 
     private void syncShield() {
         int v = shieldTicks > 0 ? Math.round(1000 * Math.min(1f, shield / Math.max(1f, getMaxHealth()))) : 0;
@@ -257,21 +314,21 @@ public class PhapTurret extends PathfinderMob {
     }
 
     /** Trụ trồi khỏi mặt đất: đất đá bắn tung, vết nứt, cột bụi dâng theo chiều cao trụ. */
-    private void rising(ServerLevel sl) {
+    private void rising(ServerLevel sl, int age) {
         float k = scaleK();
-        double h = tickCount / 14.0 * 2.2 * k;
+        double h = age / 14.0 * 2.2 * k;
         var dirt = new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.ROOTED_DIRT.defaultBlockState());
         var stone = new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.DEEPSLATE.defaultBlockState());
         sl.sendParticles(dirt, getX(), getY() + 0.1, getZ(), 10, 0.6 * k, 0.05, 0.6 * k, 0.25);
         sl.sendParticles(stone, getX(), getY() + h, getZ(), 6, 0.35 * k, 0.1, 0.35 * k, 0.15);
         sl.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, getX(), getY() + 0.2, getZ(), 2, 0.7 * k, 0.05, 0.7 * k, 0.01);
-        if (tickCount == 1) {
+        if (age == 1) {
             Fx.groundCrack(sl, null, position().add(0, 0.06, 0), 2.6f * k, PhapElement.THO.rgb, 8, 40);
             Fx.groundRing(sl, null, position().add(0, 0.06, 0), 2.2f * k, 0xFFD27A, 16);
             Fx.shake(sl, position(), 0.35f * k, 8, 14f);
             sl.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.DRIPSTONE_BLOCK_BREAK, net.minecraft.sounds.SoundSource.PLAYERS, 1.2f, 0.5f);
         }
-        if (tickCount == 12) {
+        if (age == 12) {
             Fx.elem(sl, null, Fx.E_SPIKES, position(), Vec3.ZERO, 1.2f * k, PhapElement.THO.rgb, 26);
             sl.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.ANVIL_PLACE, net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 0.6f);
         }
@@ -297,7 +354,15 @@ public class PhapTurret extends PathfinderMob {
     /** Trụ bị phá: hút kẻ địch gần vào tâm rồi nổ đá. Hết thời gian thì không nổ. */
     @Override
     public void die(DamageSource src) {
-        if (level() instanceof ServerLevel sl && !isRemoved() && !dead) burst(sl);
+        if (level() instanceof ServerLevel sl && !isRemoved() && !dead) {
+            burst(sl);
+            if (isTitan() && !ended) {
+                ended = true;
+                ServerPlayer o = owner == null ? null : sl.getServer().getPlayerList().getPlayer(owner);
+                if (o == null) o = ownerRef;
+                if (o != null) ThoTitan.onEnd(sl, o, true);
+            }
+        }
         super.die(src);
     }
 
@@ -362,25 +427,30 @@ public class PhapTurret extends PathfinderMob {
         if (best == null) return;
         Vec3 from = position().add(0, 1.8, 0), to = best.getBoundingBox().getCenter();
         float dmg = shotDamage * (empowered > 0 ? 2f : 1f);
-        best.invulnerableTime = 0;
-        hitNoKnock(o, best, dmg, 30, 1);
         Vec3 core = position().add(0, 2.3, 0);
-        Vec3 dir = to.subtract(core).normalize();
-        Fx.qi(sl, core.add(dir.scale(0.5)), dir, 0.55f, 0xFFC36A, 0, 6);                     // chớp nạp ở lõi
-        Fx.ribbon(sl, o, core, to, 1.1, 5, 0, 0.30f, 0x5A4632);                                  // thân thiên thạch đá
-        Fx.ribbonWave(sl, o, core, to, 1.1, 0.6, 5, 0, 0.18f, 0xFF8A2A);                        // vệt lửa uốn quanh
-        Fx.ribbon(sl, o, core, to, 1.1, 5, 1, 0.07f, 0xFFE9A0);                                  // lõi nóng trắng
-        Fx.elem(sl, o, Fx.E_BOULDER, to, Vec3.ZERO, 0.55f, PhapElement.THO.rgb, 14);
-        Vec3 g = PhapSkills.ground(sl, to.add(0, 0.5, 0));
-        if (to.y - g.y < 2.5) {
-            Fx.groundCrack(sl, o, g.add(0, 0.06, 0), 1.3f, PhapElement.THO.rgb, 6, 24);
-            Fx.groundRing(sl, o, g.add(0, 0.06, 0), 1.1f, 0xFFB35A, 8);
-        }
+        Vec3 d = to.subtract(core);
+        int flight = Math.max(2, (int) Math.round(d.length() / 3.5));
+        Fx.qi(sl, core.add(d.normalize().scale(0.5)), d.normalize(), 0.6f, 0xFFC36A, 0, 6);             // chớp nạp ở lõi
+        Fx.elem(sl, o, Fx.E_SHOT, core, d, 1.0f, PhapElement.THO.rgb, flight);                         // tảng đá nung bay vòng cung, đuôi lửa
         sl.sendParticles(ParticleTypes.CRIT, core.x, core.y, core.z, 6, 0.15, 0.15, 0.15, 0.25);
-        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.DEEPSLATE.defaultBlockState()),
-                to.x, to.y, to.z, 16, 0.3, 0.3, 0.3, 0.2);
-        sl.sendParticles(ParticleTypes.LAVA, to.x, to.y, to.z, 2, 0.2, 0.2, 0.2, 0);
-        sl.playSound(null, to.x, to.y, to.z, net.minecraft.sounds.SoundEvents.BASALT_BREAK, net.minecraft.sounds.SoundSource.PLAYERS, 0.9f, 0.6f);
+        sl.playSound(null, core.x, core.y, core.z, net.minecraft.sounds.SoundEvents.BLAZE_SHOOT, net.minecraft.sounds.SoundSource.PLAYERS, 0.5f, 0.8f);
+        final LivingEntity tgt = best;
+        final ServerPlayer own = o;
+        com.hukhong.skill.SkillScheduler.later(flight, () -> {
+            if (!tgt.isAlive() || !own.isAlive()) return;
+            tgt.invulnerableTime = 0;
+            hitNoKnock(own, tgt, dmg, 30, 1);
+            Vec3 at = tgt.getBoundingBox().getCenter();
+            Vec3 g = PhapSkills.ground(sl, at.add(0, 0.5, 0));
+            if (at.y - g.y < 2.5) {
+                Fx.groundCrack(sl, own, g.add(0, 0.06, 0), 1.3f, PhapElement.THO.rgb, 6, 24);
+                Fx.groundRing(sl, own, g.add(0, 0.06, 0), 1.1f, 0xFFB35A, 8);
+            }
+            sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.DEEPSLATE.defaultBlockState()),
+                    at.x, at.y, at.z, 16, 0.3, 0.3, 0.3, 0.2);
+            sl.sendParticles(ParticleTypes.LAVA, at.x, at.y, at.z, 2, 0.2, 0.2, 0.2, 0);
+            sl.playSound(null, at.x, at.y, at.z, net.minecraft.sounds.SoundEvents.BASALT_BREAK, net.minecraft.sounds.SoundSource.PLAYERS, 0.9f, 0.6f);
+        });
     }
 
     @Override

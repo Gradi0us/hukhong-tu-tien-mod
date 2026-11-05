@@ -495,6 +495,17 @@ public final class PhapRuntime {
         return s.turrets.size();
     }
 
+    /** Mọi trụ thường / Hợp Thể còn sống của p. */
+    public static java.util.List<PhapTurret> turretsOf(ServerLevel sl, ServerPlayer p) {
+        St s = st(p);
+        s.turrets.removeIf(id -> !(sl.getEntity(id) instanceof PhapTurret t) || !t.isAlive());
+        java.util.List<PhapTurret> out = new ArrayList<>();
+        for (UUID id : s.turrets) if (sl.getEntity(id) instanceof PhapTurret t) out.add(t);
+        return out;
+    }
+
+    static void clearTurrets(ServerPlayer p) { st(p).turrets.clear(); }
+
     public static void empowerTurrets(ServerLevel sl, ServerPlayer p, int ticks) {
         for (UUID id : st(p).turrets) if (sl.getEntity(id) instanceof PhapTurret t) t.empower(ticks);
     }
@@ -517,7 +528,8 @@ public final class PhapRuntime {
             var sk = p.getData(SkillAttachments.STATE);
             double rg = StatService.regen(p);
             double mm = sk.meditating() ? com.hukhong.age.AgeMath.meditationMult(com.hukhong.age.AgeService.stageOf(p)) : 1.0;
-            Resources.add(p, (int) Math.max(1, Math.round((sk.meditating() ? PathRules.PHAP_MEDITATE_REGEN * mm : PathRules.PHAP_REGEN) * rg)));
+            if (!ThoTitan.autoActive(p)) // trụ cấp 3 tự động: Pháp Lực không tự hồi
+                Resources.add(p, (int) Math.max(1, Math.round((sk.meditating() ? PathRules.PHAP_MEDITATE_REGEN * mm : PathRules.PHAP_REGEN) * rg)));
         }
         switch (el) {
             case THUY -> { if (now % PhapMath.THUY_PULSE_TICKS == 0) thuyPulse(sl, p, s, now); }

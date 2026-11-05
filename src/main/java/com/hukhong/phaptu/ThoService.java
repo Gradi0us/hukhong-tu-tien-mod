@@ -130,8 +130,21 @@ public final class ThoService {
     }
 
     /** Giữ E đủ lâu (gọi từ ThiemBoService). Trả true nếu bắt đầu xuyên tường. */
+    /** Xuyên tường miễn phí ticks tick (trụ cấp 3 vỡ khi đang nhập). */
+    public static void freePhase(ServerPlayer p, int ticks) {
+        if (!(p.level() instanceof ServerLevel lv)) return;
+        St s = st(p);
+        s.phaseLeft = ticks;
+        s.lastSafe = ThoPhase.allowed(lv, p.getBoundingBox()) ? p.position() : null;
+        p.noPhysics = true;
+        p.fallDistance = 0;
+        send(p, ThoStatePayload.PHASE_ON, s.phaseLeft);
+        Fx.shell(lv, p, p, 1.25f, COL, ticks);
+        lv.sendParticles(STONE, p.getX(), p.getY() + 1, p.getZ(), 30, 0.5, 0.8, 0.5, 0.1);
+    }
+
     public static boolean startPhase(ServerPlayer p) {
-        if (phasing(p) || !(p.level() instanceof ServerLevel lv)) return false;
+        if (phasing(p) || !(p.level() instanceof ServerLevel lv) || ThoTitan.controlling(p)) return false;
         if (com.hukhong.bicanh.BiCanhManager.inRun(p) || com.hukhong.arena.BossArena.isEngaged(p)) {
             p.displayClientMessage(Component.translatable("hukhong.phap.tho.phase.denied").withColor(COL), true);
             return false;

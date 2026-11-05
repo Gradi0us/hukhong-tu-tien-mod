@@ -20,7 +20,7 @@ import static com.hukhong.client.fx.FxDraw.white;
 final class FxElem {
     private FxElem() {}
 
-    static final int SPIKES = 0, HALOS = 1, ARC = 2, TONGUES = 3, TIDE = 4, NEEDLES = 5, BOULDER = 6;
+    static final int SPIKES = 0, HALOS = 1, ARC = 2, TONGUES = 3, TIDE = 4, NEEDLES = 5, BOULDER = 6, SHOT = 7;
 
     static int defLife(int kind) {
         return switch (kind) { case SPIKES -> 34; case HALOS -> 14; case ARC -> 8; case TONGUES -> 30; case TIDE -> 16; case NEEDLES -> 10; default -> 30; };
@@ -104,6 +104,20 @@ final class FxElem {
                     for (int i = 0; i < 5; i++)
                         FxClient.puffA(FxParticle.SHARD, f.pos.x, f.pos.y, f.pos.z, (r.nextDouble() - .5) * .3, (r.nextDouble() - .5) * .2, (r.nextDouble() - .5) * .3, 0xFFFFFF, .14f, 10, 0f, true, 1f);
             }
+            case SHOT -> {
+                Vec3 w = shotPos(f, f.age);
+                for (int i = 0; i < 2 * q; i++)
+                    FxClient.puffA(FxParticle.GLOW, w.x + r.nextGaussian() * .12, w.y + r.nextGaussian() * .12, w.z + r.nextGaussian() * .12, 0, .02, 0,
+                            i % 2 == 0 ? 0xFF7A1E : 0xFFD27A, .7f + r.nextFloat() * .5f * f.scale, 12, 0f, true, .5f);
+                if (f.age == f.life - 1) {
+                    Vec3 e = f.pos.add(f.dir);
+                    for (int i = 0; i < 22 * q; i++) {
+                        double a = r.nextDouble() * Math.PI * 2, sp = .1 + r.nextDouble() * .3 * f.scale;
+                        FxClient.puffA(FxParticle.SHARD, e.x, e.y, e.z, Math.cos(a) * sp, .15 + r.nextDouble() * .4, Math.sin(a) * sp, 0x5A4030, .12f + r.nextFloat() * .1f, 26, .08f, false, 1f);
+                        FxClient.puffA(FxParticle.GLOW, e.x, e.y, e.z, Math.cos(a) * sp * .8, r.nextDouble() * .15, Math.sin(a) * sp * .8, 0xFF9A3A, 1.1f * f.scale, 14, 0f, true, .4f);
+                    }
+                }
+            }
             case BOULDER -> {
                 int hit = f.life * 2 / 3;
                 if (f.age == hit) {
@@ -146,6 +160,7 @@ final class FxElem {
             case TIDE -> tide(f, g, t, k, fade);
             case NEEDLES -> needles(f, g, t, fade);
             case BOULDER -> boulder(f, g, t);
+            case SHOT -> shot(f, g, t);
             default -> { }
         }
     }
@@ -342,6 +357,43 @@ final class FxElem {
         for (int i = 0; i < F.length; i++) {
             double shade = .55 + .45 * Math.abs(Math.sin(i * 2.399 + rot));
             g.tri(P[F[i][0]], P[F[i][1]], P[F[i][2]], col(mix(0x3A2A18, white(f.rgb, .2f), shade), .92f * a));
+        }
+    }
+
+    private static int q2() { return 1; }
+
+    /** Vị trí đạn đá: từ pos tới pos+dir theo cung (cao = 12% quãng đường). */
+    private static Vec3 shotPos(Inst f, float t) {
+        float k = Mth.clamp(t / Math.max(1, f.life - 1), 0, 1);
+        double arc = f.dir.length() * .12;
+        return f.pos.add(f.dir.scale(k)).add(0, Math.sin(k * Math.PI) * arc, 0);
+    }
+
+    /** Đạn đá của Thổ Tháp: khối đá 20 mặt xoay nhanh, lõi nung đỏ, đuôi lửa dài phía sau, vòng sóng ở điểm trúng. */
+    private static void shot(Inst f, FxDraw g, float t) {
+        float R = .28f * f.scale;
+        if (t >= f.life) {
+            float b = (t - f.life) ;
+            if (b < 6) g.disc(f.pos.add(f.dir).add(0, .05, 0), R * (2 + b * 1.4), 20, col(0xFFB35A, .5f * (1 - b / 6f)), col(0xFF7A1E, 0f));
+            return;
+        }
+        Vec3 c = shotPos(f, t), back = shotPos(f, Math.max(0, t - 3.5f));
+        g.ribbon(back, c, R * .2, R * 1.6, col(0xFF5A10, 0f), col(0xFFB040, .85f));   // đuôi lửa
+        g.ribbon(shotPos(f, Math.max(0, t - 2f)), c, R * .1, R * .8, col(0xFFFFFF, 0f), col(0xFFF0C0, .9f));
+        double ph = 1.618, A = 1 / Math.sqrt(1 + ph * ph);
+        double[][] V = {{0, A, A * ph}, {0, -A, A * ph}, {0, A, -A * ph}, {0, -A, -A * ph}, {A, A * ph, 0}, {-A, A * ph, 0}, {A, -A * ph, 0}, {-A, -A * ph, 0}, {A * ph, 0, A}, {-A * ph, 0, A}, {A * ph, 0, -A}, {-A * ph, 0, -A}};
+        int[][] Fc = {{0, 1, 8}, {0, 9, 1}, {0, 8, 4}, {0, 5, 9}, {0, 4, 5}, {1, 6, 8}, {1, 9, 7}, {1, 7, 6}, {2, 3, 11}, {2, 10, 3}, {2, 4, 10}, {2, 5, 4}, {2, 11, 5}, {3, 7, 11}, {3, 10, 6}, {3, 6, 7}, {4, 8, 10}, {5, 11, 9}, {6, 10, 8}, {7, 9, 11}};
+        Random r = new Random(f.pos.hashCode() ^ (long) f.life);
+        double rot = t * .7, cx = Math.cos(rot), sx = Math.sin(rot);
+        Vec3[] P = new Vec3[12];
+        for (int i = 0; i < 12; i++) {
+            double s = R * (.75 + r.nextDouble() * .5);
+            double x = V[i][0] * s, yy = V[i][1] * s, z = V[i][2] * s;
+            P[i] = c.add(x * cx - yy * sx, x * sx + yy * cx, z);
+        }
+        for (int i = 0; i < Fc.length; i++) {
+            double shade = Math.abs(Math.sin(i * 2.399 + rot));
+            g.tri(P[Fc[i][0]], P[Fc[i][1]], P[Fc[i][2]], col(mix(0x2E2014, 0xFF8A2A, shade * shade), .95f));
         }
     }
 

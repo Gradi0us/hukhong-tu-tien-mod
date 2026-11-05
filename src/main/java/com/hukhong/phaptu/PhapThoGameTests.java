@@ -656,4 +656,49 @@ public final class PhapThoGameTests {
             h.succeed();
         });
     }
+
+    // ------------------------------------------------------------------ trụ cấp 3
+
+    private static PhapTurret makeTitan(GameTestHelper h, ServerPlayer p) {
+        PhapRuntime.summonTurret(h.getLevel(), p, p.position().add(3, 0, 0));
+        PhapRuntime.summonTurret(h.getLevel(), p, p.position().add(3, 0, 2));
+        PhapRuntime.summonTurret(h.getLevel(), p, p.position().add(-6, 0, 0));
+        com.hukhong.gates.Resources.add(p, manaMax(p));
+        if (!ThoTitan.onE(h.getLevel(), p)) h.fail("E khi co tru Hop The phai nang cap 3");
+        PhapTurret t = ThoTitan.titan(p);
+        if (t == null || !t.isTitan()) h.fail("khong co tru cap 3");
+        return t;
+    }
+
+    @GameTest(template = "empty", batch = "tho_titan", timeoutTicks = 60)
+    public static void tho_tru_cap3_hop_moi_tru_va_tru_nua_mana(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        com.hukhong.gates.Resources.add(p, manaMax(p));
+        int full = mana(p);
+        PhapTurret t = makeTitan(h, p);
+        if (Math.abs(mana(p) - full / 2) > 2) h.fail("tu dong phai tru 1/2 mana: " + mana(p) + " / " + full);
+        if (!PhapRuntime.turretsOf(h.getLevel(), p).isEmpty()) h.fail("cac tru khac phai bi hop vao tru cap 3");
+        if (!ThoTitan.autoActive(p)) h.fail("tru cap 3 phai o che do tu dong");
+        if (t.getBbWidth() < 2f) h.fail("tru cap 3 phai rat lon: " + t.getBbWidth());
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "tho_titan2", timeoutTicks = 60)
+    public static void tho_tru_cap3_nhap_dieu_khien_va_vo_thi_xuyen_tuong_bat_tu(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        PhapTurret t = makeTitan(h, p);
+        ThoTitan.onE(h.getLevel(), p);
+        if (!ThoTitan.controlling(p) || !t.isControlled()) h.fail("E lan 2 phai nhap tru");
+        if (p.position().distanceTo(ThoTitan.seat(t)) > 0.5) h.fail("nguoi choi phai o tren dinh tru");
+        if (ThoTitan.autoActive(p)) h.fail("dang dieu khien thi khong phai tu dong");
+        h.runAfterDelay(3, () -> {
+            t.hurt(h.getLevel().damageSources().generic(), 1.0E8f);
+            if (t.isAlive()) h.fail("tru cap 3 khong vo");
+            if (ThoTitan.controlling(p)) h.fail("tru vo phai roi khoi tru");
+            if (!ThoService.phasing(p)) h.fail("tru vo khi dang nhap phai xuyen tuong");
+            if (!ThiemBoService.immune(p)) h.fail("tru vo khi dang nhap phai bat tu");
+            if (p.isInvisible()) h.fail("nguoi choi phai hien lai");
+            h.succeed();
+        });
+    }
 }
