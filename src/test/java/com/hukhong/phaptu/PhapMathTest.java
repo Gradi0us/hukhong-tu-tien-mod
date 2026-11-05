@@ -199,11 +199,11 @@ class PhapMathTest {
 
     @Test
     void thoLaserRampsFrom30To300PercentOverSixSecondsAndClamps() {
-        assertEquals(0.30, PhapMath.thoLaserMult(0), EPS);
-        assertEquals(3.00, PhapMath.thoLaserMult(PhapMath.THO_LASER_RAMP_TICKS), EPS);
-        assertEquals(3.00, PhapMath.thoLaserMult(10_000), EPS);
-        assertEquals(0.30, PhapMath.thoLaserMult(-5), EPS);
-        assertEquals(1.65, PhapMath.thoLaserMult(PhapMath.THO_LASER_RAMP_TICKS / 2), EPS);
+        assertEquals(0.40, PhapMath.thoLaserMult(0), EPS);
+        assertEquals(3.60, PhapMath.thoLaserMult(PhapMath.THO_LASER_RAMP_TICKS), EPS);
+        assertEquals(3.60, PhapMath.thoLaserMult(10_000), EPS);
+        assertEquals(0.40, PhapMath.thoLaserMult(-5), EPS);
+        assertEquals(2.00, PhapMath.thoLaserMult(PhapMath.THO_LASER_RAMP_TICKS / 2), EPS);
         assertEquals(120, PhapMath.THO_LASER_RAMP_TICKS, "6s");
         // DPS = nhịp x (20 / pulseTicks) = sát thương trụ thường/s x hệ số
         float shot = 10f;
@@ -211,8 +211,8 @@ class PhapMathTest {
         double dps0 = PhapMath.thoLaserPulse(shot, shotTicks, 0) * 20.0 / PhapMath.THO_LASER_PULSE_TICKS;
         double dpsMax = PhapMath.thoLaserPulse(shot, shotTicks, 999) * 20.0 / PhapMath.THO_LASER_PULSE_TICKS;
         double normal = shot * 20.0 / shotTicks;
-        assertEquals(0.30 * normal, dps0, 1e-4);
-        assertEquals(3.00 * normal, dpsMax, 1e-4);
+        assertEquals(0.40 * normal, dps0, 1e-4);
+        assertEquals(3.60 * normal, dpsMax, 1e-4);
     }
 
     @Test

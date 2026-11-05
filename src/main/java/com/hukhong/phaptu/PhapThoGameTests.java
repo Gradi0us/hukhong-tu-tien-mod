@@ -601,4 +601,39 @@ public final class PhapThoGameTests {
         if (!(withKim > without * 1.2)) h.fail("Kim Cuong khong cong Phep luc: " + withKim + " vs " + without);
         h.succeed();
     }
+
+    // ------------------------------------------------------------------ trụ vỡ nổ + khiên trong vùng R
+
+    @GameTest(template = "empty", batch = "tho_burst", timeoutTicks = 60)
+    public static void tho_tru_vo_hut_ke_dich_va_no(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        PhapTurret t = PhapRuntime.summonTurret(h.getLevel(), p, p.position().add(0, 0, -4));
+        Zombie z = zombieHp(h, p, 0, 1.0E6f);
+        z.setPos(t.getX() + 1.9, t.getY(), t.getZ());
+        h.runAfterDelay(3, () -> {
+            float hp0 = z.getHealth();
+            t.hurt(h.getLevel().damageSources().generic(), 1.0E7f);
+            if (t.isAlive()) h.fail("tru khong vo");
+            double d = Math.hypot(z.getX() - t.getX(), z.getZ() - t.getZ());
+            if (d > 1.0) h.fail("ke dich trong 2 o phai bi hut sat tru, con cach " + d);
+            if (z.getHealth() >= hp0) h.fail("vu no khong gay sat thuong");
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", batch = "tho_shield", timeoutTicks = 80)
+    public static void tho_tru_trong_vung_R_co_mau_ao_va_giap(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        ThoService.rKey(p, true);
+        Vec3 c = ThoService.fieldCenter(p);
+        if (c == null || ThoService.fieldRadius(p) <= 0) h.fail("R khong tao vung");
+        PhapTurret t = PhapRuntime.summonTurret(h.getLevel(), p, c.add(1, 0, 0));
+        h.runAfterDelay(25, () -> {
+            if (t.shield() <= 0) h.fail("tru trong vung phai co mau ao");
+            float hp = t.getHealth();
+            t.hurt(h.getLevel().damageSources().generic(), t.shield() * 0.5f);
+            if (t.getHealth() < hp) h.fail("mau ao phai do sat thuong truoc");
+            h.succeed();
+        });
+    }
 }

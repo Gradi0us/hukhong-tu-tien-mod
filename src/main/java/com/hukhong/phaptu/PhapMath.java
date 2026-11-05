@@ -90,9 +90,13 @@ public final class PhapMath {
 
     // ---- Thổ: Hợp Thể (hai trụ cùng chủ cách <= 5 block gộp thành một trụ laser đơn mục tiêu kiểu Inferno Tower)
     public static final double THO_MERGE_RADIUS = 5.0;
+    /** Trụ vỡ: hút kẻ địch trong THO_BURST_PULL ô vào rồi nổ bán kính THO_BURST_RADIUS, sát thương = hệ số x một phát (Hợp Thể x THO_BURST_MERGED). */
+    public static final double THO_BURST_PULL = 2.0, THO_BURST_RADIUS = 3.0, THO_BURST_COEF = 6.0, THO_BURST_MERGED = 1.8;
+    /** Trong Địa Thứ Lĩnh Vực: máu ảo = % máu tối đa trụ (nạp lại mỗi giây), giáp ảo giảm % sát thương nhận. */
+    public static final double THO_FIELD_SHIELD_PCT = 0.40, THO_FIELD_ARMOR = 0.35;
     public static final double THO_MERGED_SCALE = 1.6;
     /** Laser: bắt đầu 30% sát thương một trụ thường, tăng tuyến tính tới 300% sau 6s khoá cùng mục tiêu; đổi mục tiêu thì về 30%. */
-    public static final double THO_LASER_MIN = 0.30, THO_LASER_MAX = 3.00;
+    public static final double THO_LASER_MIN = 0.40, THO_LASER_MAX = 3.60;
     public static final int THO_LASER_RAMP_TICKS = 120, THO_LASER_PULSE_TICKS = 4;
     public static double thoLaserMult(int lockedTicks) {
         double k = Math.max(0, Math.min(1.0, lockedTicks / (double) THO_LASER_RAMP_TICKS));

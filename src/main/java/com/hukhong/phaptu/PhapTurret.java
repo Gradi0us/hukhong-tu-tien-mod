@@ -37,7 +37,13 @@ public class PhapTurret extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> MERGED = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.BOOLEAN);
     /** Tiến độ laser 0..1000 (đồng bộ để client biết độ dày tia / hạt). */
     private static final EntityDataAccessor<Integer> RAMP = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.INT);
+    /** Máu ảo (từ Địa Thứ Lĩnh Vực) x1000 / máu tối đa, đồng bộ để client vẽ khiên. */
+    private static final EntityDataAccessor<Integer> SHIELD = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.INT);
     private static final double RANGE = 14;
+    private float shield;
+    private int shieldTicks;
+    /** Tick client bắt đầu hiệu ứng trồi lên (khi sinh ra / khi Hợp Thể). */
+    public int riseStart;
 
     private UUID owner;
     /** Tham chiếu chủ (không lưu) để tháp vẫn sống khi chủ không nằm trong PlayerList (người chơi giả / chuyển chiều). */
@@ -65,6 +71,7 @@ public class PhapTurret extends PathfinderMob {
         b.define(ELEM, PhapElement.THO.ordinal());
         b.define(MERGED, false);
         b.define(RAMP, 0);
+        b.define(SHIELD, 0);
     }
 
     public PhapElement element() { return PhapElement.values()[Math.floorMod(entityData.get(ELEM), PhapElement.values().length)]; }
@@ -94,6 +101,11 @@ public class PhapTurret extends PathfinderMob {
 
     public int lifeLeft() { return life; }
 
+    /** Tỉ lệ máu ảo 0..1 (client vẽ khiên). */
+    public float shieldFraction() { return entityData.get(SHIELD) / 1000f; }
+
+    public float shield() { return shield; }
+
     /** Số tick đã khoá cùng một mục tiêu (0 khi chưa có). */
     public int lockTicks() { return lockTicks; }
 
@@ -108,7 +120,7 @@ public class PhapTurret extends PathfinderMob {
     @Override
     public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
         super.onSyncedDataUpdated(key);
-        if (MERGED.equals(key)) refreshDimensions();
+        if (MERGED.equals(key)) { refreshDimensions(); riseStart = tickCount; }
     }
 
     /**
@@ -180,6 +192,16 @@ public class PhapTurret extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource src, float amount) {
         if (src.getEntity() instanceof Player || src.is(net.minecraft.tags.DamageTypeTags.IS_FALL)) return false;
+        if (shieldTicks > 0 && !level().isClientSide) {
+            amount *= (float) (1 - PhapMath.THO_FIELD_ARMOR); // giáp ảo
+            float soak = Math.min(shield, amount);
+            shield -= soak;
+            amount -= soak;
+            syncShield();
+            if (soak > 0 && level() instanceof ServerLevel sl)
+                sl.sendParticles(ParticleTypes.WAX_OFF, getX(), getY() + 1.2 * scaleK(), getZ(), 6, 0.5, 0.6, 0.5, 0.05);
+            if (amount <= 0) { hurtTime = 6; return true; }
+        }
         return super.hurt(src, amount);
     }
 
@@ -202,12 +224,100 @@ public class PhapTurret extends PathfinderMob {
             return;
         }
         if (empowered > 0) empowered--;
+        if (tickCount < 14) rising(sl);
+        tickFieldShield(sl, o);
         if (tickCount % 20 == 0) {
             taunt(sl);
             if (getHealth() < getMaxHealth() && o.distanceToSqr(this) < 16 * 16) heal(getMaxHealth() * 0.02f); // chủ ở gần thì tháp tự phục hồi 2%/s
         }
         if (isMerged()) laser(sl, o);
         else if (tickCount % shotTicks == 0) shoot(sl, o);
+    }
+
+    private float scaleK() { return isMerged() ? (float) PhapMath.THO_MERGED_SCALE : 1f; }
+
+    private void syncShield() {
+        int v = shieldTicks > 0 ? Math.round(1000 * Math.min(1f, shield / Math.max(1f, getMaxHealth()))) : 0;
+        if (entityData.get(SHIELD) != v) entityData.set(SHIELD, v);
+    }
+
+    /** Trụ trồi khỏi mặt đất: đất đá bắn tung, vết nứt, cột bụi dâng theo chiều cao trụ. */
+    private void rising(ServerLevel sl) {
+        float k = scaleK();
+        double h = tickCount / 14.0 * 2.2 * k;
+        var dirt = new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.ROOTED_DIRT.defaultBlockState());
+        var stone = new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.DEEPSLATE.defaultBlockState());
+        sl.sendParticles(dirt, getX(), getY() + 0.1, getZ(), 10, 0.6 * k, 0.05, 0.6 * k, 0.25);
+        sl.sendParticles(stone, getX(), getY() + h, getZ(), 6, 0.35 * k, 0.1, 0.35 * k, 0.15);
+        sl.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, getX(), getY() + 0.2, getZ(), 2, 0.7 * k, 0.05, 0.7 * k, 0.01);
+        if (tickCount == 1) {
+            Fx.groundCrack(sl, null, position().add(0, 0.06, 0), 2.6f * k, PhapElement.THO.rgb, 8, 40);
+            Fx.groundRing(sl, null, position().add(0, 0.06, 0), 2.2f * k, 0xFFD27A, 16);
+            Fx.shake(sl, position(), 0.35f * k, 8, 14f);
+            sl.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.DRIPSTONE_BLOCK_BREAK, net.minecraft.sounds.SoundSource.PLAYERS, 1.2f, 0.5f);
+        }
+        if (tickCount == 12) {
+            Fx.elem(sl, null, Fx.E_SPIKES, position(), Vec3.ZERO, 1.2f * k, PhapElement.THO.rgb, 26);
+            sl.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.ANVIL_PLACE, net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 0.6f);
+        }
+    }
+
+    /** Trong (hoặc chạm mép) Địa Thứ Lĩnh Vực của chủ: nhận máu ảo + giáp ảo, nạp lại mỗi giây. */
+    private void tickFieldShield(ServerLevel sl, ServerPlayer o) {
+        double r = ThoService.fieldRadius(o);
+        Vec3 c = r <= 0 ? null : ThoService.fieldCenter(o);
+        boolean in = c != null && Math.hypot(getX() - c.x, getZ() - c.z) <= r + 1.0 + getBbWidth() / 2 && Math.abs(getY() - c.y) < 6;
+        if (in) {
+            if (shieldTicks == 0) {
+                sl.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME, net.minecraft.sounds.SoundSource.PLAYERS, 1f, 0.5f);
+                Fx.groundRing(sl, null, position().add(0, 0.06, 0), 1.8f * scaleK(), 0xFFD27A, 14);
+            }
+            shieldTicks = 30;
+            if (tickCount % 20 == 0 || shield <= 0) shield = Math.max(shield, (float) (getMaxHealth() * PhapMath.THO_FIELD_SHIELD_PCT));
+            if (tickCount % 10 == 0) sl.sendParticles(ParticleTypes.WAX_ON, getX(), getY() + 1.1 * scaleK(), getZ(), 3, 0.6 * scaleK(), 0.8 * scaleK(), 0.6 * scaleK(), 0.02);
+        } else if (shieldTicks > 0 && --shieldTicks == 0) shield = 0;
+        syncShield();
+    }
+
+    /** Trụ bị phá: hút kẻ địch gần vào tâm rồi nổ đá. Hết thời gian thì không nổ. */
+    @Override
+    public void die(DamageSource src) {
+        if (level() instanceof ServerLevel sl && !isRemoved() && !dead) burst(sl);
+        super.die(src);
+    }
+
+    private void burst(ServerLevel sl) {
+        ServerPlayer o = owner == null ? null : sl.getServer().getPlayerList().getPlayer(owner);
+        if (o == null) o = ownerRef;
+        if (o == null) return;
+        float k = scaleK();
+        Vec3 c = position();
+        double pull = PhapMath.THO_BURST_PULL * k + getBbWidth() / 2, rad = PhapMath.THO_BURST_RADIUS * k;
+        for (LivingEntity e : sl.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(rad + 1, 3, rad + 1), this::enemy)) {
+            double d = Math.hypot(e.getX() - c.x, e.getZ() - c.z);
+            if (d <= pull + e.getBbWidth() / 2 && d > 0.6) { // hút vào sát chân trụ
+                Vec3 to = new Vec3(c.x + (e.getX() - c.x) / d * 0.6, e.getY(), c.z + (e.getZ() - c.z) / d * 0.6);
+                Fx.ribbon(sl, o, e.position().add(0, 0.5, 0), to.add(0, 0.5, 0), 0, 3, 0, 0.12f, 0x8A6A3A);
+                e.setPos(to.x, to.y, to.z);
+                d = 0.6;
+            }
+            if (d <= rad + e.getBbWidth() / 2) {
+                e.invulnerableTime = 0;
+                DamageRules.hurtBySkill(o, e, (float) (shotDamage * PhapMath.THO_BURST_COEF * (isMerged() ? PhapMath.THO_BURST_MERGED : 1)));
+                e.push((e.getX() - c.x) * 0.1, 0.45, (e.getZ() - c.z) * 0.1);
+            }
+        }
+        Fx.elem(sl, o, Fx.E_SPIKES, c, Vec3.ZERO, 1.8f * k, PhapElement.THO.rgb, 30);
+        Fx.groundCrack(sl, o, c.add(0, 0.06, 0), (float) rad + 0.8f, PhapElement.THO.rgb, 10, 50);
+        Fx.groundRing(sl, o, c.add(0, 0.06, 0), (float) rad, 0xFFD27A, 14);
+        Fx.pool(sl, o, c.add(0, 0.05, 0), (float) rad * 0.8f, 0x6B4A26, 40);
+        Fx.shake(sl, c, 0.9f * k, 12, 22f);
+        sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, c.x, c.y + 0.8, c.z, 1, 0, 0, 0, 0);
+        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.DEEPSLATE_BRICKS.defaultBlockState()),
+                c.x, c.y + 1, c.z, 60, 0.8 * k, 1.0 * k, 0.8 * k, 0.35);
+        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.RAW_GOLD_BLOCK.defaultBlockState()),
+                c.x, c.y + 1.5 * k, c.z, 30, 0.5, 0.5, 0.5, 0.3);
+        sl.playSound(null, c.x, c.y, c.z, net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE.value(), net.minecraft.sounds.SoundSource.PLAYERS, 1.4f, 0.7f);
     }
 
     private boolean enemy(LivingEntity e) {
@@ -233,7 +343,7 @@ public class PhapTurret extends PathfinderMob {
                 .filter(e -> e.distanceToSqr(this) <= RANGE * RANGE)
                 .min(Comparator.comparingDouble(e -> e.distanceToSqr(this))).orElse(null);
         if (best == null) return;
-        Vec3 from = position().add(0, 1.1, 0), to = best.getBoundingBox().getCenter();
+        Vec3 from = position().add(0, 1.8, 0), to = best.getBoundingBox().getCenter();
         float dmg = shotDamage * (empowered > 0 ? 2f : 1f);
         best.invulnerableTime = 0;
         DamageRules.hurtBySkill(o, best, dmg);

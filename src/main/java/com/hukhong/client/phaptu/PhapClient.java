@@ -69,24 +69,90 @@ public final class PhapClient {
             ps.popPose();
         }
 
+        private static net.minecraft.world.level.block.state.BlockState bs(net.minecraft.world.level.block.Block b) { return b.defaultBlockState(); }
+        private static final net.minecraft.world.level.block.state.BlockState
+                DS_BRICK = bs(net.minecraft.world.level.block.Blocks.DEEPSLATE_BRICKS), DS_TILE = bs(net.minecraft.world.level.block.Blocks.DEEPSLATE_TILES),
+                BASALT = bs(net.minecraft.world.level.block.Blocks.POLISHED_BASALT), CH_DS = bs(net.minecraft.world.level.block.Blocks.CHISELED_DEEPSLATE),
+                GILD = bs(net.minecraft.world.level.block.Blocks.GILDED_BLACKSTONE), AMBER = bs(net.minecraft.world.level.block.Blocks.SHROOMLIGHT),
+                GOLD = bs(net.minecraft.world.level.block.Blocks.GOLD_BLOCK), TUFF = bs(net.minecraft.world.level.block.Blocks.CHISELED_TUFF_BRICKS),
+                CRYING = bs(net.minecraft.world.level.block.Blocks.CRYING_OBSIDIAN), LANTERN = bs(net.minecraft.world.level.block.Blocks.OCHRE_FROGLIGHT),
+                GLASS = bs(net.minecraft.world.level.block.Blocks.YELLOW_STAINED_GLASS);
+
         @Override
         public void render(PhapTurret t, float yaw, float pt, PoseStack ps, MultiBufferSource buf, int light) {
             float age = t.tickCount + pt;
+            // trồi lên từ lòng đất trong 14 tick đầu (và lại trồi khi Hợp Thể)
+            float rise = Math.min(1f, (age - t.riseStart) / 14f);
+            float ease = 1 - (1 - rise) * (1 - rise) * (1 - rise);
+            int glow = LightTexture.pack(15, 15);
             ps.pushPose();
-            float sc = t.isMerged() ? (float) com.hukhong.phaptu.PhapMath.THO_MERGED_SCALE : 1f;
-            float ramp = t.isMerged() ? t.rampFraction() : 0f;
-            ps.scale(sc, sc, sc); // Hợp Thể: mô hình to hơn
-            block(ps, buf, BASE, 0, 0, 0, 1.0f, 0, light);
-            block(ps, buf, MID, 0, 0.95, 0, 0.72f, 45, light);
-            for (int i = 0; i < 4; i++) { // 4 gai đá quanh chân trụ
-                double a = Math.PI / 2 * i + 0.4;
-                block(ps, buf, SPIKE, Math.cos(a) * 0.62, 0, Math.sin(a) * 0.62, 0.7f, 0, light);
+            ps.translate(0, -2.4 * (1 - ease), 0);
+            if (t.isMerged()) merged(t, age, ps, buf, light, glow);
+            else single(t, age, ps, buf, light, glow);
+            float sh = t.shieldFraction();
+            if (sh > 0) { // máu ảo + giáp ảo: vỏ kính hổ phách bao trụ, co lại theo lượng máu ảo
+                float k = t.isMerged() ? (float) com.hukhong.phaptu.PhapMath.THO_MERGED_SCALE : 1f;
+                float s = (1.55f + 0.35f * sh) * k + (float) Math.sin(age * 0.25) * 0.04f;
+                block(ps, buf, GLASS, 0, 0.05, 0, s, age * 2f, glow);
+                for (int i = 0; i < 4; i++) { // 4 phiến giáp xoay quanh
+                    double a2 = age * 0.06 + Math.PI / 2 * i;
+                    block(ps, buf, GILD, Math.cos(a2) * 1.0 * k, 0.9 * k + Math.sin(age * 0.1 + i) * 0.1, Math.sin(a2) * 1.0 * k, 0.32f * k, (float) Math.toDegrees(-a2), glow);
+                }
             }
-            double bob = Math.sin(age * 0.1) * 0.06;
-            block(ps, buf, CORE, 0, 1.55 + bob, 0, 0.42f + 0.22f * ramp, age * (5f + 25f * ramp), LightTexture.pack(15, 15));
-            if (t.isMerged()) block(ps, buf, CORE, 0, 1.55 + bob, 0, 0.62f + 0.3f * ramp, -age * 3f, LightTexture.pack(15, 15)); // lõi thứ hai quay ngược
             ps.popPose();
             super.render(t, yaw, pt, ps, buf, light);
+        }
+
+        /** Trụ đơn (bắn từng phát): tháp obelisk đá sâu, 4 gai, lõi hổ phách lơ lửng với 3 mảnh đá quay quanh. */
+        private void single(PhapTurret t, float age, PoseStack ps, MultiBufferSource buf, int light, int glow) {
+            block(ps, buf, DS_TILE, 0, 0, 0, 1.15f, 0, light);
+            block(ps, buf, CH_DS, 0, 0.9, 0, 0.82f, 45, light);
+            block(ps, buf, BASALT, 0, 1.55, 0, 0.55f, 0, light);
+            for (int i = 0; i < 4; i++) { // gai đá nghiêng chĩa ra 4 góc
+                double a = Math.PI / 2 * i + Math.PI / 4;
+                ps.pushPose();
+                ps.translate(Math.cos(a) * 0.72, 0, Math.sin(a) * 0.72);
+                ps.mulPose(com.mojang.math.Axis.YP.rotation((float) -a));
+                ps.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-18));
+                block(ps, buf, SPIKE, 0, 0, 0, 0.75f, 0, light);
+                ps.popPose();
+            }
+            double bob = Math.sin(age * 0.12) * 0.08;
+            float spin = age * 4f;
+            block(ps, buf, AMBER, 0, 2.25 + bob, 0, 0.46f, spin, glow);
+            block(ps, buf, GOLD, 0, 2.30 + bob, 0, 0.3f, -spin * 1.6f, glow);
+            for (int i = 0; i < 3; i++) {
+                double a = age * 0.09 + Math.PI * 2 / 3 * i;
+                block(ps, buf, DS_BRICK, Math.cos(a) * 0.75, 2.2 + bob + Math.sin(age * 0.15 + i) * 0.15, Math.sin(a) * 0.75, 0.22f, spin, light);
+            }
+        }
+
+        /** Trụ Hợp Thể (laser theo thời gian): đàn tế lớn - bệ tuff, 4 cột đá đen viền vàng, tinh thể khóc xoay giữa, vòng đá bay quanh, nạp càng lâu càng rực. */
+        private void merged(PhapTurret t, float age, PoseStack ps, MultiBufferSource buf, int light, int glow) {
+            float ramp = t.rampFraction();
+            block(ps, buf, TUFF, 0, 0, 0, 1.9f, 0, light);
+            block(ps, buf, DS_BRICK, 0, 0.75, 0, 1.4f, 45, light);
+            for (int i = 0; i < 4; i++) { // 4 cột góc
+                double a = Math.PI / 2 * i + Math.PI / 4;
+                double x = Math.cos(a) * 1.25, z = Math.sin(a) * 1.25;
+                block(ps, buf, BASALT, x, 0, z, 0.55f, 0, light);
+                block(ps, buf, BASALT, x, 0.55, z, 0.55f, 0, light);
+                block(ps, buf, BASALT, x, 1.1, z, 0.5f, 0, light);
+                block(ps, buf, GILD, x, 1.6, z, 0.45f, 45, light);
+                block(ps, buf, LANTERN, x, 2.05 + Math.sin(age * 0.2 + i) * 0.05, z, 0.22f + 0.12f * ramp, age * 6f, glow);
+            }
+            double bob = Math.sin(age * 0.08) * 0.1;
+            float spin = age * (3f + 22f * ramp);
+            float cs = 0.7f + 0.35f * ramp + (float) Math.sin(age * (0.3 + ramp)) * 0.04f * (1 + ramp * 3);
+            block(ps, buf, CRYING, 0, 2.5 + bob, 0, cs, spin, glow);
+            block(ps, buf, AMBER, 0, 2.6 + bob, 0, cs * 0.62f, -spin * 1.4f, glow);
+            block(ps, buf, GOLD, 0, 2.65 + bob, 0, cs * 0.3f, spin * 2f, glow);
+            int n = 8;
+            for (int i = 0; i < n; i++) { // vòng đá bay, nhanh dần theo độ nạp
+                double a = age * (0.05 + 0.12 * ramp) + Math.PI * 2 / n * i;
+                double r = 1.7 - 0.35 * ramp;
+                block(ps, buf, i % 2 == 0 ? DS_TILE : GILD, Math.cos(a) * r, 2.5 + bob + Math.sin(a * 2) * 0.25, Math.sin(a) * r, 0.24f, (float) Math.toDegrees(a), light);
+            }
         }
 
         @Override
