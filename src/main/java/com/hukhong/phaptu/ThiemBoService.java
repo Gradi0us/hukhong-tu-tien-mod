@@ -109,6 +109,8 @@ public final class ThiemBoService {
             release(p);
         } else if (action == ThiemBoPayload.T_PRESS || action == ThiemBoPayload.T_RELEASE) {
             if (ThoService.isTho(p)) ThoService.tKey(p, action == ThiemBoPayload.T_PRESS); // Thổ: giữ T dẫn nổ Thiên Sơn
+        } else if (action == ThiemBoPayload.R_PRESS || action == ThiemBoPayload.R_RELEASE) {
+            ThoService.rKey(p, action == ThiemBoPayload.R_PRESS); // Thổ: nhấn R mở / tắt vùng gai, giữ R nở bán kính
         }
     }
 

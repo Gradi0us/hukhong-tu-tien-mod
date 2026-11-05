@@ -123,6 +123,8 @@ public final class GuildService {
         ItemStack st = ((slot + day) & 1) == 0 ? new ItemStack(AlchemyRegistry.HOI_XUAN_DAN.get(), 2)
                 : SkillBookRewards.stack(new Random(p.getRandom().nextLong()), SkillGrade.PHAM, null);
         SkillBookRewards.give(p, st);
+        ItemStack pk = com.hukhong.phapkhi.PhapKhiDrops.guildBonus(new Random(p.getRandom().nextLong())); // hiếm: Pháp Khí Phàm/Linh
+        if (!pk.isEmpty()) SkillBookRewards.give(p, pk);
     }
 
     private static boolean trialButton(ServerPlayer p, GuildData d) {

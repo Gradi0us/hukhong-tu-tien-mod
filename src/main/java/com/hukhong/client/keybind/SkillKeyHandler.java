@@ -65,6 +65,7 @@ public final class SkillKeyHandler {
         for (int i = 0; i < 4; i++) {
             while (SkillKeys.SKILL[i].consumeClick()) {
                 if (i == 1 && thiemBo) continue; // Quang/Lôi/Thổ E: giữ/bấm nhanh do ThiemBoClient + server phân biệt
+                if (i == 2 && thoKeys) continue; // Thổ R: nhấn/nhả gửi qua ThoClient.tickKeys (server cast + giữ nở vùng gai)
                 if (i == 0 && trCharge) continue; // Sát Trận Q: gửi nhấn/nhả qua TranChargeKeys
                 if (on && !(i == 3 && beamT)) PacketDistributor.sendToServer(new CastSkillPayload(i)); // T của Quang/Lôi/Hỏa/Thủy: giữ để nạp (PhapBeamClient)
             }

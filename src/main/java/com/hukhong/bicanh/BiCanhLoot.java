@@ -49,6 +49,8 @@ public final class BiCanhLoot {
     public static List<ItemStack> stacks(BiCanhTier t, Random r) {
         List<ItemStack> out = new java.util.ArrayList<>(BiCanhRewards.roll(t, r).stream().map(e -> toStack(e, r)).toList());
         if (r.nextDouble() < upgradeScrollChance(t)) out.add(new ItemStack(com.hukhong.skillbook.SkillBookRegistry.UPGRADE_SCROLL.get()));
+        ItemStack pk = com.hukhong.phapkhi.PhapKhiDrops.biCanhDrop(t.ordinal(), r); // Pháp Khí (xác suất tăng theo cấp)
+        if (!pk.isEmpty()) out.add(pk);
         return out;
     }
 }

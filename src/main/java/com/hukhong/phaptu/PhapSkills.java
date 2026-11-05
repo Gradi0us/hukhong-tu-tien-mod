@@ -496,20 +496,8 @@ public final class PhapSkills {
                 lv.sendParticles(STONE, o.x, o.y + 1, o.z, 24, 0.6, 0.8, 0.6, 0.08);
                 sound(lv, pos, SoundEvents.ANVIL_LAND, 0.7f, 0.6f);
             }
-            case 2 -> { // Địa Liệt: khe nứt dài phía trước, gai đá, choáng + chậm
-                Vec3 from = o.add(0, 0.9, 0);
-                for (LivingEntity e : line(lv, p, from, f, 12, 1.5)) {
-                    hit(p, e, c);
-                    PhapRuntime.stun(e, 1.0);
-                    e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2, false, false));
-                }
-                for (int k = 1; k <= 3; k++) Fx.groundCrack(lv, p, o.add(f.scale(k * 3.6)).add(0, 0.06, 0), 3.4f, col, 2, 50 + k * 4);
-                Fx.elem(lv, p, Fx.E_SPIKES, o.add(f.scale(1.5)), f.scale(11), 1.5f, 0xC49A5C, 44);
-                Fx.shake(lv, o, 0.5f, 8, 16f);
-                SkillEffects.ring(lv, o.add(0, 0.2, 0), 3.0, 36, DIRT);
-                sound(lv, o, SoundEvents.ANVIL_LAND, 1.2f, 0.5f);
-            }
-            default -> { // Thiên Sơn Áp Đỉnh: mưa núi đá 3 đợt (mỗi đợt 60% T), rồi giữ T dẫn nổ 175% (xem ThoService)
+            case 2 -> ThoService.startField(lv, p, aim(lv, p, 16)); // Địa Thứ Lĩnh Vực: vùng gai đất tại điểm ngắm; giữ R nở bán kính (xem ThoService)
+            default -> { // Thiên Sơn Áp Đỉnh: mưa núi đá 3 đợt (mỗi đợt 100% T), rồi giữ T dẫn nổ 3..8x T (xem ThoService)
                 ThoService.startT(lv, p, aim(lv, p, 16), c);
             }
         }

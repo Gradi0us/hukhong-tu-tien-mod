@@ -99,9 +99,21 @@ public final class ShopCatalog {
                 // Ton Khach (bac 4): bi tich Thien pham
                 Random rt = new Random(worldSeed ^ id.hashCode() ^ 0x7B22L);
                 o.add(new Offer(SkillBookRewards.stack(rt, SkillGrade.THIEN, null), 30_000L, 4));
+                phapKhi(o, worldSeed, d, lichDay);
             }
         }
         return o;
+    }
+
+    /** Phap Khi: moi pham 1 mon, loai xoay theo (thanh, ngay Lich); Thien pham gia rat cao + Uy Danh bac 4. */
+    static void phapKhi(List<Offer> o, long worldSeed, CityDef d, long lichDay) {
+        String id = d == null ? "" : d.id();
+        com.hukhong.phapkhi.PhapKhiKind[] ks = com.hukhong.phapkhi.PhapKhiKind.values();
+        for (com.hukhong.phapkhi.PhapKhiTier t : com.hukhong.phapkhi.PhapKhiTier.values()) {
+            Random r = new Random(worldSeed ^ id.hashCode() * 31L ^ lichDay * 0x9E3779B97F4A7C15L ^ (t.ordinal() + 1) * 0x51ED27L);
+            com.hukhong.phapkhi.PhapKhiKind k = ks[r.nextInt(ks.length)];
+            o.add(new Offer(com.hukhong.phapkhi.PhapKhiRegistry.stack(k, t), k.price(t), com.hukhong.phapkhi.PhapKhiTier.MIN_RANK[t.ordinal()]));
+        }
     }
 
     /** Gia Hon Cot theo pham (Tu/Hac/Hong), Ha. */

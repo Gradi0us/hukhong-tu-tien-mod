@@ -108,13 +108,46 @@ public final class PhapMath {
     /** Xuyên tường: tốc độ hạ nhẹ khi không bấm Space/Shift (block/tick, > 0,03125 để máy chủ không coi là bay). */
     public static final double THO_PHASE_SINK = 0.04;
 
-    // ---- Thổ T "Thiên Sơn Áp Đỉnh": hồi chiêu 45s, 3 đợt núi rơi x 60%, giữ T dẫn nổ 175% trong ~6s, nổ rút 99% Pháp Lực hiện có
+    // ---- Thổ T "Thiên Sơn Áp Đỉnh": hồi chiêu 45s, 3 đợt núi rơi x 100%, giữ T dẫn nổ (3x..8x theo % Pháp Lực lúc nổ) trong ~6s, nổ rút 99% Pháp Lực hiện có
     public static final int THO_T_COOLDOWN_TICKS = 900, THO_T_WAVES = 3, THO_T_WAVE_GAP = 30, THO_T_FALL_DELAY = 18, THO_T_WINDOW_TICKS = 120, THO_T_HOLD_TICKS = 8;
-    public static final double THO_T_WAVE_FRAC = 0.60, THO_T_BLAST_MULT = 1.75, THO_T_MANA_DRAIN = 0.99;
+    public static final double THO_T_WAVE_FRAC = 1.00, THO_T_MANA_DRAIN = 0.99;
+    /** Nổ = THO_T_BLAST_MIN..THO_T_BLAST_MAX x sát thương T, nội suy theo % Pháp Lực lúc nổ (đốt càng nhiều mana, nổ càng đau; chống nổ rẻ khi gần cạn mana). */
+    public static final double THO_T_BLAST_MIN = 3.0, THO_T_BLAST_MAX = 8.0;
+    /** Hệ số nổ tham chiếu (đầy Pháp Lực). */
+    public static final double THO_T_BLAST_MULT = THO_T_BLAST_MAX;
     public static final double THO_T_AREA = 9.0, THO_T_IMPACT_RADIUS = 3.8, THO_T_BLAST_RADIUS = 13.0;
     public static final int THO_T_IMPACTS = 5;
-    /** Tổng hệ số T Thổ so với "sát thương T hiện tại" nếu mọi đợt + nổ đều trúng cùng mục tiêu. */
+    /** Tổng hệ số T Thổ so với "sát thương T hiện tại" nếu mọi đợt + nổ (đầy Pháp Lực) đều trúng cùng mục tiêu. */
     public static final double THO_T_TOTAL = THO_T_WAVES * THO_T_WAVE_FRAC + THO_T_BLAST_MULT;
+    /** Nổ rút 99% thanh Pháp Lực nên T thực tế chỉ dùng lại được sau khi hồi đầy thanh: thời gian hồi mana tham chiếu (tick) cho cân bằng bền vững. */
+    public static final int THO_T_REFILL_TICKS = 3000;
+    /** Hệ số nổ theo tỉ lệ Pháp Lực hiện có (0..1). */
+    public static double thoTBlastMult(double manaFrac) {
+        double f = Math.max(0, Math.min(1, manaFrac));
+        return THO_T_BLAST_MIN + (THO_T_BLAST_MAX - THO_T_BLAST_MIN) * f;
+    }
+
+    // ---- Thổ R "Địa Thứ Lĩnh Vực": vùng gai đất tại điểm ngắm; giữ R nở 3 -> 9 block (3s); hao Pháp Lực/s theo bán kính; tối đa 10s
+    public static final double THO_R_RADIUS_MIN = 3.0, THO_R_RADIUS_MAX = 9.0;
+    public static final int THO_R_GROW_TICKS = 60, THO_R_MAX_TICKS = 200, THO_R_PULSE_TICKS = 10, THO_R_BLEED_TICKS = 60, THO_R_BLEED_TICK = 20, THO_R_BLEED_MAX_STACKS = 5;
+    /** Gai mỗi nhịp = 0,05 x Phép lực; chảy máu = 0,018 x Phép lực x số tầng mỗi giây (tối đa 5 tầng, +1 tầng mỗi nhịp gai trúng, 3s). */
+    public static final double THO_R_PULSE_COEF = 0.05, THO_R_BLEED_COEF = 0.018;
+    /** Làm chậm 50%; kéo kẻ bay xuống (block/tick); coi là "bay" nếu cách đất > THO_R_FLY_HEIGHT. */
+    public static final double THO_R_SLOW = 0.5, THO_R_PULL_STEP = 0.8, THO_R_FLY_HEIGHT = 2.0;
+    /** Hao Pháp Lực mỗi giây = % Pháp Lực tối đa x bán kính (block). */
+    public static final double THO_R_DRAIN_PCT_PER_BLOCK = 0.0015;
+    /** Hình trụ của vùng: từ THO_R_REACH_DOWN dưới tâm tới THO_R_REACH_UP trên tâm (để bắt kẻ bay). */
+    public static final double THO_R_REACH_UP = 16, THO_R_REACH_DOWN = 3;
+    public static double thoRRadius(int heldTicks) {
+        double k = Math.max(0, Math.min(1.0, heldTicks / (double) THO_R_GROW_TICKS));
+        return THO_R_RADIUS_MIN + (THO_R_RADIUS_MAX - THO_R_RADIUS_MIN) * k;
+    }
+    public static double thoRDrainPerSecond(double radius, int resourceMax) { return resourceMax * THO_R_DRAIN_PCT_PER_BLOCK * radius; }
+    /** Tổng hao (tỉ lệ Pháp Lực tối đa) khi giữ nở đủ rồi để vùng tồn tại trọn THO_R_MAX_TICKS. */
+    public static double thoRDrainFullFrac() {
+        double ticks = (THO_R_RADIUS_MIN + THO_R_RADIUS_MAX) / 2 * THO_R_GROW_TICKS + THO_R_RADIUS_MAX * (THO_R_MAX_TICKS - THO_R_GROW_TICKS);
+        return THO_R_DRAIN_PCT_PER_BLOCK * ticks / 20.0;
+    }
     public static int thoMaxTurrets(Aptitude a) { return 1 + (int) Math.round((THO_MAX_TURRETS - 1) * t(a)); }
     public static float thoShotDamage(Aptitude a, double spellPower) { return (float) (thoDamagePct(a) * THO_SHOT_COEF * spellPower); }
     public static float thoTurretHp(Aptitude a, double ownMaxHp) { return (float) Math.max(4, thoHpPct(a) * ownMaxHp); }
@@ -132,7 +165,7 @@ public final class PhapMath {
             /* LOI   */ {0.57, 1.26, 2.84, 8.1},
             /* HOA   */ {0.43, 0.92, 2.05, 6.2},
             /* THUY  */ {0.59, 0.86, 2.28, 7.6},
-            /* THO   */ {0.50, 0.50, 2.10, 2.00}, // T Thổ: 3 đợt x 60% + nổ 175% = THO_T_TOTAL x hệ số
+            /* THO   */ {0.50, 0.50, 2.10, 2.00}, // R Thổ = gai 20 nhịp x 0,05 + chảy máu ~1,1 (xem THO_R_*); T Thổ: 3 đợt x 100% + nổ 3..8x = THO_T_TOTAL (đầy mana) x hệ số
             /* KIM   */ {0.63, 1.44, 3.32, 9.8},
     };
 
@@ -174,7 +207,7 @@ public final class PhapMath {
         double sum = 0;
         for (int i = 0; i < 4; i++) {
             double c = coef(e, i) * (e == PhapElement.THO && i == 3 ? THO_T_TOTAL : 1.0);
-            int cdt = e == PhapElement.THO && i == 3 ? THO_T_COOLDOWN_TICKS : ks[i].cooldownTicks;
+            int cdt = e == PhapElement.THO && i == 3 ? Math.max(THO_T_COOLDOWN_TICKS, THO_T_REFILL_TICKS) : ks[i].cooldownTicks; // nổ rút 99% mana: dùng lại sau khi hồi đầy thanh
             sum += c / (cdt / 20.0 * cooldownMult(e));
         }
         return sum * damageMult(e, a) + passiveDps(e, a, spellPower) / spellPower;

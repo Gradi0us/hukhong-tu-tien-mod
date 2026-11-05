@@ -231,6 +231,177 @@ public final class PhapThoGameTests {
         h.succeed();
     }
 
+    // ------------------------------------------------------------------ R: Địa Thứ Lĩnh Vực (batch riêng: vùng R làm chậm / kéo mọi mob quanh đó, không để lẫn test khác)
+
+    /** Zombie đứng sát đất (có trọng lực) cách người chơi ahead block, AI tắt. */
+    private static Zombie groundZombie(GameTestHelper h, ServerPlayer p, double ahead) {
+        Zombie z = zombie(h, p, ahead);
+        double gy = PhapSkills.ground(h.getLevel(), z.position().add(0, 0.5, 0)).y;
+        z.setNoGravity(false);
+        z.setPos(z.getX(), gy, z.getZ());
+        return z;
+    }
+
+    private static int mana(ServerPlayer p) { return p.getData(ModAttachments.CULTIVATION).resource(); }
+
+    private static int manaMax(ServerPlayer p) { return p.getData(ModAttachments.CULTIVATION).resourceMax(); }
+
+    @GameTest(template = "empty", batch = "tho_r", timeoutTicks = 100)
+    public static void tho_r_giu_R_thi_ban_kinh_no_ra_nha_R_thi_dung(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        long cd0 = SkillService.state(p).cooldownEnd[2];
+        ThoService.rKey(p, true); // đường thật: ThiemBoPayload.R_PRESS -> rKey -> SkillService.cast -> PhapSkills.tho -> startField
+        if (SkillService.state(p).cooldownEnd[2] == cd0) h.fail("nhan R khong cast (khong dat hoi chieu)");
+        if (!ThoService.fieldActive(p)) h.fail("R khong tao vung gai");
+        if (Math.abs(ThoService.fieldRadius(p) - PhapMath.THO_R_RADIUS_MIN) > 1e-6) h.fail("ban kinh dau phai " + PhapMath.THO_R_RADIUS_MIN + ": " + ThoService.fieldRadius(p));
+        spin(p, PhapMath.THO_R_GROW_TICKS / 2);
+        double mid = ThoService.fieldRadius(p);
+        double expectMid = PhapMath.thoRRadius(PhapMath.THO_R_GROW_TICKS / 2);
+        if (Math.abs(mid - expectMid) > 0.05) h.fail("giu R nua chung: ban kinh " + mid + " != " + expectMid);
+        spin(p, PhapMath.THO_R_GROW_TICKS);
+        if (Math.abs(ThoService.fieldRadius(p) - PhapMath.THO_R_RADIUS_MAX) > 1e-6) h.fail("giu du lau phai dat " + PhapMath.THO_R_RADIUS_MAX + ": " + ThoService.fieldRadius(p));
+        ThoService.rKey(p, false); // nha R: dung no (o lai max), vung van ton tai
+        spin(p, 10);
+        if (!ThoService.fieldActive(p)) h.fail("nha R khong duoc tat vung");
+        ThoService.rKey(p, true); // nhan R lan nua: ket thuc
+        if (ThoService.fieldActive(p)) h.fail("nhan R lan 2 phai ket thuc vung");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "tho_r", timeoutTicks = 100)
+    public static void tho_r_nha_som_thi_giu_ban_kinh_nho_va_het_gio_thi_tan(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        ThoService.rKey(p, true);
+        ThoService.rKey(p, false); // bam nhanh
+        spin(p, 50);
+        if (Math.abs(ThoService.fieldRadius(p) - PhapMath.THO_R_RADIUS_MIN) > 1e-6) h.fail("bam nhanh khong duoc no: " + ThoService.fieldRadius(p));
+        spin(p, PhapMath.THO_R_MAX_TICKS);
+        if (ThoService.fieldActive(p)) h.fail("het " + PhapMath.THO_R_MAX_TICKS + " tick phai tan");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "tho_r", timeoutTicks = 200)
+    public static void tho_r_hao_mana_tang_theo_ban_kinh(GameTestHelper h) {
+        ServerPlayer small = player(h, PhapElement.THO, Aptitude.SSS);
+        ServerPlayer big = player(h, PhapElement.THO, Aptitude.SSS);
+        ThoService.rKey(small, true);
+        ThoService.rKey(small, false); // giu ban kinh 3
+        ThoService.rKey(big, true);    // giu R: no toi 9
+        spin(big, PhapMath.THO_R_GROW_TICKS + 2);
+        spin(small, PhapMath.THO_R_GROW_TICKS + 2);
+        int s0 = mana(small), b0 = mana(big);
+        spin(small, 40);
+        spin(big, 40);
+        int dSmall = s0 - mana(small), dBig = b0 - mana(big);
+        if (ThoService.fieldRadius(small) > PhapMath.THO_R_RADIUS_MIN + 1e-6 || ThoService.fieldRadius(big) < PhapMath.THO_R_RADIUS_MAX - 1e-6)
+            h.fail("ban kinh khong dung: " + ThoService.fieldRadius(small) + " / " + ThoService.fieldRadius(big));
+        int max = manaMax(small);
+        double eSmall = PhapMath.thoRDrainPerSecond(PhapMath.THO_R_RADIUS_MIN, max) * 2, eBig = PhapMath.thoRDrainPerSecond(PhapMath.THO_R_RADIUS_MAX, max) * 2; // 40 tick = 2s
+        if (dSmall <= 0) h.fail("vung nho khong hao mana");
+        if (dBig < dSmall * 2) h.fail("vung 9 block phai hao >= 2x vung 3 block: nho=" + dSmall + " lon=" + dBig);
+        if (Math.abs(dSmall - eSmall) > 2 || Math.abs(dBig - eBig) > 2) h.fail("hao lech cong thuc: nho " + dSmall + "~" + eSmall + " lon " + dBig + "~" + eBig);
+        ThoService.reset(small);
+        ThoService.reset(big);
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "tho_r", timeoutTicks = 200)
+    public static void tho_r_het_mana_thi_vung_tan(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        ThoService.rKey(p, true);
+        CultivationData cd = p.getData(ModAttachments.CULTIVATION);
+        p.setData(ModAttachments.CULTIVATION, cd.withResource(1));
+        spin(p, 40);
+        if (ThoService.fieldActive(p)) h.fail("het mana ma vung van ton tai");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "tho_r", timeoutTicks = 200)
+    public static void tho_r_zombie_trong_vung_bi_cham_50_va_chay_mau(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        ThoService.rKey(p, true);
+        Vec3 c = ThoService.fieldCenter(p);
+        Zombie z = groundZombie(h, p, 6);
+        z.setPos(c.x + 1, c.y, c.z); // dung trong vung (tam vung = diem ngam luc cast)
+        var spd = z.getAttribute(Attributes.MOVEMENT_SPEED);
+        double base = spd.getValue();
+        float hp0 = z.getHealth();
+        spin(p, 1); // nhip gai dau tien o tick 1
+        if (z.getHealth() >= hp0) h.fail("gai khong gay sat thuong: " + z.getHealth());
+        if (ThoService.bleedStacks(p, z) < 1) h.fail("gai trung khong gay chay mau");
+        if (!ThoService.slowedByField(p, z)) h.fail("zombie trong vung khong bi danh dau lam cham");
+        if (Math.abs(spd.getValue() / base - (1 - PhapMath.THO_R_SLOW)) > 0.01) h.fail("toc do phai con 50%: " + spd.getValue() + " / " + base);
+        spin(p, 2 * PhapMath.THO_R_PULSE_TICKS);
+        if (ThoService.bleedStacks(p, z) < 3) h.fail("chay mau phai cong tang theo nhip gai: " + ThoService.bleedStacks(p, z));
+        ThoService.rKey(p, true); // ket thuc vung: cham go, chay mau van con
+        if (spd.getValue() < base - 1e-9) h.fail("ket thuc vung ma van cham: " + spd.getValue());
+        float hp1 = z.getHealth();
+        spin(p, PhapMath.THO_R_BLEED_TICK + 2);
+        if (!(z.getHealth() < hp1)) h.fail("chay mau khong tiep tuc gay sat thuong sau khi vung tan: " + hp1 + " -> " + z.getHealth());
+        spin(p, PhapMath.THO_R_BLEED_TICKS + 5);
+        if (ThoService.bleedStacks(p, z) != 0) h.fail("chay mau phai het han");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "tho_r", timeoutTicks = 200)
+    public static void tho_r_ke_bay_bi_keo_xuong_dat(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        p.setXRot(90f); // nhin thang xuong: tam vung = nen duoi chan (khung GameTest co tran rao barrier ngay tren cau truc, tranh ngam ngang)
+        ThoService.rKey(p, true);
+        Vec3 c = ThoService.fieldCenter(p);
+        if (c == null) h.fail("khong co tam vung");
+        var lv = h.getLevel();
+        net.minecraft.world.entity.ambient.Bat bat = EntityType.BAT.create(lv);
+        bat.setPos(c.x + 1, c.y + 3.6, c.z);
+        bat.setNoGravity(true);
+        bat.setNoAi(true);
+        bat.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1024); // gai R khong duoc giet ngay (doi 6 mau)
+        bat.setHealth(1024f);
+        lv.addFreshEntity(bat);
+        net.minecraft.world.entity.monster.Phantom ph = EntityType.PHANTOM.create(lv);
+        ph.setPos(c.x - 1, c.y + 3.2, c.z + 1);
+        ph.setNoAi(true);
+        ph.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1024);
+        ph.setHealth(1024f);
+        ph.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_HELMET));
+        lv.addFreshEntity(ph);
+        double bat0 = bat.getY() - c.y, ph0 = ph.getY() - c.y;
+        if (bat0 < 3 || ph0 < 3) h.fail("khoi tao sai do cao");
+        spin(p, 1);
+        if (!(bat.getY() - c.y < bat0 - 0.7)) h.fail("doi khong bi keo xuong: " + (bat.getY() - c.y));
+        if (!(ph.getY() - c.y < ph0 - 0.7)) h.fail("phantom khong bi keo xuong: " + (ph.getY() - c.y));
+        spin(p, 14);
+        if (bat.getY() - c.y > 0.6) h.fail("doi chua cham dat: " + (bat.getY() - c.y) + " ground=" + PhapSkills.ground(lv, bat.position().add(0, 0.2, 0)) + " c=" + c + " bat=" + bat.position() + " alive=" + bat.isAlive() + " fieldOn=" + ThoService.fieldActive(p) + " blk=" + lv.getBlockState(bat.blockPosition().below()));
+        if (ph.getY() - c.y > 0.6) h.fail("phantom chua cham dat: " + (ph.getY() - c.y));
+        ThoService.reset(p);
+        h.succeed();
+    }
+
+    // ------------------------------------------------------------------ T: sát thương tổng cao hơn (batch riêng: tDamageDealt cộng mọi mục tiêu quanh đó)
+
+    @GameTest(template = "empty", batch = "tho_t_dmg", timeoutTicks = 120)
+    public static void tho_t_tong_sat_thuong_cao_hon_ban_cu(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        Zombie z = zombieHp(h, p, 6, 1.0E6f);
+        SkillService.cast(p, 3);
+        double c = PhapMath.coef(PhapElement.THO, 3) * StatService.spellPower(p);
+        for (int i = 0; i < 3 * PhapMath.THO_T_WAVE_GAP + 5; i++) { spin(p, 1); z.setHealth(z.getMaxHealth()); }
+        if (!ThoService.blastWindow(p)) h.fail("cua so dan no khong mo");
+        double waves = ThoService.tDamageDealt(p);
+        double expectWaves = c * PhapMath.THO_T_WAVES * PhapMath.THO_T_WAVE_FRAC;
+        if (Math.abs(waves - expectWaves) > expectWaves * 0.02) h.fail("3 dot phai = " + expectWaves + ", thuc te " + waves);
+        double frac = mana(p) / (double) manaMax(p);
+        ThoService.tKey(p, true);
+        for (int i = 0; i < PhapMath.THO_T_HOLD_TICKS + 2; i++) { spin(p, 1); z.setHealth(z.getMaxHealth()); }
+        if (ThoService.blastWindow(p)) h.fail("chua dan no");
+        double total = ThoService.tDamageDealt(p);
+        double expect = c * (PhapMath.THO_T_WAVES * PhapMath.THO_T_WAVE_FRAC + PhapMath.thoTBlastMult(frac));
+        if (Math.abs(total - expect) > expect * 0.02) h.fail("tong T phai ~ " + expect + ", thuc te " + total);
+        double oldTotal = c * (3 * 0.60 + 1.75); // ban truoc: 3 dot x 60% + no 175%
+        if (total < oldTotal * 2.5) h.fail("T moi phai >= 2,5x ban cu: " + total + " vs " + oldTotal);
+        h.succeed();
+    }
+
     // ------------------------------------------------------------------ Hợp Thể + laser
 
     @GameTest(template = "empty", timeoutTicks = 60)

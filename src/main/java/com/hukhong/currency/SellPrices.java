@@ -97,6 +97,9 @@ public final class SellPrices {
             return b == null ? 0 : BOOK_BUY[b.grade.ordinal()] * BUYBACK_PCT / 100;
         }
         if (it instanceof SkillUpgradeScrollItem) return ShopCatalog.SCROLL_PRICE * BUYBACK_PCT / 100;
+        if (it instanceof com.hukhong.phapkhi.PhapKhiItem pk) { // Phap Khi: thu mua theo so lan con lai
+            return Math.max(1, pk.kind.price(pk.tier) * BUYBACK_PCT / 100 * com.hukhong.phapkhi.PhapKhiItem.usesLeft(s) / Math.max(1, pk.maxUses()));
+        }
         Long cat = catalog().get(it);
         if (cat != null) return Math.max(1, cat * BUYBACK_PCT * qualityPct(s) / 10_000);
         Long val = VALUE.get(key.getPath());

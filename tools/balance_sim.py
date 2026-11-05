@@ -201,6 +201,10 @@ class Params:
         P.PH_HOA_STACKS = int(const("phaptu/PhapMath.java", "HOA_STACKS"))
         P.PH_THO_MAXT = int(const("phaptu/PhapMath.java", "THO_MAX_TURRETS"))
         P.PH_THO_SHOT = int(const("phaptu/PhapMath.java", "THO_SHOT_TICKS"))
+        # Thổ R "Địa Thứ Lĩnh Vực" (vùng gai, hao mana theo bán kính) + T "Thiên Sơn" (3 đợt + nổ, rút 99% mana): đọc thẳng PhapMath
+        for nm in ("THO_T_WAVE_FRAC", "THO_T_BLAST_MAX", "THO_T_WAVES", "THO_T_COOLDOWN_TICKS", "THO_T_REFILL_TICKS",
+                   "THO_R_RADIUS_MIN", "THO_R_RADIUS_MAX", "THO_R_GROW_TICKS", "THO_R_MAX_TICKS", "THO_R_DRAIN_PCT_PER_BLOCK"):
+            setattr(P, "PH_" + nm, const("phaptu/PhapMath.java", nm))
         # ---- TranMath / DanMath (Trận Tu, Đan Tu): đọc trực tiếp hằng số, không chép tay
         P.tr = {nm: const("tran/TranMath.java", nm) for nm in ("BASIC_COEF", "Q_COEF", "R_TICK_COEF", "MARK_BONUS", "WARD_DR",
                                                                 "CHARGE_MAX_COEF", "BLADE_COEF", "DOOM_COEF", "SNARE_DOT_COEF")}
@@ -488,8 +492,18 @@ def base_kit(P, B, path, element):
         cdm = P.PH_KIM_COOLDOWN_MULT if e == "KIM" else 1.0
         for i, key in enumerate(("PHAP_1", "PHAP_2", "PHAP_3", "PHAP_ULT")):
             c = P.phap_coef[e][i]
+            cd, cost = S[key]["cd"], S[key]["cost"]
+            if e == "THO" and i == 3:
+                # PhapMath.THO_T_TOTAL x hệ số (3 đợt x 100% + nổ đầy mana 8x); nổ rút 99% thanh nên dùng lại sau khi hồi đầy: cd = max(45s, THO_T_REFILL_TICKS) (cùng quy ước PhapMath.sustainedSp)
+                c = c * (P.PH_THO_T_WAVES * P.PH_THO_T_WAVE_FRAC + P.PH_THO_T_BLAST_MAX)
+                cd = max(P.PH_THO_T_COOLDOWN_TICKS, P.PH_THO_T_REFILL_TICKS)
+                c = c * min(1.0, 60.0 / (cd / 20.0))   # cửa sổ mô phỏng 60s ngắn hơn cd 150s: không cho T bắn "miễn phí" ở t=0 rồi tính cả cửa sổ (trải đều như PhapMath.sustainedSp)
+            if e == "THO" and i == 2:
+                # PhapMath.thoRDrainFullFrac: giữ nở đủ rồi để vùng tồn tại trọn 10s -> hao thêm % thanh mana, tính vào chi phí (sim bị giới hạn mana)
+                ticks = (P.PH_THO_R_RADIUS_MIN + P.PH_THO_R_RADIUS_MAX) / 2 * P.PH_THO_R_GROW_TICKS + P.PH_THO_R_RADIUS_MAX * (P.PH_THO_R_MAX_TICKS - P.PH_THO_R_GROW_TICKS)
+                cost = cost + P.PH_THO_R_DRAIN_PCT_PER_BLOCK * ticks / 20.0 * B.resmax
             if c > 0:
-                k.append(mk(f"{e} {'QERT'[i]}", "sp", c, 1, S[key]["cd"], S[key]["cost"], mult=dm, cdmult=cdm))
+                k.append(mk(f"{e} {'QERT'[i]}", "sp", c, 1, cd, cost, mult=dm, cdmult=cdm))
     elif path == "TRAN":
         # Trận Tu: không có Bản Mệnh. Kit mô phỏng = thế SÁT THƯƠNG (T + E): Q Sát Trận, E Vạn Kiếm, R Diệt Thế.
         # Đòn thường: mode "basic" trong simulate. Thế khác (Khống Chế/Phòng Ngự) không gây sát thương chính nên không tính DPS.

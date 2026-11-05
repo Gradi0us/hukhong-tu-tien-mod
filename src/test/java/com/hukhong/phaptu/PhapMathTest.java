@@ -166,10 +166,35 @@ class PhapMathTest {
     @Test
     void thoUltimateAndEHaveRealDamage() {
         // T Thổ: 3 đợt x 60% + nổ 175% của "sát thương T hiện tại" => tổng lên một mục tiêu >= 6 Phép lực
-        assertEquals(3 * 0.6 + 1.75, PhapMath.THO_T_TOTAL, EPS);
+        assertEquals(3 * 1.0 + 8.0, PhapMath.THO_T_TOTAL, EPS);
         assertTrue(PhapMath.coef(PhapElement.THO, 3) * PhapMath.THO_T_TOTAL >= 6.0);
         assertTrue(PhapMath.coef(PhapElement.THO, 1) > 0, "E không còn 0 sát thương");
         assertEquals(900, PhapMath.THO_T_COOLDOWN_TICKS, "T Thổ hồi 45s");
+    }
+
+    @Test
+    void thoTBlastScalesWithManaAndIsFarAboveOldKit() {
+        assertEquals(PhapMath.THO_T_BLAST_MIN, PhapMath.thoTBlastMult(0), EPS);
+        assertEquals(PhapMath.THO_T_BLAST_MAX, PhapMath.thoTBlastMult(1), EPS);
+        assertEquals(PhapMath.THO_T_BLAST_MAX, PhapMath.thoTBlastMult(9), EPS, "kẹp 0..1");
+        assertTrue(PhapMath.thoTBlastMult(0.8) > PhapMath.thoTBlastMult(0.2));
+        assertTrue(PhapMath.THO_T_TOTAL > 2.5 * (3 * 0.6 + 1.75), "T mới >= 2,5x bản cũ (3 đợt 60% + nổ 175%)");
+        double best = 0; // T Thổ (đầy mana) vượt ult mạnh nhất của nguyên tố khác trên một mục tiêu
+        for (PhapElement e : PhapElement.values()) if (e != PhapElement.THO) best = Math.max(best, PhapMath.coef(e, 3));
+        assertTrue(PhapMath.coef(PhapElement.THO, 3) * PhapMath.THO_T_TOTAL > 2 * best);
+    }
+
+    @Test
+    void thoFieldRadiusGrowsAndDrainGrowsWithRadius() {
+        assertEquals(3.0, PhapMath.thoRRadius(0), EPS);
+        assertEquals(9.0, PhapMath.thoRRadius(PhapMath.THO_R_GROW_TICKS), EPS);
+        assertEquals(9.0, PhapMath.thoRRadius(10_000), EPS);
+        assertEquals(6.0, PhapMath.thoRRadius(PhapMath.THO_R_GROW_TICKS / 2), EPS);
+        assertTrue(PhapMath.thoRDrainPerSecond(9, 1000) > 2.9 * PhapMath.thoRDrainPerSecond(3, 1000));
+        assertEquals(10 * 20, PhapMath.THO_R_MAX_TICKS);
+        double pulses = PhapMath.THO_R_MAX_TICKS / PhapMath.THO_R_PULSE_TICKS * PhapMath.THO_R_PULSE_COEF; // gai + chảy máu ~1,1 khớp COEF
+        assertEquals(PhapMath.coef(PhapElement.THO, 2), pulses + 1.1, 0.15);
+        assertTrue(PhapMath.thoRDrainFullFrac() < 0.25, "dùng đủ 10s không quá 25% thanh");
     }
 
     @Test

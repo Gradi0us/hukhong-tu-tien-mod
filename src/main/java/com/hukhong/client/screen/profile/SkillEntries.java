@@ -397,7 +397,7 @@ public final class SkillEntries {
             {"Lôi Châu", "Lôi Trận", "Thiên Lôi Liên", "Tinh Hà Quang Trụ"},
             {"Hỏa Cầu", "Liệt Diễm Hoàn", "Hỏa Long", "Tinh Hà Quang Trụ"},
             {"Thủy Tiễn", "Cam Lộ", "Thủy Bích", "Tinh Hà Quang Trụ"},
-            {"Thạch Mâu", "Thổ Tháp", "Địa Chấn", "Thiên Sơn Áp Đỉnh"},
+            {"Thạch Mâu", "Thổ Tháp", "Địa Thứ Lĩnh Vực", "Thiên Sơn Áp Đỉnh"},
             {"Kim Nhận", "Kim Giáp", "Kim Quang Phá", "Thiên Kim Trảm"},
     };
 
@@ -542,16 +542,35 @@ public final class SkillEntries {
                     fmt(PhapMath.THO_PHASE_TICKS / 20.0), PhapMath.THO_PHASE_COST * x.costMult(), fmt(PhapMath.THO_PHASE_COOLDOWN_TICKS / 20.0)), META));
             return new Entry(key, name, ls);
         }
+        if (el == PhapElement.THO && slot == 2) { // Địa Thứ Lĩnh Vực: vùng gai đất, giữ R nở, hao mana theo bán kính
+            ls.add(meta(x, Path.PHAP, s.cost, cd));
+            double rmin = PhapMath.THO_R_RADIUS_MIN, rmax = PhapMath.THO_R_RADIUS_MAX;
+            ls.add(l(t("hukhong.skills.tho.r.field", "Vùng gai đất tại điểm ngắm (tầm 16): bán kính %s. Giữ R để nở tới %s block trong %ss. Tồn tại tối đa %ss; nhấn R lần nữa để kết thúc sớm (hết Pháp Lực cũng tan).",
+                    fmt(rmin), fmt(rmax), fmt(PhapMath.THO_R_GROW_TICKS / 20.0), fmt(PhapMath.THO_R_MAX_TICKS / 20.0)), DMG));
+            ls.add(l(t("hukhong.skills.tho.r.dmg", "Mỗi %ss gai trồi khắp vùng: %s sát thương/mục tiêu (%s%% Phép lực). Gai trúng gây Chảy Máu: %s/s mỗi tầng, tối đa %s tầng, %ss.",
+                    fmt(PhapMath.THO_R_PULSE_TICKS / 20.0), num(PhapMath.THO_R_PULSE_COEF * sp), fmt(PhapMath.THO_R_PULSE_COEF * 100),
+                    num(PhapMath.THO_R_BLEED_COEF * sp), PhapMath.THO_R_BLEED_MAX_STACKS, fmt(PhapMath.THO_R_BLEED_TICKS / 20.0)), DMG));
+            ls.add(l(t("hukhong.skills.tho.r.cc", "Kẻ trong vùng bị chậm %s%%. Kẻ bay (hoặc lơ lửng cao hơn %s block) bị tay đá chộp kéo xuống đất.",
+                    fmt(PhapMath.THO_R_SLOW * 100), fmt(PhapMath.THO_R_FLY_HEIGHT)), DMG));
+            ls.add(l(t("hukhong.skills.tho.r.drain", "Hao %s%% %s tối đa mỗi giây trên mỗi block bán kính: bán kính %s ~%s/s, bán kính %s ~%s/s. Dùng đủ %ss tốn khoảng %s%% thanh.",
+                    fmt(PhapMath.THO_R_DRAIN_PCT_PER_BLOCK * 100), resName(Path.PHAP), fmt(rmin), num(PhapMath.thoRDrainPerSecond(rmin, x.resMax())),
+                    fmt(rmax), num(PhapMath.thoRDrainPerSecond(rmax, x.resMax())), fmt(PhapMath.THO_R_MAX_TICKS / 20.0),
+                    fmt(PhapMath.thoRDrainFullFrac() * 100)), META));
+            ls.add(l(t("hukhong.skills.tho.r.total", "Tổng nếu một mục tiêu đứng trong vùng suốt %ss: khoảng %s x Phép lực = %s.",
+                    fmt(PhapMath.THO_R_MAX_TICKS / 20.0), fmt(coef), num(coef * sp)), META));
+            return new Entry(key, name, ls);
+        }
         if (el == PhapElement.THO && slot == 3) { // Thiên Sơn Áp Đỉnh: 3 đợt núi rơi + giữ T dẫn nổ
             ls.add(meta(x, Path.PHAP, s.cost, (int) Math.round(PhapMath.THO_T_COOLDOWN_TICKS * PhapMath.cooldownMult(el))));
             double c3 = coef * sp * m;
             ls.add(l(t("hukhong.skills.tho.t.waves", "%s đợt núi rơi (cách %ss), mỗi đợt %s%% sát thương T = %s/mục tiêu, vùng bán kính %s, choáng %ss",
                     PhapMath.THO_T_WAVES, fmt(PhapMath.THO_T_WAVE_GAP / 20.0), fmt(PhapMath.THO_T_WAVE_FRAC * 100), num(c3 * PhapMath.THO_T_WAVE_FRAC),
                     fmt(PhapMath.THO_T_AREA), fmt(PhapMath.THO_MOUNTAIN_STUN)), DMG));
-            ls.add(l(t("hukhong.skills.tho.t.blast", "Sau đợt 3, giữ T trong %ss để dẫn nổ: %s%% sát thương T = %s, bán kính %s, rút %s%% Pháp Lực hiện có. Quá %ss không dẫn nổ thì mất.",
-                    fmt(PhapMath.THO_T_HOLD_TICKS / 20.0), fmt(PhapMath.THO_T_BLAST_MULT * 100), num(c3 * PhapMath.THO_T_BLAST_MULT),
+            ls.add(l(t("hukhong.skills.tho.t.blast2", "Sau đợt 3, giữ T trong %ss để dẫn nổ: %s%% (gần cạn Pháp Lực) đến %s%% (đầy Pháp Lực) sát thương T = %s đến %s, bán kính %s, rút %s%% Pháp Lực hiện có. Quá %ss không dẫn nổ thì mất.",
+                    fmt(PhapMath.THO_T_HOLD_TICKS / 20.0), fmt(PhapMath.THO_T_BLAST_MIN * 100), fmt(PhapMath.THO_T_BLAST_MAX * 100),
+                    num(c3 * PhapMath.THO_T_BLAST_MIN), num(c3 * PhapMath.THO_T_BLAST_MAX),
                     fmt(PhapMath.THO_T_BLAST_RADIUS), fmt(PhapMath.THO_T_MANA_DRAIN * 100), fmt(PhapMath.THO_T_WINDOW_TICKS / 20.0)), DMG));
-            ls.add(l(t("hukhong.skills.tho.t.total", "Tổng nếu trúng đủ 3 đợt + nổ: %s%% sát thương T = %s. Phím E và T của Pháp Thổ cố định, không thể thay.",
+            ls.add(l(t("hukhong.skills.tho.t.total2", "Tổng nếu trúng đủ 3 đợt + nổ khi đầy Pháp Lực: %s%% sát thương T = %s. Nổ càng nhiều Pháp Lực càng đau. Phím E và T của Pháp Thổ cố định, không thể thay.",
                     fmt(PhapMath.THO_T_TOTAL * 100), num(c3 * PhapMath.THO_T_TOTAL)), META));
             return new Entry(key, name, ls);
         }
@@ -625,8 +644,8 @@ public final class SkillEntries {
                     ""},
             {"Gai đá dọc đường dài 10 block.",
                     "Bấm: dựng tháp, 2 tháp gần nhau hợp thể thành trụ laser. Giữ: xuyên tường 5 giây.",
-                    "Địa chấn bán kính 7: làm chậm 3 giây, hất lên.",
-                    "Mưa núi đá 3 đợt (mỗi đợt 60% sát thương T), rồi giữ T dẫn nổ 175% và rút 99% Pháp Lực."},
+                    "Vùng gai đất tại điểm ngắm: giữ R nở 3 -> 9 block, gai trồi gây sát thương + chảy máu, làm chậm 50%, kéo kẻ bay xuống đất. Hao Pháp Lực theo bán kính.",
+                    "Mưa núi đá 3 đợt (mỗi đợt 100% sát thương T), rồi giữ T dẫn nổ 3..8x sát thương T tuỳ % Pháp Lực lúc nổ và rút 99% Pháp Lực."},
             {"Lưỡi kim bay 14 block, trúng mọi mục tiêu trên đường.",
                     "Giáp Kim 8 giây (giảm sát thương + Hấp Thụ II); lưỡi phản chấn bán kính 4.",
                     "Chém quạt lớn tầm 6,5 block.",

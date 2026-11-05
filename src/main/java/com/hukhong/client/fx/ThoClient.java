@@ -18,14 +18,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Thổ phía client: (1) dự đoán chuyển động xuyên tường khi server báo đang xuyên (server đặt noPhysics nên không giật lùi),
- * (2) gửi nhấn / nhả T cho cửa sổ dẫn nổ Thiên Sơn. KHÔNG đọc attachment CULTIVATION: trạng thái đến từ {@link ThoStatePayload}.
+ * (2) gửi nhấn / nhả T cho cửa sổ dẫn nổ Thiên Sơn, (3) gửi nhấn / nhả R cho vùng gai Địa Thứ. KHÔNG đọc attachment CULTIVATION: trạng thái đến từ {@link ThoStatePayload}.
  */
 @EventBusSubscriber(modid = HuKhong.MODID, value = Dist.CLIENT)
 public final class ThoClient {
     private ThoClient() {}
 
     private static long phaseEnd = -1, blastEnd = -1;
-    private static boolean prevT;
+    private static boolean prevT, prevR;
     private static Vec3 pre;
 
     public static void update(ThoStatePayload pl) {
@@ -56,6 +56,10 @@ public final class ThoClient {
         if (t && !prevT) PacketDistributor.sendToServer(new ThiemBoPayload(ThiemBoPayload.T_PRESS));
         if (!t && prevT) PacketDistributor.sendToServer(new ThiemBoPayload(ThiemBoPayload.T_RELEASE));
         prevT = t;
+        boolean r = active && mc.screen == null && PhapBeamClient.physicalDown(mc, SkillKeys.SKILL[2]); // R: nhấn = mở / tắt vùng gai, giữ = nở bán kính
+        if (r && !prevR) PacketDistributor.sendToServer(new ThiemBoPayload(ThiemBoPayload.R_PRESS));
+        if (!r && prevR) PacketDistributor.sendToServer(new ThiemBoPayload(ThiemBoPayload.R_RELEASE));
+        prevR = r;
     }
 
     @SubscribeEvent
