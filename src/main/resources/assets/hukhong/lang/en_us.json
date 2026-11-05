@@ -64,8 +64,8 @@
   "hukhong.hud.stance_on": "Cultivation Stance",
   "hukhong.hud.stance_off": "Stance: off (G)",
   "hukhong.msg.no_resource": "Not enough resource",
-  "hukhong.msg.domain_on": "Sword Domain: ON (press again to stop)",
-  "hukhong.msg.domain_off": "Sword Domain: OFF",
+  "hukhong.msg.domain_on": "Myriad Swords Return: ON (press again to stop)",
+  "hukhong.msg.domain_off": "Myriad Swords Return: OFF",
   "hukhong.msg.no_skill_path": "No path with skills yet",
   "hukhong.msg.void": "Nullified",
   "hukhong.breakthrough.title": "Breakthrough: %s",
@@ -244,7 +244,7 @@
   "hukhong.configuration.showHud.tooltip": "Hides level/resource bars and the skill bar.",
   "hukhong.skill.kiem_1": "Sword Qi Slash",
   "hukhong.skill.kiem_2": "Chain Slash",
-  "hukhong.skill.kiem_ult": "Sword Domain",
+  "hukhong.skill.kiem_ult": "Myriad Swords Return",
   "hukhong.skill.ma_1": "Blood Claw",
   "hukhong.skill.ma_2": "Demonic Qi Ward",
   "hukhong.skill.ma_ult": "Demon God Descends",
@@ -1548,7 +1548,7 @@
   "hukhong.skills.truong.name": "Spirit Staff (basic attack)",
   "hukhong.skills.kiem_1.desc": "Sword qi pierces 8 blocks (Sword Intent bone +25%), hits every target in line.",
   "hukhong.skills.kiem_2.desc": "3 fan slashes, 6 block reach, 0.3s apart; each slash hits every target in the fan.",
-  "hukhong.skills.kiem_ult.desc": "Toggle (T): a domain of radius 5 around you; every %s s it cuts all enemies inside and rains swords.",
+  "hukhong.skills.kiem_ult.desc": "Toggle (T): rise 2 blocks, swords fly from behind you diagonally forward to strike every enemy within 5 blocks every %s s. While channeling and 3s after: Unstoppable (no knockback / crowd control, -30%% damage taken).",
   "hukhong.skills.kiem_ult.meta": "Cost %s%% max %s per second (~%s/s) - toggle lock %ss",
   "hukhong.skills.kiem_ult.dps": "Per second: %s pulses = %s",
   "hukhong.skills.ma_1.desc": "Pulls enemies in an 8-block fan close and stuns them for 1.5s, then 3 claw strikes 6 ticks apart; the 3rd always crits.",
@@ -2614,5 +2614,7 @@
   "hukhong.ma.domain.end": "Demon Domain fades",
   "hukhong.ma.armor.on": "Blood Armor: reflecting 50%% damage for 8s",
   "hukhong.ma.domain.detonate": "Demon Domain detonates! (%s enemies)",
-  "hukhong.ma.domain.lowhp": "Demon Domain fades: HP below 40%%"
+  "hukhong.ma.domain.lowhp": "Demon Domain fades: HP below 40%%",
+  "hukhong.kiem.rend.stack": "Rend %s/%s stacks",
+  "hukhong.kiem.rend.detonate": "Rend detonated! (%s targets)"
 }

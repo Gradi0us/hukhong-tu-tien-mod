@@ -92,6 +92,8 @@ public final class SkillService {
             long rBefore = st.cooldownEnd[2];
             BanMenhSkillEffects.castR(p, st);
             if (st.cooldownEnd[2] != rBefore) com.hukhong.client.anim.CastAnimHook.playBanMenh(p, animSig); // cast thành công -> tư thế
+            if (st.cooldownEnd[2] != rBefore && page == Path.KIEM && p.level() instanceof net.minecraft.server.level.ServerLevel kl)
+                KiemRend.detonate(kl, p); // Kiếm Tu: R Bản Mệnh kích nổ Xé Toạc
             sync(p);
             return;
         }

@@ -391,9 +391,23 @@ public final class SkillEffects {
             }
             com.hukhong.gates.Resources.add(p, -drain);
         }
+        KiemRend.baThe(p, lv.getGameTime() + KiemRend.BA_THE_AFTER); // Bá Thể khi thi triển + 3s sau khi kết thúc
+        hover(lv, p, 2.0);
         if (n % DOMAIN_PULSE_TICKS == 0) {
             Fx.domain(lv, p, (float) (5 * qiRange(p)), 26);
             kiemVucPulse(p, lv, n / DOMAIN_PULSE_TICKS);
+        }
+    }
+
+    /** Bay lơ lửng ~h ô trên mặt đất (bằng hiệu ứng để client tự mô phỏng, không giật). */
+    static void hover(ServerLevel lv, ServerPlayer p, double h) {
+        if (p.getAbilities().flying) return;
+        double gap = p.getY() - groundY(lv, p.getX(), p.getY(), p.getZ());
+        p.fallDistance = 0;
+        if (gap < h - 0.05) p.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 6, gap < h - 1 ? 2 : 0, false, false, false));
+        else {
+            p.removeEffect(MobEffects.LEVITATION);
+            if (gap < h + 2) p.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 6, 0, false, false, false));
         }
     }
 
@@ -410,20 +424,20 @@ public final class SkillEffects {
         List<LivingEntity> in = lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(r, 2, r),
                 e -> valid(p, e) && e.distanceToSqr(p) <= r * r);
         for (LivingEntity e : in) slash(p, e, Skill.KIEM_ULT_COEF);
-        // mưa kiếm: rơi mũi chúc xuống, cắm đất quanh kẻ địch (thiếu địch thì rơi ngẫu nhiên trong vùng)
+        // Vạn Kiếm Quy Tông: kiếm hiện sau lưng (hai bên vai, cao trên đầu) rồi lao chéo về phía trước vào kẻ địch
+        Vec3 fwd = p.getLookAngle().multiply(1, 0, 1);
+        if (fwd.lengthSqr() < 1e-4) fwd = new Vec3(0, 0, 1);
+        fwd = fwd.normalize();
+        Vec3 side = new Vec3(-fwd.z, 0, fwd.x);
         for (int i = 0; i < DOMAIN_SWORDS; i++) {
-            double x, z, y;
+            double sd = (i % 2 == 0 ? 1 : -1) * (1.2 + (i / 2) * 0.55), up = 1.8 + (i / 2) * 0.45;
+            Vec3 from = p.position().subtract(fwd.scale(1.6 + (i / 2) * 0.3)).add(side.scale(sd)).add(0, up, 0);
+            Vec3 to;
             if (!in.isEmpty()) {
                 LivingEntity e = in.get((i + n) % in.size());
-                x = e.getX() + (lv.random.nextDouble() - 0.5) * 1.4;
-                z = e.getZ() + (lv.random.nextDouble() - 0.5) * 1.4;
-                y = e.getY();
-            } else {
-                double a = lv.random.nextDouble() * Math.PI * 2, rr = Math.sqrt(lv.random.nextDouble()) * r;
-                x = p.getX() + Math.cos(a) * rr; z = p.getZ() + Math.sin(a) * rr; y = p.getY();
-            }
-            Vec3 land = new Vec3(x, groundY(lv, x, y, z) + 0.2, z);
-            Fx.swordStab(lv, land.add((lv.random.nextDouble() - 0.5) * 0.8, 9, (lv.random.nextDouble() - 0.5) * 0.8), land, 6, i, 1.3f);
+                to = e.getBoundingBox().getCenter().add((lv.random.nextDouble() - 0.5) * 0.8, (lv.random.nextDouble() - 0.5) * 0.6, (lv.random.nextDouble() - 0.5) * 0.8);
+            } else to = p.position().add(fwd.scale(r * (0.6 + 0.4 * lv.random.nextDouble()))).add(side.scale(sd * 0.8)).add(0, 0.4, 0);
+            Fx.swordFly(lv, from, to, 6, i, 1.3f);
         }
         if (n % 2 == 0) lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 0.8f, 0.9f);
     }

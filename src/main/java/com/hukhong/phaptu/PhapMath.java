@@ -39,7 +39,9 @@ public final class PhapMath {
 
     // ---- Hỏa: Thiêu Nhiên (thiết kế: không có trong yêu cầu gốc)
     public static final int HOA_STACKS = 5;
-    public static final int HOA_DURATION_TICKS = 80;
+    public static final int HOA_DURATION_TICKS = 200;          // 10s không đánh trúng thì Thiêu Nhiên tan
+    /** Thiêu Nhiên: mỗi tầng đốt thêm 0,5% máu HIỆN TẠI / giây, tối đa 2% (4 tầng); trần x Phép lực / giây cho boss. */
+    public static final double HOA_PCT_PER_STACK = 0.005, HOA_PCT_MAX = 0.02, HOA_PCT_CAP_SP = 8.0;
     public static final int HOA_TICK = 10;                     // nhịp cháy
     public static final double HOA_BURN_COEF = 0.16;           // x Phép lực / giây / tầng (SSS)
     public static final int HOA_SPREAD_TICKS = 40;             // đủ 5 tầng: lây 2 tầng cho tối đa 3 quái trong 4 block mỗi 2s

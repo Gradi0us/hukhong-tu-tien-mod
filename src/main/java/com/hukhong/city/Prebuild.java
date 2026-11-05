@@ -89,9 +89,16 @@ public final class Prebuild {
     @SubscribeEvent
     public static void onStopped(ServerStoppedEvent e) { reset(); }
 
+    /** Chế độ test tự động (runClient -Ptitantest / -Pmatest / -Pkiemtest...): không dựng sẵn thành / cảng / tông. */
+    public static boolean skipped() {
+        return System.getProperty("hukhong.titantest") != null || System.getProperty("hukhong.matest") != null
+                || System.getProperty("hukhong.kiemtest") != null || System.getProperty("hukhong.noprebuild") != null;
+    }
+
     /** Dung toan bo truoc khi nguoi choi vao the gioi moi (chay tren luong server, dong bo). */
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent e) {
+        if (skipped()) { LOG.info("Prebuild: skipped (dev test mode)"); return; }
         MinecraftServer server = e.getServer();
         ServerLevel ow = server.getLevel(Level.OVERWORLD);
         if (ow == null) { LOG.error("Prebuild: no overworld at ServerStarted"); return; }
@@ -102,6 +109,7 @@ public final class Prebuild {
     /** Neu vi ly do nao do dung chua xong khi nguoi choi vao: dung not ngay (dong bo) truoc khi ho choi. */
     @SubscribeEvent
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
+        if (skipped()) return;
         if (state != State.RUNNING || blocking || !(e.getEntity() instanceof net.minecraft.server.level.ServerPlayer p)) return;
         ServerLevel ow = p.server.getLevel(Level.OVERWORLD);
         if (ow == null) return;

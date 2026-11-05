@@ -64,8 +64,8 @@
   "hukhong.hud.stance_on": "Thế Tu Luyện",
   "hukhong.hud.stance_off": "Thế: tắt (G)",
   "hukhong.msg.no_resource": "Không đủ tài nguyên",
-  "hukhong.msg.domain_on": "Kiếm Vực: BẬT (nhấn lại để tắt)",
-  "hukhong.msg.domain_off": "Kiếm Vực: TẮT",
+  "hukhong.msg.domain_on": "Vạn Kiếm Quy Tông: BẬT (nhấn lại để tắt)",
+  "hukhong.msg.domain_off": "Vạn Kiếm Quy Tông: TẮT",
   "hukhong.msg.no_skill_path": "Chưa có đạo nào có kỹ năng",
   "hukhong.msg.void": "Vô Hiệu",
   "hukhong.breakthrough.title": "Đột Phá: %s",
@@ -244,7 +244,7 @@
   "hukhong.configuration.showHud.tooltip": "Tắt để ẩn thanh cấp/tài nguyên và thanh kỹ năng.",
   "hukhong.skill.kiem_1": "Trảm Khí",
   "hukhong.skill.kiem_2": "Liên Hoàn Trảm",
-  "hukhong.skill.kiem_ult": "Kiếm Vực",
+  "hukhong.skill.kiem_ult": "Vạn Kiếm Quy Tông",
   "hukhong.skill.ma_1": "Huyết Trảo",
   "hukhong.skill.ma_2": "Ma Khí Hộ Thể",
   "hukhong.skill.ma_ult": "Ma Thần Giáng Thế",
@@ -1548,7 +1548,7 @@
   "hukhong.skills.truong.name": "Linh Trượng (đòn thường)",
   "hukhong.skills.kiem_1.desc": "Kiếm khí xuyên tầm 8 block (Kiếm Ý Cốt +25%), trúng mọi mục tiêu trên đường.",
   "hukhong.skills.kiem_2.desc": "3 nhát chém quạt tầm 6 block, cách nhau 0,3 giây; mỗi nhát trúng mọi mục tiêu trong quạt.",
-  "hukhong.skills.kiem_ult.desc": "Bật/tắt (phím T): lĩnh vực bán kính 5 block quanh bạn, mỗi %s giây chém mọi kẻ địch trong vùng và rơi mưa kiếm.",
+  "hukhong.skills.kiem_ult.desc": "Bật/tắt (phím T): bay lên 2 ô, vạn kiếm từ sau lưng lao chéo về phía trước chém mọi kẻ địch trong 5 ô mỗi %s giây. Đang thi triển và 3s sau: Bá Thể (không bị đẩy lùi / khống chế, giảm 30%% sát thương).",
   "hukhong.skills.kiem_ult.meta": "Tốn %s%% %s tối đa mỗi giây (~%s/s) · khóa bấm %ss",
   "hukhong.skills.kiem_ult.dps": "Mỗi giây: %s nhịp = %s",
   "hukhong.skills.ma_1.desc": "Kéo địch trong quạt 8 block về sát người và choáng 1.5 giây, rồi chém 3 nhát móng (cách 6 tick); nhát thứ 3 chắc chắn bạo kích.",
@@ -2614,5 +2614,7 @@
   "hukhong.ma.domain.end": "Ma Vực tan biến",
   "hukhong.ma.armor.on": "Huyết Giáp: phản 50%% sát thương trong 8s",
   "hukhong.ma.domain.detonate": "Quỷ Vực bạo phát! (%s kẻ địch)",
-  "hukhong.ma.domain.lowhp": "Ma Vực tan biến vì máu dưới 40%%"
+  "hukhong.ma.domain.lowhp": "Ma Vực tan biến vì máu dưới 40%%",
+  "hukhong.kiem.rend.stack": "Xé Toạc %s/%s tầng",
+  "hukhong.kiem.rend.detonate": "Xé Toạc bùng nổ! (%s mục tiêu)"
 }

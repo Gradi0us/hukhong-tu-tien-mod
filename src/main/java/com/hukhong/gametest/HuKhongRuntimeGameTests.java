@@ -252,6 +252,42 @@ public final class HuKhongRuntimeGameTests {
         h.succeed();
     }
 
+    @GameTest(template = "empty", batch = "kiem_rend")
+    public static void kiemRendStacksAndRDetonate(GameTestHelper h) {
+        ServerPlayer p = fake(h, 60, Set.of(Path.KIEM));
+        p.setData(BanMenhAttachments.BAN_MENH.get(), p.getData(BanMenhAttachments.BAN_MENH.get()).withType(BanMenhType.THANH_PHONG.id(), p.getUUID()));
+        place(h, p, 2, 1, 2);
+        Zombie z = dummy(h, 2, 4);
+        z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100000);
+        z.setHealth(100000);
+        SkillService.state(p).stance = true;
+        for (int i = 0; i < 3; i++) { java.util.Arrays.fill(SkillService.state(p).cooldownEnd, 0L); SkillService.cast(p, 0); }
+        int st = com.hukhong.skill.KiemRend.stacks(z);
+        if (st < 3) h.fail("moi lan gay sat thuong phai them 1 tang Xe Toac: " + st);
+        float hp = z.getHealth();
+        java.util.Arrays.fill(SkillService.state(p).cooldownEnd, 0L);
+        SkillService.cast(p, 2);
+        if (com.hukhong.skill.KiemRend.stacks(z) != 0) h.fail("R phai kich no va xoa tang");
+        if (z.getHealth() >= hp) h.fail("R khong gay sat thuong");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "dao_heal")
+    public static void daoHealHurtsEnemiesTriple(GameTestHelper h) {
+        ServerPlayer p = fake(h, 60, Set.of(Path.DAO));
+        place(h, p, 2, 1, 2);
+        Zombie z = dummy(h, 2, 4);
+        z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(10000);
+        z.setHealth(10000);
+        p.setHealth(p.getMaxHealth() * 0.5f);
+        p.heal(10f);
+        float hp = z.getHealth();
+        float d = com.hukhong.skill.DaoHealBack.flush(p);
+        if (Math.abs(d - 30f) > 0.5f) h.fail("phai = 3 x 10 mau hoi: " + d);
+        if (z.getHealth() >= hp) h.fail("ke dich khong mat mau");
+        h.succeed();
+    }
+
     /** Huyết Trảo (Q): kéo địch về sát người, choáng, 3 nhát cách 6 tick; nhát 3 bạo kích (≈ 1.5 x nhát 1). */
     @GameTest(template = "empty")
     public static void maQPullStunThreeHits(GameTestHelper h) {

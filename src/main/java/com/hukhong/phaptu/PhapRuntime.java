@@ -257,7 +257,9 @@ public final class PhapRuntime {
                 it.remove();
                 continue;
             }
-            float dmg = (float) (PhapMath.hoaBurnPerSecond(PhapTu.aptitude(o), b.stacks, StatService.spellPower(o))
+            double pct = Math.min(PhapMath.HOA_PCT_MAX, PhapMath.HOA_PCT_PER_STACK * b.stacks) * t.getHealth();
+            pct = Math.min(pct, PhapMath.HOA_PCT_CAP_SP * StatService.spellPower(o));
+            float dmg = (float) ((PhapMath.hoaBurnPerSecond(PhapTu.aptitude(o), b.stacks, StatService.spellPower(o)) + pct)
                     * PhapMath.HOA_TICK / 20.0);
             t.invulnerableTime = 0;
             boolean was = busy;
