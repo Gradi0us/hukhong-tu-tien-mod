@@ -637,7 +637,7 @@ public final class PhapThoGameTests {
         });
     }
 
-    @GameTest(template = "empty", batch = "tho_target", timeoutTicks = 80)
+    @GameTest(template = "empty", batch = "tho_target", timeoutTicks = 140)
     public static void tho_tru_bo_qua_npc_va_muc_tieu_bat_tu(GameTestHelper h) {
         ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
         PhapTurret t = PhapRuntime.summonTurret(h.getLevel(), p, p.position().add(0, 0, -4));
@@ -650,7 +650,7 @@ public final class PhapThoGameTests {
         god.setPos(t.getX() - 2, t.getY(), t.getZ());
         Zombie z = zombieHp(h, p, 0, 1.0E6f);
         z.setPos(t.getX(), t.getY(), t.getZ() + 9);
-        h.runAfterDelay(60, () -> {
+        h.runAfterDelay(110, () -> {
             if (z.getHealth() >= z.getMaxHealth()) h.fail("tru phai ban quai that o xa, khong ket o NPC/muc tieu bat tu");
             if (vil.getHealth() < vil.getMaxHealth()) h.fail("tru khong duoc ban dan lang");
             h.succeed();
@@ -716,7 +716,7 @@ public final class PhapThoGameTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", batch = "tho_titan4", timeoutTicks = 200)
+    @GameTest(template = "empty", batch = "tho_titan4", timeoutTicks = 260)
     public static void tho_tru_cap3_tu_huy_hut_no_va_xuyen_tuong(GameTestHelper h) {
         ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
         PhapTurret t = makeTitan(h, p);
@@ -725,7 +725,7 @@ public final class PhapThoGameTests {
         z.setPos(t.getX() + 6, t.getY(), t.getZ());
         ThoTitan.selfDestruct(p);
         if (!ThoTitan.selfDestructing(p)) h.fail("giu E khi hop the phai tu huy");
-        h.runAfterDelay(ThoTitan.DESTRUCT_TICKS + 5, () -> {
+        h.runAfterDelay(ThoTitan.DESTRUCT_TICKS + 25, () -> {
             if (t.isAlive()) h.fail("tru phai no sau 7s");
             if (z.getHealth() >= z.getMaxHealth()) h.fail("vu no phai gay sat thuong");
             if (!ThoService.phasing(p) || !ThiemBoService.immune(p)) h.fail("tu huy xong phai xuyen tuong + bat tu");

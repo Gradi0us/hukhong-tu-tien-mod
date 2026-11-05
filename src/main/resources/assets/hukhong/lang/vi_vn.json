@@ -2603,7 +2603,8 @@
   "hukhong.phap.tho.titan.cd": "Kỹ năng tháp hồi lại sau %s giây",
   "hukhong.phap.tho.titan.q": "Liệt Hoả Liên Pháo! (6s bắn nhanh, mỗi loạt 3 phát nổ choáng)",
   "hukhong.phap.tho.titan.r": "Địa Thứ Hộ Tháp!",
-  "hukhong.phap.tho.titan.t": "Tia Diệt Thế! Di chuột để lái tia",
-  "hukhong.phap.tho.titan.t_used": "Tia Diệt Thế chỉ dùng được 1 lần mỗi Thần Tháp",
-  "hukhong.phap.tho.titan.destruct": "TỰ HUỶ sau %s giây!"
+  "hukhong.phap.tho.titan.t": "Tia Diệt Thế! Di chuột lái tia · nhấn T lần nữa để tạm dừng",
+  "hukhong.phap.tho.titan.t_used": "Tia Diệt Thế đã cạn (tối đa 10 giây mỗi Thần Tháp)",
+  "hukhong.phap.tho.titan.destruct": "TỰ HUỶ sau %s giây!",
+  "hukhong.phap.tho.titan.t_pause": "Tạm dừng Tia Diệt Thế - còn %s giây"
 }

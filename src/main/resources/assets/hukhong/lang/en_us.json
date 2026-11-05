@@ -2603,7 +2603,8 @@
   "hukhong.phap.tho.titan.cd": "Tower skill ready in %s s",
   "hukhong.phap.tho.titan.q": "Blazing Barrage! (6s rapid fire, 3-shot stunning volleys)",
   "hukhong.phap.tho.titan.r": "Earthspike Guard!",
-  "hukhong.phap.tho.titan.t": "Annihilation Ray! Move the mouse to steer it",
-  "hukhong.phap.tho.titan.t_used": "Annihilation Ray can be used only once per Titan Tower",
-  "hukhong.phap.tho.titan.destruct": "SELF-DESTRUCT in %s s!"
+  "hukhong.phap.tho.titan.t": "Annihilation Ray! Move the mouse to steer · press T again to pause",
+  "hukhong.phap.tho.titan.t_used": "Annihilation Ray depleted (max 10 s per Titan Tower)",
+  "hukhong.phap.tho.titan.destruct": "SELF-DESTRUCT in %s s!",
+  "hukhong.phap.tho.titan.t_pause": "Annihilation Ray paused - %s s left"
 }

@@ -93,7 +93,8 @@ public final class PhapClient {
             else if (t.isMerged()) merged(t, age, ps, buf, light, glow);
             else single(t, age, ps, buf, light, glow);
             float sh = t.shieldFraction();
-            if (sh > 0) { // máu ảo + giáp ảo: vỏ kính hổ phách bao trụ, co lại theo lượng máu ảo
+            boolean pilotView = t.isTitan() && t.isControlled() && com.hukhong.client.fx.ThoClient.titanControl();
+            if (sh > 0 && !pilotView) { // máu ảo + giáp ảo: vỏ kính hổ phách bao trụ, co lại theo lượng máu ảo
                 float k = t.isTitan() ? (float) com.hukhong.phaptu.PhapMath.THO_TITAN_SCALE : t.isMerged() ? (float) com.hukhong.phaptu.PhapMath.THO_MERGED_SCALE : 1f;
                 float s = (1.55f + 0.35f * sh) * k + (float) Math.sin(age * 0.25) * 0.04f;
                 block(ps, buf, GLASS, 0, 0.05, 0, s, age * 2f, glow);
@@ -139,6 +140,9 @@ public final class PhapClient {
          *  lõi núi lửa xoay + 12 tảng đá bay vòng quanh. Có người nhập: lõi chuyển đỏ rực, vòng đá quay nhanh. */
         private void titan(PhapTurret t, float age, PoseStack ps, MultiBufferSource buf, int light, int glow) {
             boolean ctl = t.isControlled();
+            var mc = Minecraft.getInstance();
+            boolean pilot = ctl && com.hukhong.client.fx.ThoClient.titanControl() && mc.player != null
+                    && mc.player.distanceToSqr(t) < 14 * 14; // người đang nhập trụ: ẩn phần trên để không che tầm nhìn
             // bệ 3 tầng
             for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) block(ps, buf, (x + z) % 2 == 0 ? DS_TILE : TUFF, x * 1.4, 0, z * 1.4, 1.4f, 0, light);
             block(ps, buf, POL_BS, 0, 1.3, 0, 3.0f, 0, light);
@@ -167,6 +171,7 @@ public final class PhapClient {
                 double a = Math.PI / 4 * i;
                 block(ps, buf, GILD, Math.cos(a) * 1.5, 5.6, Math.sin(a) * 1.5, 0.45f, (float) Math.toDegrees(-a), light);
             }
+            if (pilot) return;
             // lõi núi lửa lơ lửng trên đỉnh
             double bob = Math.sin(age * 0.07) * 0.18;
             float spin = age * (ctl ? 9f : 3f);

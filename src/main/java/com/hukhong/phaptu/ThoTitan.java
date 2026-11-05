@@ -49,20 +49,21 @@ public final class ThoTitan {
 
     public static final int AUTO_LIFE = 400, MERGED_LIFE = 1200, ENTER_WINDOW = 100, MERGE_CD = 3600;
     public static final double ENTER_RANGE = 4.0;
-    public static final int AUTO_TICKS = 14, Q_TICKS = 120, Q_CD = 240, Q_VOLLEY = 8, R_CD = 300, SPIKE_LIFE = 200, T_TICKS = 100, DESTRUCT_TICKS = 140;
+    public static final int AUTO_TICKS = 14, Q_TICKS = 120, Q_CD = 240, Q_VOLLEY = 8, R_CD = 300, SPIKE_LIFE = 200, T_TICKS = 200, DESTRUCT_TICKS = 140;
     /** Sát thương = hệ số x một phát trụ thường. */
     public static final double AUTO_MULT = 3.5, AUTO_R = 3.5, Q_MULT = 3.0, Q_R = 3.0, SPIKE_MULT = 1.5, T_MULT = 4.0, NUKE_MULT = 60, NUKE_R = 14;
     public static final double PULL_R = 15, HARD_PULL_R = 4;
-    public static final double SEAT_Y = 6.9, CORE_Y = 7.8;
+    public static final double SEAT_Y = 10.2, CORE_Y = 7.8;
 
     static final class Zone { Vec3 pos; long until; }
 
     static final class St {
         UUID titan;
         PhapTurret ref;
-        boolean control, entered, windowMsg, tUsed;
+        boolean control, entered, windowMsg, laserOn;
+        int tBudget = T_TICKS;
         long createdAt, qEnd, qCdEnd, rCdEnd;
-        int laserLeft, destructLeft;
+        int laserAge, destructLeft;
         final List<Zone> zones = new ArrayList<>();
     }
 
@@ -94,7 +95,7 @@ public final class ThoTitan {
 
     public static boolean laserActive(ServerPlayer p) {
         St s = STATES.get(p.getUUID());
-        return s != null && s.laserLeft > 0;
+        return s != null && s.laserOn && s.tBudget > 0;
     }
 
     private static void msg(ServerPlayer p, String key, int col, Object... args) {
@@ -135,7 +136,7 @@ public final class ThoTitan {
         PhapTurret t = titan(p);
         if (s == null || t == null || !s.control || s.destructLeft > 0 || !(p.level() instanceof ServerLevel sl)) return;
         s.destructLeft = DESTRUCT_TICKS;
-        s.laserLeft = 0;
+        s.laserOn = false;
         Vec3 c = t.position();
         Fx.telegraphCircle(sl, p, c.add(0, 0.05, 0), (float) PULL_R, DESTRUCT_TICKS, LAVA);
         Fx.rune(sl, p, c.add(0, 0.08, 0), (float) HARD_PULL_R + 1, LAVA, DESTRUCT_TICKS, 12);
@@ -280,7 +281,7 @@ public final class ThoTitan {
             if (!ts.isEmpty()) shell(sl, o, t, ts.get(0).getBoundingBox().getCenter(), (float) (shot * AUTO_MULT), AUTO_R, 1.6f, false, null);
         }
         tickZones(sl, t, s, now);
-        if (s.laserLeft > 0) tickLaser(sl, o, t, s, shot);
+        if (s.laserOn && s.tBudget > 0) tickLaser(sl, o, t, s, shot);
         if (t.tickCount % 30 == 0) {
             Fx.groundRing(sl, null, t.position().add(0, 0.06, 0), 4.5f, s.control ? FIRE : GOLD, 20);
             sl.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, t.getX(), t.getY() + 0.3, t.getZ(), 3, 2.0, 0.1, 2.0, 0.01);
@@ -380,13 +381,14 @@ public final class ThoTitan {
                 spikes(sl, p, t);
                 msg(p, "r", GOLD);
             }
-            default -> { // T: Tia Diệt Thế (1 lần mỗi trụ cấp 3)
-                if (s.tUsed) { msg(p, "t_used", 0x999999); return; }
-                s.tUsed = true;
-                s.laserLeft = T_TICKS;
+            default -> { // T: Tia Diệt Thế - tổng 10s mỗi trụ; nhấn lại để tắt, lần sau dùng nốt phần còn lại
+                if (s.laserOn) { s.laserOn = false; msg(p, "t_pause", 0xFFD27A, String.format("%.1f", s.tBudget / 20f)); return; }
+                if (s.tBudget <= 0) { msg(p, "t_used", 0x999999); return; }
+                s.laserOn = true;
+                s.laserAge = 0;
                 Vec3 c = core(t);
                 Fx.qi(sl, c, p.getLookAngle(), 3.0f, 0xFFFFFF, 0, 12);
-                Fx.shake(sl, c, 1.0f, T_TICKS, 40f);
+                Fx.shake(sl, c, 0.6f, 20, 40f);
                 sl.playSound(null, c.x, c.y, c.z, SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 2f, 0.5f);
                 sl.playSound(null, c.x, c.y, c.z, SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.6f, 0.6f);
                 msg(p, "t", 0xFFFFFF);
@@ -421,29 +423,39 @@ public final class ThoTitan {
 
     /** Tia Diệt Thế: tia khổng lồ từ lõi theo hướng nhìn người điều khiển (di chuột lái tia). */
     private static void tickLaser(ServerLevel sl, ServerPlayer o, PhapTurret t, St s, float shot) {
-        s.laserLeft--;
-        Vec3 from = core(t), look = o.getLookAngle();
-        Vec3 end = from.add(look.scale(48));
-        var hit = sl.clip(new ClipContext(from.add(look.scale(2.5)), end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, t));
+        s.tBudget--;
+        s.laserAge++;
+        if (s.tBudget <= 0) { s.laserOn = false; msg(o, "t_used", 0x999999); }
+        // điểm đích = theo tâm ngắm (tia mắt người điều khiển), tia vẽ từ lõi trụ tới đó
+        Vec3 eye = o.getEyePosition(), look = o.getLookAngle();
+        var hit = sl.clip(new ClipContext(eye, eye.add(look.scale(56)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, o));
         Vec3 to = hit.getLocation();
-        float age = T_TICKS - s.laserLeft;
-        float w = Math.min(1f, age / 10f) * (s.laserLeft < 10 ? s.laserLeft / 10f : 1f);
-        if (s.laserLeft % 2 == 0) {
+        LivingEntity aimed = null;
+        double best = Double.MAX_VALUE;
+        for (LivingEntity e : sl.getEntitiesOfClass(LivingEntity.class, new AABB(eye, to).inflate(2), t::isEnemy)) {
+            var h = e.getBoundingBox().inflate(1.2).clip(eye, to);
+            if (h.isPresent() && eye.distanceToSqr(h.get()) < best) { best = eye.distanceToSqr(h.get()); aimed = e; }
+        }
+        if (aimed != null) to = aimed.getBoundingBox().getCenter();
+        Vec3 from = core(t);
+        float age = s.laserAge;
+        float w = Math.min(1f, age / 8f) * (s.tBudget < 10 ? Math.max(0.2f, s.tBudget / 10f) : 1f);
+        if (s.laserAge % 2 == 0) {
             Fx.ribbon(sl, o, from, to, 0, 3, 0, 1.6f * w + 0.1f, LAVA);
             Fx.ribbon(sl, o, from, to, 0, 3, 0, 0.9f * w + 0.05f, GOLD);
             Fx.ribbon(sl, o, from, to, 0, 3, 0, 0.35f * w + 0.03f, 0xFFFFFF);
             Fx.ribbonHelix(sl, o, from, to, 1.4 * w, age * 0.5, 3, 0, 0.12f, FIRE);
-            Fx.qi(sl, from, look, 1.8f * w + 0.3f, 0xFFFFFF, 0, 4);
         }
-        if (s.laserLeft % 4 == 0) {
+        if (s.laserAge % 4 == 0) {
+            if (aimed != null) { aimed.invulnerableTime = 0; PhapTurret.hitNoKnock(o, aimed, (float) (shot * T_MULT), 10, 3); aimed.igniteForSeconds(3); }
             Vec3 seg = to.subtract(from);
             double len = seg.length();
             Vec3 u = seg.scale(1 / Math.max(1e-6, len));
-            double rad = 2.0;
+            double rad = 2.6;
             for (LivingEntity e : sl.getEntitiesOfClass(LivingEntity.class, new AABB(from, to).inflate(rad + 1), t::isEnemy)) {
                 Vec3 c = e.getBoundingBox().getCenter().subtract(from);
                 double along = Math.max(0, Math.min(len, c.dot(u)));
-                if (c.subtract(u.scale(along)).length() > rad + e.getBbWidth() / 2) continue;
+                if (e == aimed || c.subtract(u.scale(along)).length() > rad + e.getBbWidth() / 2) continue;
                 e.invulnerableTime = 0;
                 PhapTurret.hitNoKnock(o, e, (float) (shot * T_MULT), 10, 3);
                 e.igniteForSeconds(3);
@@ -453,9 +465,9 @@ public final class ThoTitan {
             sl.sendParticles(ParticleTypes.EXPLOSION, to.x, to.y, to.z, 2, 0.8, 0.5, 0.8, 0);
             sl.sendParticles(ParticleTypes.LAVA, to.x, to.y, to.z, 6, 0.8, 0.4, 0.8, 0);
             sl.sendParticles(ParticleTypes.LARGE_SMOKE, to.x, to.y + 1, to.z, 6, 0.8, 0.6, 0.8, 0.04);
-            if (s.laserLeft % 12 == 0) sl.playSound(null, to.x, to.y, to.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.2f, 0.5f);
+            if (s.laserAge % 12 == 0) sl.playSound(null, to.x, to.y, to.z, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, 1.2f, 0.5f);
         }
-        if (s.laserLeft % 20 == 0) sl.playSound(null, from.x, from.y, from.z, SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 2f, 0.5f);
+        if (s.laserAge % 20 == 0) sl.playSound(null, from.x, from.y, from.z, SoundEvents.BEACON_AMBIENT, SoundSource.PLAYERS, 2f, 0.5f);
     }
 
     /** Tự huỷ: hút quái 15 ô, kéo cứng trong 4 ô; hết 7s nổ như bom hạt nhân. */
