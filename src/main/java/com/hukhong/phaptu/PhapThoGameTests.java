@@ -636,4 +636,24 @@ public final class PhapThoGameTests {
             h.succeed();
         });
     }
+
+    @GameTest(template = "empty", batch = "tho_target", timeoutTicks = 80)
+    public static void tho_tru_bo_qua_npc_va_muc_tieu_bat_tu(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        PhapTurret t = PhapRuntime.summonTurret(h.getLevel(), p, p.position().add(0, 0, -4));
+        var vil = net.minecraft.world.entity.EntityType.VILLAGER.create(h.getLevel());
+        vil.setNoAi(true);
+        vil.moveTo(t.getX() + 2, t.getY(), t.getZ());
+        h.getLevel().addFreshEntity(vil);
+        Zombie god = zombieHp(h, p, 0, 100f);
+        god.setInvulnerable(true);
+        god.setPos(t.getX() - 2, t.getY(), t.getZ());
+        Zombie z = zombieHp(h, p, 0, 1.0E6f);
+        z.setPos(t.getX(), t.getY(), t.getZ() + 9);
+        h.runAfterDelay(60, () -> {
+            if (z.getHealth() >= z.getMaxHealth()) h.fail("tru phai ban quai that o xa, khong ket o NPC/muc tieu bat tu");
+            if (vil.getHealth() < vil.getMaxHealth()) h.fail("tru khong duoc ban dan lang");
+            h.succeed();
+        });
+    }
 }

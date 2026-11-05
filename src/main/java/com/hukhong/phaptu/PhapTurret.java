@@ -163,6 +163,12 @@ public class PhapTurret extends PathfinderMob {
         int core = lerpRgb(0xC49A5C, 0xFFE9A0, k);
         Fx.ribbon(sl, o, from, to, 0, 5, 0, 0.10f + 0.42f * k, core);                 // tia dày dần theo độ nạp
         Fx.ribbon(sl, o, from, to, 0, 5, 0, 0.04f + 0.14f * k, 0xFFFFFF);              // lõi trắng
+        Fx.ribbonWave(sl, o, from, to, 0, 0.5 + 0.8 * k, 5, 0, 0.06f + 0.10f * k, 0xC47A2A); // xoắn đất quanh tia
+        if (tickCount % (PhapMath.THO_LASER_PULSE_TICKS * 2) == 0) {
+            Fx.rune(sl, o, to.subtract(from).normalize().scale(-0.4).add(to), 0.5f + 0.7f * k, core, 10, 5); // ấn trận tại điểm chạm
+            Fx.qi(sl, from, to.subtract(from).normalize(), 0.5f + 0.5f * k, core, 0, 6);                     // chớp ở tinh thể
+        }
+        if (k > 0.7f && tickCount % 8 == 0) Fx.groundRing(sl, o, PhapSkills.ground(sl, to).add(0, 0.06, 0), 1.0f + k, core, 10);
         sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.GOLD_BLOCK.defaultBlockState()),
                 to.x, to.y, to.z, 2 + Math.round(8 * k), 0.25, 0.25, 0.25, 0.1 + 0.15 * k);
         if (lockTicks % 20 == 0) sl.playSound(null, to.x, to.y, to.z, net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_RESONATE,
@@ -322,7 +328,9 @@ public class PhapTurret extends PathfinderMob {
 
     private boolean enemy(LivingEntity e) {
         return e != this && e.isAlive() && !(e instanceof Player) && !(e instanceof PhapTurret)
-                && (e instanceof Enemy || (e instanceof Mob m && m.getTarget() != null));
+                && !e.isInvulnerable() && !(e instanceof net.minecraft.world.entity.npc.Npc)
+                && !(e instanceof net.minecraft.world.entity.animal.IronGolem) && !(e instanceof net.minecraft.world.entity.TamableAnimal ta && ta.isTame())
+                && (e instanceof Enemy || (e instanceof Mob m && (m.getTarget() instanceof Player || m.getTarget() instanceof PhapTurret)));
     }
 
     private void taunt(ServerLevel sl) {
@@ -347,9 +355,23 @@ public class PhapTurret extends PathfinderMob {
         float dmg = shotDamage * (empowered > 0 ? 2f : 1f);
         best.invulnerableTime = 0;
         DamageRules.hurtBySkill(o, best, dmg);
-        Fx.ribbon(sl, o, from.add(0, 0.5, 0), to, 0.8, 4, 0, 0.16f, 0xB08A4F); // tảng đá bắn theo cung, không phải tia sáng
-        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState()),
-                to.x, to.y, to.z, 8, 0.25, 0.25, 0.25, 0.12);
+        Vec3 core = position().add(0, 2.3, 0);
+        Vec3 dir = to.subtract(core).normalize();
+        Fx.qi(sl, core.add(dir.scale(0.5)), dir, 0.55f, 0xFFC36A, 0, 6);                     // chớp nạp ở lõi
+        Fx.ribbon(sl, o, core, to, 1.1, 5, 0, 0.30f, 0x5A4632);                                  // thân thiên thạch đá
+        Fx.ribbonWave(sl, o, core, to, 1.1, 0.6, 5, 0, 0.18f, 0xFF8A2A);                        // vệt lửa uốn quanh
+        Fx.ribbon(sl, o, core, to, 1.1, 5, 1, 0.07f, 0xFFE9A0);                                  // lõi nóng trắng
+        Fx.elem(sl, o, Fx.E_BOULDER, to, Vec3.ZERO, 0.55f, PhapElement.THO.rgb, 14);
+        Vec3 g = PhapSkills.ground(sl, to.add(0, 0.5, 0));
+        if (to.y - g.y < 2.5) {
+            Fx.groundCrack(sl, o, g.add(0, 0.06, 0), 1.3f, PhapElement.THO.rgb, 6, 24);
+            Fx.groundRing(sl, o, g.add(0, 0.06, 0), 1.1f, 0xFFB35A, 8);
+        }
+        sl.sendParticles(ParticleTypes.CRIT, core.x, core.y, core.z, 6, 0.15, 0.15, 0.15, 0.25);
+        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.DEEPSLATE.defaultBlockState()),
+                to.x, to.y, to.z, 16, 0.3, 0.3, 0.3, 0.2);
+        sl.sendParticles(ParticleTypes.LAVA, to.x, to.y, to.z, 2, 0.2, 0.2, 0.2, 0);
+        sl.playSound(null, to.x, to.y, to.z, net.minecraft.sounds.SoundEvents.BASALT_BREAK, net.minecraft.sounds.SoundSource.PLAYERS, 0.9f, 0.6f);
     }
 
     @Override
