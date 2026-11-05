@@ -1552,7 +1552,7 @@
   "hukhong.skills.kiem_ult.meta": "Tốn %s%% %s tối đa mỗi giây (~%s/s) · khóa bấm %ss",
   "hukhong.skills.kiem_ult.dps": "Mỗi giây: %s nhịp = %s",
   "hukhong.skills.ma_1.desc": "Kéo địch trong quạt 8 block về sát người và choáng 1.5 giây, rồi chém 3 nhát móng (cách 6 tick); nhát thứ 3 chắc chắn bạo kích.",
-  "hukhong.skills.ma_2.desc": "Lá chắn bằng 15%% máu tối đa trong 6 giây (chỉ bản thân): %s.",
+  "hukhong.skills.ma_2.desc": "Huyết Giáp 8 giây: phản 50%% sát thương nhận phải về kẻ tấn công.",
   "hukhong.skills.ma_ult.desc": "12 giây: +40%% Công (= +%s), +4%% Hút Huyết, Ác Tính +15.",
   "hukhong.skills.dao_1.desc": "Tia sáng tầm 14 block đánh 1 mục tiêu (nội tại Đạo Tu x%s).",
   "hukhong.skills.dao_2.desc": "Đồng đội gần nhất trong 20 block nhận Sức Mạnh, Tốc Độ, Hấp Thụ II 20 giây; không có thì bản thân nhận Tốc Độ + Hấp Thụ.",
@@ -2606,5 +2606,12 @@
   "hukhong.phap.tho.titan.t": "Tia Diệt Thế! Di chuột lái tia · nhấn T lần nữa để tạm dừng",
   "hukhong.phap.tho.titan.t_used": "Tia Diệt Thế đã cạn (tối đa 10 giây mỗi Thần Tháp)",
   "hukhong.phap.tho.titan.destruct": "TỰ HUỶ sau %s giây!",
-  "hukhong.phap.tho.titan.t_pause": "Tạm dừng Tia Diệt Thế - còn %s giây"
+  "hukhong.phap.tho.titan.t_pause": "Tạm dừng Tia Diệt Thế - còn %s giây",
+  "hukhong.skill.ma_3": "Ma Vực",
+  "hukhong.skills.ma_3.desc": "Mở Quỷ Vực 7 ô trong 20s: kẻ địch mất ngay 10%% máu tối đa (trả lại khi ra khỏi vùng), mỗi giây gây 60%% Công, kỹ năng Ma +30%%, bản thân +10%% hút máu nhưng -10%% máu tối đa/giây. Nhấn R lần nữa: nổ = máu tối đa x số kẻ địch.",
+  "hukhong.ma.domain.open": "Ma Vực giáng lâm!",
+  "hukhong.ma.domain.left": "Ma Vực còn %ss · nổ sau %ss",
+  "hukhong.ma.domain.end": "Ma Vực tan biến",
+  "hukhong.ma.armor.on": "Huyết Giáp: phản 50%% sát thương trong 8s",
+  "hukhong.ma.domain.detonate": "Quỷ Vực bạo phát! (%s kẻ địch)"
 }

@@ -78,7 +78,7 @@ public final class TranMath {
     public static final double CHARGE_MIN_R = 2, CHARGE_MAX_R = 7;
     public static final int CHARGE_TICKS = 60;          // 3 giây giữ để đạt bán kính tối đa
     public static final int CHARGE_EXTRA_TICKS = 20;    // giữ thêm 1 giây ở tối đa thì tự thả
-    public static final double CHARGE_MIN_COEF = 2.0, CHARGE_MAX_COEF = 8.0;
+    public static final double CHARGE_MIN_COEF = 6.0, CHARGE_MAX_COEF = 24.0; // 2026-11-05: x3
     public static final int CHARGE_SLOW_AMP = 4;        // MOVEMENT_SLOWDOWN amp 4 (~-75%, gần -80% nhất) cho quái trong vòng tụ lực
     public static final int CHARGE_SLOW_TICKS = 10;     // mỗi lần làm mới kéo dài 0,5 giây
     public static final int CHARGE_REFRESH_TICKS = 4;   // vẽ lại vòng và làm chậm mỗi 4 tick

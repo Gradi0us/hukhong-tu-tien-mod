@@ -145,7 +145,7 @@ public final class PhapBeamService {
         St s = STATES.get(p.getUUID());
         if (s == null || s.phase != Phase.READY || !eligible(p)) return false;
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
-        double f = com.hukhong.banmenh.BanMenhService.skillCostFactor(p);
+        double f = com.hukhong.banmenh.BanMenhService.skillCostFactor(p) * PhapBeamMath.costMult(s.element);
         int cost = PhapBeamMath.upfrontCost(d.resourceMax(), f);
         if (d.resource() < cost) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
@@ -231,7 +231,7 @@ public final class PhapBeamService {
 
     private static void tickFire(ServerPlayer p, ServerLevel lv, St s) {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
-        double f = com.hukhong.banmenh.BanMenhService.skillCostFactor(p);
+        double f = com.hukhong.banmenh.BanMenhService.skillCostFactor(p) * PhapBeamMath.costMult(s.element);
         s.drainAcc += PhapBeamMath.drainPerTick(d.resourceMax(), f);
         int take = (int) s.drainAcc;
         if (take > 0) {
@@ -322,7 +322,7 @@ public final class PhapBeamService {
         PhapElement el = s.element;
         long now = p.level().getGameTime();
         SkillState sk = SkillService.state(p);
-        int cd = (int) Math.round(SkillBookMath.cooldown(PhapBeamMath.COOLDOWN_TICKS, s.skillLevel)
+        int cd = (int) Math.round(SkillBookMath.cooldown(PhapBeamMath.cooldownTicks(el), s.skillLevel)
                 * PhapRuntime.cooldownMult(p, Path.PHAP));
         sk.cooldownEnd[3] = now + cd;
         sk.lastCombat = now;

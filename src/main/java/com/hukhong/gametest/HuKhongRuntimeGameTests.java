@@ -205,6 +205,53 @@ public final class HuKhongRuntimeGameTests {
     @GameTest(template = "empty") public static void skillMaR(GameTestHelper h) { skillCase(h, Path.MA, 2, true); }
     @GameTest(template = "empty") public static void skillMaT(GameTestHelper h) { skillCase(h, Path.MA, 3, false); }
 
+    /** Ma Vực (R): mở là kẻ địch trong 7 ô mất ngay 10% máu tối đa; vùng còn hiệu lực. */
+    @GameTest(template = "empty", batch = "ma_domain")
+    public static void maRDomainTenPercent(GameTestHelper h) {
+        ServerPlayer p = fake(h, 60, Set.of(Path.MA));
+        place(h, p, 2, 1, 2);
+        Zombie z = dummy(h, 2, 6);
+        SkillService.state(p).stance = true;
+        float max = z.getMaxHealth(), hp = z.getHealth();
+        SkillService.cast(p, 2);
+        if (!com.hukhong.skill.MaDomain.active(p)) h.fail("R khong mo Ma Vuc");
+        if (hp - z.getHealth() < max * 0.09f) h.fail("Ma Vuc phai tru ~10% mau toi da: " + (hp - z.getHealth()) + " / " + max);
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "ma_domain2")
+    public static void maRDomainRestoreAndDetonate(GameTestHelper h) {
+        ServerPlayer p = fake(h, 60, Set.of(Path.MA));
+        place(h, p, 2, 1, 2);
+        Zombie z = dummy(h, 2, 6), z2 = dummy(h, 3, 5);
+        SkillService.state(p).stance = true;
+        float hp0 = z.getHealth();
+        SkillService.cast(p, 2);
+        if (z.getHealth() >= hp0) h.fail("Ma Vuc khong rut mau");
+        z.setPos(z.getX() + 14, z.getY(), z.getZ()); // ra khoi vung
+        for (int i = 0; i < 8; i++) com.hukhong.skill.MaDomain.tick(p);
+        if (z.getHealth() < hp0 - 0.5f) h.fail("ra khoi vung phai tra lai 10% mau: " + z.getHealth() + " / " + hp0);
+        float hp2 = z2.getHealth();
+        SkillService.cast(p, 2); // R lan 2: no
+        if (com.hukhong.skill.MaDomain.active(p)) h.fail("R lan 2 phai no va tat vung");
+        if (hp2 - z2.getHealth() < p.getMaxHealth() * 0.9f) h.fail("no phai >= mau toi da ban than: " + (hp2 - z2.getHealth()));
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "ma_armor")
+    public static void maEHuyetGiapReflect(GameTestHelper h) {
+        ServerPlayer p = fake(h, 60, Set.of(Path.MA));
+        place(h, p, 2, 1, 2);
+        Zombie z = dummy(h, 2, 4);
+        SkillService.state(p).stance = true;
+        SkillService.cast(p, 1);
+        if (!com.hukhong.skill.MaDomain.armored(p)) h.fail("E khong bat Huyet Giap");
+        float hp = z.getHealth();
+        com.hukhong.skill.MaDomain.reflect(h.getLevel(), p, z, 10f); // người chơi giả miễn sát thương nên gọi thẳng phần phản đòn
+        if (z.getHealth() >= hp) h.fail("Huyet Giap khong phan sat thuong");
+        h.succeed();
+    }
+
     /** Huyết Trảo (Q): kéo địch về sát người, choáng, 3 nhát cách 6 tick; nhát 3 bạo kích (≈ 1.5 x nhát 1). */
     @GameTest(template = "empty")
     public static void maQPullStunThreeHits(GameTestHelper h) {

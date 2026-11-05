@@ -7,7 +7,7 @@ import com.hukhong.core.Path;
 public enum Skill {
     KIEM_1(Path.KIEM, 0, "kiem_1", 6, 12),
     KIEM_2(Path.KIEM, 1, "kiem_2", 25, 160),
-    KIEM_ULT(Path.KIEM, 3, "kiem_ult", 80, 1200),
+    KIEM_ULT(Path.KIEM, 3, "kiem_ult", 64, 1200), // 2026-11-05: mana -20%
     MA_1(Path.MA, 0, "ma_1", 0, 16),
     MA_2(Path.MA, 1, "ma_2", 20, 400),
     MA_ULT(Path.MA, 3, "ma_ult", 60, 2400),
@@ -30,7 +30,7 @@ public enum Skill {
     TRAN_CAGE(Path.TRAN, 0, "tran_cage", 30, 600),
     TRAN_SLOW(Path.TRAN, 1, "tran_slow", 25, 400),
     TRAN_SUPPRESS(Path.TRAN, 2, "tran_suppress", 35, 500),
-    TRAN_PILLAR(Path.TRAN, 0, "tran_pillar", 25, 300),
+    TRAN_PILLAR(Path.TRAN, 0, "tran_pillar", 45, 300), // 2026-11-05: 25 -> 45 mana
     TRAN_BLADES(Path.TRAN, 1, "tran_blades", 35, 400),
     TRAN_DOOM(Path.TRAN, 2, "tran_doom", 60, 1200),
     TRAN_WARD(Path.TRAN, 0, "tran_ward", 25, 400),
@@ -39,7 +39,9 @@ public enum Skill {
     DAN_1(Path.DAN, 0, "dan_1", 4, 14),
     DAN_2(Path.DAN, 1, "dan_2", 30, 500),
     DAN_3(Path.DAN, 2, "dan_3", 35, 360),
-    DAN_ULT(Path.DAN, 3, "dan_ult", 90, 1800);
+    DAN_ULT(Path.DAN, 3, "dan_ult", 90, 1800),
+    /** Ma Tu R: Ma Vực (xem MaDomain). */
+    MA_3(Path.MA, 2, "ma_3", 40, 1000);
 
     /** Hệ số sát thương kỹ năng 1 (nhân Phép lực / Công lực) - dùng chung với bài test cân bằng. */
     public static final double DAO_1_COEF = 1.10, THE_1_COEF = 4.00;

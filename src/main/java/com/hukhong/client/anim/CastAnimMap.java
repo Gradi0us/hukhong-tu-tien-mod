@@ -30,6 +30,7 @@ public final class CastAnimMap {
         BASE.put(Skill.MA_1, CastAnim.CLAW_SWIPE);         // Huyết Trảo
         BASE.put(Skill.MA_2, CastAnim.ROAR);               // Ma Khí Hộ Thể
         BASE.put(Skill.MA_ULT, CastAnim.ULT_RAISE);        // Ma Thần Giáng Thế
+        BASE.put(Skill.MA_3, CastAnim.ROAR);               // Ma Vực
         BASE.put(Skill.DAO_1, CastAnim.HAND_SEAL);         // Thánh Quang Tiễn
         BASE.put(Skill.DAO_2, CastAnim.HAND_SEAL);         // Bàn Phù
         BASE.put(Skill.DAO_ULT, CastAnim.ULT_RAISE);       // Thánh Giáng

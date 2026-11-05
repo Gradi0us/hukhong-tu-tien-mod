@@ -270,6 +270,10 @@ public final class SkillEntries {
                 ls.add(note("hukhong.skills.ma_ult.desc", "12 giây: +40%% Công (= +%s), +4%% Hút Huyết, Ác Tính +15.", num(x.ap() * 0.40)));
                 ls.add(meta(x, page, s.cost, cd));
             }
+            case MA_3 -> {
+                ls.add(note("hukhong.skills.ma_3.desc", "Mở lĩnh vực của quỷ 7 ô quanh bản thân trong 20s: kẻ địch mất ngay 10%% máu tối đa, kỹ năng Ma +30%%, mỗi 10s vùng nổ (250%% Công + 5%% máu tối đa)."));
+                ls.add(meta(x, page, s.cost, cd));
+            }
             case DAO_1 -> {
                 ls.add(note("hukhong.skills.dao_1.desc", "Tia sáng tầm 14 block đánh 1 mục tiêu (nội tại Đạo Tu x%s).", fmt(PassiveMath.DAO_SKILL_MULT)));
                 ls.add(meta(x, page, s.cost, cd));

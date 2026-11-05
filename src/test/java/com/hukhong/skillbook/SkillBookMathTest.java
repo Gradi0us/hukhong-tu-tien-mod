@@ -145,9 +145,9 @@ class SkillBookMathTest {
         assertEquals(Skill.KIEM_1, SkillBook.resolve(d, Path.KIEM, 0).base());
         assertEquals("lang_ba_vi_bo", SkillBook.resolve(d, Path.MA, 0).id());
         // R: gán thủ công chạy khi chưa mở Bản Mệnh, nhường Bản Mệnh khi đã mở (cấp 40)
-        d = d.withSlot(Path.MA, 2, "lang_ba_vi_bo");
-        assertEquals("lang_ba_vi_bo", SkillBook.resolve(d, Path.MA, 2, 39).id());
-        assertNull(SkillBook.resolve(d, Path.MA, 2, 40));
+        d = d.withSlot(Path.KIEM, 2, "lang_ba_vi_bo"); // Ma Tu R cố định Ma Vực nên dùng Kiếm
+        assertEquals("lang_ba_vi_bo", SkillBook.resolve(d, Path.KIEM, 2, 39).id());
+        assertNull(SkillBook.resolve(d, Path.KIEM, 2, 40));
         // cấp
         assertEquals(1, d.level("kiem_1"));
         d = d.withLevel("kiem_1", 5);

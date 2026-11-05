@@ -1552,7 +1552,7 @@
   "hukhong.skills.kiem_ult.meta": "Cost %s%% max %s per second (~%s/s) - toggle lock %ss",
   "hukhong.skills.kiem_ult.dps": "Per second: %s pulses = %s",
   "hukhong.skills.ma_1.desc": "Pulls enemies in an 8-block fan close and stuns them for 1.5s, then 3 claw strikes 6 ticks apart; the 3rd always crits.",
-  "hukhong.skills.ma_2.desc": "Shield of 15%% max health for 6 seconds (self only): %s.",
+  "hukhong.skills.ma_2.desc": "Blood Armor for 8s: reflect 50%% of damage taken to the attacker.",
   "hukhong.skills.ma_ult.desc": "12 seconds: +40%% Attack (= +%s), +4%% Lifesteal, Wickedness +15.",
   "hukhong.skills.dao_1.desc": "Light ray, 14 blocks, hits 1 target (Dao passive x%s).",
   "hukhong.skills.dao_2.desc": "Nearest ally within 20 blocks gets Strength, Speed, Absorption II for 20s; with no ally you get Speed + Absorption.",
@@ -2606,5 +2606,12 @@
   "hukhong.phap.tho.titan.t": "Annihilation Ray! Move the mouse to steer · press T again to pause",
   "hukhong.phap.tho.titan.t_used": "Annihilation Ray depleted (max 10 s per Titan Tower)",
   "hukhong.phap.tho.titan.destruct": "SELF-DESTRUCT in %s s!",
-  "hukhong.phap.tho.titan.t_pause": "Annihilation Ray paused - %s s left"
+  "hukhong.phap.tho.titan.t_pause": "Annihilation Ray paused - %s s left",
+  "hukhong.skill.ma_3": "Demon Domain",
+  "hukhong.skills.ma_3.desc": "Open a 7-block Demon Domain for 20s: enemies instantly lose 10%% max HP (returned if they leave), take 60%% Attack per second, Ma skills +30%%, you gain +10%% lifesteal but lose 10%% max HP per second. Press R again: explode for your max HP x enemy count.",
+  "hukhong.ma.domain.open": "Demon Domain descends!",
+  "hukhong.ma.domain.left": "Demon Domain %ss left · blast in %ss",
+  "hukhong.ma.domain.end": "Demon Domain fades",
+  "hukhong.ma.armor.on": "Blood Armor: reflecting 50%% damage for 8s",
+  "hukhong.ma.domain.detonate": "Demon Domain detonates! (%s enemies)"
 }

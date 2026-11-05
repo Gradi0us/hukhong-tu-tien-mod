@@ -42,7 +42,7 @@ public final class SkillBook {
 
     /** Như {@link #resolve(SkillBookData, Path, int)} nhưng phím R luôn nhường Bản Mệnh khi đã mở khóa (cấp tu luyện đủ). */
     public static Resolved resolve(SkillBookData d, Path page, int slot, int playerLevel) {
-        if (slot == 2 && com.hukhong.skill.BanMenhSkill.of(page, playerLevel) != null) return null;
+        if (slot == 2 && page != Path.MA && com.hukhong.skill.BanMenhSkill.of(page, playerLevel) != null) return null; // Ma Tu: R cố định Ma Vực
         return resolve(d, page, slot);
     }
 

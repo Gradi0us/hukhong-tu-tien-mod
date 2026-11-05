@@ -74,6 +74,11 @@ public final class SkillService {
         SkillBookData bd = SkillBookService.data(p);
         boolean lockT = page == Path.PHAP && com.hukhong.phaptu.beam.PhapBeamService.locksT(p);
         if (lockT && slot == 3) return; // phím T của Quang/Lôi/Hỏa/Thủy đi qua PhapBeamService (nạp -> bắn), không cast tức thời
+        if (page == Path.MA && slot == 2 && MaDomain.active(p) && p.level() instanceof net.minecraft.server.level.ServerLevel ml) { // Ma Vực: R lần 2 = nổ
+            MaDomain.detonate(ml, p);
+            sync(p);
+            return;
+        }
         if (page == Path.TRAN) { // Trận Tu: 4 phím cố định; T đổi thế, Q/E/R theo thế (TranSkills)
             com.hukhong.tran.TranSkills.cast(p, st, slot);
             sync(p);

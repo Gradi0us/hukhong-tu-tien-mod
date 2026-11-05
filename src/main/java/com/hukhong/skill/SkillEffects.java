@@ -51,6 +51,7 @@ public final class SkillEffects {
             case MA_1 -> huyetTrao(lv, p);
             case MA_2 -> maKhiHoThe(lv, p);
             case MA_ULT -> maThanGiangThe(lv, p);
+            case MA_3 -> MaDomain.cast(lv, p);
             case PHAP_1, PHAP_2, PHAP_3, PHAP_ULT -> com.hukhong.phaptu.PhapSkills.run(s.slot, p);
             case TRAN_1, TRAN_2, TRAN_3, TRAN_ULT, TRAN_CAGE, TRAN_SLOW, TRAN_SUPPRESS, TRAN_PILLAR, TRAN_BLADES, TRAN_DOOM,
                  TRAN_WARD, TRAN_HEAL, TRAN_SHIELD -> com.hukhong.tran.TranSkills.run(s, p);
@@ -300,6 +301,8 @@ public final class SkillEffects {
      * Liên Hoàn Trảm: 3 nhát quạt 6 block, mỗi nhát 70% Công, cách nhau 6 tick. Bản Mệnh Kiếm phóng to ~5x vung qua
      * cả vùng chém (chéo trên, bổ dọc, chéo dưới), mỗi nhát tung thêm một dải kiếm khí.
      */
+    public static final double KIEM_2_LIFESTEAL = 0.10;
+
     private static void lienHoanTram(ServerLevel lv, ServerPlayer p) {
         final double reach = 6 * qiRange(p);
         final double[] rolls = {30, 90, -30};
@@ -312,7 +315,12 @@ public final class SkillEffects {
             };
             Runnable hit = () -> {
                 if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
-                for (LivingEntity e : coneTargets(l2, p, reach, 0.45)) slash(p, e, Skill.KIEM_2_COEF);
+                for (LivingEntity e : coneTargets(l2, p, reach, 0.45)) {
+                    float hp0 = e.getHealth();
+                    slash(p, e, Skill.KIEM_2_COEF);
+                    float dealt = Math.max(0, hp0 - (e.isAlive() ? e.getHealth() : 0));
+                    if (dealt > 0) p.heal(dealt * (float) KIEM_2_LIFESTEAL); // Liên Hoàn Trảm: cố định 10% hút máu
+                }
             };
             Runnable qi = () -> {
                 if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
@@ -328,7 +336,7 @@ public final class SkillEffects {
     // ---- Kiếm Vực (kênh): bật/tắt bằng phím T ----
 
     /** Tiêu hao mỗi giây = 10% tài nguyên tối đa; nhịp đánh + mưa kiếm mỗi 0,5s; khoá chống bấm liên tục 1s. */
-    public static final double DOMAIN_DRAIN_PCT = 0.10;
+    public static final double DOMAIN_DRAIN_PCT = 0.08; // 2026-11-05: -20%
     public static final int DOMAIN_PULSE_TICKS = 10, DOMAIN_LOCK_TICKS = 20, DOMAIN_SWORDS = 8;
 
     static int domainDrain(CultivationData d) { return Math.max(1, (int) Math.round(d.resourceMax() * DOMAIN_DRAIN_PCT)); }
@@ -481,15 +489,12 @@ public final class SkillEffects {
 
     /** Ma Khí Hộ Thể: lá chắn 15% HP tối đa trong 6s (chỉ bản thân, qua Absorption). */
     private static void maKhiHoThe(ServerLevel lv, ServerPlayer p) {
-        float shield = p.getMaxHealth() * 0.15f;
-        int amp = Math.max(0, (int) Math.ceil(shield / 4f) - 1);
-        p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 120, amp, false, false));
-        p.setAbsorptionAmount(Math.max(p.getAbsorptionAmount(), shield));
+        MaDomain.armor(lv, p); // Huyết Giáp: 8s phản 50% sát thương nhận phải
         for (int h = 0; h < 3; h++) ring(lv, p.position().add(0, 0.3 + 0.7 * h, 0), h == 1 ? 1.1 : 0.8, 14,
                 com.hukhong.vfx.ModParticles.MA_KHI.get());
         spiral(lv, p.position(), 1.0, 1.0, 2.2, 2.5, 32, BLOOD);
         Fx.play(lv, FxType.BLOOD_VORTEX, p.position(), Vec3.ZERO, 1.6f, Fx.RED, 34);
-        Fx.shell(lv, p, p, 1.3f, 0xB01030, 120);
+        Fx.shell(lv, p, p, 1.3f, 0xB01030, MaDomain.ARMOR_TICKS);
         Fx.play(lv, FxType.TALISMAN_CIRCLE, p.position(), Vec3.ZERO, 1.8f, 0xB01030, 34);
         lv.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.9f, 0.5f);
         layer(lv, p.position(), SoundEvents.SOUL_ESCAPE.value(), 0.8f, 0.8f);

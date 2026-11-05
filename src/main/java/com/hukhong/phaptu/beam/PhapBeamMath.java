@@ -26,7 +26,18 @@ public final class PhapBeamMath {
     // ---- chi phí / hồi chiêu
     public static final double UPFRONT_PCT = 0.40;      // % Pháp Lực tối đa trả khi bắt đầu bắn
     public static final double DRAIN_PCT_PER_SEC = 0.14; // % Pháp Lực tối đa mỗi giây khi kênh
-    public static final int COOLDOWN_TICKS = 900;       // 45s (29/10: giảm từ 75s theo phản hồi)
+    public static final int COOLDOWN_TICKS = 900;
+    /** 2026-11-05: Quang / Lôi / Thủy: hồi chiêu -30s, mana -20%. */
+    public static final int LIGHT_CD_CUT = 600;
+    public static final double LIGHT_COST_MULT = 0.80;
+
+    public static boolean lightCut(com.hukhong.phaptu.PhapElement e) {
+        return e == com.hukhong.phaptu.PhapElement.QUANG || e == com.hukhong.phaptu.PhapElement.LOI || e == com.hukhong.phaptu.PhapElement.THUY;
+    }
+
+    public static int cooldownTicks(com.hukhong.phaptu.PhapElement e) { return lightCut(e) ? COOLDOWN_TICKS - LIGHT_CD_CUT : COOLDOWN_TICKS; }
+
+    public static double costMult(com.hukhong.phaptu.PhapElement e) { return lightCut(e) ? LIGHT_COST_MULT : 1.0; }       // 45s (29/10: giảm từ 75s theo phản hồi)
 
     // ---- làm chậm di chuyển (ADD_MULTIPLIED_TOTAL)
     public static final double CHARGE_SLOW = -0.60, FIRE_SLOW = -0.85;
