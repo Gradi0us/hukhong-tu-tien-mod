@@ -24,7 +24,16 @@ public enum CreatureKind {
     BANG_HON("bang_hon", Impl.QUAI, MobCategory.MONSTER, 0.7f, 1.9f, 24, 5, 0.24, false, null, null),
     MOC_YEU("moc_yeu", Impl.QUAI, MobCategory.MONSTER, 0.9f, 2.4f, 40, 7, 0.20, false, null, null),
     DOC_THIEM("doc_thiem", Impl.QUAI, MobCategory.MONSTER, 0.9f, 0.8f, 22, 3, 0.26, false, null, null),
-    QUAN_HON("quan_hon", Impl.QUAI, MobCategory.MONSTER, 0.6f, 1.95f, 26, 5, 0.26, false, null, null);
+    QUAN_HON("quan_hon", Impl.QUAI, MobCategory.MONSTER, 0.6f, 1.95f, 26, 5, 0.26, false, null, null),
+    // ---- 2026-11-05: quái mới ----
+    HU_LANG("hu_lang", Impl.QUAI, MobCategory.MONSTER, 0.9f, 1.1f, 22, 5, 0.34, false, null, null),
+    THACH_QUY("thach_quy", Impl.QUAI, MobCategory.MONSTER, 1.0f, 2.2f, 45, 7, 0.20, false, null, null),
+    AM_HON_SU("am_hon_su", Impl.QUAI, MobCategory.MONSTER, 0.7f, 2.0f, 24, 5, 0.24, false, null, null),
+    HOA_TINH("hoa_tinh", Impl.QUAI, MobCategory.MONSTER, 0.6f, 1.5f, 18, 5, 0.27, false, null, null),
+    // ---- mini boss (thanh máu boss, kỹ năng riêng, hiếm) ----
+    HU_LANG_VUONG("hu_lang_vuong", Impl.QUAI, MobCategory.MONSTER, 2.2f, 2.4f, 320, 14, 0.30, false, null, null),
+    THACH_CU_NHAN("thach_cu_nhan", Impl.QUAI, MobCategory.MONSTER, 2.4f, 5.2f, 520, 18, 0.20, false, null, null),
+    HUYET_YEU_VUONG("huyet_yeu_vuong", Impl.QUAI, MobCategory.MONSTER, 1.4f, 4.4f, 380, 15, 0.24, false, null, null);
 
     public enum Impl { THU, QUAI, NGU }
 
@@ -48,12 +57,16 @@ public enum CreatureKind {
 
     public boolean hostile() { return impl == Impl.QUAI; }
 
+    /** Mini boss: thanh máu boss, kháng đẩy lùi, kỹ năng định kỳ (MiniBossSkills). */
+    public boolean mini() { return this == HU_LANG_VUONG || this == THACH_CU_NHAN || this == HUYET_YEU_VUONG; }
+
     public static final List<CreatureKind> ALL = List.of(values());
 
     /** Nguyen lieu roi (vat pham mod): moi sinh vat 1 loai (tru thu chien dau con). */
     public static final List<String> MATERIALS = List.of("linh_loc_giac", "hac_tien_vu", "ngoc_tho_mao", "hoa_huynh_quang", "linh_ngu_lan",
             "linh_ho_vi", "thiet_boi_hung_trao", "doc_van_xa_nha", "sa_trung_giap", "bang_hon_tinh", "moc_yeu_loi",
-            "doc_thiem_noc", "quan_hon_manh");
+            "doc_thiem_noc", "quan_hon_manh", "hu_lang_nanh", "thach_quy_tam", "am_hon_phu", "hoa_tinh_hach",
+            "lang_vuong_doc_nha", "cu_nhan_thach_tam", "huyet_yeu_tinh_huyet");
 
     public static CreatureKind byId(String id) {
         for (CreatureKind k : values()) if (k.id.equals(id)) return k;

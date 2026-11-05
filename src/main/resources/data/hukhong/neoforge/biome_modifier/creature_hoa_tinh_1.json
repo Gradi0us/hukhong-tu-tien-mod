@@ -1,0 +1,15 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:hoa_tinh",
+  "weight": 11,
+  "minCount": 2,
+  "maxCount": 3
+ },
+ "biomes": [
+  "minecraft:desert",
+  "minecraft:savanna_plateau",
+  "minecraft:basalt_deltas",
+  "minecraft:nether_wastes"
+ ]
+}

@@ -145,6 +145,7 @@ public class AmbientNpc extends PathfinderMob {
     // Ngoai le khi vay thanh: linh dang chien dau co the bi QUAI (khong phai nguoi choi) lam bi thuong / ha guc.
     @Override public boolean isInvulnerableTo(DamageSource s) {
         if (s.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+        if (role() == GUARD) return s.getEntity() instanceof Player || super.isInvulnerableTo(s); // lính thủ vệ: quái / môi trường đánh chết được (người chơi thì không)
         return !(siegeMode == SIEGE_FIGHT && downed <= 0 && s.getEntity() instanceof Mob);
     }
     @Override public boolean removeWhenFarAway(double d) { return true; }
@@ -157,7 +158,7 @@ public class AmbientNpc extends PathfinderMob {
     /** Chi mat mau toi muc nguy kich thi "ha guc" nam yen roi hoi phuc, khong chet. */
     @Override
     public boolean hurt(DamageSource s, float amount) {
-        if (!level().isClientSide && siegeMode == SIEGE_FIGHT && downed <= 0 && !isInvulnerableTo(s) && amount >= getHealth() - 1f) {
+        if (!level().isClientSide && role() != GUARD && siegeMode == SIEGE_FIGHT && downed <= 0 && !isInvulnerableTo(s) && amount >= getHealth() - 1f) {
             downed = 160;
             setHealth(Math.max(4f, getMaxHealth() * 0.25f));
             setTarget(null);

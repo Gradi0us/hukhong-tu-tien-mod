@@ -92,7 +92,7 @@ public final class Prebuild {
     /** Chế độ test tự động (runClient -Ptitantest / -Pmatest / -Pkiemtest...): không dựng sẵn thành / cảng / tông. */
     public static boolean skipped() {
         return System.getProperty("hukhong.titantest") != null || System.getProperty("hukhong.matest") != null
-                || System.getProperty("hukhong.kiemtest") != null || System.getProperty("hukhong.noprebuild") != null;
+                || System.getProperty("hukhong.kiemtest") != null || System.getProperty("hukhong.secttest") != null || System.getProperty("hukhong.noprebuild") != null;
     }
 
     /** Dung toan bo truoc khi nguoi choi vao the gioi moi (chay tren luong server, dong bo). */

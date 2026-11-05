@@ -1,0 +1,33 @@
+{
+ "role": "hostile",
+ "hp_mul": 1.2,
+ "dmg_mul": 1.1,
+ "exp_weight": 0.8,
+ "hon_tinh": 0.1,
+ "drops": [
+  {
+   "item": "hukhong:thach_quy_tam",
+   "chance": 0.5,
+   "min": 1,
+   "max": 2
+  },
+  {
+   "item": "hukhong:hon_tinh",
+   "chance": 0.05,
+   "min": 1,
+   "max": 1
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "#minecraft:is_mountain",
+   "minecraft:stony_shore",
+   "minecraft:windswept_hills",
+   "minecraft:dripstone_caves"
+  ],
+  "weight": 10,
+  "min": 1,
+  "max": 2,
+  "time": "any"
+ }
+}

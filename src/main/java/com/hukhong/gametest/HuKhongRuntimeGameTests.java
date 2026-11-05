@@ -293,6 +293,31 @@ public final class HuKhongRuntimeGameTests {
         h.succeed();
     }
 
+    @GameTest(template = "empty", batch = "sect_zone")
+    public static void sectLakeAndAltarGiveExp(GameTestHelper h) {
+        ServerPlayer p = fake(h, 23, Set.of(Path.KIEM));
+        place(h, p, 2, 1, 2);
+        var data = com.hukhong.city.WorldBuildData.get(h.getLevel());
+        int cx = p.getBlockX(), cz = p.getBlockZ() - com.hukhong.society.SectBuilder.LAKE_Z0 - 5, y = p.getBlockY();
+        int half = com.hukhong.society.SectBuilder.HALF;
+        String id = "test_sect_zone";
+        data.put(new com.hukhong.city.WorldBuildData.Settlement(id, "sect", cx - half, cz - half, cx + half, cz + half, y, cx, cz));
+        try {
+            if (com.hukhong.society.SectZones.zoneOf(p) != com.hukhong.society.SectZones.Zone.LAKE) h.fail("phai o Linh Khi Ho: " + com.hukhong.society.SectZones.zoneOf(p));
+            long e0 = p.getData(ModAttachments.CULTIVATION).exp();
+            if (com.hukhong.society.SectZones.tick(p) <= 0) h.fail("Linh Khi Ho khong cong EXP");
+            if (p.getData(ModAttachments.CULTIVATION).exp() <= e0 && p.getData(ModAttachments.CULTIVATION).level() <= 23) h.fail("EXP khong tang: " + e0 + " -> " + p.getData(ModAttachments.CULTIVATION).exp() + " locked=" + p.getData(ModAttachments.CULTIVATION).milestoneLocked());
+            p.moveTo(cx + 0.5, y + 3, cz + com.hukhong.society.SectBuilder.ALTAR_Z + 0.5);
+            if (com.hukhong.society.SectZones.zoneOf(p) != com.hukhong.society.SectZones.Zone.ALTAR) h.fail("phai o An Hon Dai: " + com.hukhong.society.SectZones.zoneOf(p));
+            p.moveTo(cx + 40.5, y, cz - 40.5);
+            if (com.hukhong.society.SectZones.zoneOf(p) != com.hukhong.society.SectZones.Zone.NONE) h.fail("ngoai vung khong duoc cong");
+        } finally {
+            data.settlements().remove(id);
+            data.setDirty();
+        }
+        h.succeed();
+    }
+
     /** Huyết Trảo (Q): kéo địch về sát người, choáng, 3 nhát cách 6 tick; nhát 3 bạo kích (≈ 1.5 x nhát 1). */
     @GameTest(template = "empty")
     public static void maQPullStunThreeHits(GameTestHelper h) {

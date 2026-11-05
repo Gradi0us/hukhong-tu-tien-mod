@@ -1,0 +1,10 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:hu_lang",
+  "weight": 14,
+  "minCount": 2,
+  "maxCount": 4
+ },
+ "biomes": "#minecraft:is_forest"
+}

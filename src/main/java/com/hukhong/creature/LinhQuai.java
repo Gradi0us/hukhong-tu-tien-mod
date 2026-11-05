@@ -94,6 +94,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
                 level().addParticle(ParticleTypes.SNOWFLAKE, getRandomX(0.6), getRandomY(), getRandomZ(0.6), 0, 0.02, 0);
             return;
         }
+        if (kind.mini()) MiniBossSkills.tick(this);
         if (kind == CreatureKind.BANG_HON) freezeAura();
         if (kind == CreatureKind.SA_TRUNG) burrowTick();
     }
@@ -161,6 +162,11 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
                         sl.sendParticles(ParticleTypes.COMPOSTER, le.getX(), le.getY() + 0.2, le.getZ(), 12, 0.4, 0.1, 0.4, 0.02);
                 }
                 case QUAN_HON -> le.knockback(0.6, getX() - le.getX(), getZ() - le.getZ()); // thuong tran day lui
+                case HU_LANG, HU_LANG_VUONG -> le.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 0)); // cắn xé: suy yếu
+                case THACH_QUY, THACH_CU_NHAN -> { le.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1)); le.push(0, 0.35, 0); le.hurtMarked = true; }
+                case AM_HON_SU -> le.addEffect(new MobEffectInstance(MobEffects.WITHER, 80, 0));
+                case HOA_TINH -> le.igniteForSeconds(4);
+                case HUYET_YEU_VUONG -> heal(4f); // hút huyết
                 default -> { }
             }
         }
@@ -196,6 +202,30 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
 
     @Override public Component getDisplayName() { return HuHoa.name(huLevel(), getTypeName()); }
     @Override public boolean shouldShowName() { return !burrowed(); }
+
+    // ---- mini boss: thanh máu ----
+    private net.minecraft.server.level.ServerBossEvent bossBar;
+
+    net.minecraft.server.level.ServerBossEvent bar() {
+        if (bossBar == null && kind.mini()) {
+            bossBar = new net.minecraft.server.level.ServerBossEvent(getDisplayName(),
+                    kind == CreatureKind.HUYET_YEU_VUONG ? net.minecraft.world.BossEvent.BossBarColor.RED
+                            : kind == CreatureKind.HU_LANG_VUONG ? net.minecraft.world.BossEvent.BossBarColor.PURPLE : net.minecraft.world.BossEvent.BossBarColor.WHITE,
+                    net.minecraft.world.BossEvent.BossBarOverlay.NOTCHED_10);
+        }
+        return bossBar;
+    }
+
+    @Override public void startSeenByPlayer(net.minecraft.server.level.ServerPlayer p) { super.startSeenByPlayer(p); if (bar() != null) bar().addPlayer(p); }
+
+    @Override public void stopSeenByPlayer(net.minecraft.server.level.ServerPlayer p) { super.stopSeenByPlayer(p); if (bossBar != null) bossBar.removePlayer(p); }
+
+    @Override protected void customServerAiStep() {
+        super.customServerAiStep();
+        if (bossBar != null) bossBar.setProgress(getHealth() / getMaxHealth());
+    }
+
+    @Override public boolean removeWhenFarAway(double d) { return !kind.mini() && super.removeWhenFarAway(d); }
     @Override public boolean isSunBurnTick() { return false; }
 
     @Override public void addAdditionalSaveData(CompoundTag tag) {

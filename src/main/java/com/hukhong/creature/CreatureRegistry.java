@@ -63,7 +63,11 @@ public final class CreatureRegistry {
     private static EntityType<?> build(CreatureKind k) {
         return switch (k.impl) {
             case THU -> EntityType.Builder.of(LinhThu::new, k.cat).sized(k.w, k.h).clientTrackingRange(8).build(k.id);
-            case QUAI -> EntityType.Builder.of(LinhQuai::new, k.cat).sized(k.w, k.h).clientTrackingRange(8).build(k.id);
+            case QUAI -> {
+                var b = EntityType.Builder.of(LinhQuai::new, k.cat).sized(k.w, k.h).clientTrackingRange(k.mini() ? 10 : 8);
+                if (k == CreatureKind.HOA_TINH || k.mini()) b = b.fireImmune();
+                yield b.build(k.id);
+            }
             case NGU -> EntityType.Builder.of(LinhNgu::new, k.cat).sized(k.w, k.h).clientTrackingRange(6).build(k.id);
         };
     }

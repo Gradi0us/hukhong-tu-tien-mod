@@ -1,0 +1,15 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:hu_lang",
+  "weight": 14,
+  "minCount": 2,
+  "maxCount": 4
+ },
+ "biomes": [
+  "minecraft:taiga",
+  "minecraft:snowy_taiga",
+  "minecraft:old_growth_spruce_taiga",
+  "minecraft:plains"
+ ]
+}

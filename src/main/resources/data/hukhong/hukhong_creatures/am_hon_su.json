@@ -1,0 +1,33 @@
+{
+ "role": "hostile",
+ "hp_mul": 1.0,
+ "dmg_mul": 1.1,
+ "exp_weight": 0.8,
+ "hon_tinh": 0.12,
+ "drops": [
+  {
+   "item": "hukhong:am_hon_phu",
+   "chance": 0.5,
+   "min": 1,
+   "max": 2
+  },
+  {
+   "item": "hukhong:hon_tinh",
+   "chance": 0.05,
+   "min": 1,
+   "max": 1
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "minecraft:dark_forest",
+   "minecraft:deep_dark",
+   "minecraft:swamp",
+   "minecraft:soul_sand_valley"
+  ],
+  "weight": 9,
+  "min": 1,
+  "max": 2,
+  "time": "night"
+ }
+}

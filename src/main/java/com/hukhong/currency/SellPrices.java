@@ -52,7 +52,7 @@ public final class SellPrices {
         // nguyen lieu sinh vat
         v(40, "linh_loc_giac"); v(25, "hac_tien_vu"); v(20, "ngoc_tho_mao"); v(45, "hoa_huynh_quang"); v(15, "linh_ngu_lan");
         v(50, "linh_ho_vi"); v(35, "thiet_boi_hung_trao"); v(30, "doc_van_xa_nha"); v(25, "sa_trung_giap"); v(55, "bang_hon_tinh");
-        v(60, "moc_yeu_loi"); v(30, "doc_thiem_noc"); v(80, "quan_hon_manh");
+        v(60, "moc_yeu_loi"); v(30, "doc_thiem_noc"); v(80, "quan_hon_manh"); v(50, "hu_lang_nanh"); v(70, "thach_quy_tam"); v(60, "am_hon_phu"); v(55, "hoa_tinh_hach"); v(600, "lang_vuong_doc_nha"); v(800, "cu_nhan_thach_tam"); v(700, "huyet_yeu_tinh_huyet");
         // dan / vat dung khong ban o cho
         v(3_000, "hoang_cuc_dan"); v(8_000, "de_hoan_dan"); v(20_000, "huyen_ton_dan"); v(50_000, "thanh_co_dan");
         v(120_000, "than_dan"); v(400, "tu_linh_dan"); v(1_500, "di_hoa_chau");

@@ -1,0 +1,15 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:am_hon_su",
+  "weight": 9,
+  "minCount": 1,
+  "maxCount": 2
+ },
+ "biomes": [
+  "minecraft:dark_forest",
+  "minecraft:deep_dark",
+  "minecraft:swamp",
+  "minecraft:soul_sand_valley"
+ ]
+}
