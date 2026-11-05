@@ -72,4 +72,22 @@ class ZoneMathTest {
         assertFalse(ZoneMath.covers(50, 0, 0, 0, 200, 100), "tam da sach");
         assertTrue(ZoneMath.covers(150, 0, 0, 0, 200, 100));
     }
+
+    @Test
+    void nearRingsCloseAndClear() {
+        int[][] avoid = {{440, 4080}, {1500, -300}};
+        var old = ZoneMath.place(42L, 0, 0, new int[][]{{1500, -300}});
+        var near = ZoneMath.nearRings(42L, 0, 0, avoid, old, 100);
+        org.junit.jupiter.api.Assertions.assertTrue(near.size() >= 8, "vong gan qua it: " + near.size());
+        long close = near.stream().filter(s -> Math.hypot(s.cx(), s.cz()) <= 2200).count();
+        org.junit.jupiter.api.Assertions.assertTrue(close >= 3, "it vung trong 2200: " + close);
+        for (var s : near) {
+            org.junit.jupiter.api.Assertions.assertTrue(Math.hypot(s.cx(), s.cz()) - s.radius() >= ZoneMath.SPAWN_CLEAR - 1, "de len spawn");
+            for (int[] a : avoid)
+                org.junit.jupiter.api.Assertions.assertTrue(Math.hypot(s.cx() - a[0], s.cz() - a[1]) - s.radius() >= ZoneMath.CITY_CLEAR - 1, "de len vi tri tranh");
+            for (var o : old)
+                org.junit.jupiter.api.Assertions.assertTrue(Math.hypot(s.cx() - o.cx(), s.cz() - o.cz()) >= s.radius() + o.radius(), "chong vung cu");
+            org.junit.jupiter.api.Assertions.assertTrue(s.id() >= 100);
+        }
+    }
 }

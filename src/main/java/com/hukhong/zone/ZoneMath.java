@@ -61,6 +61,33 @@ public final class ZoneMath {
         return out;
     }
 
+    /** Vong gan spawn (v2): {khoang cach min, max, so vung}. Vung gan nho va cap thap de nguoi choi gap som. */
+    public static final int[][] NEAR_RINGS = {{700, 2200, 5}, {2200, 5000, 5}};
+    public static final int DATA_VERSION = 2;
+
+    /**
+     * Them vung vong gan (NEAR_RINGS) vao danh sach co san, khong de len spawn / thanh / vung cu / vi tri tranh (avoid).
+     * id bat dau tu startId. Tat dinh theo seed.
+     */
+    public static List<Spec> nearRings(long seed, int sx, int sz, int[][] avoidXZ, List<Spec> existing, int startId) {
+        Random rnd = new Random(seed ^ 0x4E454152L);
+        List<Spec> all = new ArrayList<>(existing), out = new ArrayList<>();
+        int id = startId;
+        for (int[] ring : NEAR_RINGS) {
+            int made = 0;
+            for (int attempt = 0; attempt < 3000 && made < ring[2]; attempt++) {
+                double ang = rnd.nextDouble() * Math.PI * 2;
+                double dist = ring[0] + (ring[1] - ring[0]) * rnd.nextDouble();
+                int cx = sx + (int) Math.round(Math.cos(ang) * dist), cz = sz + (int) Math.round(Math.sin(ang) * dist);
+                int fit = (int) Math.min(desiredRadius(dist, rnd.nextDouble()), maxFit(cx, cz, sx, sz, avoidXZ, all));
+                if (fit < MIN_RADIUS) continue;
+                Spec s = new Spec(id++, cx, cz, fit, levelForRadius(fit), name(rnd));
+                all.add(s); out.add(s); made++;
+            }
+        }
+        return out;
+    }
+
     /** Ban kinh lon nhat dat duoc tai (cx,cz) khong de len spawn/thanh/vung da co/bien the gioi. */
     public static double maxFit(int cx, int cz, int sx, int sz, int[][] cityXZ, List<Spec> others) {
         double d = Math.hypot(cx - sx, cz - sz);

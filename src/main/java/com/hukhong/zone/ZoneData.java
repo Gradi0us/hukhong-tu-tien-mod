@@ -41,6 +41,8 @@ public class ZoneData extends SavedData {
 
     private final List<Zone> zones = new ArrayList<>();
     private boolean generated;
+    /** Phien ban bo tri (ZoneMath.DATA_VERSION); the gioi cu (1) duoc bo sung vong gan khi khoi dong. */
+    private int version = 1;
     private static volatile Zone[] INDEX = new Zone[0];
 
     public static ZoneData get(ServerLevel ow) {
@@ -52,6 +54,7 @@ public class ZoneData extends SavedData {
     public static ZoneData load(CompoundTag tag, HolderLookup.Provider reg) {
         ZoneData d = new ZoneData();
         d.generated = tag.getBoolean("generated");
+        d.version = tag.contains("ver") ? tag.getInt("ver") : 1;
         ListTag l = tag.getList("zones", Tag.TAG_COMPOUND);
         for (int i = 0; i < l.size(); i++) {
             CompoundTag c = l.getCompound(i);
@@ -67,6 +70,7 @@ public class ZoneData extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider reg) {
         tag.putBoolean("generated", generated);
+        tag.putInt("ver", version);
         ListTag l = new ListTag();
         for (Zone z : zones) {
             CompoundTag c = new CompoundTag();
@@ -79,6 +83,8 @@ public class ZoneData extends SavedData {
     }
 
     public boolean generated() { return generated; }
+    public int version() { return version; }
+    public void setVersion(int v) { version = v; setDirty(); }
     public List<Zone> zones() { return zones; }
     public void add(Zone z) { zones.add(z); setDirty(); }
     public void markGenerated() { generated = true; setDirty(); rebuildIndex(); }

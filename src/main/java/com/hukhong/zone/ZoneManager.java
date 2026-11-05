@@ -75,6 +75,7 @@ public final class ZoneManager {
         if (ow == null) return;
         ZoneData d = ZoneData.get(ow);
         if (!d.generated()) generate(ow, d);
+        if (d.version() < ZoneMath.DATA_VERSION) addNearRings(ow, d, e.getServer().getPlayerList().getPlayers());
         d.rebuildIndex();
     }
 
@@ -97,6 +98,53 @@ public final class ZoneManager {
             d.add(new ZoneData.Zone(s.id(), s.cx(), s.cz(), s.radius(), s.level(), form, s.name()));
         }
         d.markGenerated();
+        addNearRings(ow, d, List.of());
+    }
+
+    /**
+     * Bo sung vung vong gan spawn (ZoneMath.NEAR_RINGS). The gioi cu chi co vung xa 650-12500 nen nguoi choi hiem khi gap.
+     * Tranh thanh, vung cu, va vi tri nguoi choi dang o / diem hoi sinh (khong chup len nha da xay).
+     */
+    static void addNearRings(ServerLevel ow, ZoneData d, List<ServerPlayer> online) {
+        BlockPos sp = ow.getSharedSpawnPos();
+        CityRegistryData reg = CityRegistryData.get(ow);
+        List<int[]> avoid = new ArrayList<>();
+        for (CityDef c : CityDef.ALL) {
+            BlockPos ctr = reg.center(c.id());
+            avoid.add(ctr != null ? new int[]{ctr.getX(), ctr.getZ()} : new int[]{sp.getX() + c.ax(), sp.getZ() + c.az()});
+        }
+        for (ServerPlayer p : online) {
+            avoid.add(new int[]{p.getBlockX(), p.getBlockZ()});
+            BlockPos rs = p.getRespawnPosition();
+            if (rs != null) avoid.add(new int[]{rs.getX(), rs.getZ()});
+        }
+        avoid.addAll(knownPlayerSpots(ow));
+        List<ZoneMath.Spec> old = new ArrayList<>();
+        int maxId = 0;
+        for (ZoneData.Zone z : d.zones()) { old.add(new ZoneMath.Spec(z.id, z.cx, z.cz, z.radius, z.level, z.name)); maxId = Math.max(maxId, z.id); }
+        for (ZoneMath.Spec s : ZoneMath.nearRings(ow.getSeed(), sp.getX(), sp.getZ(), avoid.toArray(new int[0][]), old, maxId + 1)) {
+            d.add(new ZoneData.Zone(s.id(), s.cx(), s.cz(), s.radius(), s.level(), formFor(ow, s.cx(), s.cz()), s.name()));
+        }
+        d.setVersion(ZoneMath.DATA_VERSION);
+        d.rebuildIndex();
+    }
+
+    /** Vi tri nguoi choi da luu (playerdata/*.dat, ke ca offline) de vung moi khong chup len nha. Loi doc -> bo qua. */
+    private static List<int[]> knownPlayerSpots(ServerLevel ow) {
+        List<int[]> out = new ArrayList<>();
+        try {
+            java.nio.file.Path dir = ow.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR);
+            if (!java.nio.file.Files.isDirectory(dir)) return out;
+            try (var files = java.nio.file.Files.list(dir)) {
+                for (java.nio.file.Path f : (Iterable<java.nio.file.Path>) files.filter(x -> x.toString().endsWith(".dat"))::iterator) {
+                    var tag = net.minecraft.nbt.NbtIo.readCompressed(f, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+                    var pos = tag.getList("Pos", net.minecraft.nbt.Tag.TAG_DOUBLE);
+                    if (pos.size() == 3) out.add(new int[]{(int) pos.getDouble(0), (int) pos.getDouble(2)});
+                    if (tag.contains("SpawnX")) out.add(new int[]{tag.getInt("SpawnX"), tag.getInt("SpawnZ")});
+                }
+            }
+        } catch (Exception ex) { /* khong doc duoc -> chi tranh thanh + nguoi dang online */ }
+        return out;
     }
 
     /** Goi y dang Hu Vuong theo bioma (lay tu bo sinh bioma, khong tai chunk). 0 dong bang,1 nui,2 rung,3 tuyet,4 sa mac,5 dam,6 bien. */
