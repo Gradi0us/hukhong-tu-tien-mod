@@ -42,6 +42,8 @@ public class PhapTurret extends PathfinderMob {
     private static final double RANGE = 14;
     /** Trụ cấp 3 (Thái Sơn Thần Tháp) / đang có người nhập điều khiển. */
     private static final EntityDataAccessor<Boolean> TITAN = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> SPIKE = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.BOOLEAN);
+    private Vec3 spikeFrom;
     private static final EntityDataAccessor<Boolean> CONTROL = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.BOOLEAN);
     private boolean ended;
     private int riseFrom;
@@ -79,6 +81,7 @@ public class PhapTurret extends PathfinderMob {
         b.define(SHIELD, 0);
         b.define(TITAN, false);
         b.define(CONTROL, false);
+        b.define(SPIKE, false);
     }
 
     public PhapElement element() { return PhapElement.values()[Math.floorMod(entityData.get(ELEM), PhapElement.values().length)]; }
@@ -123,6 +126,21 @@ public class PhapTurret extends PathfinderMob {
     public boolean isControlled() { return entityData.get(CONTROL); }
 
     void setControlled(boolean v) { entityData.set(CONTROL, v); }
+
+    public boolean isSpike() { return entityData.get(SPIKE); }
+
+    void setLife(int ticks) { life = ticks; }
+
+    float shotDamage() { return shotDamage; }
+
+    /** Gai đá của R trụ cấp 3: máu hp, sát thương mỗi nhịp dmg, sống life tick, đẩy lùi ra xa tâm from. */
+    void makeSpike(ServerPlayer o, float hp, float dmg, int life, Vec3 from) {
+        setup(o, hp, dmg, 20);
+        entityData.set(SPIKE, true);
+        this.life = life;
+        this.spikeFrom = from;
+        riseFrom = tickCount;
+    }
 
     /** Nâng thành trụ cấp 3: máu hp, sống life tick, trồi lên lại. */
     void makeTitan(float hp, int life) {
@@ -258,18 +276,19 @@ public class PhapTurret extends PathfinderMob {
         if (o == null || !o.isAlive() || !o.getData(com.hukhong.core.ModAttachments.CULTIVATION).paths().contains(Path.PHAP)
                 || --life <= 0) {
             sl.sendParticles(ParticleTypes.POOF, getX(), getY() + 0.6, getZ(), 12, 0.3, 0.4, 0.3, 0.02);
-            if (isTitan() && o != null && !ended) { ended = true; ThoTitan.onEnd(sl, o, false); }
+            if (isTitan() && o != null && !ended) { ended = true; ThoTitan.onEnd(sl, o, this, false); }
             discard();
             return;
         }
         if (empowered > 0) empowered--;
+        if (isSpike()) { spikeTick(sl, o); return; }
         if (tickCount - riseFrom < 14) rising(sl, tickCount - riseFrom);
         tickFieldShield(sl, o);
         if (tickCount % 20 == 0) {
             taunt(sl);
             if (getHealth() < getMaxHealth() && o.distanceToSqr(this) < 16 * 16) heal(getMaxHealth() * 0.02f); // chủ ở gần thì tháp tự phục hồi 2%/s
         }
-        if (isTitan()) titanTick(sl, o);
+        if (isTitan()) ThoTitan.tick(sl, o, this, shotDamage * (empowered > 0 ? 2f : 1f));
         else if (isMerged()) laser(sl, o);
         else if (tickCount % shotTicks == 0) shoot(sl, o);
     }
@@ -285,26 +304,29 @@ public class PhapTurret extends PathfinderMob {
 
     private float scaleK() { return isTitan() ? (float) PhapMath.THO_TITAN_SCALE : isMerged() ? (float) PhapMath.THO_MERGED_SCALE : 1f; }
 
-    /** Trụ cấp 3: tự động bắn pháo đá vào kẻ địch gần nhất; có người nhập thì bắn theo tâm ngắm của họ (nhanh + mạnh hơn). */
-    private void titanTick(ServerLevel sl, ServerPlayer o) {
-        float emp = empowered > 0 ? 2f : 1f;
-        if (isControlled()) {
-            if (!ThoTitan.controlling(o)) { setControlled(false); return; }
-            ThoTitan.lockSeat(o, this);
-            if (tickCount % PhapMath.THO_TITAN_CTRL_TICKS == 0) {
-                LivingEntity[] h = new LivingEntity[1];
-                Vec3 to = ThoTitan.aimPoint(sl, o, this, h);
-                boolean any = h[0] != null || !sl.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(to, to).inflate(PhapMath.THO_TITAN_SPLASH), this::enemy).isEmpty();
-                if (any) ThoTitan.cannon(sl, o, this, to, (float) (shotDamage * PhapMath.THO_TITAN_CTRL_MULT * emp), PhapMath.THO_TITAN_SPLASH, 1f);
-            }
-        } else if (tickCount % PhapMath.THO_TITAN_AUTO_TICKS == 0) {
-            LivingEntity t = sl.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(PhapMath.THO_TITAN_RANGE * 0.7, 8, PhapMath.THO_TITAN_RANGE * 0.7), this::enemy).stream()
-                    .min(Comparator.comparingDouble(e -> e.distanceToSqr(this))).orElse(null);
-            if (t != null) ThoTitan.cannon(sl, o, this, t.getBoundingBox().getCenter(), (float) (shotDamage * PhapMath.THO_TITAN_AUTO_MULT * emp), PhapMath.THO_TITAN_SPLASH, 1f);
+    /** Gai đá Địa Thứ Hộ Tháp (R trụ cấp 3): đứng yên, có máu riêng, đẩy lùi + gây sát thương quanh mình. */
+    private void spikeTick(ServerLevel sl, ServerPlayer o) {
+        if (tickCount - riseFrom < 8) {
+            sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.POINTED_DRIPSTONE.defaultBlockState()),
+                    getX(), getY() + 0.2, getZ(), 6, 0.4, 0.1, 0.4, 0.2);
         }
-        if (tickCount % 30 == 0) {
-            Fx.groundRing(sl, null, position().add(0, 0.06, 0), 4.5f, isControlled() ? 0xFF8A2A : 0xFFD27A, 20);
-            sl.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, getX(), getY() + 0.3, getZ(), 3, 2.0, 0.1, 2.0, 0.01);
+        if (tickCount % 10 != 0) return;
+        double r = 2.2;
+        boolean any = false;
+        for (LivingEntity e : sl.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(r, 2, r), x -> enemy(x) && x.distanceToSqr(this) <= (r + 0.5) * (r + 0.5))) {
+            any = true;
+            e.invulnerableTime = 0;
+            DamageRules.hurtBySkill(o, e, shotDamage);
+            Vec3 away = e.position().subtract(spikeFrom == null ? position() : spikeFrom).multiply(1, 0, 1);
+            if (away.lengthSqr() < 1e-4) away = e.position().subtract(position()).multiply(1, 0, 1);
+            if (away.lengthSqr() > 1e-4) away = away.normalize();
+            e.setDeltaMovement(away.x * 1.1, 0.35, away.z * 1.1);
+            e.hurtMarked = true;
+            Fx.ribbon(sl, o, position().add(0, 0.3, 0), e.getBoundingBox().getCenter(), 0, 2, 0, 0.14f, PhapElement.THO.rgb);
+        }
+        if (any) {
+            Fx.elem(sl, o, Fx.E_SPIKES, position(), Vec3.ZERO, 0.6f, PhapElement.THO.rgb, 16);
+            sl.playSound(null, getX(), getY(), getZ(), net.minecraft.sounds.SoundEvents.POINTED_DRIPSTONE_HIT, net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 0.6f);
         }
     }
 
@@ -355,12 +377,18 @@ public class PhapTurret extends PathfinderMob {
     @Override
     public void die(DamageSource src) {
         if (level() instanceof ServerLevel sl && !isRemoved() && !dead) {
+            if (isSpike()) {
+                sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.DRIPSTONE_BLOCK.defaultBlockState()),
+                        getX(), getY() + 0.8, getZ(), 30, 0.4, 0.6, 0.4, 0.2);
+                super.die(src);
+                return;
+            }
             burst(sl);
             if (isTitan() && !ended) {
                 ended = true;
                 ServerPlayer o = owner == null ? null : sl.getServer().getPlayerList().getPlayer(owner);
                 if (o == null) o = ownerRef;
-                if (o != null) ThoTitan.onEnd(sl, o, true);
+                if (o != null) ThoTitan.onEnd(sl, o, this, true);
             }
         }
         super.die(src);

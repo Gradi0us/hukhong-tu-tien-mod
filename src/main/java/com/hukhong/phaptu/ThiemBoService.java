@@ -120,7 +120,7 @@ public final class ThiemBoService {
         if (s == null || !s.pressed) return;
         s.pressed = false;
         if (s.sprinting) { stopSprint(p, s, null); return; }
-        if (!ThiemBoMath.isHold(s.held) && eligible(p)) SkillService.cast(p, 1);
+        if (!ThiemBoMath.isHold(s.held) && eligible(p) && !ThoTitan.onTap(p)) SkillService.cast(p, 1);
     }
 
     /** Dừng mọi trạng thái (tắt thế, đổi trang, chết, thoát). */
@@ -148,7 +148,7 @@ public final class ThiemBoService {
         s.held++;
         if (!s.sprinting) {
             if (s.held != ThiemBoMath.HOLD_TICKS || !eligible(p)) return;
-            if (isTho(p)) { ThoService.startPhase(p); return; } // Thổ: giữ E = xuyên tường 5s (không chạy tia sáng)
+            if (isTho(p)) { if (ThoTitan.controlling(p)) ThoTitan.selfDestruct(p); else ThoService.startPhase(p); return; } // Thổ: giữ E = xuyên tường 5s (không chạy tia sáng)
             CultivationData d0 = p.getData(ModAttachments.CULTIVATION);
             if (d0.resource() < ThiemBoMath.minStartMana(d0.resourceMax())) {
                 p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);

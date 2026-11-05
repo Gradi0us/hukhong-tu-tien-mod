@@ -20,7 +20,7 @@ import static com.hukhong.client.fx.FxDraw.white;
 final class FxElem {
     private FxElem() {}
 
-    static final int SPIKES = 0, HALOS = 1, ARC = 2, TONGUES = 3, TIDE = 4, NEEDLES = 5, BOULDER = 6, SHOT = 7;
+    static final int SPIKES = 0, HALOS = 1, ARC = 2, TONGUES = 3, TIDE = 4, NEEDLES = 5, BOULDER = 6, SHOT = 7, NUKE = 8;
 
     static int defLife(int kind) {
         return switch (kind) { case SPIKES -> 34; case HALOS -> 14; case ARC -> 8; case TONGUES -> 30; case TIDE -> 16; case NEEDLES -> 10; default -> 30; };
@@ -104,6 +104,20 @@ final class FxElem {
                     for (int i = 0; i < 5; i++)
                         FxClient.puffA(FxParticle.SHARD, f.pos.x, f.pos.y, f.pos.z, (r.nextDouble() - .5) * .3, (r.nextDouble() - .5) * .2, (r.nextDouble() - .5) * .3, 0xFFFFFF, .14f, 10, 0f, true, 1f);
             }
+            case NUKE -> {
+                float R = f.scale, k = Mth.clamp((float) f.age / f.life, 0, 1);
+                double h = nukeH(f, f.age);
+                for (int i = 0; i < 6 * q; i++) {
+                    double a = r.nextDouble() * Math.PI * 2, rr = R * (.3 + .5 * Math.min(1, k * 2)) * r.nextDouble();
+                    FxClient.puffA(FxParticle.GLOW, f.pos.x + Math.cos(a) * rr, f.pos.y + h + r.nextGaussian() * R * .12, f.pos.z + Math.sin(a) * rr,
+                            Math.cos(a) * .05, .04, Math.sin(a) * .05, k < .35 ? 0xFF8A2A : 0x5A4A40, 2.4f + r.nextFloat() * 2f, 40, 0f, k < .35, .35f);
+                }
+                if (f.age < 12) for (int i = 0; i < 14 * q; i++) {
+                    double a = r.nextDouble() * Math.PI * 2, sp = .6 + r.nextDouble() * 1.4;
+                    FxClient.puffA(FxParticle.GLOW, f.pos.x, f.pos.y + .3, f.pos.z, Math.cos(a) * sp, .05, Math.sin(a) * sp, 0x8A7060, 2.2f, 30, 0f, false, .4f);
+                    FxClient.puffA(FxParticle.SHARD, f.pos.x, f.pos.y + .5, f.pos.z, Math.cos(a) * sp * .5, .5 + r.nextDouble(), Math.sin(a) * sp * .5, 0x4A3420, .25f, 40, .06f, false, 1f);
+                }
+            }
             case SHOT -> {
                 Vec3 w = shotPos(f, f.age);
                 for (int i = 0; i < 2 * q; i++)
@@ -161,6 +175,7 @@ final class FxElem {
             case NEEDLES -> needles(f, g, t, fade);
             case BOULDER -> boulder(f, g, t);
             case SHOT -> shot(f, g, t);
+            case NUKE -> nuke(f, g, t);
             default -> { }
         }
     }
@@ -361,6 +376,56 @@ final class FxElem {
     }
 
     private static int q2() { return 1; }
+
+    /** Độ cao quả cầu lửa nấm (tăng nhanh rồi chậm dần). */
+    private static double nukeH(Inst f, float t) {
+        float k = Mth.clamp(t / (f.life * .45f), 0, 1);
+        return f.scale * 1.7 * (1 - (1 - k) * (1 - k));
+    }
+
+    private static void sphere(FxDraw g, Vec3 c, double r, double sy, int col) {
+        int la = 8, lo = 16;
+        for (int i = 0; i < la; i++) {
+            double p0 = Math.PI * i / la - Math.PI / 2, p1 = Math.PI * (i + 1) / la - Math.PI / 2;
+            for (int j = 0; j < lo; j++) {
+                double a0 = Math.PI * 2 * j / lo, a1 = Math.PI * 2 * (j + 1) / lo;
+                Vec3 A = c.add(Math.cos(p0) * Math.cos(a0) * r, Math.sin(p0) * r * sy, Math.cos(p0) * Math.sin(a0) * r);
+                Vec3 B = c.add(Math.cos(p0) * Math.cos(a1) * r, Math.sin(p0) * r * sy, Math.cos(p0) * Math.sin(a1) * r);
+                Vec3 C = c.add(Math.cos(p1) * Math.cos(a1) * r, Math.sin(p1) * r * sy, Math.cos(p1) * Math.sin(a1) * r);
+                Vec3 D = c.add(Math.cos(p1) * Math.cos(a0) * r, Math.sin(p1) * r * sy, Math.cos(p1) * Math.sin(a0) * r);
+                g.quad(A, B, C, D, col, col, col, col);
+            }
+        }
+    }
+
+    /** Vụ nổ tự huỷ Thái Sơn Thần Tháp: chớp trắng, quả cầu lửa bốc lên thành nấm, thân khói, vành sóng xung kích lan trên mặt đất. */
+    private static void nuke(Inst f, FxDraw g, float t) {
+        float R = f.scale, k = Mth.clamp(t / f.life, 0, 1);
+        float fade = Mth.clamp((f.life - t) / (f.life * .35f), 0, 1);
+        if (t < 10) { // chớp
+            float a = 1 - t / 10f;
+            sphere(g, f.pos.add(0, R * .2, 0), R * (.15 + .55 * t / 10f), 1, col(0xFFFFFF, .9f * a));
+            sphere(g, f.pos.add(0, R * .2, 0), R * (.3 + .9 * t / 10f), 1, col(0xFFF0B0, .35f * a));
+        }
+        double h = nukeH(f, t);
+        double capR = R * (.28 + .42 * Math.min(1, k * 2.2));
+        int hot = mix(0xFFE9A0, 0xFF5A14, Math.min(1, k * 3)), smoke = mix(hot, 0x4A3C34, Mth.clamp(k * 2 - .4f, 0, 1));
+        // thân nấm
+        g.cylinder(f.pos, R * (.08 + .07 * k), 0, h, 18, col(mix(0xFF7A1E, 0x3A302A, k), .8f * fade), col(smoke, .55f * fade));
+        g.cylinder(f.pos, R * (.04 + .03 * k), 0, h, 12, col(0xFFE9A0, .7f * fade * (1 - k)), col(0xFFB040, .4f * fade * (1 - k)));
+        // mũ nấm: quả cầu dẹt + vành cuộn
+        Vec3 cap = f.pos.add(0, h, 0);
+        sphere(g, cap, capR, .55, col(smoke, .85f * fade));
+        sphere(g, cap.add(0, -capR * .1, 0), capR * .7, .5, col(hot, .6f * fade * (1 - k * .7f)));
+        g.flatRing(cap.add(0, -capR * .25, 0), capR * .7, capR * 1.25, 28, t * .03, col(smoke, .7f * fade), col(smoke, 0f), 0);
+        // vành chân đế + sóng xung kích
+        double base = R * (.3 + .45 * Math.min(1, k * 3));
+        sphere(g, f.pos.add(0, base * .25, 0), base, .35, col(mix(0x8A6A50, 0x4A3C34, k), .6f * fade));
+        float sk = Math.min(1, k * 2.4f);
+        double sr = R * 3.2 * sk;
+        g.flatRing(f.pos.add(0, .08, 0), Math.max(0, sr - R * .35), sr, 48, 0, col(0xFFD27A, .75f * (1 - sk)), col(0xFF8A2A, 0f), 0);
+        g.disc(f.pos.add(0, .06, 0), R * 2.0 * Math.min(1, k * 3), 40, col(0x2A1E10, .55f * fade), col(0x2A1E10, 0f));
+    }
 
     /** Vị trí đạn đá: từ pos tới pos+dir theo cung (cao = 12% quãng đường). */
     private static Vec3 shotPos(Inst f, float t) {

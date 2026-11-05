@@ -24,7 +24,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class ThoClient {
     private ThoClient() {}
 
-    private static long phaseEnd = -1, blastEnd = -1;
+    private static long phaseEnd = -1, blastEnd = -1, titanEnd = -1;
     private static boolean prevT, prevR;
     private static Vec3 pre;
 
@@ -36,8 +36,16 @@ public final class ThoClient {
             case ThoStatePayload.PHASE_OFF -> phaseEnd = -1;
             case ThoStatePayload.BLAST_OPEN -> blastEnd = now + pl.ticks();
             case ThoStatePayload.BLAST_CLOSED -> blastEnd = -1;
+            case ThoStatePayload.TITAN_ON -> titanEnd = now + pl.ticks() + 20;
+            case ThoStatePayload.TITAN_OFF -> titanEnd = -1;
             default -> { }
         }
+    }
+
+    /** Đang hợp thể trụ cấp 3 (HUD đổi icon Q/E/R/T sang kỹ năng trụ). */
+    public static boolean titanControl() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null && titanEnd >= 0 && mc.level.getGameTime() < titanEnd;
     }
 
     public static boolean phasing() {

@@ -68,6 +68,7 @@ public final class SkillService {
         SkillState st = state(p);
         if (!st.stance) return; // server chỉ nhận cast khi thế bật
         if (com.hukhong.phaptu.beam.PhapBeamService.busy(p)) return; // đang nạp / sẵn sàng / bắn Tinh Hà Quang Trụ
+        if (com.hukhong.phaptu.ThoTitan.interceptCast(p, slot)) return; // đang hợp thể trụ cấp 3: Q/R/T là kỹ năng trụ
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         Path page = Skill.skillPath(d, st.page);
         SkillBookData bd = SkillBookService.data(p);

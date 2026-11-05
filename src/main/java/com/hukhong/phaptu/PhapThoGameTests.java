@@ -701,4 +701,35 @@ public final class PhapThoGameTests {
             h.succeed();
         });
     }
+
+    @GameTest(template = "empty", batch = "tho_titan3", timeoutTicks = 60)
+    public static void tho_tru_cap3_song_20s_hop_the_60s_va_chi_1_lan(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        PhapTurret t = makeTitan(h, p);
+        if (t.lifeLeft() > ThoTitan.AUTO_LIFE) h.fail("tu dong chi song 20s: " + t.lifeLeft());
+        ThoTitan.onTap(p);
+        if (!ThoTitan.controlling(p)) h.fail("E trong 5s, gan tru phai hop the");
+        if (t.lifeLeft() < ThoTitan.MERGED_LIFE - 5) h.fail("hop the phai song 60s: " + t.lifeLeft());
+        if (ThoTitan.mergeCooldown(p) < ThoTitan.MERGE_CD - 5) h.fail("hop the phai hoi 3 phut");
+        com.hukhong.skill.SkillService.cast(p, 3);
+        if (!ThoTitan.laserActive(p)) h.fail("T khi hop the phai la Tia Diet The");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty", batch = "tho_titan4", timeoutTicks = 200)
+    public static void tho_tru_cap3_tu_huy_hut_no_va_xuyen_tuong(GameTestHelper h) {
+        ServerPlayer p = player(h, PhapElement.THO, Aptitude.SSS);
+        PhapTurret t = makeTitan(h, p);
+        ThoTitan.onTap(p);
+        Zombie z = zombieHp(h, p, 0, 1.0E7f);
+        z.setPos(t.getX() + 6, t.getY(), t.getZ());
+        ThoTitan.selfDestruct(p);
+        if (!ThoTitan.selfDestructing(p)) h.fail("giu E khi hop the phai tu huy");
+        h.runAfterDelay(ThoTitan.DESTRUCT_TICKS + 5, () -> {
+            if (t.isAlive()) h.fail("tru phai no sau 7s");
+            if (z.getHealth() >= z.getMaxHealth()) h.fail("vu no phai gay sat thuong");
+            if (!ThoService.phasing(p) || !ThiemBoService.immune(p)) h.fail("tu huy xong phai xuyen tuong + bat tu");
+            h.succeed();
+        });
+    }
 }

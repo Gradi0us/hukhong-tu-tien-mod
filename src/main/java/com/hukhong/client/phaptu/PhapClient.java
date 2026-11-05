@@ -37,6 +37,7 @@ public final class PhapClient {
     /** Icon HUD: "phap_1" -> "phap_quang_1" theo nguyên tố của người chơi; id khác giữ nguyên. */
     public static String icon(String id) {
         if (id == null || !id.startsWith("phap_")) return id;
+        if (com.hukhong.client.fx.ThoClient.titanControl()) return "tho_titan_" + id.substring(5); // kỹ năng trụ cấp 3
         var mc = Minecraft.getInstance();
         PhapElement e = mc.player == null ? null : PhapTu.rawElement(mc.player);
         return e == null ? id : "phap_" + e.id() + "_" + id.substring(5);
@@ -87,7 +88,8 @@ public final class PhapClient {
             int glow = LightTexture.pack(15, 15);
             ps.pushPose();
             ps.translate(0, -2.4 * (1 - ease), 0);
-            if (t.isTitan()) titan(t, age, ps, buf, light, glow);
+            if (t.isSpike()) spike(t, age, ps, buf, light, glow);
+            else if (t.isTitan()) titan(t, age, ps, buf, light, glow);
             else if (t.isMerged()) merged(t, age, ps, buf, light, glow);
             else single(t, age, ps, buf, light, glow);
             float sh = t.shieldFraction();
@@ -180,6 +182,22 @@ public final class PhapClient {
                 block(ps, buf, inner ? DS_BRICK : GILD, Math.cos(a) * r, 7.4 + bob + Math.sin(a * 3 + age * 0.05) * 0.4, Math.sin(a) * r,
                         inner ? 0.55f : 0.4f, (float) Math.toDegrees(a) * 2, light);
             }
+        }
+
+        /** Gai Địa Thứ Hộ Tháp: cụm 5 nhũ đá chĩa lên, chân đá vụn, mũi hổ phách sáng. */
+        private void spike(PhapTurret t, float age, PoseStack ps, MultiBufferSource buf, int light, int glow) {
+            block(ps, buf, bs(net.minecraft.world.level.block.Blocks.DRIPSTONE_BLOCK), 0, 0, 0, 0.9f, 20, light);
+            float[][] o = {{0, 0, 1.6f}, {0.38f, 0.1f, 1.1f}, {-0.35f, 0.25f, 1.0f}, {0.1f, -0.4f, 0.9f}, {-0.2f, -0.3f, 0.8f}};
+            for (float[] q : o) {
+                ps.pushPose();
+                ps.translate(q[0], 0.6, q[1]);
+                ps.mulPose(com.mojang.math.Axis.XP.rotationDegrees(q[1] * 30));
+                ps.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-q[0] * 30));
+                ps.scale(q[2], q[2] * 1.6f, q[2]);
+                block(ps, buf, SPIKE, 0, 0, 0, 1f, 0, light);
+                ps.popPose();
+            }
+            block(ps, buf, AMBER, 0, 2.3 + Math.sin(age * 0.2) * 0.05, 0, 0.22f, age * 6, glow);
         }
 
         /** Trụ Hợp Thể (laser theo thời gian): đàn tế lớn - bệ tuff, 4 cột đá đen viền vàng, tinh thể khóc xoay giữa, vòng đá bay quanh, nạp càng lâu càng rực. */
