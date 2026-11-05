@@ -48,8 +48,8 @@ public final class MaDomain {
     private static final Map<UUID, Map<UUID, Float>> DRAINED = new ConcurrentHashMap<>();
     /** Huyết Giáp (E): hết hạn (gameTime). */
     private static final Map<UUID, Long> ARMOR = new ConcurrentHashMap<>();
-    public static final double TICK_ATK = 0.6, SELF_DRAIN = 0.10, LIFESTEAL = 0.10, REFLECT = 0.50;
-    public static final int ARMOR_TICKS = 160;
+    public static final double TICK_ATK = 0.6, SELF_DRAIN = 0.10, MIN_HP = 0.40, LIFESTEAL = 0.10, REFLECT = 0.50;
+    public static final int ARMOR_TICKS = 160, SELF_DRAIN_TICKS = 60;
     private static final net.minecraft.resources.ResourceLocation LS_ID = com.hukhong.stats.ModAttributes.id("ma/domain_lifesteal");
 
     public static boolean armored(Player p) { Long t = ARMOR.get(p.getUUID()); return t != null && p.level().getGameTime() < t; }
@@ -232,9 +232,15 @@ public final class MaDomain {
                 DamageRules.hurtBySkill(p, x, tick);
                 lv.sendParticles(BLOOD, x.getX(), x.getY() + x.getBbHeight() * 0.5, x.getZ(), 5, 0.25, 0.3, 0.25, 0.02);
             }
-            float self = (float) (p.getMaxHealth() * SELF_DRAIN); // giá phải trả: -10% máu tối đa/giây (hút máu hồi lại được)
-            p.setHealth(Math.max(1f, p.getHealth() - self));
-            lv.sendParticles(BLOOD, p.getX(), p.getY() + 1, p.getZ(), 10, 0.3, 0.5, 0.3, 0.03);
+        }
+        if ((DURATION - l) % SELF_DRAIN_TICKS == 0) { // giá phải trả: -10% máu tối đa mỗi 3s (hút máu hồi lại được)
+            p.setHealth(Math.max(1f, p.getHealth() - (float) (p.getMaxHealth() * SELF_DRAIN)));
+            lv.sendParticles(BLOOD, p.getX(), p.getY() + 1, p.getZ(), 16, 0.3, 0.5, 0.3, 0.03);
+        }
+        if (p.getHealth() < p.getMaxHealth() * MIN_HP) { // dưới 40% máu: Ma Vực tự tan
+            end(p);
+            p.displayClientMessage(Component.translatable("hukhong.ma.domain.lowhp").withColor(0x999999), true);
+            return;
         }
         int age = DURATION - l;
         if (age % BLAST_EVERY == 0) blast(lv, p);

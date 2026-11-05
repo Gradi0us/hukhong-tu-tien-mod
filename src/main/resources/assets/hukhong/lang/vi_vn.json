@@ -2608,10 +2608,11 @@
   "hukhong.phap.tho.titan.destruct": "TỰ HUỶ sau %s giây!",
   "hukhong.phap.tho.titan.t_pause": "Tạm dừng Tia Diệt Thế - còn %s giây",
   "hukhong.skill.ma_3": "Ma Vực",
-  "hukhong.skills.ma_3.desc": "Mở Quỷ Vực 7 ô trong 20s: kẻ địch mất ngay 10%% máu tối đa (trả lại khi ra khỏi vùng), mỗi giây gây 60%% Công, kỹ năng Ma +30%%, bản thân +10%% hút máu nhưng -10%% máu tối đa/giây. Nhấn R lần nữa: nổ = máu tối đa x số kẻ địch.",
+  "hukhong.skills.ma_3.desc": "Mở Quỷ Vực 7 ô trong 20s: kẻ địch mất ngay 10%% máu tối đa (trả lại khi ra khỏi vùng), mỗi giây gây 60%% Công, kỹ năng Ma +30%%, bản thân +10%% hút máu nhưng -10%% máu tối đa mỗi 3s; tự tan khi máu dưới 40%%. Nhấn R lần nữa: nổ = máu tối đa x số kẻ địch.",
   "hukhong.ma.domain.open": "Ma Vực giáng lâm!",
   "hukhong.ma.domain.left": "Ma Vực còn %ss · nổ sau %ss",
   "hukhong.ma.domain.end": "Ma Vực tan biến",
   "hukhong.ma.armor.on": "Huyết Giáp: phản 50%% sát thương trong 8s",
-  "hukhong.ma.domain.detonate": "Quỷ Vực bạo phát! (%s kẻ địch)"
+  "hukhong.ma.domain.detonate": "Quỷ Vực bạo phát! (%s kẻ địch)",
+  "hukhong.ma.domain.lowhp": "Ma Vực tan biến vì máu dưới 40%%"
 }

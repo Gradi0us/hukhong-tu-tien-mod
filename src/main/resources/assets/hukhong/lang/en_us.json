@@ -2608,10 +2608,11 @@
   "hukhong.phap.tho.titan.destruct": "SELF-DESTRUCT in %s s!",
   "hukhong.phap.tho.titan.t_pause": "Annihilation Ray paused - %s s left",
   "hukhong.skill.ma_3": "Demon Domain",
-  "hukhong.skills.ma_3.desc": "Open a 7-block Demon Domain for 20s: enemies instantly lose 10%% max HP (returned if they leave), take 60%% Attack per second, Ma skills +30%%, you gain +10%% lifesteal but lose 10%% max HP per second. Press R again: explode for your max HP x enemy count.",
+  "hukhong.skills.ma_3.desc": "Open a 7-block Demon Domain for 20s: enemies instantly lose 10%% max HP (returned if they leave), take 60%% Attack per second, Ma skills +30%%, you gain +10%% lifesteal but lose 10%% max HP every 3s; ends below 40%% HP. Press R again: explode for your max HP x enemy count.",
   "hukhong.ma.domain.open": "Demon Domain descends!",
   "hukhong.ma.domain.left": "Demon Domain %ss left · blast in %ss",
   "hukhong.ma.domain.end": "Demon Domain fades",
   "hukhong.ma.armor.on": "Blood Armor: reflecting 50%% damage for 8s",
-  "hukhong.ma.domain.detonate": "Demon Domain detonates! (%s enemies)"
+  "hukhong.ma.domain.detonate": "Demon Domain detonates! (%s enemies)",
+  "hukhong.ma.domain.lowhp": "Demon Domain fades: HP below 40%%"
 }
