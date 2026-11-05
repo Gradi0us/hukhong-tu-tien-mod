@@ -47,6 +47,14 @@ public final class ModItems {
             () -> new PhaCanhDanItem(9, 98, new Item.Properties().stacksTo(16)));
 
     public static final DeferredItem<Item> HON_TINH = ITEMS.register("hon_tinh", () -> new Item(new Item.Properties()));
+    public static final DeferredItem<NguyenKhongTinhItem> NGUYEN_KHONG_TINH_HA = ITEMS.register("nguyen_khong_tinh_ha",
+            () -> new NguyenKhongTinhItem(0.03, new Item.Properties().stacksTo(64)));
+    public static final DeferredItem<NguyenKhongTinhItem> NGUYEN_KHONG_TINH_TRUNG = ITEMS.register("nguyen_khong_tinh_trung",
+            () -> new NguyenKhongTinhItem(0.1, new Item.Properties().stacksTo(64)));
+    public static final DeferredItem<NguyenKhongTinhItem> NGUYEN_KHONG_TINH_THUONG = ITEMS.register("nguyen_khong_tinh_thuong",
+            () -> new NguyenKhongTinhItem(0.3, new Item.Properties().stacksTo(64)));
+    public static final DeferredItem<TiemNangThachItem> TIEM_NANG_THACH = ITEMS.register("tiem_nang_thach",
+            () -> new TiemNangThachItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC)));
     public static final DeferredItem<net.minecraft.world.item.BlockItem> AN_HON_DAI =
             ITEMS.registerSimpleBlockItem("an_hon_dai", com.hukhong.block.ModBlocks.AN_HON_DAI);
 
@@ -75,6 +83,10 @@ public final class ModItems {
                 e.accept(TIEU_KINH_DAN_V.get());
                 e.accept(TIEU_BAN_THAN_DAN.get());
                 e.accept(HON_TINH.get());
+                e.accept(TIEM_NANG_THACH.get());
+                e.accept(NGUYEN_KHONG_TINH_HA.get());
+                e.accept(NGUYEN_KHONG_TINH_TRUNG.get());
+                e.accept(NGUYEN_KHONG_TINH_THUONG.get());
             }
         });
     }

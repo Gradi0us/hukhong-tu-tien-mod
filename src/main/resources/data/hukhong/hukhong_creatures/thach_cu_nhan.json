@@ -16,6 +16,12 @@
    "chance": 1.0,
    "min": 2,
    "max": 4
+  },
+  {
+   "item": "hukhong:tiem_nang_thach",
+   "chance": 0.25,
+   "min": 1,
+   "max": 1
   }
  ],
  "spawn": {

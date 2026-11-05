@@ -294,6 +294,25 @@ public final class HuKhongRuntimeGameTests {
     }
 
     @GameTest(template = "empty", batch = "sect_zone")
+    public static void tiemNangAndNguyenKhong(GameTestHelper h) {
+        ServerPlayer p = fake(h, 23, Set.of(Path.KIEM));
+        var d = p.getData(ModAttachments.CULTIVATION);
+        java.util.Map<Path, com.hukhong.core.Aptitude> apt = new java.util.EnumMap<>(Path.class);
+        apt.put(Path.KIEM, com.hukhong.core.Aptitude.A);
+        p.setData(ModAttachments.CULTIVATION, d.withCharacter(d.paths(), apt, d.origin(), d.roll()));
+        if (com.hukhong.item.TiemNangThachItem.apply(p, 0.9) != com.hukhong.item.TiemNangThachItem.Result.FAIL) { h.fail("A->S 0.9 phai that bai"); return; }
+        if (com.hukhong.item.TiemNangThachItem.apply(p, 0.1) != com.hukhong.item.TiemNangThachItem.Result.SUCCESS
+                || p.getData(ModAttachments.CULTIVATION).aptitude().get(Path.KIEM) != com.hukhong.core.Aptitude.S) { h.fail("A->S khong len"); return; }
+        apt.put(Path.KIEM, com.hukhong.core.Aptitude.SSS);
+        p.setData(ModAttachments.CULTIVATION, p.getData(ModAttachments.CULTIVATION).withCharacter(d.paths(), apt, d.origin(), d.roll()));
+        if (com.hukhong.item.TiemNangThachItem.apply(p, 0) != com.hukhong.item.TiemNangThachItem.Result.MAXED) { h.fail("SSS phai MAXED"); return; }
+        var nk = com.hukhong.item.ModItems.NGUYEN_KHONG_TINH_TRUNG.get();
+        long want = nk.amount(p.getData(ModAttachments.CULTIVATION));
+        if (want != Math.round(com.hukhong.core.CultivationService.expToNext(23) * 0.10)) { h.fail("Nguyen Khong 10% sai: " + want); return; }
+        h.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void sectLakeAndAltarGiveExp(GameTestHelper h) {
         ServerPlayer p = fake(h, 23, Set.of(Path.KIEM));
         place(h, p, 2, 1, 2);

@@ -75,6 +75,9 @@ public final class ShopCatalog {
                 add(o, 12, ModItems.HON_TINH.get(), 1);
                 add(o, 30, ModItems.HON_TINH.get(), 3);
                 add(o, 2500, ModItems.HON_TINH.get(), 10, 2);
+                add(o, 300, ModItems.NGUYEN_KHONG_TINH_HA.get(), 1);
+                add(o, 1500, ModItems.NGUYEN_KHONG_TINH_TRUNG.get(), 1, 1);
+                add(o, 6000, ModItems.NGUYEN_KHONG_TINH_THUONG.get(), 1, 2);
             }
             case K_EVO -> { // vat lieu tien hoa Ban Menh / Linh Bao / Linh Truong = Hon Tinh (tien trong vi) + Pha Canh Dan
                 add(o, 1100, ModItems.HON_TINH.get(), 10, 1);
@@ -120,6 +123,8 @@ public final class ShopCatalog {
     public static final long[] BONE_PRICE = {6_000L, 15_000L, 40_000L};
     /** Gia Truc Nang Cap Ky Nang (Ha). */
     public static final long SCROLL_PRICE = 12_000L;
+    /** Gia Da Tiem Nang (Ha). */
+    public static final long TIEM_NANG_PRICE = 25_000L;
 
     /**
      * Quay Dac Biet (bac Thuong Khach 3+): Hon Cot xoay vong moi ngay Lich (96000 tick) + Truc Nang Cap Ky Nang.
@@ -135,6 +140,7 @@ public final class ShopCatalog {
                     BONE_PRICE[tierBone], com.hukhong.market.MarketRep.SPECIAL_TIER));
         }
         o.add(new Offer(new ItemStack(com.hukhong.skillbook.SkillBookRegistry.UPGRADE_SCROLL.get()), SCROLL_PRICE, com.hukhong.market.MarketRep.SPECIAL_TIER));
+        o.add(new Offer(new ItemStack(ModItems.TIEM_NANG_THACH.get()), TIEM_NANG_PRICE, com.hukhong.market.MarketRep.SPECIAL_TIER));
         for (int i = 0; i < 2; i++) {
             int tierBone = r.nextInt(3) == 0 ? com.hukhong.honcot.HonCotMath.TIER_HONG : com.hukhong.honcot.HonCotMath.TIER_HAC;
             o.add(new Offer(com.hukhong.honcot.HonCotRegistry.stack(bones[r.nextInt(bones.length)], tierBone, 70 + r.nextInt(30)),

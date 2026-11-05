@@ -52,7 +52,7 @@ public final class SellPrices {
         // nguyen lieu sinh vat
         v(40, "linh_loc_giac"); v(25, "hac_tien_vu"); v(20, "ngoc_tho_mao"); v(45, "hoa_huynh_quang"); v(15, "linh_ngu_lan");
         v(50, "linh_ho_vi"); v(35, "thiet_boi_hung_trao"); v(30, "doc_van_xa_nha"); v(25, "sa_trung_giap"); v(55, "bang_hon_tinh");
-        v(60, "moc_yeu_loi"); v(30, "doc_thiem_noc"); v(80, "quan_hon_manh"); v(50, "hu_lang_nanh"); v(70, "thach_quy_tam"); v(60, "am_hon_phu"); v(55, "hoa_tinh_hach"); v(600, "lang_vuong_doc_nha"); v(800, "cu_nhan_thach_tam"); v(700, "huyet_yeu_tinh_huyet");
+        v(60, "moc_yeu_loi"); v(30, "doc_thiem_noc"); v(80, "quan_hon_manh"); v(50, "hu_lang_nanh"); v(70, "thach_quy_tam"); v(60, "am_hon_phu"); v(55, "hoa_tinh_hach"); v(600, "lang_vuong_doc_nha"); v(800, "cu_nhan_thach_tam"); v(700, "huyet_yeu_tinh_huyet"); v(10000, "tiem_nang_thach");
         // dan / vat dung khong ban o cho
         v(3_000, "hoang_cuc_dan"); v(8_000, "de_hoan_dan"); v(20_000, "huyen_ton_dan"); v(50_000, "thanh_co_dan");
         v(120_000, "than_dan"); v(400, "tu_linh_dan"); v(1_500, "di_hoa_chau");
@@ -85,7 +85,8 @@ public final class SellPrices {
     public static long unit(ItemStack s) {
         if (s.isEmpty() || s.has(ModItems.BOUND_TO.get())) return 0;
         Item it = s.getItem();
-        if (it == CurrencyRegistry.HA.get() || it == CurrencyRegistry.TRUNG.get() || it == CurrencyRegistry.THUONG.get() || it == ModItems.HON_TINH.get()) return 0;
+        if (it == CurrencyRegistry.HA.get() || it == CurrencyRegistry.TRUNG.get() || it == CurrencyRegistry.THUONG.get()) return 0;
+        if (it == ModItems.HON_TINH.get()) return HON_TINH_SELL;
         var key = BuiltInRegistries.ITEM.getKey(it);
         if (!HuKhong.MODID.equals(key.getNamespace())) return 0;
         if (it instanceof HonCotItem) {
@@ -106,6 +107,11 @@ public final class SellPrices {
         return val == null ? 0 : Math.max(1, val * qualityPct(s) / 100);
     }
 
+    /** Hon Tinh (trong vi) ban lai = 50% gia mua 12 Ha. */
+    public static final long HON_TINH_SELL = 6;
+
+    public static boolean isHonTinh(ItemStack s) { return s.is(ModItems.HON_TINH.get()); }
+
     /** Gia thu mua ca chong (Ha); 0 neu khong thu mua. */
     public static long of(ItemStack s) { return unit(s) * Math.max(0, s.getCount()); }
 
@@ -117,8 +123,10 @@ public final class SellPrices {
     /** Cac mon thu mua duoc trong tui (gop chong, sap theo ten vat pham), thu tu on dinh giua client va server. */
     public static List<Row> rows(Player p) {
         List<Row> out = new ArrayList<>();
+        long hon = Wallet.honTinh(p);
+        if (hon > 0) out.add(new Row(new ItemStack(ModItems.HON_TINH.get()), (int) Math.min(Integer.MAX_VALUE, hon), HON_TINH_SELL));
         for (ItemStack s : p.getInventory().items) {
-            long u = unit(s);
+            long u = isHonTinh(s) ? 0 : unit(s);
             if (u <= 0) continue;
             int idx = -1;
             for (int i = 0; i < out.size(); i++) if (ItemStack.isSameItemSameComponents(out.get(i).proto(), s)) { idx = i; break; }
@@ -132,6 +140,11 @@ public final class SellPrices {
 
     /** Lay toi da want cai giong proto khoi tui; tra so cai lay duoc. */
     public static int take(Player p, ItemStack proto, int want) {
+        if (isHonTinh(proto)) { // Hon Tinh nam trong vi
+            int n = (int) Math.min(want, Wallet.honTinh(p));
+            if (n > 0) Wallet.setHonTinh(p, Wallet.honTinh(p) - n);
+            return n;
+        }
         int got = 0;
         for (ItemStack s : p.getInventory().items) {
             if (got >= want) break;

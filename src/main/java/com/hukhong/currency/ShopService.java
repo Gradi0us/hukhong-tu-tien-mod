@@ -88,6 +88,7 @@ public final class ShopService {
             long total = 0;
             int n = 0;
             for (SellPrices.Row r : SellPrices.rows(sp)) {
+                if (SellPrices.isHonTinh(r.proto())) continue; // Hon Tinh chi ban rieng
                 int got = SellPrices.take(sp, r.proto(), r.count());
                 total += r.unit() * got;
                 n += got;

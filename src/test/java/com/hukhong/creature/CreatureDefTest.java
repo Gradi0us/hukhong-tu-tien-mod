@@ -22,7 +22,7 @@ class CreatureDefTest {
     @Test
     void everyKindHasAParsableDefinitionWithModItemDrops() throws Exception {
         Set<String> mats = Set.copyOf(CreatureKind.MATERIALS);
-        Set<String> extra = Set.of("huyen_thiet", "huyet_tham", "tinh_than_sa", "thanh_diep", "linh_thao", "bang_lien", "hon_tinh");
+        Set<String> extra = Set.of("huyen_thiet", "huyet_tham", "tinh_than_sa", "thanh_diep", "linh_thao", "bang_lien", "hon_tinh", "tiem_nang_thach");
         for (CreatureKind k : CreatureKind.values()) {
             CreatureDef d = CreatureDef.parse(k.id, load("/data/hukhong/hukhong_creatures/" + k.id + ".json"));
             assertEquals(k.id, d.id());

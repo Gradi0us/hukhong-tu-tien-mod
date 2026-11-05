@@ -2648,5 +2648,16 @@
   "item.hukhong.huyet_yeu_vuong_spawn_egg": "Blood Demon Queen Spawn Egg",
   "hukhong.poi.mob.huyet_yeu_vuong": "Blood Demon Queen",
   "hukhong.sect.zone.lake": "Spirit Lake: +%s%% experience every 10 seconds",
-  "hukhong.sect.zone.altar": "Soul Seal Altar: +%s%% experience every 10 seconds"
+  "hukhong.sect.zone.altar": "Soul Seal Altar: +%s%% experience every 10 seconds",
+  "item.hukhong.tiem_nang_thach": "Potential Stone",
+  "hukhong.tiem_nang.no_path": "You have no cultivation path yet.",
+  "hukhong.tiem_nang.maxed": "All your aptitudes are already SSS.",
+  "hukhong.tiem_nang.success": "Potential awakened! %s aptitude: %s → %s",
+  "hukhong.tiem_nang.fail": "The stone shatters; %s aptitude unchanged (chance %s%%).",
+  "hukhong.tiem_nang.tip": "Use: raise your main path's aptitude by 1 grade. Chance: D→C 100%%, C→B 90%%, B→A 70%%, A→S 50%%, S→SS 30%%, SS→SSS 15%%. Failure consumes the stone.",
+  "hukhong.nguyen_khong.absorb": "Absorbed Void Origin Crystal: +%s EXP",
+  "hukhong.nguyen_khong.tip": "Use: absorb for %s%% of the EXP needed for your current level.",
+  "item.hukhong.nguyen_khong_tinh_ha": "Lesser Void Origin Crystal",
+  "item.hukhong.nguyen_khong_tinh_trung": "Middle Void Origin Crystal",
+  "item.hukhong.nguyen_khong_tinh_thuong": "Greater Void Origin Crystal"
 }
