@@ -56,8 +56,9 @@ class SkillEntriesTest {
         assertEquals(4, pg.keys().size());
         // Q: 0.52 x 20 = 10.4
         assertTrue(text(key(pg, "Q")).contains("10.4"), text(key(pg, "Q")));
-        // R: 2.51 x 20 = 50.2
-        assertTrue(text(key(pg, "R")).contains("50.2"), text(key(pg, "R")));
+        // R: Quang Ảnh Kính, nổ đặt kính 0.80 x 20 = 16
+        assertTrue(text(key(pg, "R")).contains("16"), text(key(pg, "R")));
+        assertTrue(text(key(pg, "R")).contains("Quang Ảnh Kính"), text(key(pg, "R")));
         // E = Thiem Bo moi: giu E chay / bam nhanh lui + Ba The, khong sat thuong, so lay tu ThiemBoMath
         String e = text(key(pg, "E"));
         assertTrue(e.contains("120%"), e);

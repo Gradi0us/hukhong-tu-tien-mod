@@ -345,6 +345,32 @@ public final class HuKhongRuntimeGameTests {
         h.succeed();
     }
 
+    /** Quang Ảnh Kính: số kính theo tư chất (B = 2, đặt thứ 3 thì kính cũ vỡ), quái đánh 10 đòn thì vỡ, người chơi không phá được, kính bắn lại Q. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void quangKinhLimitsBreaksAndEchoes(GameTestHelper h) {
+        ServerPlayer p = fake(h, 40, Set.of(Path.PHAP));
+        com.hukhong.phaptu.PhapTu.setElement(p, com.hukhong.phaptu.PhapElement.QUANG);
+        place(h, p, 2, 1, 0.5);
+        var lv = h.getLevel();
+        var k1 = com.hukhong.phaptu.QuangKinh.place(lv, p, 0);
+        com.hukhong.phaptu.QuangKinh.place(lv, p, 0);
+        com.hukhong.phaptu.QuangKinh.place(lv, p, 0);
+        if (com.hukhong.phaptu.QuangKinh.of(p).size() != 2 || !k1.isRemoved()) { h.fail("tu chat B phai toi da 2 kinh, kinh cu vo"); return; }
+        var k = com.hukhong.phaptu.QuangKinh.of(p).get(0);
+        k.hurt(p.damageSources().playerAttack(p), 5f);
+        if (k.hits() != 0) { h.fail("nguoi choi pha duoc kinh"); return; }
+        var z = kDummy(h, 2, 14);
+        var target = kDummy(h, 2, 15.5);
+        float hp = target.getHealth();
+        int n = com.hukhong.phaptu.QuangKinh.echo(lv, p, 0, 100);
+        if (n != 2 || target.getHealth() >= hp) { h.fail("kinh khong ban lai Q: n=" + n + " hp " + hp + "->" + target.getHealth()); return; }
+        for (int i = 0; i < 10; i++) k.hurt(lv.damageSources().mobAttack(z), 1f);
+        if (!k.isRemoved()) { h.fail("10 don cua quai khong pha kinh"); return; }
+        if (com.hukhong.phaptu.QuangKinh.maxMirrors(com.hukhong.core.Aptitude.SSS) != 3 || com.hukhong.phaptu.QuangKinh.maxMirrors(com.hukhong.core.Aptitude.D) != 1) { h.fail("so kinh theo tu chat sai"); return; }
+        for (var x : com.hukhong.phaptu.QuangKinh.of(p)) x.shatter();
+        h.succeed();
+    }
+
     /** Quang/Lôi Linh Lưu: Q/E rẻ 40%, hồi nhanh 25%; trúng thì hoàn 50% mana đã tốn đúng 1 lần. */
     @GameTest(template = "empty")
     public static void quangLoiRefundOnHit(GameTestHelper h) {

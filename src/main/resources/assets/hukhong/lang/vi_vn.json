@@ -1235,7 +1235,7 @@
   "hukhong.phap.element.kim.desc": "Sát thương và phòng thủ cao, hồi chiêu chậm, khó tăng tốc",
   "hukhong.phap.cast.quang.0": "Quang Tiễn",
   "hukhong.phap.cast.quang.1": "Thiểm Bộ",
-  "hukhong.phap.cast.quang.2": "Quang Vũ",
+  "hukhong.phap.cast.quang.2": "Quang Ảnh Kính",
   "hukhong.phap.cast.quang.3": "Thánh Quang Trụ",
   "hukhong.phap.cast.loi.0": "Lôi Châu",
   "hukhong.phap.cast.loi.1": "Lôi Trận",
@@ -1297,7 +1297,7 @@
   "hukhong.phap.stack.loi": "Lôi Ấn %s/%s",
   "hukhong.phap.stack.thuy": "Thủy Ấn %s/%s",
   "hukhong.phap.quang.free": "Quang Mang bùng nổ! Vòng kỹ năng tiếp theo miễn phí",
-  "hukhong.phap.passive.quang": "Quang Mang: đòn thường và kỹ năng cộng tầng; đủ 15 tầng nổ gây tối đa 40% sát thương đã gây, vòng kỹ năng kế tiếp không tốn Pháp Lực",
+  "hukhong.phap.passive.quang": "Quang Mang: đòn thường và kỹ năng (kể cả của Quang Ảnh Kính) cộng tầng; đủ 15 tầng nổ gây tối đa 40%% sát thương đã gây, vòng kỹ năng kế tiếp không tốn Pháp Lực. Linh Lưu: Q/E rẻ 40%%, hồi nhanh 25%%, trúng hoàn 50%% mana",
   "hukhong.phap.passive.loi": "Lôi Ấn: đủ 5 tầng nổ, choáng 1-2,5s và gây tối đa 5% máu tối đa mục tiêu (boss thế giới chỉ choáng nửa thời gian)",
   "hukhong.phap.passive.hoa": "Thiêu Nhiên (thiết kế mới): mỗi đòn cộng 1 tầng Hỏa Ấn (tối đa 5, kéo dài 4s); mỗi tầng thiêu theo thời gian, đủ 5 tầng lây 2 tầng sang tối đa 3 kẻ địch gần mỗi 2s",
   "hukhong.phap.passive.thuy": "Thủy Ấn: gây sát thương hoặc tự hồi máu cộng tầng; 3 bậc (5/10/15 tầng) miễn thương tối đa 30%; xung hào quang mỗi 0,75s; đủ 15 tầng gây tối đa 60% máu tối đa của bản thân lên kẻ địch gần",
@@ -2708,5 +2708,7 @@
   "hukhong.kiem.guard.off": "Kiếm hộ thân đã dùng hết",
   "hukhong.dao.thanh_quang.stack": "Thánh Quang %s/%s",
   "hukhong.dao.thanh_quang.full": "Thánh Quang đầy! Đòn kế tiếp sẽ kích nổ",
-  "hukhong.dao.thanh_quang.burst": "Thánh Quang bộc phát: %s sát thương"
+  "hukhong.dao.thanh_quang.burst": "Thánh Quang bộc phát: %s sát thương",
+  "hukhong.phap.quang.kinh": "Quang Ảnh Kính %s/%s",
+  "entity.hukhong.quang_kinh": "Quang Ảnh Kính"
 }

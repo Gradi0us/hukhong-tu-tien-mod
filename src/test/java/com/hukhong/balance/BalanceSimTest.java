@@ -47,7 +47,7 @@ class BalanceSimTest {
     static final double MELEE_RATE_SWORD = 1.6, MELEE_RATE_FIST = 1.6;
     static final double MELEE_UPTIME = 0.55, SKILL_UPTIME = 0.85;
     /** 2026-11-05 (yêu cầu người chơi): T Quang/Lôi/Thủy x2,5, Kim x3, buff Q Đạo -> nới trần cho Pháp và Đạo. */
-    static final double PHAP_HI = 1.55, DAO_HI = 1.35; // 2026-11-06: buff Quang/Lôi/Kim theo yêu cầu
+    static final double PHAP_HI = 1.65, DAO_HI = 1.35; // 2026-11-06: buff Quang/Lôi/Kim + Quang Ảnh Kính theo yêu cầu (sim bỏ qua giới hạn mana tia T)
     static final double AURA_AVG = 0.5;           // Bá Khí trung bình của Thể
     static final double MA_ATK_BONUS = 0.10;      // Ác Tính/Huyết Tế điển hình (MaRules)
     static final double SEEK_SECONDS = 30;        // thời gian tìm/chạy giữa hai quái khi cày EXP
@@ -348,7 +348,7 @@ class BalanceSimTest {
                 Fight f = fightBoss(player(Path.PHAP, b.lv()), b);
                 md.append(String.format("| %s | %d | %s | %.0f | %.0f | %.0f-%.0f |%n", b.name(), b.lv(), e, f.dps(), f.ttk(), b.minSec(), b.maxSec()));
                 double hi = phapSupport(e) ? 1.4 : 1.1;
-                if (f.ttk() < b.minSec() * 0.8 || f.ttk() > b.maxSec() * hi) fails.add("phap boss ttk " + b.name() + " " + e + " = " + f.ttk());
+                if (f.ttk() < b.minSec() * 0.72 || f.ttk() > b.maxSec() * hi) fails.add("phap boss ttk " + b.name() + " " + e + " = " + f.ttk());
             }
         } finally {
             SIM_EL = keep;

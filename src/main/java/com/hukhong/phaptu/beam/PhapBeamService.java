@@ -299,6 +299,7 @@ public final class PhapBeamService {
                 SkillBookRuntime.clear(p);
             }
         }
+        if (s.element == PhapElement.QUANG) com.hukhong.phaptu.QuangKinh.echoBeam(lv, p, dmg, PhapBeamMath.RANGE); // Quang Ảnh Kính bắn tia 40%
     }
 
     private static Vec3 impact(ServerLevel lv, ServerPlayer p) {

@@ -35,6 +35,10 @@ public final class PhapTuRegistry {
             () -> EntityType.Builder.of(PhapTurret::new, MobCategory.MISC).sized(0.9f, 1.9f).clientTrackingRange(8)
                     .fireImmune().build("phap_turret"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<QuangKinh>> KINH = ENTITIES.register("quang_kinh",
+            () -> EntityType.Builder.<QuangKinh>of(QuangKinh::new, MobCategory.MISC).sized(1.0f, 2.2f).clientTrackingRange(8)
+                    .fireImmune().build("quang_kinh"));
+
     public static void register(IEventBus bus) {
         ATTACHMENTS.register(bus);
         ENTITIES.register(bus);
@@ -43,5 +47,6 @@ public final class PhapTuRegistry {
     @SubscribeEvent
     public static void attrs(EntityAttributeCreationEvent e) {
         e.put(TURRET.get(), PhapTurret.attributes().build());
+        e.put(KINH.get(), QuangKinh.attributes().build());
     }
 }

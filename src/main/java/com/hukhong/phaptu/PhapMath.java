@@ -22,6 +22,8 @@ public final class PhapMath {
     public static final double QUANG_EXPLODE_MAX = 0.40;      // % sát thương đã gây trong 15 đòn (SSS)
     public static final int QUANG_FREE_WINDOW_TICKS = 400;    // 20s để dùng hết vòng kỹ năng miễn phí
     public static double quangExplode(Aptitude a) { return QUANG_EXPLODE_MAX * frac(a); }
+    /** Tỉ lệ thời gian kính còn sống khi đánh boss (bị quái đánh vỡ / chưa kịp đặt đủ). */
+    public static final double QUANG_MIRROR_UPTIME = 0.3; // boss bị kính hút: mỗi kính ~10s (10 đòn), R hồi 20s -> trung bình ~1 kính
 
     // ---- Lôi: Lôi Ấn
     public static final int LOI_STACKS = 5;
@@ -181,7 +183,7 @@ public final class PhapMath {
 
     // ---- kỹ năng: tổng hệ số x Phép lực lên MỘT mục tiêu cho mỗi phím Q/E/R/T (cân bằng bởi BalanceSimTest)
     private static final double[][] COEF = {
-            /* QUANG */ {0.52, 1.19, 2.51, 18.25}, // T x2,5
+            /* QUANG */ {0.52, 1.19, 0.80, 18.25}, // T x2,5; 2026-11-06: R = Quang Ảnh Kính (nổ đặt kính 0,8; kính lặp Q/T 40% xem damageMult)
             /* LOI   */ {0.57, 1.26, 2.84, 20.25}, // T x2,5
             /* HOA   */ {0.43, 0.92, 2.05, 6.2},
             /* THUY  */ {0.59, 0.86, 2.28, 19.0}, // T x2,5
@@ -201,7 +203,7 @@ public final class PhapMath {
     /** Hệ số nhân sát thương gây ra từ bị động (Quang Mang nổ ~ +40% x frac x phần đòn Quang; Kim +35% x frac). */
     public static double damageMult(PhapElement e, Aptitude a) {
         return switch (e) {
-            case QUANG -> 1 + quangExplode(a) * 0.9;
+            case QUANG -> (1 + quangExplode(a) * 0.9) * (1 + com.hukhong.phaptu.QuangKinh.ECHO * com.hukhong.phaptu.QuangKinh.maxMirrors(a) * QUANG_MIRROR_UPTIME);
             case KIM -> 1 + kimBonus(a);
             default -> 1.0;
         };

@@ -631,8 +631,8 @@ public final class SkillEntries {
 
     private static final String[][] PHAP_DESC = {
             {"Tia sáng xuyên tầm 16 block, trúng mọi mục tiêu trên đường.",
-                    "Giữ E: chạy tia sáng (tốc độ lớn, vệt sét phía sau, tiêu hao Pháp Lực mỗi giây). Bấm nhanh E: lùi về sau rồi nhận Bá Thể (miễn nhiễm sát thương).",
-                    "5 tia sáng quạt (lệch 11 độ) tầm 14 block; mỗi mục tiêu chỉ trúng một lần.",
+                    "Giữ E: chạy tia sáng (tốc độ lớn, vệt sét phía sau, tiêu hao Pháp Lực mỗi giây). Bấm nhanh E: chớp sáng làm choáng 1,5 giây kẻ địch trong 3,5 block, lùi về sau rồi nhận Bá Thể (miễn nhiễm sát thương).",
+                    "Đặt Quang Ảnh Kính tại điểm ngắm (tầm 12): hút kẻ địch trong 8 block, vỡ sau 10 đòn từ quái hoặc 45 giây. Kính bắn lại Q/E/T của bạn với 40% sát thương. Số kính tối đa theo tư chất: D-C 1, B-S 2, SS-SSS 3.",
                     ""},
             {"Giáng sét xuống điểm ngắm (tầm 18); lan sang tối đa 2 mục tiêu quanh đó (5 block).",
                     "Vùng sét bán kính 5 tại điểm ngắm (tầm 14): 3 đợt, choáng 0,5 giây ở đợt đầu.",

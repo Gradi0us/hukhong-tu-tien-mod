@@ -107,7 +107,7 @@ public final class PhapSkills {
     }
 
     /** Mục tiêu gần tia (origin, dir) dài range, bán kính width; gần nhất trước. */
-    private static List<LivingEntity> line(ServerLevel lv, ServerPlayer p, Vec3 origin, Vec3 dir, double range, double width) {
+    static List<LivingEntity> line(ServerLevel lv, ServerPlayer p, Vec3 origin, Vec3 dir, double range, double width) {
         Vec3 end = origin.add(dir.scale(range));
         AABB box = new AABB(origin, end).inflate(width + 1);
         List<LivingEntity> out = new ArrayList<>();
@@ -191,21 +191,18 @@ public final class PhapSkills {
                 Fx.elem(lv, p, Fx.E_HALOS, vf, look.scale(16), 0.9f, col, 14); // vòng hào quang lăng kính dọc tia
                 FxSfx.cast(lv, from, 0.5f, 1.8f, SoundEvents.TRIDENT_THROW.value(), SoundEvents.AMETHYST_BLOCK_CHIME, null);
                 sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9f, 1.6f);
+                QuangKinh.echo(lv, p, 0, c); // Quang Ảnh Kính bắn lại 40%
             }
-            case 1 -> ThiemBoService.dash(lv, p); // Thiểm Bộ (bấm nhanh E): lùi + Bá Thể; giữ E = chạy tia sáng (ThiemBoService)
-            case 2 -> { // Quang Vũ: 5 tia quạt, mỗi mục tiêu trúng một lần
-                Set<LivingEntity> hit = new LinkedHashSet<>();
-                for (int i = -2; i <= 2; i++) {
-                    Vec3 d = look.yRot((float) Math.toRadians(i * 11));
-                    hit.addAll(line(lv, p, from, d, 14, 0.55));
-                    beam(lv, vf, d, 14, col, 8);
-                    streak(lv, vf, d, 14, GOLD, 1.0);
-                    Fx.ribbon(lv, p, vf, vf.add(d.scale(14)), 0, 3, Math.abs(i), 0.07f, col);
-                    if (i % 2 == 0) Fx.elem(lv, p, Fx.E_HALOS, vf, d.scale(14), 0.55f, col, 12);
-                }
-                for (LivingEntity t : hit) hit(p, t, c);
-                sound(lv, from, SoundEvents.AMETHYST_BLOCK_RESONATE, 1f, 1.2f);
+            case 1 -> { // Thiểm Bộ (bấm nhanh E): chớp sáng làm choáng quanh người rồi lùi + Bá Thể; giữ E = chạy tia sáng (ThiemBoService)
+                for (LivingEntity t : lv.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(QuangKinh.THIEM_RADIUS),
+                        x -> PhapRuntime.valid(p, x) && x.distanceToSqr(p) <= QuangKinh.THIEM_RADIUS * QuangKinh.THIEM_RADIUS))
+                    PhapRuntime.stun(t, QuangKinh.THIEM_STUN);
+                Fx.groundRing(lv, p, p.position().add(0, 0.06, 0), (float) QuangKinh.THIEM_RADIUS, 0xFFF4C0, 14);
+                lv.sendParticles(ParticleTypes.FLASH, p.getX(), p.getY() + 1, p.getZ(), 1, 0, 0, 0, 0);
+                QuangKinh.echo(lv, p, 1, c);
+                ThiemBoService.dash(lv, p);
             }
+            case 2 -> QuangKinh.place(lv, p, c); // Quang Ảnh Kính: đặt kính (nổ sáng nhẹ bán kính 3)
             default -> { // Thánh Quang Trụ: dồn lực 0,4s rồi bắn tia khổng lồ
                 Fx.play(lv, FxType.TALISMAN_CIRCLE, p.position(), Vec3.ZERO, 2.2f, col, 16);
                 Fx.rune(lv, p, p.position().add(0, 0.06, 0), 3.2f, col, 24, 8);   // tụ lực

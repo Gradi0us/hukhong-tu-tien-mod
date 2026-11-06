@@ -55,7 +55,20 @@ public final class YeuThuGameTests {
         java.util.List<CreatureKind> rest = new java.util.ArrayList<>(CreatureKind.BEASTS);
         rest.remove(CreatureKind.HAC_GIAP_TE);
         rest.remove(CreatureKind.HUYET_NHA_TRU);
-        skillsHit(h, rest);
+        skillsHit(h, rest.subList(0, 3)); // tối đa 3 loài mỗi test: xa hơn thì ra ngoài vùng thế giới đang chạy của test
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void yeuThuSkillsHit2(GameTestHelper h) { skillsHit(h, rest().subList(3, 6)); }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void yeuThuSkillsHit3(GameTestHelper h) { skillsHit(h, rest().subList(6, rest().size())); }
+
+    private static java.util.List<CreatureKind> rest() {
+        java.util.List<CreatureKind> r = new java.util.ArrayList<>(CreatureKind.BEASTS);
+        r.remove(CreatureKind.HAC_GIAP_TE);
+        r.remove(CreatureKind.HUYET_NHA_TRU);
+        return r;
     }
 
     /** Chiêu lao húc cần thế giới chạy: mỗi loài 1 test riêng, đặt giữa vùng test. */

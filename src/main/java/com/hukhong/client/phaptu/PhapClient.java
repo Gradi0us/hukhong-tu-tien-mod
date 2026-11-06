@@ -46,6 +46,7 @@ public final class PhapClient {
     @SubscribeEvent
     public static void renderers(EntityRenderersEvent.RegisterRenderers e) {
         e.registerEntityRenderer(PhapTuRegistry.TURRET.get(), TurretRenderer::new);
+        e.registerEntityRenderer(PhapTuRegistry.KINH.get(), QuangKinhRenderer::new);
     }
 
     /** Tháp Thổ: trụ đá 3 tầng (đế gạch đá, thân chạm khắc, lõi hổ phách xoay) nhấp nhô nhẹ; lõi sáng khi vừa bắn. */

@@ -1235,7 +1235,7 @@
   "hukhong.phap.element.kim.desc": "High damage and defense, slow cooldowns, weak speed buffs",
   "hukhong.phap.cast.quang.0": "Light Arrow",
   "hukhong.phap.cast.quang.1": "Flash Step",
-  "hukhong.phap.cast.quang.2": "Light Rain",
+  "hukhong.phap.cast.quang.2": "Light Mirror",
   "hukhong.phap.cast.quang.3": "Pillar of Radiance",
   "hukhong.phap.cast.loi.0": "Thunder Orb",
   "hukhong.phap.cast.loi.1": "Thunder Field",
@@ -1297,7 +1297,7 @@
   "hukhong.phap.stack.loi": "Thunder Mark %s/%s",
   "hukhong.phap.stack.thuy": "Water Mark %s/%s",
   "hukhong.phap.quang.free": "Light Glow bursts! Next skill rotation is free",
-  "hukhong.phap.passive.quang": "Light Glow: hits stack; at 15 stacks it bursts for up to 40% of damage dealt and the next skill rotation costs no Spell Power",
+  "hukhong.phap.passive.quang": "Radiance: basic attacks and skills (including your Light Mirrors') add stacks; at 15 stacks explode for up to 40%% of damage dealt and your next skill rotation is free. Flow: Q/E cost 40%% less, recharge 25%% faster, hits refund 50%% mana",
   "hukhong.phap.passive.loi": "Thunder Mark: at 5 stacks it detonates, stunning 1-2.5s and dealing up to 5% of the target's max HP (world bosses are stunned half as long)",
   "hukhong.phap.passive.hoa": "Kindling (new design): each hit adds a Fire Mark (max 5, 4s); each mark burns over time and at 5 marks it spreads 2 marks to up to 3 nearby enemies every 2s",
   "hukhong.phap.passive.thuy": "Water Mark: dealing damage or self-healing adds stacks; 3 tiers (5/10/15) grant up to 30% damage immunity; aura pulses every 0.75s; at 15 stacks it deals up to 60% of your max HP to nearby enemies",
@@ -2708,5 +2708,7 @@
   "hukhong.kiem.guard.off": "Guardian swords spent",
   "hukhong.dao.thanh_quang.stack": "Holy Light %s/%s",
   "hukhong.dao.thanh_quang.full": "Holy Light full! Your next hit will detonate",
-  "hukhong.dao.thanh_quang.burst": "Holy Light burst: %s damage"
+  "hukhong.dao.thanh_quang.burst": "Holy Light burst: %s damage",
+  "hukhong.phap.quang.kinh": "Light Mirror %s/%s",
+  "entity.hukhong.quang_kinh": "Light Mirror"
 }
