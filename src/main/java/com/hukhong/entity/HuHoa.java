@@ -192,13 +192,19 @@ public final class HuHoa {
     public static void onDeath(LivingDeathEvent e) {
         if (!(e.getEntity() instanceof HuMob h) || e.getEntity().level().isClientSide) return;
         LivingEntity v = e.getEntity();
-        if (!(e.getSource().getEntity() instanceof ServerPlayer p)) return;
+        ServerPlayer killer = e.getSource().getEntity() instanceof ServerPlayer sp ? sp : null;
+        var shares = KillCredit.shares(v, killer); // người giết / người gây nhiều sát thương nhất (lính thủ vệ kết liễu) + người hỗ trợ
+        if (shares.isEmpty()) return;
         float mult = RewardGate.reward(v);
         if (mult <= 0f) return;
-        long exp = Math.round(exp(h.huWeight(), h.huLevel(), CultivationService.get(p).level()) * mult * com.hukhong.endgame.WorldTier.rewardMul() * com.hukhong.bicanh.BiCanhRewards.expMult(v));
-        if (exp > 0) CultivationService.addExp(p, exp);
-        if (v.getRandom().nextFloat() < h.honTinhChance() * mult) {
-            com.hukhong.currency.Wallet.grantHonTinh(p, 1);
+        boolean first = true;
+        for (var en : shares.entrySet()) {
+            ServerPlayer p = en.getKey();
+            long exp = Math.round(exp(h.huWeight(), h.huLevel(), CultivationService.get(p).level()) * mult * en.getValue()
+                    * com.hukhong.endgame.WorldTier.rewardMul() * com.hukhong.bicanh.BiCanhRewards.expMult(v));
+            if (exp > 0) CultivationService.addExp(p, exp);
+            if (first && v.getRandom().nextFloat() < h.honTinhChance() * mult) com.hukhong.currency.Wallet.grantHonTinh(p, 1);
+            first = false;
         }
     }
 }
