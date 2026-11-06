@@ -1,0 +1,12 @@
+{
+ "item": "hukhong:ngoc_tuy_chi",
+ "seasons": [
+  "xuan",
+  "ha"
+ ],
+ "biomes": [
+  "#minecraft:is_jungle",
+  "minecraft:lush_caves"
+ ],
+ "rarity": 10
+}

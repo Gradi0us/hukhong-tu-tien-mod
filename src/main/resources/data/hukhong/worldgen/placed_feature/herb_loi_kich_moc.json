@@ -1,0 +1,19 @@
+{
+ "feature": "hukhong:herb_loi_kich_moc",
+ "placement": [
+  {
+   "type": "minecraft:rarity_filter",
+   "chance": 30
+  },
+  {
+   "type": "minecraft:in_square"
+  },
+  {
+   "type": "minecraft:heightmap",
+   "heightmap": "WORLD_SURFACE_WG"
+  },
+  {
+   "type": "minecraft:biome"
+  }
+ ]
+}

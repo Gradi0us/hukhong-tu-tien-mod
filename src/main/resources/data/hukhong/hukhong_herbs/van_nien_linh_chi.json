@@ -1,0 +1,12 @@
+{
+ "item": "hukhong:van_nien_linh_chi",
+ "seasons": [
+  "thu"
+ ],
+ "biomes": [
+  "minecraft:old_growth_spruce_taiga",
+  "minecraft:old_growth_pine_taiga",
+  "minecraft:old_growth_birch_forest"
+ ],
+ "rarity": 12
+}

@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:u_minh_hoa",
+ "seasons": [
+  "thu",
+  "dong"
+ ],
+ "biomes": [
+  "minecraft:dark_forest",
+  "minecraft:swamp",
+  "minecraft:mangrove_swamp"
+ ],
+ "rarity": 10
+}

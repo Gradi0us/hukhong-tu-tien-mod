@@ -43,7 +43,13 @@ public enum CreatureKind {
     HUYET_NHA_TRU("huyet_nha_tru", Impl.QUAI, MobCategory.MONSTER, 1.2f, 1.1f, 38, 7, 0.29, false, null, null),
     U_ANH_BAO("u_anh_bao", Impl.QUAI, MobCategory.MONSTER, 0.9f, 1.0f, 30, 8, 0.34, false, null, null),
     THIET_GIAP_TRI_CHU("thiet_giap_tri_chu", Impl.QUAI, MobCategory.MONSTER, 1.6f, 0.9f, 36, 6, 0.30, false, null, null),
-    BAO_VIEM_TICH("bao_viem_tich", Impl.QUAI, MobCategory.MONSTER, 1.0f, 0.8f, 32, 6, 0.27, false, null, null);
+    BAO_VIEM_TICH("bao_viem_tich", Impl.QUAI, MobCategory.MONSTER, 1.0f, 0.8f, 32, 6, 0.27, false, null, null),
+    // ---- 2026-11-06: Yêu Thú thực vật (tính năm tuổi, rơi Hồn Cốt) + boss Vạn Niên Thụ Vương ----
+    THU_YEU("thu_yeu", Impl.QUAI, MobCategory.MONSTER, 1.2f, 2.8f, 60, 8, 0.20, false, null, null),
+    THUC_NHAN_HOA("thuc_nhan_hoa", Impl.QUAI, MobCategory.MONSTER, 1.0f, 1.4f, 40, 7, 0.12, false, null, null),
+    DANG_XA("dang_xa", Impl.QUAI, MobCategory.MONSTER, 0.8f, 0.5f, 30, 6, 0.30, false, null, null),
+    QUY_CO("quy_co", Impl.QUAI, MobCategory.MONSTER, 1.0f, 1.5f, 34, 5, 0.22, false, null, null),
+    VAN_NIEN_THU_VUONG("van_nien_thu_vuong", Impl.QUAI, MobCategory.MONSTER, 1.6f, 3.6f, 600, 16, 0.18, false, null, null);
 
     public enum Impl { THU, QUAI, NGU }
 
@@ -68,14 +74,22 @@ public enum CreatureKind {
     public boolean hostile() { return impl == Impl.QUAI; }
 
     /** Mini boss: thanh máu boss, kháng đẩy lùi, kỹ năng định kỳ (MiniBossSkills). */
-    public boolean mini() { return this == HU_LANG_VUONG || this == THACH_CU_NHAN || this == HUYET_YEU_VUONG; }
+    public boolean mini() { return this == HU_LANG_VUONG || this == THACH_CU_NHAN || this == HUYET_YEU_VUONG || this == VAN_NIEN_THU_VUONG; }
+
+    /** Yêu Thú thực vật (Thụ Yêu, Thực Nhân Hoa, Đằng Xà, Quỷ Cô, Vạn Niên Thụ Vương). */
+    public boolean plant() { return PLANTS.contains(this) || this == VAN_NIEN_THU_VUONG; }
 
     /** Yêu Thú: có năm tuổi, có thể rơi Hồn Cốt, tham gia Yêu Thú Triều. */
     public boolean beast() { return BEASTS.contains(this); }
 
     public static final List<CreatureKind> ALL = List.of(values());
     public static final List<CreatureKind> BEASTS = List.of(XICH_VAN_HO, HAC_GIAP_TE, CUONG_LUC_VIEN, BICH_NHAN_THIEM, NGAN_LAN_MANG,
-            HUYET_NHA_TRU, U_ANH_BAO, THIET_GIAP_TRI_CHU, BAO_VIEM_TICH);
+            HUYET_NHA_TRU, U_ANH_BAO, THIET_GIAP_TRI_CHU, BAO_VIEM_TICH,
+            THU_YEU, THUC_NHAN_HOA, DANG_XA, QUY_CO, VAN_NIEN_THU_VUONG);
+    /** Yêu Thú thường (không gồm boss) - dùng khi chọn ngẫu nhiên cho rừng / Thú Triều / Bí Cảnh. */
+    public static final List<CreatureKind> COMMON_BEASTS = BEASTS.stream().filter(k -> !k.mini()).toList();
+    /** Yêu Thú thực vật thường (không gồm boss). */
+    public static final List<CreatureKind> PLANTS = List.of(THU_YEU, THUC_NHAN_HOA, DANG_XA, QUY_CO);
     /** Yêu Thú to hơn sinh vật thường (nhân thêm theo năm tuổi). */
     public static final double BEAST_SCALE = 1.75;
 
@@ -85,7 +99,8 @@ public enum CreatureKind {
             "doc_thiem_noc", "quan_hon_manh", "hu_lang_nanh", "thach_quy_tam", "am_hon_phu", "hoa_tinh_hach",
             "lang_vuong_doc_nha", "cu_nhan_thach_tam", "huyet_yeu_tinh_huyet",
             "xich_van_ho_bi", "hac_giap_te_giac", "cuong_luc_vien_tam", "bich_nhan_thiem_nang", "ngan_lan_mang_lan",
-            "huyet_nha_tru_nha", "u_anh_bao_trao", "tri_chu_thiet_ti", "bao_viem_tich_hach");
+            "huyet_nha_tru_nha", "u_anh_bao_trao", "tri_chu_thiet_ti", "bao_viem_tich_hach",
+            "thu_yeu_tam", "thuc_nhan_hoa_nhuy", "dang_xa_dang", "quy_co_bao_tu", "thu_vuong_linh_qua");
 
     public static CreatureKind byId(String id) {
         for (CreatureKind k : values()) if (k.id.equals(id)) return k;

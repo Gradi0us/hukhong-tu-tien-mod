@@ -15,10 +15,11 @@ public final class BiCanhVariety {
     /** Chủ đề: quái thường + boss. kinds rỗng = quái Hư (Hư Thi / Hư Cốt / Hư Chú), boss null = Hư Cốt khổng lồ. */
     public enum Theme {
         HU_KHONG(List.of(), null),
-        YEU_LAM(CreatureKind.BEASTS, null), // boss: Yêu Thú lâu năm nhất
+        YEU_LAM(CreatureKind.COMMON_BEASTS, null), // boss: Yêu Thú lâu năm nhất
         THACH_DONG(List.of(CreatureKind.THACH_QUY, CreatureKind.THIET_GIAP_TRI_CHU, CreatureKind.SA_TRUNG), CreatureKind.THACH_CU_NHAN),
         AM_MO(List.of(CreatureKind.AM_HON_SU, CreatureKind.QUAN_HON, CreatureKind.BANG_HON), CreatureKind.HUYET_YEU_VUONG),
         LANG_HUYET(List.of(CreatureKind.HU_LANG, CreatureKind.U_ANH_BAO, CreatureKind.HUYET_NHA_TRU), CreatureKind.HU_LANG_VUONG),
+        MOC_YEU_LAM(CreatureKind.PLANTS, CreatureKind.VAN_NIEN_THU_VUONG), // 2026-11-06: rừng yêu thực vật
         HOA_NGUC(List.of(CreatureKind.HOA_TINH, CreatureKind.BAO_VIEM_TICH, CreatureKind.DOC_VAN_XA), CreatureKind.HUYET_YEU_VUONG);
 
         public final List<CreatureKind> kinds;

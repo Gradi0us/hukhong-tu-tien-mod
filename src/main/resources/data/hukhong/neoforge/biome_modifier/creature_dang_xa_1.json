@@ -1,0 +1,10 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:dang_xa",
+  "weight": 9,
+  "minCount": 1,
+  "maxCount": 2
+ },
+ "biomes": "#minecraft:is_jungle"
+}

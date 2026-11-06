@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:hoang_tinh",
+ "seasons": [
+  "xuan",
+  "ha",
+  "thu"
+ ],
+ "biomes": [
+  "#minecraft:is_forest",
+  "minecraft:plains"
+ ],
+ "rarity": 7
+}

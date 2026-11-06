@@ -80,7 +80,7 @@ public final class DaiSamLam {
         return best;
     }
 
-    public static final List<CreatureKind> BEASTS = CreatureKind.BEASTS;
+    public static final List<CreatureKind> BEASTS = CreatureKind.COMMON_BEASTS;
 
     private static final Map<UUID, Boolean> INSIDE = new HashMap<>();
 

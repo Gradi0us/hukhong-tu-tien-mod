@@ -1,0 +1,11 @@
+{
+ "item": "hukhong:xich_duong_chi",
+ "seasons": [
+  "ha"
+ ],
+ "biomes": [
+  "minecraft:desert",
+  "#minecraft:is_savanna"
+ ],
+ "rarity": 9
+}

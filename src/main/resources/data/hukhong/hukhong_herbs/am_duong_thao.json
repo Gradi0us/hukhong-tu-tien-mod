@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:am_duong_thao",
+ "seasons": [
+  "xuan",
+  "thu"
+ ],
+ "biomes": [
+  "minecraft:plains",
+  "minecraft:meadow",
+  "minecraft:sunflower_plains"
+ ],
+ "rarity": 9
+}

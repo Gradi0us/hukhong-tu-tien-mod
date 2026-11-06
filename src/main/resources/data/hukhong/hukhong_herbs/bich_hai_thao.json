@@ -1,0 +1,14 @@
+{
+ "item": "hukhong:bich_hai_thao",
+ "seasons": [
+  "xuan",
+  "ha",
+  "thu"
+ ],
+ "biomes": [
+  "minecraft:beach",
+  "minecraft:stony_shore",
+  "minecraft:river"
+ ],
+ "rarity": 8
+}

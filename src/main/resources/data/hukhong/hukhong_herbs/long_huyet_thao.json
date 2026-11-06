@@ -1,0 +1,12 @@
+{
+ "item": "hukhong:long_huyet_thao",
+ "seasons": [
+  "ha",
+  "thu"
+ ],
+ "biomes": [
+  "#minecraft:is_badlands",
+  "minecraft:savanna_plateau"
+ ],
+ "rarity": 10
+}

@@ -44,7 +44,12 @@ public final class SellPrices {
     static {
         // 8 thao duoc chua co thuong nhan (4 loai kia lay tu ShopCatalog)
         v(10, "bang_lien"); v(14, "hoa_linh_chi"); v(16, "tu_linh_thao"); v(20, "ngung_hon_hoa");
-        v(24, "kim_tinh_thao"); v(12, "thuy_tam_thao"); v(14, "phong_linh_diep"); v(30, "dia_long_can");
+        v(24, "kim_tinh_thao");
+        v(60, "thien_son_tuyet_lien"); v(40, "long_huyet_thao"); v(40, "u_minh_hoa"); v(32, "xich_duong_chi"); v(28, "am_duong_thao");
+        v(40, "ngoc_tuy_chi"); v(90, "van_nien_linh_chi"); v(18, "bich_hai_thao"); v(45, "tinh_than_hoa"); v(10, "hoang_tinh");
+        v(16, "ha_thu_o"); v(36, "loi_kich_moc");
+        v(120, "hoi_linh_dan"); v(900, "dai_hoi_linh_dan"); v(600, "thanh_tam_dan"); v(2_000, "tay_tuy_dan"); v(300, "kim_cuong_dan");
+        v(500, "bao_huyet_dan"); v(300, "phong_hanh_dan"); v(4_000, "van_nien_linh_dich"); v(12, "thuy_tam_thao"); v(14, "phong_linh_diep"); v(30, "dia_long_can");
         // linh thach / khoang san (+ khoi quang cung gia nguyen lieu no roi ra)
         v(20, "linh_thach_ha", "linh_thach_ha_ore"); v(120, "linh_thach_trung", "linh_thach_trung_ore");
         v(700, "linh_thach_thuong", "linh_thach_thuong_ore"); v(300, "huyen_thiet", "huyen_thiet_ore");
@@ -52,7 +57,7 @@ public final class SellPrices {
         // nguyen lieu sinh vat
         v(40, "linh_loc_giac"); v(25, "hac_tien_vu"); v(20, "ngoc_tho_mao"); v(45, "hoa_huynh_quang"); v(15, "linh_ngu_lan");
         v(50, "linh_ho_vi"); v(35, "thiet_boi_hung_trao"); v(30, "doc_van_xa_nha"); v(25, "sa_trung_giap"); v(55, "bang_hon_tinh");
-        v(60, "moc_yeu_loi"); v(30, "doc_thiem_noc"); v(80, "quan_hon_manh"); v(50, "hu_lang_nanh"); v(70, "thach_quy_tam"); v(60, "am_hon_phu"); v(55, "hoa_tinh_hach"); v(600, "lang_vuong_doc_nha"); v(800, "cu_nhan_thach_tam"); v(700, "huyet_yeu_tinh_huyet"); v(10000, "tiem_nang_thach"); v(60, "huyet_nha_tru_nha"); v(70, "u_anh_bao_trao"); v(55, "tri_chu_thiet_ti"); v(65, "bao_viem_tich_hach"); v(60, "xich_van_ho_bi"); v(75, "hac_giap_te_giac"); v(70, "cuong_luc_vien_tam"); v(55, "bich_nhan_thiem_nang"); v(65, "ngan_lan_mang_lan");
+        v(60, "moc_yeu_loi"); v(30, "doc_thiem_noc"); v(80, "quan_hon_manh"); v(50, "hu_lang_nanh"); v(70, "thach_quy_tam"); v(60, "am_hon_phu"); v(55, "hoa_tinh_hach"); v(600, "lang_vuong_doc_nha"); v(800, "cu_nhan_thach_tam"); v(700, "huyet_yeu_tinh_huyet"); v(10000, "tiem_nang_thach"); v(60, "huyet_nha_tru_nha"); v(70, "thu_yeu_tam"); v(60, "thuc_nhan_hoa_nhuy"); v(50, "dang_xa_dang"); v(55, "quy_co_bao_tu"); v(900, "thu_vuong_linh_qua"); v(70, "u_anh_bao_trao"); v(55, "tri_chu_thiet_ti"); v(65, "bao_viem_tich_hach"); v(60, "xich_van_ho_bi"); v(75, "hac_giap_te_giac"); v(70, "cuong_luc_vien_tam"); v(55, "bich_nhan_thiem_nang"); v(65, "ngan_lan_mang_lan");
         // dan / vat dung khong ban o cho
         v(3_000, "hoang_cuc_dan"); v(8_000, "de_hoan_dan"); v(20_000, "huyen_ton_dan"); v(50_000, "thanh_co_dan");
         v(120_000, "than_dan"); v(400, "tu_linh_dan"); v(1_500, "di_hoa_chau");

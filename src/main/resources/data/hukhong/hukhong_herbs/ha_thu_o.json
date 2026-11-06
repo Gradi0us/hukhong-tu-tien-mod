@@ -1,0 +1,12 @@
+{
+ "item": "hukhong:ha_thu_o",
+ "seasons": [
+  "thu",
+  "dong"
+ ],
+ "biomes": [
+  "#minecraft:is_taiga",
+  "#minecraft:is_forest"
+ ],
+ "rarity": 8
+}

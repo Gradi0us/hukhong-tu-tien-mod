@@ -42,24 +42,7 @@ public final class MaHud {
     private static void renderBar(GuiGraphics g, DeltaTracker dt) {
         if (!ClientConfig.showHud() || !active()) return;
         Minecraft mc = Minecraft.getInstance();
-        float ac = ClientMaState.acTinh();
-        int x = BAR_X, y = BAR_Y;
-        if (ac >= 80 && !ClientConfig.screenEffectsOff()) { // rung nhẹ khi gần ngưỡng
-            float t = (mc.player.tickCount + dt.getGameTimeDeltaPartialTick(false));
-            x += Math.round((float) Math.sin(t * 1.7f) * (ac >= 95 ? 2 : 1));
-        }
-        g.fill(x - 1, y - 1, x + BAR_W + 1, y + BAR_H + 1, 0xFF000000);
-        g.fill(x, y, x + BAR_W, y + BAR_H, 0xFF221018);
-        int h = Math.round(BAR_H * Math.max(0f, Math.min(100f, ac)) / 100f);
-        boolean cb = ClientConfig.colorblind();
-        int color = ac >= 95 ? (cb ? 0xFFD55E00 : 0xFFFF2020) : ac >= 80 ? (cb ? 0xFFE69F00 : 0xFFE0502A) : ac >= 30 ? (cb ? 0xFFCC79A7 : 0xFFB03060) : (cb ? 0xFF56B4E9 : 0xFF8A4FB0);
-        g.fill(x, y + BAR_H - h, x + BAR_W, y + BAR_H, color);
-        for (int th : new int[]{80, 95}) { // vạch Mất Kiểm Soát / Tẩu Hỏa
-            int ty = y + BAR_H - Math.round(BAR_H * th / 100f);
-            g.fill(x - 2, ty, x + BAR_W + 2, ty + 1, th == 80 ? 0xFFFFD34F : 0xFFFFFFFF);
-        }
-        g.drawString(mc.font, Component.translatable("hukhong.hud.ac_tinh"), x - 2, y + BAR_H + 3, 0xFFCC7788, true);
-        g.drawString(mc.font, String.valueOf(Math.round(ac)), x - 1, y + BAR_H + 13, color, true);
+        int x = BAR_X, y = BAR_Y, BAR_W = -6; // thanh Ác Tính đã chuyển xuống dưới thanh Linh Khí (LinhKhiHud)
         if (ClientMaState.huyetTe() > 0)
             g.drawString(mc.font, Component.translatable("hukhong.hud.huyet_te", ClientMaState.huyetTe()), x + BAR_W + 6, y, 0xFFCC4455, true);
         if (ClientMaState.lost())

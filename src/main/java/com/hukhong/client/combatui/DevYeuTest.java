@@ -91,19 +91,19 @@ public final class DevYeuTest {
             int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 300;
             for (int dx = -40; dx <= 40; dx++) for (int dz = -10; dz <= 40; dz++)
                 lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
-            var kinds = CreatureKind.BEASTS;
+            var kinds = new java.util.ArrayList<>(CreatureKind.PLANTS); kinds.add(CreatureKind.VAN_NIEN_THU_VUONG); // 2026-11-06: Yêu Thú thực vật
             for (int i = 0; i < kinds.size(); i++) {
-                LinhQuai a = DaiSamLam.spawnBeast(lv, kinds.get(i), new BlockPos(x0 - 32 + i * 8, y0, z0 + 6), YeuThuAge.Y1000, MobSpawnType.COMMAND);
+                LinhQuai a = DaiSamLam.spawnBeast(lv, kinds.get(i), new BlockPos(x0 - 24 + i * 12, y0, z0 + 6), YeuThuAge.Y1000, MobSpawnType.COMMAND);
                 a.setNoAi(true); a.setYRot(180); a.setYHeadRot(180); a.yBodyRot = 180;
                 LOG.info("YEUTEST {} scale={} bb={}", a.getDisplayName().getString(), a.getScale(), a.getBbWidth());
             }
             sp.connection.teleport(x0 + 0.5, y0 + 9, z0 - 22.5, 0, 18);
         });
-        if (t == 720) shot("03_nine_beasts");
+        if (t == 720) shot("03_plant_beasts");
         if (t == 760) server.execute(() -> {
             int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 320;
             for (var old : lv.getEntitiesOfClass(LinhQuai.class, new net.minecraft.world.phys.AABB(x0 - 60, y0 - 5, z0 - 40, x0 + 60, y0 + 20, z0 + 40))) old.discard();
-            CreatureKind[] demo = {CreatureKind.XICH_VAN_HO, CreatureKind.BAO_VIEM_TICH, CreatureKind.THIET_GIAP_TRI_CHU, CreatureKind.BICH_NHAN_THIEM};
+            CreatureKind[] demo = CreatureKind.PLANTS.toArray(new CreatureKind[0]);
             for (int i = 0; i < demo.length; i++) {
                 int x = x0 - 24 + i * 16;
                 LinhQuai m = DaiSamLam.spawnBeast(lv, demo[i], new BlockPos(x, y0, z0), YeuThuAge.Y10000, MobSpawnType.COMMAND);

@@ -1,0 +1,6 @@
+{
+ "type": "neoforge:add_features",
+ "features": "hukhong:herb_u_minh_hoa",
+ "step": "vegetal_decoration",
+ "biomes": "#hukhong:gen_herb_u_minh_hoa"
+}

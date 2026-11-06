@@ -1,0 +1,6 @@
+{
+ "type": "neoforge:add_features",
+ "features": "hukhong:herb_hoang_tinh",
+ "step": "vegetal_decoration",
+ "biomes": "#hukhong:gen_herb_hoang_tinh"
+}

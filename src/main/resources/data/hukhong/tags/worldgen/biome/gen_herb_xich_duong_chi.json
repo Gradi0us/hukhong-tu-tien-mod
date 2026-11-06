@@ -1,0 +1,13 @@
+{
+ "replace": false,
+ "values": [
+  {
+   "id": "minecraft:desert",
+   "required": false
+  },
+  {
+   "id": "#minecraft:is_savanna",
+   "required": false
+  }
+ ]
+}

@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:thien_son_tuyet_lien",
+ "seasons": [
+  "dong"
+ ],
+ "biomes": [
+  "minecraft:snowy_slopes",
+  "minecraft:frozen_peaks",
+  "minecraft:jagged_peaks",
+  "minecraft:grove"
+ ],
+ "rarity": 11
+}

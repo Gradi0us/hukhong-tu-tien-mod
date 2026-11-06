@@ -1,0 +1,14 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:van_nien_thu_vuong",
+  "weight": 1,
+  "minCount": 1,
+  "maxCount": 1
+ },
+ "biomes": [
+  "minecraft:dark_forest",
+  "minecraft:old_growth_spruce_taiga",
+  "minecraft:old_growth_birch_forest"
+ ]
+}

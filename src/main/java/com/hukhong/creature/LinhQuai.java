@@ -103,7 +103,9 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         entityData.set(LEVEL, CreatureCommon.scaleOnSpawn(this, kind, l));
         if (kind.beast() && age() == null) {
             double depth = com.hukhong.world.yeulam.DaiSamLam.depth(l.getLevel().getSeed(), getX(), getZ());
-            setAge(YeuThuAge.roll(depth, getRandom()));
+            YeuThuAge a = YeuThuAge.roll(depth, getRandom());
+            if (kind.mini() && a.ordinal() < YeuThuAge.Y1000.ordinal()) a = YeuThuAge.Y1000; // boss Yêu Thú: ít nhất thiên niên
+            setAge(a);
         }
         return r;
     }
@@ -157,7 +159,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
             return;
         }
         if (kind.mini()) MiniBossSkills.tick(this);
-        if (kind.beast()) YeuThuSkills.tick(this);
+        if (kind.beast() && !kind.mini()) YeuThuSkills.tick(this);
         if (kind == CreatureKind.BANG_HON) freezeAura();
         if (kind == CreatureKind.SA_TRUNG) burrowTick();
     }
@@ -239,6 +241,10 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
                 case U_ANH_BAO -> le.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 30, 0)); // vồ trong bóng tối
                 case THIET_GIAP_TRI_CHU -> le.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2));
                 case BAO_VIEM_TICH -> le.igniteForSeconds(3);
+                case THU_YEU, VAN_NIEN_THU_VUONG -> { le.knockback(0.9, getX() - le.getX(), getZ() - le.getZ()); le.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1)); }
+                case THUC_NHAN_HOA -> heal(2f); // nuốt: hút máu
+                case DANG_XA -> le.addEffect(new MobEffectInstance(MobEffects.POISON, 60, 0));
+                case QUY_CO -> le.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 80, 0)); // bào tử gây choáng váng
                 default -> { }
             }
         }

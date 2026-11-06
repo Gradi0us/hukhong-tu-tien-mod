@@ -1,0 +1,12 @@
+{
+ "item": "hukhong:loi_kich_moc",
+ "seasons": [
+  "ha"
+ ],
+ "biomes": [
+  "minecraft:windswept_hills",
+  "minecraft:windswept_gravelly_hills",
+  "#minecraft:is_mountain"
+ ],
+ "rarity": 10
+}

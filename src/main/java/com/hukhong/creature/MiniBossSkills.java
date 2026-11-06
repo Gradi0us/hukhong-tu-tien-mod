@@ -44,6 +44,7 @@ public final class MiniBossSkills {
                 case HU_LANG_VUONG -> { if (which == 0) howl(sl, m); else lunge(sl, m, t); }
                 case THACH_CU_NHAN -> { if (which == 0) quake(sl, m); else boulders(sl, m); }
                 case HUYET_YEU_VUONG -> { if (which == 0) bloodTide(sl, m); else needles(sl, m, t); }
+                case VAN_NIEN_THU_VUONG -> { if (which == 0) vanDang(sl, m); else sprouts(sl, m, t); }
                 default -> { }
             }
         }
@@ -67,7 +68,7 @@ public final class MiniBossSkills {
     }
 
     private static void telegraph(ServerLevel sl, LinhQuai m, int which) {
-        float r = switch (m.kind()) { case THACH_CU_NHAN -> which == 0 ? 7f : 3f; case HUYET_YEU_VUONG -> which == 0 ? 9f : 4f; default -> which == 0 ? 4f : 6f; };
+        float r = switch (m.kind()) { case THACH_CU_NHAN -> which == 0 ? 7f : 3f; case HUYET_YEU_VUONG -> which == 0 ? 9f : 4f; case VAN_NIEN_THU_VUONG -> which == 0 ? 10f : 5f; default -> which == 0 ? 4f : 6f; };
         Fx.telegraphCircle(sl, null, m.position().add(0, 0.05, 0), r, WINDUP, 0xFF3020);
         sl.playSound(null, m.getX(), m.getY(), m.getZ(), SoundEvents.EVOKER_PREPARE_ATTACK, SoundSource.HOSTILE, 1.2f, 0.6f);
     }
@@ -113,6 +114,41 @@ public final class MiniBossSkills {
             Fx.qi(sl, c, f, 2.2f, 0xA070FF, i % 2 == 0 ? 30 : -30, 8);
         }
         sl.playSound(null, m.getX(), m.getY(), m.getZ(), SoundEvents.WOLF_GROWL, SoundSource.HOSTILE, 2f, 0.6f);
+    }
+
+    // ---------------------------------------------------------------- Vạn Niên Thụ Vương (2026-11-06)
+
+    /** Vạn Đằng Triền: rễ trồi khắp bán kính 10, trói + sát thương, Thụ Vương hồi 5% máu mỗi người trúng. */
+    private static void vanDang(ServerLevel sl, LinhQuai m) {
+        Vec3 c = m.position();
+        for (Player p : players(sl, m, 10)) {
+            p.hurt(m.damageSources().mobAttack(m), atk(m) * 1.2f);
+            p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 6));
+            p.addEffect(new MobEffectInstance(MobEffects.POISON, 80, 1));
+            p.displayClientMessage(Component.translatable("hukhong.thu_vuong.roots").withColor(0x8FD45A), true);
+            m.heal(m.getMaxHealth() * 0.05f);
+        }
+        Fx.groundCrack(sl, null, c.add(0, 0.06, 0), 10f, 0x6B4A2A, 16, 60);
+        sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.ROOTED_DIRT.defaultBlockState()),
+                c.x, c.y + 0.3, c.z, 160, 5, 0.3, 5, 0.3);
+        sl.playSound(null, c.x, c.y, c.z, SoundEvents.ROOTED_DIRT_BREAK, SoundSource.HOSTILE, 2.5f, 0.4f);
+    }
+
+    /** Gọi mầm yêu: 2 Thực Nhân Hoa / Đằng Xà trẻ (10-100 năm) quanh mục tiêu. */
+    private static void sprouts(ServerLevel sl, LinhQuai m, LivingEntity t) {
+        for (int i = 0; i < 2; i++) {
+            CreatureKind k = i == 0 ? CreatureKind.THUC_NHAN_HOA : CreatureKind.DANG_XA;
+            if (!(CreatureRegistry.type(k).create(sl) instanceof LinhQuai s)) continue;
+            double a = sl.random.nextDouble() * Math.PI * 2;
+            s.moveTo(t.getX() + Math.cos(a) * 3, t.getY(), t.getZ() + Math.sin(a) * 3, sl.random.nextFloat() * 360f, 0);
+            s.finalizeSpawn(sl, sl.getCurrentDifficultyAt(s.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
+            s.setAge(sl.random.nextBoolean() ? YeuThuAge.Y10 : YeuThuAge.Y100);
+            s.setTarget(t);
+            sl.addFreshEntity(s);
+            sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, s.getX(), s.getY() + 0.5, s.getZ(), 20, 0.5, 0.5, 0.5, 0.05);
+        }
+        for (Player p : players(sl, m, 24)) p.displayClientMessage(Component.translatable("hukhong.thu_vuong.sprout").withColor(0x8FD45A), true);
+        sl.playSound(null, m.getX(), m.getY(), m.getZ(), SoundEvents.BIG_DRIPLEAF_TILT_DOWN, SoundSource.HOSTILE, 2f, 0.5f);
     }
 
     // ---------------------------------------------------------------- Thạch Cự Nhân

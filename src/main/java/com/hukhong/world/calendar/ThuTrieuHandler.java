@@ -133,7 +133,7 @@ public final class ThuTrieuHandler {
         int y = w.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         BlockPos bp = new BlockPos(x, y, z);
         if (!w.level.getFluidState(bp.below()).isEmpty()) return;
-        var kinds = com.hukhong.creature.CreatureKind.BEASTS;
+        var kinds = com.hukhong.creature.CreatureKind.COMMON_BEASTS;
         if (!(com.hukhong.creature.CreatureRegistry.type(kinds.get(w.level.random.nextInt(kinds.size()))).create(w.level) instanceof com.hukhong.creature.LinhQuai m)) return;
         m.moveTo(x + 0.5, y, z + 0.5, w.level.random.nextFloat() * 360f, 0f);
         m.finalizeSpawn(w.level, w.level.getCurrentDifficultyAt(bp), MobSpawnType.EVENT, null);

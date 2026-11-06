@@ -1,0 +1,7 @@
+{
+ "parent": "minecraft:block/cross",
+ "textures": {
+  "cross": "hukhong:item/thien_son_tuyet_lien"
+ },
+ "render_type": "minecraft:cutout"
+}

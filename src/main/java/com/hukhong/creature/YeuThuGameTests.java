@@ -68,6 +68,8 @@ public final class YeuThuGameTests {
         java.util.List<CreatureKind> r = new java.util.ArrayList<>(CreatureKind.BEASTS);
         r.remove(CreatureKind.HAC_GIAP_TE);
         r.remove(CreatureKind.HUYET_NHA_TRU);
+        r.removeAll(CreatureKind.PLANTS); // cây: test riêng (YeuThuPlantGameTests)
+        r.remove(CreatureKind.VAN_NIEN_THU_VUONG);
         return r;
     }
 

@@ -1,0 +1,10 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:van_nien_thu_vuong",
+  "weight": 1,
+  "minCount": 1,
+  "maxCount": 1
+ },
+ "biomes": "#minecraft:is_jungle"
+}

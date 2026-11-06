@@ -82,6 +82,19 @@ public final class ResourceRegistry {
     public static final DeferredItem<PhaCanhDanItem> THANH_CO_DAN = pill("thanh_co_dan", 8);
     public static final DeferredItem<PhaCanhDanItem> THAN_DAN = pill("than_dan", 9);
 
+    /** Linh dược (2026-11-06). */
+    public static final Map<String, DeferredItem<LinhDuocItem>> LINH_DUOC = new LinkedHashMap<>();
+    static {
+        String[] ids = {"hoi_linh_dan", "dai_hoi_linh_dan", "thanh_tam_dan", "tay_tuy_dan", "kim_cuong_dan", "bao_huyet_dan", "phong_hanh_dan", "van_nien_linh_dich"};
+        LinhDuocItem.Kind[] ks = LinhDuocItem.Kind.values();
+        for (int i = 0; i < ids.length; i++) {
+            String id = ids[i]; LinhDuocItem.Kind k = ks[i];
+            LINH_DUOC.put(id, ITEMS.register(id, () -> new LinhDuocItem(id, k, new Item.Properties().stacksTo(16))));
+        }
+    }
+
+    public static java.util.function.Supplier<Item> linhDuoc(String id) { return () -> LINH_DUOC.get(id).get(); }
+
     private static DeferredItem<PhaCanhDanItem> pill(String id, int tier) {
         return ITEMS.register(id, () -> new PhaCanhDanItem(tier, new Item.Properties().stacksTo(16)));
     }
@@ -114,6 +127,7 @@ public final class ResourceRegistry {
                 for (var i : HERB_ITEMS.values()) e.accept(i.get());
                 for (var i : MATERIALS.values()) e.accept(i.get());
                 e.accept(TU_LINH_DAN.get());
+                for (var i : LINH_DUOC.values()) e.accept(i.get());
                 e.accept(HUYEN_TON_DAN.get());
                 e.accept(THANH_CO_DAN.get());
                 e.accept(THAN_DAN.get());

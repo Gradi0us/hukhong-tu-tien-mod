@@ -13,7 +13,10 @@ public record HerbDef(String id, String item, int seasonMask, List<String> biome
     /** 12 linh thao (thu tu dang ky). 4 loai dau co vat pham san trong AlchemyRegistry. */
     public static final List<String> IDS = List.of("linh_thao", "thanh_diep", "hoa_lien", "huyet_tham",
             "bang_lien", "hoa_linh_chi", "tu_linh_thao", "ngung_hon_hoa", "kim_tinh_thao", "thuy_tam_thao",
-            "phong_linh_diep", "dia_long_can");
+            "phong_linh_diep", "dia_long_can",
+            // 2026-11-06: 12 linh thao moi (tools/gen_c10_herbs.py)
+            "thien_son_tuyet_lien", "long_huyet_thao", "u_minh_hoa", "xich_duong_chi", "am_duong_thao", "ngoc_tuy_chi",
+            "van_nien_linh_chi", "bich_hai_thao", "tinh_than_hoa", "hoang_tinh", "ha_thu_o", "loi_kich_moc");
 
     public static HerbDef parse(String id, JsonObject o) {
         int mask = 0;

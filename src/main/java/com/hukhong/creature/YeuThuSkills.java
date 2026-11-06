@@ -87,6 +87,9 @@ public final class YeuThuSkills {
             case BICH_NHAN_THIEM -> Fx.telegraphCircle(sl, null, t.position().add(0, 0.05, 0), 3f, WINDUP, 0x6FBF4A);
             case THIET_GIAP_TRI_CHU -> Fx.telegraphCircle(sl, null, t.position().add(0, 0.05, 0), 2.5f, WINDUP, 0xD8D8D8);
             case NGAN_LAN_MANG -> Fx.telegraphLine(sl, null, at, t.position().subtract(m.position()), 1.2f, WINDUP, c);
+            case THU_YEU -> Fx.telegraphCircle(sl, null, t.position().add(0, 0.05, 0), 3.5f, WINDUP, 0x6A8A3A);
+            case THUC_NHAN_HOA, DANG_XA -> Fx.telegraphLine(sl, null, at, t.position().subtract(m.position()), 1.0f, WINDUP, 0x4FBF4A);
+            case QUY_CO -> Fx.telegraphCircle(sl, null, m.position().add(0, 0.05, 0), 4.5f, WINDUP, 0xC070C0);
             case U_ANH_BAO -> { m.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, WINDUP + 4, 0, false, false));
                 sl.sendParticles(ParticleTypes.SMOKE, m.getX(), m.getY() + 0.6, m.getZ(), 20, 0.4, 0.4, 0.4, 0.02); }
             default -> { }
@@ -131,8 +134,64 @@ public final class YeuThuSkills {
             case U_ANH_BAO -> ambush(sl, m, t);
             case THIET_GIAP_TRI_CHU -> web(sl, m, t);
             case BAO_VIEM_TICH -> breath(sl, m, face);
+            case THU_YEU -> roots(sl, m, t);
+            case THUC_NHAN_HOA -> vinePull(sl, m, t);
+            case DANG_XA -> { constrict(sl, m, t); t.addEffect(new MobEffectInstance(MobEffects.POISON, 80, 1)); }
+            case QUY_CO -> spores(sl, m);
             default -> { }
         }
+    }
+
+    // ---------------------------------------------------------------- Yêu Thú thực vật (2026-11-06)
+
+    /** Thụ Yêu: rễ trồi lên quanh mục tiêu, trói chặt 2 giây. */
+    private static void roots(ServerLevel sl, LinhQuai m, LivingEntity t) {
+        for (LivingEntity e : victims(sl, m, t.position(), 3.5)) {
+            hit(m, e, 1.2f);
+            e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 6));
+            e.setDeltaMovement(0, Math.min(0, e.getDeltaMovement().y), 0);
+            e.hurtMarked = true;
+        }
+        for (int i = 0; i < 10; i++) {
+            double a = i * Math.PI / 5, r = 1.2 + (i % 3) * 0.8;
+            double x = t.getX() + Math.cos(a) * r, z = t.getZ() + Math.sin(a) * r;
+            for (int y = 0; y < 5; y++) sl.sendParticles(dust(0x6B4A2A, 1.3f), x, t.getY() + y * 0.3, z, 1, 0.05, 0, 0.05, 0);
+        }
+        sl.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ROOTED_DIRT.defaultBlockState()), t.getX(), t.getY() + 0.2, t.getZ(), 40, 1.5, 0.2, 1.5, 0.1);
+        sl.playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvents.ROOTED_DIRT_BREAK, SoundSource.HOSTILE, 1.5f, 0.6f);
+    }
+
+    /** Thực Nhân Hoa: dây leo quấn kéo mục tiêu về rồi cắn (hút máu). */
+    private static void vinePull(ServerLevel sl, LinhQuai m, LivingEntity t) {
+        for (int i = 0; i < 14; i++) {
+            Vec3 p = m.getEyePosition().lerp(t.position().add(0, 0.8, 0), i / 14.0);
+            sl.sendParticles(dust(0x3F9F3A, 1.0f), p.x, p.y, p.z, 1, 0, 0, 0, 0);
+        }
+        Vec3 pull = m.position().subtract(t.position()).multiply(1, 0, 1);
+        if (pull.lengthSqr() > 1e-4) {
+            t.setDeltaMovement(pull.normalize().scale(Math.min(1.6, pull.length() * 0.25)).add(0, 0.25, 0));
+            t.hurtMarked = true;
+        }
+        hit(m, t, 1.1f);
+        m.heal(atk(m) * 0.5f);
+        sl.playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvents.CAVE_VINES_PICK_BERRIES, SoundSource.HOSTILE, 1.5f, 0.5f);
+    }
+
+    /** Quỷ Cô: phun đám bào tử quanh mình (độc + mù nhẹ). */
+    private static void spores(ServerLevel sl, LinhQuai m) {
+        AreaEffectCloud c = new AreaEffectCloud(sl, m.getX(), m.getY(), m.getZ());
+        c.setOwner(m);
+        c.setRadius(4.5f);
+        c.setDuration(100);
+        c.setRadiusPerTick(0);
+        c.setWaitTime(0);
+        c.setParticle(dust(0xC070C0, 1.3f));
+        c.addEffect(new MobEffectInstance(MobEffects.POISON, 60, Math.min(2, m.age().ordinal() / 2)));
+        c.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 30, 0));
+        sl.addFreshEntity(c);
+        sl.sendParticles(ParticleTypes.SPORE_BLOSSOM_AIR, m.getX(), m.getY() + 1.5, m.getZ(), 60, 2.5, 1, 2.5, 0.02);
+        for (LivingEntity e : victims(sl, m, m.position(), 4.5)) hit(m, e, 0.6f);
+        sl.playSound(null, m.getX(), m.getY(), m.getZ(), SoundEvents.PUFFER_FISH_BLOW_OUT, SoundSource.HOSTILE, 1.5f, 0.5f);
     }
 
     // ---------------------------------------------------------------- chiêu

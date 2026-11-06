@@ -1,0 +1,15 @@
+{
+ "type": "neoforge:add_spawns",
+ "spawners": {
+  "type": "hukhong:quy_co",
+  "weight": 8,
+  "minCount": 1,
+  "maxCount": 2
+ },
+ "biomes": [
+  "minecraft:dark_forest",
+  "minecraft:swamp",
+  "minecraft:mushroom_fields",
+  "minecraft:old_growth_spruce_taiga"
+ ]
+}

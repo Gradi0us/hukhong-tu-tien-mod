@@ -1,0 +1,6 @@
+{
+ "type": "neoforge:add_features",
+ "features": "hukhong:herb_ngoc_tuy_chi",
+ "step": "vegetal_decoration",
+ "biomes": "#hukhong:gen_herb_ngoc_tuy_chi"
+}

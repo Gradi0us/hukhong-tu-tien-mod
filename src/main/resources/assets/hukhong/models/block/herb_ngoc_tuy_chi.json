@@ -1,0 +1,7 @@
+{
+ "parent": "minecraft:block/cross",
+ "textures": {
+  "cross": "hukhong:item/ngoc_tuy_chi"
+ },
+ "render_type": "minecraft:cutout"
+}

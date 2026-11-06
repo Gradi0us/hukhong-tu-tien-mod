@@ -82,11 +82,7 @@ public final class CultivationHud {
         g.drawString(font, expTxt, x + BAR_W + 4, y - 1, 0xFFDDDDDD, true);
         y += BAR_H + 3;
 
-        Path path = d.primaryPath();
-        int color = path == null ? 0xFF6FA8DC : ClientConfig.colorblind() ? colorblindPath(path) : path.argb;
-        bar(g, x, y, (double) d.resource() / d.resourceMax(), "resource_bar_bg", "resource_bar_fill", color);
-        g.drawString(font, d.resource() + "/" + d.resourceMax(), x + BAR_W + 4, y - 1, color, true);
-        y += BAR_H + 4;
+        // Linh Khí (mana): đã chuyển xuống chỗ thanh thức ăn (LinhKhiHud)
 
         int lifeHud = ClientCache.age().lifespan(d.realmIndex());
         int leftHud = lifeHud - ClientCache.age().ageYears();

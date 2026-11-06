@@ -1,0 +1,13 @@
+{
+ "item": "hukhong:tinh_than_hoa",
+ "seasons": [
+  "xuan",
+  "thu"
+ ],
+ "biomes": [
+  "minecraft:meadow",
+  "minecraft:cherry_grove",
+  "minecraft:flower_forest"
+ ],
+ "rarity": 11
+}

@@ -19,7 +19,7 @@ class HerbDefTest {
 
     @Test
     void twelveHerbsParseAndEverySeasonHasABloomer() throws Exception {
-        assertEquals(12, HerbDef.IDS.size());
+        assertEquals(24, HerbDef.IDS.size());
         int all = 0;
         for (String id : HerbDef.IDS) {
             HerbDef d = HerbDef.parse(id, load("/data/hukhong/hukhong_herbs/" + id + ".json"));

@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/generated",
+ "textures": {
+  "layer0": "hukhong:item/tay_tuy_dan"
+ }
+}
