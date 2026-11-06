@@ -322,6 +322,45 @@ public final class HuKhongRuntimeGameTests {
         return m;
     }
 
+    /** Đạo Thánh Quang: 10 đòn = 1 tầng, 5 kỹ năng = 1 tầng, đủ 20 thì đòn kế tiếp nổ min(30% máu tối đa, 20 x Phép lực) rồi về 0. */
+    @GameTest(template = "empty", batch = "dao_tq")
+    public static void daoThanhQuangStacksAndBurst(GameTestHelper h) {
+        ServerPlayer p = fake(h, 40, Set.of(Path.DAO));
+        place(h, p, 2, 1, 2);
+        var t = kDummy(h, 2, 4);
+        int s0 = com.hukhong.skill.DaoThanhQuang.stacks(p);
+        for (int i = 0; i < 10; i++) { t.invulnerableTime = 0; com.hukhong.gates.DamageRules.hurtBySkill(p, t, 1f); }
+        if (com.hukhong.skill.DaoThanhQuang.stacks(p) != s0 + 1) { h.fail("10 don phai +1 tang: " + com.hukhong.skill.DaoThanhQuang.stacks(p)); return; }
+        for (int i = 0; i < 5; i++) com.hukhong.skill.DaoThanhQuang.onCast(p);
+        if (com.hukhong.skill.DaoThanhQuang.stacks(p) != s0 + 2) { h.fail("5 ky nang phai +1 tang"); return; }
+        com.hukhong.skill.DaoThanhQuang.add(p, 50);
+        if (com.hukhong.skill.DaoThanhQuang.stacks(p) != com.hukhong.skill.DaoThanhQuang.MAX) { h.fail("phai kep o 20"); return; }
+        float hp = t.getHealth();
+        t.invulnerableTime = 0;
+        com.hukhong.gates.DamageRules.hurtBySkill(p, t, 1f); // đòn kế tiếp kích nổ
+        float lost = hp - t.getHealth();
+        double want = Math.min(t.getMaxHealth() * 0.30, 20 * StatService.spellPower(p));
+        if (lost < want * 0.5) { h.fail("no Thanh Quang qua yeu: " + lost + " < " + want); return; }
+        if (com.hukhong.skill.DaoThanhQuang.stacks(p) != 0) { h.fail("no xong phai ve 0"); return; }
+        h.succeed();
+    }
+
+    /** Quang/Lôi Linh Lưu: Q/E rẻ 40%, hồi nhanh 25%; trúng thì hoàn 50% mana đã tốn đúng 1 lần. */
+    @GameTest(template = "empty")
+    public static void quangLoiRefundOnHit(GameTestHelper h) {
+        ServerPlayer p = fake(h, 40, Set.of(Path.PHAP));
+        com.hukhong.phaptu.PhapTu.setElement(p, com.hukhong.phaptu.PhapElement.QUANG);
+        if (com.hukhong.phaptu.QuangLoiFlow.costMult(p, Path.PHAP, 0) != 0.6 || com.hukhong.phaptu.QuangLoiFlow.costMult(p, Path.PHAP, 3) != 1.0) { h.fail("he so mana sai"); return; }
+        if (com.hukhong.phaptu.QuangLoiFlow.cdMult(p, Path.PHAP, 1) != 0.75) { h.fail("hoi chieu E sai"); return; }
+        com.hukhong.gates.Resources.add(p, -100000);
+        com.hukhong.phaptu.QuangLoiFlow.afterCast(p, Path.PHAP, 0, 20);
+        if (com.hukhong.phaptu.QuangLoiFlow.onSkillHit(p) != 10 || p.getData(ModAttachments.CULTIVATION).resource() != 10) { h.fail("khong hoan 50%"); return; }
+        if (com.hukhong.phaptu.QuangLoiFlow.onSkillHit(p) != 0) { h.fail("hoan 2 lan"); return; }
+        com.hukhong.phaptu.PhapTu.setElement(p, com.hukhong.phaptu.PhapElement.HOA);
+        if (com.hukhong.phaptu.QuangLoiFlow.costMult(p, Path.PHAP, 0) != 1.0) { h.fail("Hoa khong duoc giam"); return; }
+        h.succeed();
+    }
+
     /** Kiếm Q Thiên Kiếm Trấn: đúng 5 kẻ gần nhất phía trước trúng + bị giam (kéo đi vẫn bị giữ lại); kẻ phía sau không. */
     @GameTest(template = "empty", timeoutTicks = 120)
     public static void kiemQPinsFiveEnemies(GameTestHelper h) {

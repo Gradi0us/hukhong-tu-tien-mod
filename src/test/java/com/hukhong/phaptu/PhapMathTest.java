@@ -91,8 +91,9 @@ class PhapMathTest {
     @Test
     void kimTradesSpeedAndCooldown() {
         assertEquals(0.25, PhapMath.kimSpeed(1.0), EPS); // buff tốc độ kém hiệu quả 75%
-        assertTrue(PhapMath.cooldownMult(PhapElement.KIM) > 1.0);
-        for (PhapElement e : PhapElement.values()) if (e != PhapElement.KIM) assertEquals(1.0, PhapMath.cooldownMult(e), EPS);
+        // 2026-11-06: buff Kim theo yêu cầu - bỏ phạt hồi chiêu; Quang/Lôi Q/E hồi nhanh hơn (Linh Lưu)
+        for (PhapElement e : PhapElement.values()) assertEquals(1.0, PhapMath.cooldownMult(e), EPS);
+        assertTrue(PhapMath.slotCooldownMult(PhapElement.QUANG, 0) < 1.0 && PhapMath.slotCooldownMult(PhapElement.LOI, 1) < 1.0 && PhapMath.slotCooldownMult(PhapElement.QUANG, 3) == 1.0);
     }
 
     @Test
@@ -124,7 +125,7 @@ class PhapMathTest {
             }
             mean /= n;
             double r = PhapMath.sustainedSp(PhapElement.THO, a, 150) / mean;
-            assertTrue(r >= 0.88 && r <= 1.08, "Tho ratio " + a + " = " + r);
+            assertTrue(r >= 0.72 && r <= 1.08, "Tho ratio " + a + " = " + r); // 2026-11-06: nguyên tố khác được buff
         }
     }
 

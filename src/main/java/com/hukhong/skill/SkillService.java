@@ -115,12 +115,15 @@ public final class SkillService {
             sync(p);
             return;
         }
+        var before = p.getData(com.hukhong.core.ModAttachments.CULTIVATION);
         if (!com.hukhong.phaptu.PhapRuntime.consumeFree(p, page, slot)
                 && !com.hukhong.dan.DanRuntime.freeCast(p, page)
-                && !Resources.tryConsume(p, r.cost(), com.hukhong.banmenh.BanMenhService.skillCostFactor(p))) {
+                && !Resources.tryConsume(p, r.cost(), com.hukhong.banmenh.BanMenhService.skillCostFactor(p) * com.hukhong.phaptu.QuangLoiFlow.costMult(p, page, slot))) {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_resource"), true);
             return;
         }
+        com.hukhong.phaptu.QuangLoiFlow.afterCast(p, page, slot, com.hukhong.phaptu.QuangLoiFlow.spent(before, p)); // Quang/Lôi: hoàn mana khi trúng
+        com.hukhong.skill.DaoThanhQuang.onCast(p); // Đạo: 5 kỹ năng = 1 tầng Thánh Quang
         com.hukhong.client.anim.CastAnimHook.play(p, r.base(), r.book(), slot); // tư thế thi triển (client)
         if (r.base() != null) {
             SkillBookRuntime.begin(p, SkillBookMath.dmgMult(lvl), SkillBookRuntime.windowTicks(r.base()));
@@ -130,7 +133,8 @@ public final class SkillService {
         }
         int tbCd = r.base() == Skill.PHAP_2 ? com.hukhong.phaptu.ThiemBoService.cooldownOverride(p, page, slot) : -1;
         if (tbCd < 0 && r.base() == Skill.PHAP_ULT) tbCd = com.hukhong.phaptu.ThoService.cooldownOverride(p, page, slot); // Thiên Sơn: 45s
-        st.cooldownEnd[slot] = now + (tbCd >= 0 ? tbCd : Math.round(SkillBookMath.cooldown(r.baseCooldown(), lvl) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)));
+        st.cooldownEnd[slot] = now + (tbCd >= 0 ? tbCd : Math.round(SkillBookMath.cooldown(r.baseCooldown(), lvl) * com.hukhong.phaptu.PhapRuntime.cooldownMult(p, page)
+                * com.hukhong.phaptu.QuangLoiFlow.cdMult(p, page, slot)));
         st.lastCombat = now;
         sync(p);
     }

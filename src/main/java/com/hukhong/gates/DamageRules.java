@@ -50,7 +50,8 @@ public final class DamageRules {
         try {
             amount = com.hukhong.skillbook.SkillBookRuntime.scale(caster, amount); // hệ số Cường Hóa kỹ năng nền
             amount *= (float) com.hukhong.skill.MaDomain.skillMult(caster); // Ma Vực: kỹ năng Ma +30%
-            target.hurt(caster.damageSources().indirectMagic(caster, caster), amount);
+            if (target.hurt(caster.damageSources().indirectMagic(caster, caster), amount))
+                com.hukhong.phaptu.QuangLoiFlow.onSkillHit(caster); // Quang/Lôi: trúng thì hoàn mana
         } finally {
             skillActive = false;
         }

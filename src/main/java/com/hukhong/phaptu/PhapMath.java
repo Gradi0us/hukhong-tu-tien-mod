@@ -168,11 +168,16 @@ public final class PhapMath {
     public static float thoTurretHp(Aptitude a, double ownMaxHp) { return (float) Math.max(4, thoHpPct(a) * ownMaxHp); }
 
     // ---- Kim: Kim Cương
-    public static final double KIM_BONUS_MAX = 0.35, KIM_COOLDOWN_MULT = 1.30, KIM_SPEED_EFFECT = 0.25;
+    public static final double KIM_BONUS_MAX = 0.35, KIM_COOLDOWN_MULT = 1.00, KIM_SPEED_EFFECT = 0.25;
     public static double kimBonus(Aptitude a) { return KIM_BONUS_MAX * frac(a); }
     /** Phần buff tốc độ còn lại cho Kim (giảm 75%). */
     public static double kimSpeed(double buff) { return buff * KIM_SPEED_EFFECT; }
     public static double cooldownMult(PhapElement e) { return e == PhapElement.KIM ? KIM_COOLDOWN_MULT : 1.0; }
+
+    /** Hồi chiêu theo phím: Quang/Lôi (Linh Lưu) Q/E nhanh hơn 25%. */
+    public static double slotCooldownMult(PhapElement e, int slot) {
+        return cooldownMult(e) * ((e == PhapElement.QUANG || e == PhapElement.LOI) && slot <= 1 ? com.hukhong.phaptu.QuangLoiFlow.QE_CD_MULT : 1.0);
+    }
 
     // ---- kỹ năng: tổng hệ số x Phép lực lên MỘT mục tiêu cho mỗi phím Q/E/R/T (cân bằng bởi BalanceSimTest)
     private static final double[][] COEF = {
@@ -181,7 +186,7 @@ public final class PhapMath {
             /* HOA   */ {0.43, 0.92, 2.05, 6.2},
             /* THUY  */ {0.59, 0.86, 2.28, 19.0}, // T x2,5
             /* THO   */ {0.50, 0.50, 2.10, 2.00}, // R Thổ = gai 20 nhịp x 0,05 + chảy máu ~1,1 (xem THO_R_*); T Thổ: 3 đợt x 100% + nổ 3..8x = THO_T_TOTAL (đầy mana) x hệ số
-            /* KIM   */ {0.63, 1.44, 3.32, 29.4}, // T x3
+            /* KIM   */ {0.63, 1.44, 3.32, 29.4}, // T x3; 2026-11-06: bỏ phạt hồi chiêu (KIM_COOLDOWN_MULT 1.0)
     };
 
     /** Mặt nạ phím cố định theo nguyên tố (bit i = phím i): Thổ E+T (2|8), Quang/Lôi/Hỏa/Thủy T (8), Kim không. Dùng cho UI client. */
@@ -223,7 +228,7 @@ public final class PhapMath {
         for (int i = 0; i < 4; i++) {
             double c = coef(e, i) * (e == PhapElement.THO && i == 3 ? THO_T_TOTAL : 1.0);
             int cdt = e == PhapElement.THO && i == 3 ? Math.max(THO_T_COOLDOWN_TICKS, THO_T_REFILL_TICKS) : ks[i].cooldownTicks; // nổ rút 99% mana: dùng lại sau khi hồi đầy thanh
-            sum += c / (cdt / 20.0 * cooldownMult(e));
+            sum += c / (cdt / 20.0 * slotCooldownMult(e, i));
         }
         return sum * damageMult(e, a) + passiveDps(e, a, spellPower) / spellPower;
     }

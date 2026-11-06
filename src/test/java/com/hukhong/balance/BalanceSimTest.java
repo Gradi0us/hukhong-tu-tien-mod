@@ -47,7 +47,7 @@ class BalanceSimTest {
     static final double MELEE_RATE_SWORD = 1.6, MELEE_RATE_FIST = 1.6;
     static final double MELEE_UPTIME = 0.55, SKILL_UPTIME = 0.85;
     /** 2026-11-05 (yêu cầu người chơi): T Quang/Lôi/Thủy x2,5, Kim x3, buff Q Đạo -> nới trần cho Pháp và Đạo. */
-    static final double PHAP_HI = 1.35, DAO_HI = 1.35;
+    static final double PHAP_HI = 1.55, DAO_HI = 1.35; // 2026-11-06: buff Quang/Lôi/Kim theo yêu cầu
     static final double AURA_AVG = 0.5;           // Bá Khí trung bình của Thể
     static final double MA_ATK_BONUS = 0.10;      // Ác Tính/Huyết Tế điển hình (MaRules)
     static final double SEEK_SECONDS = 30;        // thời gian tìm/chạy giữa hai quái khi cày EXP
@@ -135,7 +135,7 @@ class BalanceSimTest {
         String[] nm = {"Q", "E", "R", "T"};
         double mult = PhapMath.damageMult(SIM_EL, SIM_APT), cdm = PhapMath.cooldownMult(SIM_EL);
         for (int i = 0; i < 4; i++)
-            c.add(new Cast(nm[i], PhapMath.coef(SIM_EL, i) * A * cm * mult, SkillBookMath.cooldown(ss[i].cooldownTicks, sl) / 20.0 * cdm, ss[i].cost));
+            c.add(new Cast(nm[i], PhapMath.coef(SIM_EL, i) * A * cm * mult, SkillBookMath.cooldown(ss[i].cooldownTicks, sl) / 20.0 * PhapMath.slotCooldownMult(SIM_EL, i), ss[i].cost));
     }
 
     /** Sát thương thêm / giây từ bị động Pháp Tu (Hỏa cháy, Thổ tháp, Lôi nổ, Thủy xung). */
@@ -332,12 +332,12 @@ class BalanceSimTest {
                     if (sus < 20) fails.add("phap sustain<20s " + e + " L" + lv + " = " + sus);
                     for (Mob m : MOBS) {
                         int h = hitsToKill(pl, m, lv), kill = mobHitsToKillPlayer(pl, m, lv);
-                        if (h < 6 || h > 10) fails.add("phap hits " + e + " " + m.name() + " L" + lv + " = " + h);
+                        if (h < 5 || h > 10) fails.add("phap hits " + e + " " + m.name() + " L" + lv + " = " + h);
                         if (kill < 8 || kill > 70) fails.add("phap mob kills player outside 8-70 hits " + e + " " + m.name() + " L" + lv + " = " + kill);
                         if (mobBigHitFrac(pl, m, lv) >= 0.5) fails.add("phap one-shot risk " + e + " L" + lv);
                     }
                     double ttk = ttkMob(pl, HU_THI, lv);
-                    if (ttk < 3 || ttk > 6.5) fails.add("phap ttk sec " + e + " L" + lv + " = " + ttk);
+                    if (ttk < 2.5 || ttk > 6.5) fails.add("phap ttk sec " + e + " L" + lv + " = " + ttk);
                 }
                 row.append(String.format(" %.0f |%n", mean));
                 md.append(row);
@@ -348,7 +348,7 @@ class BalanceSimTest {
                 Fight f = fightBoss(player(Path.PHAP, b.lv()), b);
                 md.append(String.format("| %s | %d | %s | %.0f | %.0f | %.0f-%.0f |%n", b.name(), b.lv(), e, f.dps(), f.ttk(), b.minSec(), b.maxSec()));
                 double hi = phapSupport(e) ? 1.4 : 1.1;
-                if (f.ttk() < b.minSec() * 0.9 || f.ttk() > b.maxSec() * hi) fails.add("phap boss ttk " + b.name() + " " + e + " = " + f.ttk());
+                if (f.ttk() < b.minSec() * 0.8 || f.ttk() > b.maxSec() * hi) fails.add("phap boss ttk " + b.name() + " " + e + " = " + f.ttk());
             }
         } finally {
             SIM_EL = keep;

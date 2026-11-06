@@ -2705,5 +2705,8 @@
   "item.hukhong.bao_viem_tich_hach": "Blaze Lizard Core",
   "hukhong.poi.mob.bao_viem_tich": "Blaze Lizard",
   "hukhong.kiem.guard.on": "Guardian Swords: %s swords",
-  "hukhong.kiem.guard.off": "Guardian swords spent"
+  "hukhong.kiem.guard.off": "Guardian swords spent",
+  "hukhong.dao.thanh_quang.stack": "Holy Light %s/%s",
+  "hukhong.dao.thanh_quang.full": "Holy Light full! Your next hit will detonate",
+  "hukhong.dao.thanh_quang.burst": "Holy Light burst: %s damage"
 }

@@ -2705,5 +2705,8 @@
   "item.hukhong.bao_viem_tich_hach": "Hạch Bạo Viêm Tích",
   "hukhong.poi.mob.bao_viem_tich": "Bạo Viêm Tích",
   "hukhong.kiem.guard.on": "Thủ Hộ Chi Kiếm: %s thanh kiếm hộ thân",
-  "hukhong.kiem.guard.off": "Kiếm hộ thân đã dùng hết"
+  "hukhong.kiem.guard.off": "Kiếm hộ thân đã dùng hết",
+  "hukhong.dao.thanh_quang.stack": "Thánh Quang %s/%s",
+  "hukhong.dao.thanh_quang.full": "Thánh Quang đầy! Đòn kế tiếp sẽ kích nổ",
+  "hukhong.dao.thanh_quang.burst": "Thánh Quang bộc phát: %s sát thương"
 }
