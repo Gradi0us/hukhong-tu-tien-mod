@@ -316,6 +316,9 @@ public final class NemesisService {
     }
 
     /** Dùng cho GameTest: buổi đang chạy của người chơi (hoặc null). */
+    /** Đang có cảnh / trận Dạ Khuyết với người chơi này. */
+    public static boolean busy(ServerPlayer p) { return SESSIONS.containsKey(p.getUUID()); }
+
     public static boolean fighting(ServerPlayer p) {
         Session s = SESSIONS.get(p.getUUID());
         return s != null && s.fight;

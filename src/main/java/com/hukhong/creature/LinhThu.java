@@ -56,6 +56,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Hanh vi theo {@link CreatureKind}. Ngoc Tho / Linh Ho (linh sung) va Thiet Boi Hung con (thu chien dau) thuan phuc duoc.
  */
 public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
+    private static final EntityDataAccessor<Integer> GROWTH = SynchedEntityData.defineId(LinhThu.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(LinhThu.class, EntityDataSerializers.INT);
     /** Tang tien hoa (0 = chua) va nhanh (ordinal PetBranch, -1 = chua chon) - dong bo ve client de hien ten. */
     private static final EntityDataAccessor<Integer> PET_STAGE = SynchedEntityData.defineId(LinhThu.class, EntityDataSerializers.INT);
@@ -88,6 +89,7 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
         b.define(LEVEL, 1);
+        b.define(GROWTH, 0);
         b.define(PET_STAGE, 0);
         b.define(PET_BRANCH, -1);
     }
@@ -244,10 +246,11 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
         entityData.set(PET_BRANCH, branch == null ? -1 : branch.ordinal());
     }
 
-    private int growth;
     /** Điểm trưởng thành 0..100 của ấu thể (xem PetGrowth). */
-    public int growth() { return growth; }
-    public void setGrowth(int v) { growth = Math.max(0, Math.min(100, v)); }
+    public int growth() { return entityData.get(GROWTH); }
+    public void setGrowth(int v) { entityData.set(GROWTH, Math.max(0, Math.min(100, v))); }
+    /** Giai đoạn hình thái: 0 ấu thể (<40), 1 thiếu niên (<100), 2 trưởng thành. Thú hoang = 0 (model gốc). */
+    public int growthStage() { int g = growth(); return !isTame() ? 0 : g >= 100 ? 2 : g >= 40 ? 1 : 0; }
 
     public int bond() { return bond; }
     public void setBond(int v) { bond = Math.max(0, Math.min(100, v)); }
@@ -268,14 +271,14 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
         PetBranch b = petBranch();
         if (b != null) tag.putString("PetBranch", b.id);
         tag.putInt("PetBond", bond);
-        tag.putInt("PetGrowth", growth);
+        tag.putInt("PetGrowth", growth());
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains(HuHoa.TAG_LEVEL)) entityData.set(LEVEL, tag.getInt(HuHoa.TAG_LEVEL));
         if (tag.contains("PetStage")) setPetForm(tag.getInt("PetStage"), tag.contains("PetBranch") ? PetBranch.byId(tag.getString("PetBranch")) : null);
-        if (tag.contains("PetGrowth")) growth = Math.max(0, Math.min(100, tag.getInt("PetGrowth")));
+        if (tag.contains("PetGrowth")) setGrowth(tag.getInt("PetGrowth"));
         if (tag.contains("PetBond")) bond = Math.max(0, Math.min(100, tag.getInt("PetBond")));
     }
 

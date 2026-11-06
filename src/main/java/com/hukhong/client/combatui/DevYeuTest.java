@@ -213,6 +213,14 @@ public final class DevYeuTest {
     static double lastY;
     static void scenes2(net.minecraft.server.MinecraftServer server, ServerPlayer sp, net.minecraft.server.level.ServerLevel lv, int x0, int y0, int z0) {
         int u = t - 3000;
+        if (DEMO) { demo(server, sp, lv, x0, y0, z0, u); return; }
+        if (RIFT_ONLY) {
+            if (u == 0) server.execute(() -> { lv.setDayTime(18000); sp.setGameMode(GameType.CREATIVE); sp.getAbilities().flying = true; sp.onUpdateAbilities(); sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0); });
+            if (u == 40) server.execute(() -> com.hukhong.story.nemesis.NemesisService.start(sp, com.hukhong.story.flow.FlowSteps.get("c9_nemesis")));
+            for (int k : new int[]{70, 130, 250, 450, 700}) if (u == k) shot("80_rift_" + k);
+            if (u == 720) { LOG.info("YEUTEST done"); mc().stop(); }
+            return;
+        }
         if (Math.abs(sp.getY() - lastY) > 2) LOG.info("YEUTEST ydrop u={} {} -> {}", u, lastY, sp.position());
         lastY = sp.getY();
         if (u == 0) server.execute(() -> {
@@ -280,6 +288,83 @@ public final class DevYeuTest {
         if (u == 2340) server.execute(() -> cmd(server, sp, "hkpet evolve huyet_sat"));
         for (int k : new int[]{2350, 2380, 2420}) if (u == k) shot("79_pet_evo2_" + k);
         if (u == 2480 && !DEMO) { LOG.info("YEUTEST done"); mc().stop(); }
+    }
+
+    static com.hukhong.creature.LinhThu demoPet;
+
+    /** Bản xem cho người dùng: cảnh Dạ Khuyết chương 1, rồi linh thú ấu thể lớn dần tới trưởng thành. */
+    static void demo(net.minecraft.server.MinecraftServer server, ServerPlayer sp, net.minecraft.server.level.ServerLevel lv, int x0, int y0, int z0, int u) {
+        if (u == 0) server.execute(() -> {
+            for (int dx = -48; dx <= 48; dx++) for (int dz = -48; dz <= 48; dz++) {
+                lv.setBlock(new BlockPos(x0 + dx, y0 - 2, z0 + dz), Blocks.STONE.defaultBlockState(), 2);
+                lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+                for (int dy = 0; dy < 30; dy++) lv.setBlock(new BlockPos(x0 + dx, y0 + dy, z0 + dz), Blocks.AIR.defaultBlockState(), 2);
+            }
+            lv.setDayTime(18000);
+            com.hukhong.core.CultivationService.setLevel(sp, 30);
+            sp.setGameMode(GameType.CREATIVE);
+            sp.getAbilities().flying = true; sp.onUpdateAbilities();
+            sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0);
+        });
+        // 4 cảnh Dạ Khuyết nối nhau (bắt đầu cảnh sau khi cảnh trước xong)
+        String[] sc = {"c1_nemesis", "c4_nemesis", "c6_nemesis", "c9_nemesis"};
+        if (u >= 60 && demoIdx < sc.length && u % 20 == 0) server.execute(() -> {
+            boolean busy = com.hukhong.story.nemesis.NemesisService.busy(sp);
+            if (busy) return;
+            if (demoIdx == 2 && demoFightStarted && com.hukhong.story.nemesis.NemesisService.fighting(sp)) return;
+            demoIdx++;
+            if (demoIdx <= sc.length) {
+                sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0);
+                com.hukhong.story.nemesis.NemesisService.start(sp, com.hukhong.story.flow.FlowSteps.get(sc[demoIdx - 1]));
+                demoFightStarted = demoIdx == 3;
+            }
+        });
+        // trận chương 6: đợi 10 s rồi hạ Ảnh xuống 35% để xem cảnh rút lui
+        if (demoFightStarted && com.hukhong.story.nemesis.NemesisService.fighting(sp) && demoFightT++ == 200) server.execute(() -> {
+            var a = com.hukhong.story.nemesis.NemesisService.avatar(sp);
+            if (a != null) { a.setHealth(a.getMaxHealth() * 0.3f); a.hurt(sp.damageSources().playerAttack(sp), 1f); }
+        });
+        if (demoIdx == sc.length + 1 && demoPetAt < 0) demoPetAt = u + 40;
+        if (demoPetAt > 0) pets(server, sp, lv, x0, y0, z0, u - demoPetAt);
+    }
+
+    static final boolean RIFT_ONLY = false;
+    static int demoIdx, demoFightT, demoPetAt = -1;
+    static boolean demoFightStarted;
+    static final java.util.List<com.hukhong.creature.LinhThu> DEMO_PETS = new java.util.ArrayList<>();
+
+    /** Ba linh thú ấu thể đứng cạnh nhau, lớn dần qua thiếu niên tới trưởng thành. */
+    static void pets(net.minecraft.server.MinecraftServer server, ServerPlayer sp, net.minecraft.server.level.ServerLevel lv, int x0, int y0, int z0, int v) {
+        if (v == 0) server.execute(() -> {
+            lv.setDayTime(6000);
+            sp.setGameMode(GameType.CREATIVE);
+            sp.getAbilities().flying = false; sp.onUpdateAbilities();
+            sp.connection.teleport(x0 + 0.5, y0 + 1, z0 - 16.5, 0, 12);
+            com.hukhong.creature.CreatureKind[] ks = {com.hukhong.creature.CreatureKind.NGOC_THO, com.hukhong.creature.CreatureKind.THIET_BOI_HUNG_CON, com.hukhong.creature.CreatureKind.LINH_HO};
+            com.hukhong.creature.pet.PetData none = com.hukhong.creature.pet.PetData.EMPTY;
+            for (int i = 0; i < ks.length; i++) {
+                sp.setData(com.hukhong.creature.CreatureRegistry.PETS.get(), none); // demo: cho thuần cả 3
+                var e = com.hukhong.creature.CreatureRegistry.type(ks[i]).create(lv);
+                if (e instanceof com.hukhong.creature.LinhThu lt) {
+                    lt.moveTo(x0 - 8 + i * 8 + 0.5, y0, z0 + 0.5, 180, 0);
+                    lv.addFreshEntity(lt);
+                    lt.setHealth(1f);
+                    com.hukhong.creature.pet.PetService.tryTame(sp, lt);
+                    lt.setHealth(lt.getMaxHealth());
+                    lt.setOrderedToSit(true);
+                    DEMO_PETS.add(lt);
+                }
+            }
+            sp.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a[Demo] Ngọc Thố · Thiết Bối Hùng Con · Linh Hồ — ấu thể → thiếu niên → trưởng thành"));
+        });
+        for (int k = 1; k <= 10; k++) if (v == 40 + k * 60) server.execute(() -> {
+            for (var lt : DEMO_PETS) if (lt.isAlive()) com.hukhong.creature.pet.PetGrowth.add(lt, 10);
+            // gấu con đã đổi thành gấu lớn: lấy lại thực thể mới gần đó
+            DEMO_PETS.removeIf(x -> !x.isAlive());
+            for (var e : lv.getEntitiesOfClass(com.hukhong.creature.LinhThu.class, sp.getBoundingBox().inflate(40)))
+                if (e.isTame() && !DEMO_PETS.contains(e)) { e.setOrderedToSit(true); DEMO_PETS.add(e); }
+        });
+        if (v == 760) server.execute(() -> sp.connection.teleport(x0 + 0.5, y0 + 3, z0 - 22.5, 0, 14));
     }
 
     static net.minecraft.client.Minecraft mc() { return net.minecraft.client.Minecraft.getInstance(); }

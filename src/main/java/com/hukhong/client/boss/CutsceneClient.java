@@ -126,9 +126,21 @@ public final class CutsceneClient {
         Pose p = poseAt(mc, elapsed);
         cam.setOldPosAndRot();
         cam.setPos(p.pos.x, p.pos.y - cam.getEyeHeight(), p.pos.z);
-        cam.setYRot(p.yaw);
+        float yaw = cam.getYRot() + Mth.wrapDegrees(p.yaw - cam.getYRot()); // không nhảy qua ±180°
+        cam.setYRot(yaw);
         cam.setXRot(p.pitch);
-        cam.setYHeadRot(p.yaw);
+        cam.setYHeadRot(yaw);
+    }
+
+    /** Góc máy tính lại mỗi khung hình (không chỉ 20 lần/giây) -> quay mượt, không giật. */
+    @SubscribeEvent
+    public static void onAngles(ViewportEvent.ComputeCameraAngles e) {
+        if (cur == null || cam == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null || mc.getCameraEntity() != cam) return;
+        Pose p = poseAt(mc, elapsed - 1 + (float) e.getPartialTick());
+        e.setYaw(e.getYaw() + Mth.wrapDegrees(p.yaw() - e.getYaw()));
+        e.setPitch(p.pitch());
     }
 
     private record Pose(Vec3 pos, float yaw, float pitch, float fov) {}

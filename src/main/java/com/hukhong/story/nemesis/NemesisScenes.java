@@ -235,7 +235,6 @@ final class NemesisScenes {
             NemesisFx.darkness(p, 60);
             NemesisFx.cam(p, c, NemesisFx.yawFromTo(c, p.position()), total, orbit(total, 6f, 20f, 2.2f, 9f, 3f, 45f), subs);
             riftAt(lv, p, c, total / 2);
-            NemesisFx.pillar(lv, c, NemesisFx.RIFT_RGB, 170);
             NemesisFx.growl(lv, c);
         });
         T.at(total / 2, x -> riftAt(lv, p, x.anchor, total / 2));
@@ -257,6 +256,7 @@ final class NemesisScenes {
         Vec3 d = p.position().subtract(c);
         Vec3 perp = new Vec3(-d.z, 0, d.x);
         perp = perp.lengthSqr() < 1e-6 ? new Vec3(1, 0, 0) : perp.normalize().scale(6);
-        Fx.rift(lv, p, c.add(0, 3, 0), perp, 3f, NemesisFx.RIFT_RGB, life);
+        Vec3 back = d.lengthSqr() < 1e-6 ? Vec3.ZERO : new Vec3(-d.x, 0, -d.z).normalize().scale(3.5); // sau lưng Dạ Khuyết
+        Fx.rift(lv, p, c.add(back).add(0, 3.6, 0), perp.scale(1.3), 3.4f, NemesisFx.RIFT_RGB, life);
     }
 }

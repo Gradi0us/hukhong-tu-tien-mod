@@ -47,9 +47,11 @@ public final class PetGrowth {
 
     public static void add(LinhThu t, int n) {
         if (!juvenile(t) || n <= 0) return;
+        int before = t.growthStage();
         t.setGrowth(t.growth() + n);
         applyScale(t);
         if (t.growth() >= MAX) mature(t);
+        else if (t.growthStage() > before && t.level() instanceof ServerLevel sl && t.getOwner() instanceof ServerPlayer o) teen(sl, o, t);
     }
 
     /** Hệ số cỡ theo điểm trưởng thành: ấu thể = cỡ gốc, trưởng thành = ngang ~4 khối. */
@@ -59,10 +61,13 @@ public final class PetGrowth {
         a.removeModifier(MOD);
         if (!t.isTame()) return;
         double w = Math.max(0.3, t.getType().getDimensions().width());
-        double adult = ADULT_WIDTH / w;                       // hệ số khi trưởng thành
-        // loài có dạng lớn riêng: ấu thể lớn tới ~1.8 lần rồi đổi model; loài khác lớn đều tới cỡ trưởng thành
-        double end = ADULT.containsKey(t.kind()) && t.growth() < MAX ? Math.min(adult, 1.8) : adult;
-        double f = 1.0 + (end - 1.0) * Math.min(MAX, t.growth()) / (double) MAX;
+        double adult = ADULT_WIDTH / w;  // trưởng thành: ngang ~4 khối
+        int g = Math.min(MAX, t.growth());
+        double f;
+        if (ADULT.containsKey(t.kind())) f = g < 40 ? 1.0 + 0.35 * g / 40.0 : 1.35 + 0.45 * (g - 40) / 60.0; // con: lớn tới ~1.8 rồi đổi model gấu lớn
+        else if (g >= MAX) f = adult;
+        else if (g < 40) f = 1.0 + 0.4 * g / 40.0;                                     // ấu thể
+        else f = 1.6 + (adult * 0.55 - 1.6) * (g - 40) / 60.0;                          // thiếu niên: tới ~55% cỡ trưởng thành
         a.addPermanentModifier(new AttributeModifier(MOD, f - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
     }
 
@@ -94,6 +99,20 @@ public final class PetGrowth {
             t.setHealth(t.getMaxHealth());
         }
         fx(sl, owner, result);
+    }
+
+    /** Ấu thể -> thiếu niên: vòng sáng nhỏ + tiêu đề. */
+    static void teen(ServerLevel sl, ServerPlayer owner, LinhThu t) {
+        Vec3 c = t.position();
+        Fx.groundRing(sl, owner, c.add(0, 0.05, 0), 2.5f, 0x9FE08A, 40);
+        Fx.play(sl, FxType.SHOCKWAVE, c.add(0, 0.1, 0), Vec3.ZERO, 2f, 0x9FE08A, 14);
+        sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, c.x, c.y + 1, c.z, 30, 1, 1, 1, 0.1);
+        sl.playSound(null, t.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 0.8f, 1.2f);
+        try {
+            owner.connection.send(new ClientboundSetTitlesAnimationPacket(6, 40, 12));
+            owner.connection.send(new ClientboundSetSubtitleTextPacket(t.getDisplayName().copy().withColor(0xDFFFD0)));
+            owner.connection.send(new ClientboundSetTitleTextPacket(Tx.t("hukhong.pet.grow.teen", "Thiếu Niên", "Adolescent").copy().withColor(0x9FE08A)));
+        } catch (RuntimeException ignored) { }
     }
 
     static void fx(ServerLevel sl, ServerPlayer owner, LinhThu t) {

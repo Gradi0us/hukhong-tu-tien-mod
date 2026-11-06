@@ -202,7 +202,7 @@ final class FxDecal {
                     default -> {}
                 }
             }
-            case RIFT -> rift(f, g, k);
+            case RIFT -> rift(f, g, t);
             case SHELL -> shell(f, g, t, L);
             default -> {}
         }
@@ -359,27 +359,145 @@ final class FxDecal {
 
     // ---------------------------------------------------------------- rift
 
-    private static void rift(Inst f, FxDraw g, float k) {
-        Vec3 d = f.dir;
-        double len = d.length();
-        if (len < 0.3) return;
-        float open = k < 0.22f ? k / 0.22f : 1f - (float) Math.pow((k - 0.22f) / 0.78f, 1.6);
-        open = cl(open);
-        Vec3 n = d.scale(1 / len), up = Math.abs(n.y) > 0.9 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+    // ---------------------------------------------------------------- RIFT: vết nứt không gian, sau là vũ trụ sao
+    static final int RIFT_SEGS = 18;
+    static final int[] STAR_COLS = {0xFFFFFF, 0xBFE4FF, 0xFFC6E8, 0xFFE7A8, 0xC8B4FF, 0x9FFFF0};
+    static final int[] NEB_COLS = {0x7A2AE0, 0x2A6AFF, 0xFF3AA0, 0x20D0C0, 0xFFA040, 0xB040FF};
+
+    /** {độ dài, độ mở 0..1}: mở trong ~1 s, giữ, khép trong ~1.3 s cuối. */
+    private static double[] riftFrame(Inst f, float t) {
+        double len = f.dir.length();
+        float open = Math.min(1f, t / 22f), close = Math.min(1f, Math.max(0f, (f.life - t) / 26f));
+        double o = 1 - Math.pow(1 - Math.min(open, close), 3);
+        return new double[]{len, o};
+    }
+
+    private static Vec3[] riftAxes(Inst f) {
+        Vec3 n = f.dir.normalize(), up = Math.abs(n.y) > 0.9 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
         Vec3 side = n.cross(up).normalize(), lift = side.cross(n).normalize();
-        int segs = 14, c = f.rgb, w = 0xFFFFFF;
-        float a = cl((1 - k) * 2f);
-        Vec3 pt = null, pb = null;
-        for (int i = 0; i <= segs; i++) {
-            double u = (double) i / segs, h = f.scale * open * Math.pow(Math.sin(Math.PI * u), 0.85);
-            Vec3 ctr = f.pos.add(n.scale(len * u));
-            Vec3 top = ctr.add(lift.scale(h)), bot = ctr.subtract(lift.scale(h));
-            if (pt != null) {
-                g.quad2(pt, top, ctr, f.pos.add(n.scale(len * (u - 1.0 / segs))), col(w, 0.9f * a), col(w, 0.9f * a), col(c, 0.55f * a), col(c, 0.55f * a));
-                g.quad2(f.pos.add(n.scale(len * (u - 1.0 / segs))), ctr, bot, pb, col(c, 0.55f * a), col(c, 0.55f * a), col(w, 0.9f * a), col(w, 0.9f * a));
-                g.glowLine(pt, top, 0.035, w, 0.9f * a); g.glowLine(pb, bot, 0.035, w, 0.9f * a);
+        return new Vec3[]{n, lift, side};
+    }
+
+    /** Biên răng cưa ổn định theo hạt giống: [0..segs] nửa cao trên, [segs+1..] nửa cao dưới (đơn vị = scale). */
+    private static double[] riftEdge(Inst f) {
+        java.util.Random r = new java.util.Random(Double.doubleToLongBits(f.pos.x * 73.1 + f.pos.y * 13.7 + f.pos.z * 31.3) ^ f.life);
+        double[] e = new double[(RIFT_SEGS + 1) * 2];
+        for (int side = 0; side < 2; side++)
+            for (int i = 0; i <= RIFT_SEGS; i++) {
+                double u = (double) i / RIFT_SEGS, base = Math.pow(Math.sin(Math.PI * u), 0.75);
+                double jag = 0.6 + 0.4 * r.nextDouble();
+                if (r.nextInt(4) == 0) jag *= 0.55 + 0.2 * r.nextDouble(); // khía sâu ngẫu nhiên
+                e[side * (RIFT_SEGS + 1) + i] = i == 0 || i == RIFT_SEGS ? 0 : base * jag;
             }
-            pt = top; pb = bot;
+        return e;
+    }
+
+    private static Vec3 riftPt(Inst f, Vec3[] ax, double len, double u, double h) {
+        return f.pos.add(ax[0].scale(len * (u - 0.5))).add(ax[1].scale(h));
+    }
+
+    /** Lượt nền tối (RenderType trong suốt thường, trước lượt cộng sáng): lòng vết nứt = khoảng không đen tím. */
+    static void riftDark(Inst f, FxDraw g, float pt) {
+        float t = f.age + pt;
+        double[] fr = riftFrame(f, t);
+        double len = fr[0], o = fr[1];
+        if (len < 0.3 || o <= 0.01) return;
+        Vec3[] ax = riftAxes(f);
+        double[] e = riftEdge(f);
+        double H = f.scale * o;
+        int rim = FxDraw.col(0x1A0A34, 0.96f), mid = FxDraw.col(0x02020A, 0.985f);
+        for (int i = 0; i < RIFT_SEGS; i++) {
+            double u0 = (double) i / RIFT_SEGS, u1 = (double) (i + 1) / RIFT_SEGS;
+            Vec3 t0 = riftPt(f, ax, len, u0, H * e[i]), t1 = riftPt(f, ax, len, u1, H * e[i + 1]);
+            Vec3 b0 = riftPt(f, ax, len, u0, -H * e[RIFT_SEGS + 1 + i]), b1 = riftPt(f, ax, len, u1, -H * e[RIFT_SEGS + 2 + i]);
+            Vec3 c0 = riftPt(f, ax, len, u0, 0), c1 = riftPt(f, ax, len, u1, 0);
+            g.quad2(t0, t1, c1, c0, rim, rim, mid, mid);
+            g.quad2(c0, c1, b1, b0, mid, mid, rim, rim);
+        }
+    }
+
+    /** Hình phẳng mềm trong mặt phẳng vết nứt (tinh vân / quầng sao). */
+    private static void planeBlob(FxDraw g, Vec3 c, Vec3 a1, Vec3 a2, double rx, double ry, int ci, int co) {
+        int n = 14;
+        for (int i = 0; i < n; i++) {
+            double t0 = Math.PI * 2 * i / n, t1 = Math.PI * 2 * (i + 1) / n;
+            Vec3 p0 = c.add(a1.scale(Math.cos(t0) * rx)).add(a2.scale(Math.sin(t0) * ry));
+            Vec3 p1 = c.add(a1.scale(Math.cos(t1) * rx)).add(a2.scale(Math.sin(t1) * ry));
+            g.quad2(c, c, p1, p0, ci, ci, co, co);
+        }
+    }
+
+    private static double edgeAt(double[] e, double u, boolean top) {
+        double x = Math.max(0, Math.min(RIFT_SEGS, u * RIFT_SEGS));
+        int i = Math.min(RIFT_SEGS - 1, (int) x);
+        double fr = x - i;
+        int off = top ? 0 : RIFT_SEGS + 1;
+        return e[off + i] * (1 - fr) + e[off + i + 1] * fr;
+    }
+
+    private static void rift(Inst f, FxDraw g, float t) {
+        double[] fr = riftFrame(f, t);
+        double len = fr[0], o = fr[1];
+        if (len < 0.3 || o <= 0.01) return;
+        Vec3[] ax = riftAxes(f);
+        double[] e = riftEdge(f);
+        double H = f.scale * o;
+        Vec3 toward = g.cam.subtract(f.pos).normalize();
+        Vec3 nudge = ax[2].scale(ax[2].dot(toward) >= 0 ? 0.02 : -0.02); // nhích về phía camera (khỏi z-fight với nền)
+        java.util.Random r = new java.util.Random(Double.doubleToLongBits(f.pos.z * 17.3 - f.pos.x * 5.1) ^ 99);
+        Vec3 rel = g.cam.subtract(f.pos);
+        double pu = rel.dot(ax[0]), pv = rel.dot(ax[1]); // thị sai: lớp sâu trôi ngược hướng nhìn
+        // tinh vân
+        for (int i = 0; i < 7; i++) {
+            double u = 0.18 + 0.64 * r.nextDouble(), v = (r.nextDouble() * 2 - 1) * 0.5;
+            double depth = 0.04 + 0.05 * r.nextDouble();
+            double uu = u - pu * depth / len, vv = v * edgeAt(e, u, v > 0) * H - pv * depth;
+            int c = NEB_COLS[r.nextInt(NEB_COLS.length)];
+            double rx = len * (0.12 + 0.12 * r.nextDouble()), ry = H * (0.25 + 0.25 * r.nextDouble());
+            float pulse = 0.75f + 0.25f * (float) Math.sin(t * 0.05 + i);
+            planeBlob(g, riftPt(f, ax, len, uu, vv).add(nudge), ax[0], ax[1], rx, ry, FxDraw.col(c, 0.32f * pulse * (float) o), FxDraw.col(c, 0f));
+        }
+        // sao
+        for (int i = 0; i < 70; i++) {
+            double u = 0.06 + 0.88 * r.nextDouble(), v = r.nextDouble() * 2 - 1;
+            double depth = 0.02 + 0.14 * r.nextDouble();
+            double szr = r.nextDouble();
+            int c = STAR_COLS[r.nextInt(STAR_COLS.length)];
+            double uu = u - pu * depth / len;
+            double lim = edgeAt(e, uu, v > 0) * 0.88;
+            double vv = v * lim * H - pv * depth;
+            if (uu < 0.04 || uu > 0.96 || Math.abs(vv) > lim * H) continue;
+            double sz = (0.025 + 0.06 * Math.pow(szr, 3)) * Math.max(1, f.scale * 0.6);
+            float tw = 0.55f + 0.45f * (float) Math.sin(t * (0.12 + 0.1 * (i % 5)) + i * 1.7);
+            Vec3 p = riftPt(f, ax, len, uu, vv).add(nudge).add(nudge);
+            int cc = FxDraw.col(c, tw * (float) o);
+            g.quad2(p.add(ax[0].scale(-sz * 2.2)), p.add(ax[1].scale(sz * 0.35)), p.add(ax[0].scale(sz * 2.2)), p.add(ax[1].scale(-sz * 0.35)), cc, cc, cc, cc);
+            g.quad2(p.add(ax[1].scale(-sz * 2.2)), p.add(ax[0].scale(sz * 0.35)), p.add(ax[1].scale(sz * 2.2)), p.add(ax[0].scale(-sz * 0.35)), cc, cc, cc, cc);
+            if (sz > 0.06) planeBlob(g, p, ax[0], ax[1], sz * 3, sz * 3, FxDraw.col(c, 0.35f * tw * (float) o), FxDraw.col(c, 0f));
+        }
+        // viền răng cưa phát sáng + nhánh nứt toả ra
+        int c = f.rgb, w = 0xFFFFFF;
+        float a = (float) o;
+        for (int side = 0; side < 2; side++) {
+            double sg = side == 0 ? 1 : -1;
+            for (int i = 0; i < RIFT_SEGS; i++) {
+                double u0 = (double) i / RIFT_SEGS, u1 = (double) (i + 1) / RIFT_SEGS;
+                Vec3 p0 = riftPt(f, ax, len, u0, sg * H * e[side * (RIFT_SEGS + 1) + i]).add(nudge);
+                Vec3 p1 = riftPt(f, ax, len, u1, sg * H * e[side * (RIFT_SEGS + 1) + i + 1]).add(nudge);
+                g.glowLine(p0, p1, 0.16, c, 0.35f * a);
+                g.glowLine(p0, p1, 0.05, w, 0.95f * a);
+                if (i > 1 && i < RIFT_SEGS - 1 && (i * 7 + side * 3) % 4 == 0) {
+                    Vec3 q = p0;
+                    double ang = 0.6 + 0.5 * ((i * 13) % 7) / 7.0;
+                    for (int k2 = 0; k2 < 3; k2++) {
+                        Vec3 dir = ax[1].scale(Math.cos(ang) * sg).add(ax[0].scale(Math.sin(ang) * ((i % 2 == 0) ? 0.6 : -0.6))).normalize();
+                        Vec3 q2 = q.add(dir.scale(H * (0.22 - k2 * 0.05)));
+                        g.glowLine(q, q2, 0.03, white(c, 0.5f), (0.8f - k2 * 0.22f) * a);
+                        q = q2;
+                        ang += ((i + k2) % 2 == 0 ? 0.5 : -0.5);
+                    }
+                }
+            }
         }
     }
 

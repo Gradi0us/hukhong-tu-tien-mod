@@ -42,7 +42,26 @@ public final class CreatureRenderers {
         return HuRenderers.glow(new GeoEntityRenderer<T>(c, model));
     }
 
+    /** Loài có model theo giai đoạn trưởng thành (gen_c14_pet_stages.py): giai đoạn -> hậu tố. */
+    private static String stageSuffix(String id, int stage) {
+        return switch (id) {
+            case "ngoc_tho", "linh_ho" -> stage == 2 ? "_g2" : stage == 1 ? "_g1" : "";
+            case "thiet_boi_hung_con" -> stage >= 1 ? "_g1" : "";
+            case "thiet_boi_hung" -> stage == 2 ? "_g2" : "";
+            default -> "";
+        };
+    }
+
     private static <T extends Entity & GeoAnimatable> GeoEntityRenderer<T> make(EntityRendererProvider.Context c, String id) {
+        if (!stageSuffix(id, 2).isEmpty() || !stageSuffix(id, 1).isEmpty()) {
+            var model = new DefaultedEntityGeoModel<T>(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, id)) {
+                private String sid(T a) { return id + (a instanceof com.hukhong.creature.LinhThu t ? stageSuffix(id, t.growthStage()) : ""); }
+                @Override public ResourceLocation getModelResource(T a) { return ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "geo/entity/" + sid(a) + ".geo.json"); }
+                @Override public ResourceLocation getTextureResource(T a) { return ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "textures/entity/" + sid(a) + ".png"); }
+                @Override public ResourceLocation getAnimationResource(T a) { return ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "animations/entity/" + sid(a) + ".animation.json"); }
+            };
+            return HuRenderers.glow(new GeoEntityRenderer<T>(c, model));
+        }
         return HuRenderers.glow(new GeoEntityRenderer<T>(c, new DefaultedEntityGeoModel<>(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, id))));
     }
 }

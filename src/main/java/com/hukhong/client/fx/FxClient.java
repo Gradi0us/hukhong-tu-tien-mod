@@ -233,6 +233,14 @@ public final class FxClient {
         Minecraft mc = Minecraft.getInstance();
         float pt = e.getPartialTick().getGameTimeDeltaPartialTick(false);
         MultiBufferSource.BufferSource bs = mc.renderBuffers().bufferSource();
+        // lượt nền tối cho vết nứt Hư Không (lòng vũ trụ) - trong suốt thường, trước lượt cộng sáng
+        boolean anyRift = false;
+        for (Inst f : ACTIVE) if (f.type == FxType.RIFT && f.started && f.delay <= 0) { anyRift = true; break; }
+        if (anyRift) {
+            FxDraw dg = new FxDraw(bs.getBuffer(RenderType.debugQuads()), e.getPoseStack().last().pose(), e.getCamera().getPosition());
+            for (Inst f : ACTIVE) if (f.type == FxType.RIFT && f.started && f.delay <= 0) FxDecal.riftDark(f, dg, pt);
+            bs.endBatch(RenderType.debugQuads());
+        }
         VertexConsumer vc = bs.getBuffer(RenderType.lightning());
         FxDraw g = new FxDraw(vc, e.getPoseStack().last().pose(), e.getCamera().getPosition());
         double lod = ClientConfig.fxLod();
