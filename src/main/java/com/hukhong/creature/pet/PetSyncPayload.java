@@ -23,7 +23,7 @@ public record PetSyncPayload(List<Entry> entries) implements CustomPacketPayload
     public static final Type<PetSyncPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "pet_sync"));
 
     /** status: 0 = theo sat, 1 = ngoi yen, 2 = da chet (reviveSec = giay con lai). */
-    public record Entry(String slot, String kind, int level, int stage, String branch, float hp, float maxHp, int bond, int status, int reviveSec) {}
+    public record Entry(String slot, String kind, int level, int stage, String branch, float hp, float maxHp, int bond, int status, int reviveSec, int growth) {}
 
     private static final Set<UUID> ACTIVE = new HashSet<>();
 
@@ -32,7 +32,7 @@ public record PetSyncPayload(List<Entry> entries) implements CustomPacketPayload
                 buf.writeVarInt(pl.entries.size());
                 for (Entry e : pl.entries) {
                     buf.writeUtf(e.slot); buf.writeUtf(e.kind); buf.writeVarInt(e.level); buf.writeVarInt(e.stage); buf.writeUtf(e.branch);
-                    buf.writeFloat(e.hp); buf.writeFloat(e.maxHp); buf.writeVarInt(e.bond); buf.writeVarInt(e.status); buf.writeVarInt(e.reviveSec);
+                    buf.writeFloat(e.hp); buf.writeFloat(e.maxHp); buf.writeVarInt(e.bond); buf.writeVarInt(e.status); buf.writeVarInt(e.reviveSec); buf.writeVarInt(e.growth + 1);
                 }
             },
             buf -> {
@@ -40,7 +40,7 @@ public record PetSyncPayload(List<Entry> entries) implements CustomPacketPayload
                 List<Entry> l = new ArrayList<>(n);
                 for (int i = 0; i < n; i++) {
                     l.add(new Entry(buf.readUtf(), buf.readUtf(), buf.readVarInt(), buf.readVarInt(), buf.readUtf(),
-                            buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt()));
+                            buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt() - 1));
                 }
                 return new PetSyncPayload(List.copyOf(l));
             });
@@ -72,11 +72,11 @@ public record PetSyncPayload(List<Entry> entries) implements CustomPacketPayload
             if (id.isPresent() && p.serverLevel().getEntity(id.get()) instanceof LinhThu t && t.isAlive()) {
                 PetBranch b = t.petBranch();
                 out.add(new Entry(s, t.kind().id, PetService.ownerLevel(p), t.petStage(), b == null ? "" : b.id,
-                        t.getHealth(), t.getMaxHealth(), t.bond(), t.isOrderedToSit() ? 1 : 0, 0));
+                        t.getHealth(), t.getMaxHealth(), t.bond(), t.isOrderedToSit() ? 1 : 0, 0, PetGrowth.juvenile(t) ? t.growth() : -1));
             } else if (d.fallen(s).isPresent()) {
                 PetData.Fallen f = d.fallen(s).get();
                 out.add(new Entry(s, f.kind(), f.level(), f.stage(), f.branch(), 0, 1, f.bond(), 2,
-                        (int) Math.max(0, (f.reviveAt() - now) / 20)));
+                        (int) Math.max(0, (f.reviveAt() - now) / 20), -1));
             }
         }
         return out;

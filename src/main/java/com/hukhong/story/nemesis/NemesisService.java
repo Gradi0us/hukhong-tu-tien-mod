@@ -51,7 +51,8 @@ public final class NemesisService {
     static final float RETREAT_FRAC = 0.35f;
     /** Người chơi đi xa hơn 48 block thì trận dừng; quay lại trong 24 block quanh điểm bắt đầu thì trận khởi lại từ đầu. */
     static final double LEASH = 48, RESUME = 24;
-    static final int INTRO_TICKS = 80, RETREAT_TICKS = 60, VISION_TICKS = 200, TAUNT_TICKS = 200, REVEAL_TICKS = 230;
+    /** Giới hạn trên độ dài cảnh (cảnh thật dài theo lời thoại) — dùng cho test. */
+    static final int INTRO_TICKS = 620, RETREAT_TICKS = 820, VISION_TICKS = 1600, TAUNT_TICKS = 1600, REVEAL_TICKS = 2000;
 
     static final Map<UUID, Session> SESSIONS = new HashMap<>();
     static final Map<UUID, Session> PAUSED = new HashMap<>();

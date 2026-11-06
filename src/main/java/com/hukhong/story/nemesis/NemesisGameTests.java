@@ -56,7 +56,7 @@ public final class NemesisGameTests {
         h.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 600)
+    @GameTest(template = "empty", timeoutTicks = 1800)
     public static void fightRetreatCompletesStep(GameTestHelper h) {
         ServerPlayer p = player(h, 40);
         DialogueService.setQuest(p, QuestData.DEFAULT.withChapter(6).withFlag(StoryFlow.F_V2).withStep("c6_nemesis"));

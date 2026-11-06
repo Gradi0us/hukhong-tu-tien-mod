@@ -66,6 +66,11 @@ final class NemesisFx {
                 .append(line.copy().withStyle(ChatFormatting.GRAY)));
     }
 
+    /** Dòng chat có tên người nói (lưu lại lời thoại cảnh). */
+    static void chat(ServerPlayer p, String who, ChatFormatting color, Component line) {
+        p.sendSystemMessage(Component.literal("[" + who + "] ").withStyle(color).append(line.copy().withStyle(ChatFormatting.GRAY)));
+    }
+
     // ------------------------------------------------------------------ máy quay
     /** Cutscene camera neo tĩnh tại anchor; refYaw = hướng "trước" của khung (dz > 0 = về phía trước). */
     static void cam(ServerPlayer p, Vec3 anchor, float refYaw, int ticks, List<CamPath.Key> keys, List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> subs) {

@@ -212,6 +212,7 @@ public final class PetService {
         }
         if (!sp.isCreative()) held.shrink(1);
         PetForm.addBond(t, 5);
+        PetGrowth.add(t, 5); // cho ăn: lớn nhanh hơn
         t.heal(t.getMaxHealth() * 0.25f);
         sp.displayClientMessage(Tx.t("hukhong.pet.feed", "%s được bồi dưỡng, thân mật %s/100.", "%s was fed, bond %s/100.", t.getDisplayName(), t.bond()), true);
         return InteractionResult.CONSUME;

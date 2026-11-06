@@ -114,7 +114,10 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
             }
             case THIET_BOI_HUNG -> {
                 goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, true));
-                targetSelector.addGoal(1, new HurtByTargetGoal(this));
+                goalSelector.addGoal(3, new FollowOwnerGoal(this, 1.1, 8f, 2.5f)); // chỉ chạy khi đã có chủ (ấu thể lớn lên)
+                targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
+                targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
+                targetSelector.addGoal(3, new HurtByTargetGoal(this));
             }
             case THIET_BOI_HUNG_CON -> {
                 goalSelector.addGoal(1, new PanicGoal(this, 1.5) { @Override public boolean canUse() { return !isTame() && super.canUse(); } });
@@ -241,6 +244,11 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
         entityData.set(PET_BRANCH, branch == null ? -1 : branch.ordinal());
     }
 
+    private int growth;
+    /** Điểm trưởng thành 0..100 của ấu thể (xem PetGrowth). */
+    public int growth() { return growth; }
+    public void setGrowth(int v) { growth = Math.max(0, Math.min(100, v)); }
+
     public int bond() { return bond; }
     public void setBond(int v) { bond = Math.max(0, Math.min(100, v)); }
     public int frenzyTicks() { return frenzyTicks; }
@@ -260,12 +268,14 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
         PetBranch b = petBranch();
         if (b != null) tag.putString("PetBranch", b.id);
         tag.putInt("PetBond", bond);
+        tag.putInt("PetGrowth", growth);
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains(HuHoa.TAG_LEVEL)) entityData.set(LEVEL, tag.getInt(HuHoa.TAG_LEVEL));
         if (tag.contains("PetStage")) setPetForm(tag.getInt("PetStage"), tag.contains("PetBranch") ? PetBranch.byId(tag.getString("PetBranch")) : null);
+        if (tag.contains("PetGrowth")) growth = Math.max(0, Math.min(100, tag.getInt("PetGrowth")));
         if (tag.contains("PetBond")) bond = Math.max(0, Math.min(100, tag.getInt("PetBond")));
     }
 

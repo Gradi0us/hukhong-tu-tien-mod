@@ -58,7 +58,7 @@ public final class DevYeuTest {
         var server = mc.getSingleplayerServer();
         if (mc.player == null || mc.level == null || server == null) return;
         mc.options.pauseOnLostFocus = false;
-        if (!movedAway) { // chạy ngầm: đẩy cửa sổ ra ngoài màn hình, không che máy người dùng
+        if (!movedAway && !DEMO) { // chạy ngầm: đẩy cửa sổ ra ngoài màn hình, không che máy người dùng
             movedAway = true;
             long w = mc.getWindow().getWindow();
             org.lwjgl.glfw.GLFW.glfwSetWindowPos(w, -6000, -6000);
@@ -66,8 +66,8 @@ public final class DevYeuTest {
             org.lwjgl.glfw.GLFW.glfwSetWindowAttrib(w, org.lwjgl.glfw.GLFW.GLFW_FLOATING, org.lwjgl.glfw.GLFW.GLFW_FALSE);
         }
         // không bao giờ giữ chuột của người dùng
-        if (mc.mouseHandler.isMouseGrabbed()) mc.mouseHandler.releaseMouse();
-        org.lwjgl.glfw.GLFW.glfwSetInputMode(mc.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_CURSOR, org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
+        if (!DEMO && mc.mouseHandler.isMouseGrabbed()) mc.mouseHandler.releaseMouse();
+        if (!DEMO) org.lwjgl.glfw.GLFW.glfwSetInputMode(mc.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_CURSOR, org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
         if (mc.screen != null && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen)) mc.setScreen(null);
         if (mc.isPaused()) return;
         t++;
@@ -202,6 +202,7 @@ public final class DevYeuTest {
 
     private static final com.hukhong.story.kyngo.KyNgoInstance[] KYNGO = new com.hukhong.story.kyngo.KyNgoInstance[4];
     private static boolean movedAway;
+    static final boolean DEMO = System.getProperty("hukhong.yeudemo") != null;
     static final String[] POIS = {"battlefield", "grave", "sword_mound", "ruin", "shrine", "dao_quan", "wuxing", "abyss", "cave", "arena"};
     static final boolean RUN_KIEP = false, RUN_KYNGO = false, RUN_POI = false;
 
@@ -278,7 +279,7 @@ public final class DevYeuTest {
         if (u == 2320) shot("79_pet_hud_dmg");
         if (u == 2340) server.execute(() -> cmd(server, sp, "hkpet evolve huyet_sat"));
         for (int k : new int[]{2350, 2380, 2420}) if (u == k) shot("79_pet_evo2_" + k);
-        if (u == 2480) { LOG.info("YEUTEST done"); mc().stop(); }
+        if (u == 2480 && !DEMO) { LOG.info("YEUTEST done"); mc().stop(); }
     }
 
     static net.minecraft.client.Minecraft mc() { return net.minecraft.client.Minecraft.getInstance(); }
