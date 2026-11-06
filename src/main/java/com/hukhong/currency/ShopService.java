@@ -54,10 +54,18 @@ public final class ShopService {
         return com.hukhong.world.calendar.LichMath.day((ow == null ? l : ow).getGameTime());
     }
 
+    /** Nguyen Khong Tinh: gia x (1 + (cap/10)^2) vi EXP nhan duoc tang theo cap. */
+    public static long nguyenKhongMult(int level) { return 1 + (long) level * level / 100; }
+
+    private static long levelPrice(ServerPlayer p, ShopCatalog.Offer o) {
+        if (!(o.stack().getItem() instanceof com.hukhong.item.NguyenKhongTinhItem)) return o.price();
+        return o.price() * nguyenKhongMult(com.hukhong.core.CultivationService.get(p).level());
+    }
+
     private static List<ShopMenu.Entry> buys(ServerPlayer p, Entity t, int kind) {
         List<ShopMenu.Entry> out = new ArrayList<>();
         for (ShopCatalog.Offer o : ShopCatalog.buys(p.serverLevel().getSeed(), kind, cityOf(p.serverLevel(), t), lichDay(p.serverLevel())))
-            out.add(new ShopMenu.Entry(o.stack(), com.hukhong.living.AffectionService.adjustPrice(p, MarketRep.discounted(o.price(), rank(p))), o.minRank()));
+            out.add(new ShopMenu.Entry(o.stack(), com.hukhong.living.AffectionService.adjustPrice(p, MarketRep.discounted(levelPrice(p, o), rank(p))), o.minRank()));
         return out;
     }
 

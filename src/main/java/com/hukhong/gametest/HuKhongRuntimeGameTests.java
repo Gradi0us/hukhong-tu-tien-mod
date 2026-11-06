@@ -309,6 +309,7 @@ public final class HuKhongRuntimeGameTests {
         var nk = com.hukhong.item.ModItems.NGUYEN_KHONG_TINH_TRUNG.get();
         long want = nk.amount(p.getData(ModAttachments.CULTIVATION));
         if (want != Math.round(com.hukhong.core.CultivationService.expToNext(23) * 0.10)) { h.fail("Nguyen Khong 10% sai: " + want); return; }
+        if (com.hukhong.currency.ShopService.nguyenKhongMult(1) != 1 || com.hukhong.currency.ShopService.nguyenKhongMult(50) != 26) { h.fail("gia Nguyen Khong khong tang theo cap"); return; }
         h.succeed();
     }
 
