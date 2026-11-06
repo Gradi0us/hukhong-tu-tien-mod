@@ -2687,5 +2687,21 @@
   "entity.hukhong.ngan_lan_mang": "Silver-Scaled Python",
   "item.hukhong.ngan_lan_mang_spawn_egg": "Silver-Scaled Python Spawn Egg",
   "item.hukhong.ngan_lan_mang_lan": "Silver Python Scale",
-  "hukhong.poi.mob.ngan_lan_mang": "Silver-Scaled Python"
+  "hukhong.poi.mob.ngan_lan_mang": "Silver-Scaled Python",
+  "entity.hukhong.huyet_nha_tru": "Blood-Tusk Boar",
+  "item.hukhong.huyet_nha_tru_spawn_egg": "Blood-Tusk Boar Spawn Egg",
+  "item.hukhong.huyet_nha_tru_nha": "Blood Boar Tusk",
+  "hukhong.poi.mob.huyet_nha_tru": "Blood-Tusk Boar",
+  "entity.hukhong.u_anh_bao": "Shadow Leopard",
+  "item.hukhong.u_anh_bao_spawn_egg": "Shadow Leopard Spawn Egg",
+  "item.hukhong.u_anh_bao_trao": "Shadow Leopard Claw",
+  "hukhong.poi.mob.u_anh_bao": "Shadow Leopard",
+  "entity.hukhong.thiet_giap_tri_chu": "Iron-Carapace Spider",
+  "item.hukhong.thiet_giap_tri_chu_spawn_egg": "Iron-Carapace Spider Spawn Egg",
+  "item.hukhong.tri_chu_thiet_ti": "Iron Spider Silk",
+  "hukhong.poi.mob.thiet_giap_tri_chu": "Iron-Carapace Spider",
+  "entity.hukhong.bao_viem_tich": "Blaze Lizard",
+  "item.hukhong.bao_viem_tich_spawn_egg": "Blaze Lizard Spawn Egg",
+  "item.hukhong.bao_viem_tich_hach": "Blaze Lizard Core",
+  "hukhong.poi.mob.bao_viem_tich": "Blaze Lizard"
 }

@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/generated",
+ "textures": {
+  "layer0": "hukhong:item/bao_viem_tich_hach"
+ }
+}

@@ -118,7 +118,95 @@ def ngan_lan_mang():
     return m, cfg(legs=False, bob=0, sway=sw, skills=dict(attack="strike", skill="strike"))
 
 
-JOBS = [("xich_van_ho", xich_van_ho), ("hac_giap_te", hac_giap_te), ("cuong_luc_vien", cuong_luc_vien),
+def huyet_nha_tru():
+    """Lợn rừng nanh máu: lông nâu sẫm bờm dựng, cặp nanh cong đỏ thẫm, mắt đỏ, sẹo trên lưng."""
+    m = Model("huyet_nha_tru", 128, (3, 3), 1.0)
+    FR = skin((92, 60, 44)); DK = skin((50, 32, 26)); MN = skin((30, 22, 20)); TU = bone((236, 224, 200)); RD = skin((170, 30, 30)); SN = skin((200, 140, 130))
+    m.bone("body", None, (0, 11, 0))
+    m.cube("body", (-4.5, 8, -8), (9, 9, 16), FR)
+    m.cube("body", (-4, 7.5, -7), (8, 1, 14), DK)
+    for i, z in enumerate((-7, -4, -1, 2, 5)):  # bờm dựng
+        m.cube("body", (-1, 17, z), (2, 2 + (i % 2), 2.5), MN)
+    m.cube("body", (2, 15, -2), (2.5, 1, 4), RD)  # sẹo
+    m.bone("head", "body", (0, 13, -8))
+    m.cube("head", (-3.5, 8, -14), (7, 7, 6), FR, eyes=[(1, 4, 1, 1, (255, 50, 40)), (5, 4, 1, 1, (255, 50, 40))])
+    m.cube("head", (-2.5, 8, -17), (5, 4, 3), SN)
+    m.cube("head", (-1.5, 9, -17.2), (1, 1, 1), DK); m.cube("head", (.5, 9, -17.2), (1, 1, 1), DK)
+    for sx in (-3.5, 2.5):  # nanh cong
+        m.cube("head", (sx, 9, -16.5), (1, 4, 1), TU, rot=[-25, 0, 0], pivot=[sx + .5, 9, -16])
+        m.cube("head", (sx, 12, -18), (1, 1.5, 1), RD)
+    m.cube("head", (-3.5, 15, -10), (2, 2, 1), FR); m.cube("head", (1.5, 15, -10), (2, 2, 1), FR)
+    q = quad_legs(m, "body", 8, (-2.8, 2.8), (-5, 5), 2.5, 2.5, DK, MN)
+    return m, cfg(quad=q, legs=False, sway=[("head", 0, 4, 1, 0)], skills=dict(attack="strike", skill="roar"))
+
+
+def u_anh_bao():
+    """Báo bóng tối: thân thon đen tím, đốm mờ, mắt tím phát sáng, đuôi dài có khói ở chót."""
+    m = Model("u_anh_bao", 128, (3, 3), 0.8)
+    BK = skin((36, 32, 48)); SP = skin((70, 60, 96)); GL = glow((180, 120, 255)); TO = bone((230, 226, 240))
+    m.bone("body", None, (0, 10, 0))
+    m.cube("body", (-2.8, 8, -8), (5.6, 5.5, 16), BK)
+    for x, z in ((-2.9, -5), (1.4, -2), (-2.9, 1), (1.4, 4), (-.5, -6.5), (-.5, 3)):
+        m.cube("body", (x, 11.5, z), (1.5, 1.5, 1.5), SP)
+    m.bone("head", "body", (0, 12, -8))
+    m.cube("head", (-2.8, 10, -13), (5.6, 5, 5), BK, eyes=[(1, 3, 1, 1, (190, 140, 255)), (4, 3, 1, 1, (190, 140, 255))])
+    m.cube("head", (-1.8, 10, -15), (3.6, 2.5, 2), BK)
+    m.cube("head", (-1, 9.5, -14.6), (.8, 1.5, .8), TO); m.cube("head", (.2, 9.5, -14.6), (.8, 1.5, .8), TO)
+    m.cube("head", (-2.8, 15, -10), (1.5, 2, 1), BK); m.cube("head", (1.3, 15, -10), (1.5, 2, 1), BK)
+    m.bone("tail", "body", (0, 12, 8))
+    m.cube("tail", (-.8, 11.2, 8), (1.6, 1.6, 13), BK, rot=[-15, 0, 0], pivot=[0, 12, 8])
+    m.cube("tail", (-1, 11, 19.5), (2, 2, 2), GL, rot=[-15, 0, 0], pivot=[0, 12, 8])
+    q = quad_legs(m, "body", 8, (-1.9, 1.9), (-5.5, 5.5), 2, 2, BK, SP)
+    return m, cfg(quad=q, legs=False, sway=[("tail", 1, 18, 1, 0), ("head", 0, 3, 1, 0)], skills=dict(attack="strike", skill="strike"))
+
+
+def thiet_giap_tri_chu():
+    """Nhện giáp sắt: mai kim loại xám bạc có vân, bụng to đốm đỏ, 8 chân dài khớp nhọn, 6 mắt đỏ."""
+    m = Model("thiet_giap_tri_chu", 128, (4, 4), 0.8)
+    PL = plate((110, 114, 126), (200, 210, 225)); DK = skin((40, 40, 48)); RD = glow((220, 40, 40)); LG = skin((60, 62, 72))
+    m.bone("body", None, (0, 7, 0))
+    m.cube("body", (-4, 5, -5), (8, 5, 8), PL, rune=True)
+    m.cube("body", (-5, 5, 3), (10, 7, 10), DK)
+    m.cube("body", (-2, 12, 6), (4, 1, 4), RD)
+    m.cube("body", (-3, 12, 9.5), (1.5, 1, 1.5), RD); m.cube("body", (1.5, 12, 9.5), (1.5, 1, 1.5), RD)
+    m.bone("head", "body", (0, 8, -5))
+    m.cube("head", (-3, 5, -9), (6, 4, 4), PL, eyes=[(1, 2, 1, 1, (255, 40, 40)), (4, 2, 1, 1, (255, 40, 40)), (0, 0, 1, 1, (255, 40, 40)), (5, 0, 1, 1, (255, 40, 40))])
+    m.cube("head", (-2, 4, -10), (1, 2, 1), LG); m.cube("head", (1, 4, -10), (1, 2, 1), LG)
+    sw = []
+    for i, z in enumerate((-4, -1.5, 1, 3.5)):
+        for sgn, side in ((-1, "r"), (1, "l")):
+            nm = f"leg{i+1}{side}"
+            m.bone(nm, "body", (sgn * 4, 8, z))
+            m.cube(nm, (sgn * 4 + (0 if sgn > 0 else -9), 7, z - .6), (9, 1.2, 1.2), LG, rot=[0, (i - 1.5) * 12 * sgn, -sgn * 25], pivot=[sgn * 4, 8, z])
+            m.cube(nm, (sgn * 12 + (0 if sgn > 0 else -1), 0, z - .5), (1, 7, 1), DK, rot=[0, (i - 1.5) * 12 * sgn, -sgn * 25], pivot=[sgn * 4, 8, z])
+            sw.append((nm, 1, 14, 1, i * .9 + (0 if sgn > 0 else 3.14)))
+    return m, cfg(legs=False, bob=.6, sway=sw, skills=dict(attack="strike", skill="cast"))
+
+
+def bao_viem_tich():
+    """Thằn lằn lửa: da đỏ cam vảy, gai lưng vàng nóng chảy, họng phát sáng, đuôi dài vằn đen."""
+    m = Model("bao_viem_tich", 128, (3, 3), 0.6)
+    SK = skin((196, 74, 30)); DK = skin((80, 30, 20)); GL = glow((255, 190, 70)); SP = crystal((255, 140, 40), (255, 220, 120))
+    m.bone("body", None, (0, 5, 0))
+    m.cube("body", (-3.5, 3, -7), (7, 4.5, 14), SK)
+    m.cube("body", (-3, 2.5, -6), (6, 1, 12), DK)
+    for z in (-5, -2, 1, 4):
+        m.cube("body", (-.5, 7.5, z), (1, 2.5, 1.5), SP)
+    m.bone("head", "body", (0, 6, -7))
+    m.cube("head", (-3, 3.5, -13), (6, 4, 6), SK, eyes=[(0, 2, 1, 1, (255, 220, 60)), (5, 2, 1, 1, (255, 220, 60))])
+    m.cube("head", (-2.5, 3, -13.3), (5, 1, 5), GL)
+    m.cube("head", (-1, 7.5, -10), (2, 1.5, 3), SP)
+    m.bone("tail", "body", (0, 5, 7))
+    m.cube("tail", (-2, 3.5, 7), (4, 3, 7), SK)
+    m.bone("tail2", "tail", (0, 5, 14))
+    m.cube("tail2", (-1.2, 4, 14), (2.4, 2, 8), DK)
+    m.cube("tail2", (-.5, 6, 16), (1, 1.5, 1), SP)
+    q = quad_legs(m, "body", 3, (-4, 4), (-4.5, 4.5), 2, 2, SK, DK)
+    return m, cfg(quad=q, legs=False, sway=[("tail", 1, 14, 1, 0), ("tail2", 1, 20, 1, .8), ("head", 0, 4, 1, 0)], skills=dict(attack="strike", skill="cast"))
+
+
+JOBS = [("huyet_nha_tru", huyet_nha_tru), ("u_anh_bao", u_anh_bao), ("thiet_giap_tri_chu", thiet_giap_tri_chu), ("bao_viem_tich", bao_viem_tich),
+        ("xich_van_ho", xich_van_ho), ("hac_giap_te", hac_giap_te), ("cuong_luc_vien", cuong_luc_vien),
         ("bich_nhan_thiem", bich_nhan_thiem), ("ngan_lan_mang", ngan_lan_mang)]
 
 

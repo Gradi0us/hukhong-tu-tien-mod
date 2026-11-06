@@ -39,7 +39,11 @@ public enum CreatureKind {
     HAC_GIAP_TE("hac_giap_te", Impl.QUAI, MobCategory.MONSTER, 1.6f, 1.7f, 60, 8, 0.24, false, null, null),
     CUONG_LUC_VIEN("cuong_luc_vien", Impl.QUAI, MobCategory.MONSTER, 1.2f, 2.4f, 50, 9, 0.27, false, null, null),
     BICH_NHAN_THIEM("bich_nhan_thiem", Impl.QUAI, MobCategory.MONSTER, 1.0f, 0.9f, 28, 5, 0.25, false, null, null),
-    NGAN_LAN_MANG("ngan_lan_mang", Impl.QUAI, MobCategory.MONSTER, 1.2f, 0.8f, 40, 7, 0.26, false, null, null);
+    NGAN_LAN_MANG("ngan_lan_mang", Impl.QUAI, MobCategory.MONSTER, 1.2f, 0.8f, 40, 7, 0.26, false, null, null),
+    HUYET_NHA_TRU("huyet_nha_tru", Impl.QUAI, MobCategory.MONSTER, 1.2f, 1.1f, 38, 7, 0.29, false, null, null),
+    U_ANH_BAO("u_anh_bao", Impl.QUAI, MobCategory.MONSTER, 0.9f, 1.0f, 30, 8, 0.34, false, null, null),
+    THIET_GIAP_TRI_CHU("thiet_giap_tri_chu", Impl.QUAI, MobCategory.MONSTER, 1.6f, 0.9f, 36, 6, 0.30, false, null, null),
+    BAO_VIEM_TICH("bao_viem_tich", Impl.QUAI, MobCategory.MONSTER, 1.0f, 0.8f, 32, 6, 0.27, false, null, null);
 
     public enum Impl { THU, QUAI, NGU }
 
@@ -67,17 +71,21 @@ public enum CreatureKind {
     public boolean mini() { return this == HU_LANG_VUONG || this == THACH_CU_NHAN || this == HUYET_YEU_VUONG; }
 
     /** Yêu Thú: có năm tuổi, có thể rơi Hồn Cốt, tham gia Yêu Thú Triều. */
-    public boolean beast() { return this == XICH_VAN_HO || this == HAC_GIAP_TE || this == CUONG_LUC_VIEN || this == BICH_NHAN_THIEM || this == NGAN_LAN_MANG; }
+    public boolean beast() { return BEASTS.contains(this); }
 
     public static final List<CreatureKind> ALL = List.of(values());
-    public static final List<CreatureKind> BEASTS = List.of(XICH_VAN_HO, HAC_GIAP_TE, CUONG_LUC_VIEN, BICH_NHAN_THIEM, NGAN_LAN_MANG);
+    public static final List<CreatureKind> BEASTS = List.of(XICH_VAN_HO, HAC_GIAP_TE, CUONG_LUC_VIEN, BICH_NHAN_THIEM, NGAN_LAN_MANG,
+            HUYET_NHA_TRU, U_ANH_BAO, THIET_GIAP_TRI_CHU, BAO_VIEM_TICH);
+    /** Yêu Thú to hơn sinh vật thường (nhân thêm theo năm tuổi). */
+    public static final double BEAST_SCALE = 1.75;
 
     /** Nguyen lieu roi (vat pham mod): moi sinh vat 1 loai (tru thu chien dau con). */
     public static final List<String> MATERIALS = List.of("linh_loc_giac", "hac_tien_vu", "ngoc_tho_mao", "hoa_huynh_quang", "linh_ngu_lan",
             "linh_ho_vi", "thiet_boi_hung_trao", "doc_van_xa_nha", "sa_trung_giap", "bang_hon_tinh", "moc_yeu_loi",
             "doc_thiem_noc", "quan_hon_manh", "hu_lang_nanh", "thach_quy_tam", "am_hon_phu", "hoa_tinh_hach",
             "lang_vuong_doc_nha", "cu_nhan_thach_tam", "huyet_yeu_tinh_huyet",
-            "xich_van_ho_bi", "hac_giap_te_giac", "cuong_luc_vien_tam", "bich_nhan_thiem_nang", "ngan_lan_mang_lan");
+            "xich_van_ho_bi", "hac_giap_te_giac", "cuong_luc_vien_tam", "bich_nhan_thiem_nang", "ngan_lan_mang_lan",
+            "huyet_nha_tru_nha", "u_anh_bao_trao", "tri_chu_thiet_ti", "bao_viem_tich_hach");
 
     public static CreatureKind byId(String id) {
         for (CreatureKind k : values()) if (k.id.equals(id)) return k;

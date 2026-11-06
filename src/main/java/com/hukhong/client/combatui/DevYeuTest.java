@@ -89,22 +89,37 @@ public final class DevYeuTest {
         if (t == 620) shot("02_forest_ground");
         if (t == 625) server.execute(() -> {
             int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 300;
-            for (int dx = -24; dx <= 24; dx++) for (int dz = -6; dz <= 18; dz++)
+            for (int dx = -40; dx <= 40; dx++) for (int dz = -10; dz <= 40; dz++)
                 lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
-            YeuThuAge[] ages = YeuThuAge.values();
-            for (int i = 0; i < 5; i++) {
-                LinhQuai a = DaiSamLam.spawnBeast(lv, CreatureKind.BEASTS.get(i), new BlockPos(x0 - 20 + i * 10, y0, z0 + 8), YeuThuAge.Y1000, MobSpawnType.COMMAND);
-                LinhQuai b = DaiSamLam.spawnBeast(lv, CreatureKind.XICH_VAN_HO, new BlockPos(x0 - 20 + i * 10, y0, z0), ages[i], MobSpawnType.COMMAND);
-                for (LinhQuai m : new LinhQuai[]{a, b}) { m.setNoAi(true); m.setYRot(180); m.setYHeadRot(180); }
-                LOG.info("YEUTEST {} hp={} tough={} scale={} | {} hp={}", b.getDisplayName().getString(), b.getMaxHealth(), b.toughness(), b.getScale(),
-                        a.getDisplayName().getString(), a.getMaxHealth());
+            var kinds = CreatureKind.BEASTS;
+            for (int i = 0; i < kinds.size(); i++) {
+                LinhQuai a = DaiSamLam.spawnBeast(lv, kinds.get(i), new BlockPos(x0 - 32 + i * 8, y0, z0 + 6), YeuThuAge.Y1000, MobSpawnType.COMMAND);
+                a.setNoAi(true); a.setYRot(180); a.setYHeadRot(180); a.yBodyRot = 180;
+                LOG.info("YEUTEST {} scale={} bb={}", a.getDisplayName().getString(), a.getScale(), a.getBbWidth());
             }
-            sp.connection.teleport(x0 + 0.5, y0 + 7, z0 - 18.5, 0, 20);
+            sp.connection.teleport(x0 + 0.5, y0 + 9, z0 - 22.5, 0, 18);
         });
-        if (t == 700) shot("03_ages_and_kinds");
-        if (t == 705) server.execute(() -> sp.connection.teleport(reg.cx() + 0.5, 233, reg.cz() + 297.5, 0, 30));
-        if (t == 760) shot("04_ages_close");
-        if (t == 780) { LOG.info("YEUTEST done"); mc.stop(); }
+        if (t == 720) shot("03_nine_beasts");
+        if (t == 760) server.execute(() -> {
+            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 320;
+            for (var old : lv.getEntitiesOfClass(LinhQuai.class, new net.minecraft.world.phys.AABB(x0 - 60, y0 - 5, z0 - 40, x0 + 60, y0 + 20, z0 + 40))) old.discard();
+            CreatureKind[] demo = {CreatureKind.XICH_VAN_HO, CreatureKind.BAO_VIEM_TICH, CreatureKind.THIET_GIAP_TRI_CHU, CreatureKind.BICH_NHAN_THIEM};
+            for (int i = 0; i < demo.length; i++) {
+                int x = x0 - 24 + i * 16;
+                LinhQuai m = DaiSamLam.spawnBeast(lv, demo[i], new BlockPos(x, y0, z0), YeuThuAge.Y10000, MobSpawnType.COMMAND);
+                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(lv);
+                z.moveTo(x + 0.5, y0, z0 + 7.5, 180, 0);
+                z.setNoAi(true); z.setPersistenceRequired(); z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000); z.setHealth(1000);
+                lv.addFreshEntity(z);
+                m.setTarget(z);
+                com.hukhong.creature.YeuThuSkills.start(lv, m, z, YeuThuAge.Y10000);
+            }
+            sp.connection.teleport(x0 + 0.5, y0 + 10, z0 - 16.5, 0, 25);
+        });
+        if (t == 790) shot("04_skill_windup");
+        if (t == 812) shot("05_skill_cast");
+        if (t == 830) shot("06_skill_after");
+        if (t == 860) { LOG.info("YEUTEST done"); mc.stop(); }
     }
 
     private static void shot(String name) {

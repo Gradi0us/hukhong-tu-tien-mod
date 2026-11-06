@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/generated",
+ "textures": {
+  "layer0": "hukhong:item/huyet_nha_tru_nha"
+ }
+}

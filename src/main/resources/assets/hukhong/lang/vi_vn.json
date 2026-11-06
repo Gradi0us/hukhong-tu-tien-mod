@@ -2687,5 +2687,21 @@
   "entity.hukhong.ngan_lan_mang": "Ngân Lân Mãng",
   "item.hukhong.ngan_lan_mang_spawn_egg": "Trứng Ngân Lân Mãng",
   "item.hukhong.ngan_lan_mang_lan": "Vảy Ngân Lân Mãng",
-  "hukhong.poi.mob.ngan_lan_mang": "Ngân Lân Mãng"
+  "hukhong.poi.mob.ngan_lan_mang": "Ngân Lân Mãng",
+  "entity.hukhong.huyet_nha_tru": "Huyết Nha Trư",
+  "item.hukhong.huyet_nha_tru_spawn_egg": "Trứng Huyết Nha Trư",
+  "item.hukhong.huyet_nha_tru_nha": "Nanh Huyết Nha Trư",
+  "hukhong.poi.mob.huyet_nha_tru": "Huyết Nha Trư",
+  "entity.hukhong.u_anh_bao": "U Ảnh Báo",
+  "item.hukhong.u_anh_bao_spawn_egg": "Trứng U Ảnh Báo",
+  "item.hukhong.u_anh_bao_trao": "Vuốt U Ảnh Báo",
+  "hukhong.poi.mob.u_anh_bao": "U Ảnh Báo",
+  "entity.hukhong.thiet_giap_tri_chu": "Thiết Giáp Tri Chu",
+  "item.hukhong.thiet_giap_tri_chu_spawn_egg": "Trứng Thiết Giáp Tri Chu",
+  "item.hukhong.tri_chu_thiet_ti": "Thiết Ti Tri Chu",
+  "hukhong.poi.mob.thiet_giap_tri_chu": "Thiết Giáp Tri Chu",
+  "entity.hukhong.bao_viem_tich": "Bạo Viêm Tích",
+  "item.hukhong.bao_viem_tich_spawn_egg": "Trứng Bạo Viêm Tích",
+  "item.hukhong.bao_viem_tich_hach": "Hạch Bạo Viêm Tích",
+  "hukhong.poi.mob.bao_viem_tich": "Bạo Viêm Tích"
 }

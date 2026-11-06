@@ -35,6 +35,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -58,6 +59,10 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
     private int auraCd, emerge, idle;
     /** Hệ số chia sát thương nhận vào khi máu theo năm tuổi vượt trần máu của game (>= 1). */
     private float toughness = 1f;
+    /** Trạng thái hồn kỹ Yêu Thú (YeuThuSkills). */
+    int skillCd = 60, windup, charge, chargeLeft;
+    Vec3 chargeDir = Vec3.ZERO;
+    final java.util.Set<Integer> chargeHits = new java.util.HashSet<>();
 
     public float toughness() { return toughness; }
 
@@ -115,10 +120,11 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         ageMod(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, a.hpMul - 1, mul);
         ageMod(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, a.dmgMul - 1, mul);
         ageMod(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, a.armor, add);
-        ageMod(net.minecraft.world.entity.ai.attributes.Attributes.SCALE, a.scale - 1, add);
+        ageMod(net.minecraft.world.entity.ai.attributes.Attributes.SCALE, CreatureKind.BEAST_SCALE * a.scale - 1, add);
         ageMod(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE, Math.min(1, a.ordinal() * 0.2), add);
         if (a.ordinal() >= YeuThuAge.Y10000.ordinal()) setPersistenceRequired();
         toughness = (float) Math.max(1.0, wanted / Math.max(1, getMaxHealth())); // máu vượt trần 1024 -> giảm sát thương nhận
+        refreshDimensions();
         setHealth(getMaxHealth());
     }
 
@@ -149,6 +155,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
             return;
         }
         if (kind.mini()) MiniBossSkills.tick(this);
+        if (kind.beast()) YeuThuSkills.tick(this);
         if (kind == CreatureKind.BANG_HON) freezeAura();
         if (kind == CreatureKind.SA_TRUNG) burrowTick();
     }
@@ -226,6 +233,10 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
                 case CUONG_LUC_VIEN -> { le.push(0, 0.6, 0); le.hurtMarked = true; le.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 60, 0)); } // đấm hất
                 case BICH_NHAN_THIEM -> { le.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 1)); le.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1)); }
                 case NGAN_LAN_MANG -> le.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 50, 4)); // siết
+                case HUYET_NHA_TRU -> { le.addEffect(new MobEffectInstance(MobEffects.WITHER, 40, 0)); le.knockback(0.5, getX() - le.getX(), getZ() - le.getZ()); }
+                case U_ANH_BAO -> le.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 30, 0)); // vồ trong bóng tối
+                case THIET_GIAP_TRI_CHU -> le.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2));
+                case BAO_VIEM_TICH -> le.igniteForSeconds(3);
                 default -> { }
             }
         }

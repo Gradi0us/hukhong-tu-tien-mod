@@ -32,6 +32,8 @@ public final class CreatureCommon {
             b.add(Attributes.KNOCKBACK_RESISTANCE, k == CreatureKind.THIET_BOI_HUNG ? 0.7 : 0.3).add(Attributes.ARMOR, k == CreatureKind.THIET_BOI_HUNG ? 6 : 2);
         if (k.mini()) b.add(Attributes.KNOCKBACK_RESISTANCE, 1.0).add(Attributes.ARMOR, 10).add(Attributes.FOLLOW_RANGE, 32);
         else if (k == CreatureKind.HAC_GIAP_TE) b.add(Attributes.KNOCKBACK_RESISTANCE, 0.6).add(Attributes.ARMOR, 8);
+        else if (k == CreatureKind.HUYET_NHA_TRU) b.add(Attributes.KNOCKBACK_RESISTANCE, 0.5).add(Attributes.ARMOR, 4);
+        else if (k == CreatureKind.THIET_GIAP_TRI_CHU) b.add(Attributes.ARMOR, 10);
         else if (k == CreatureKind.CUONG_LUC_VIEN) b.add(Attributes.KNOCKBACK_RESISTANCE, 0.4).add(Attributes.ARMOR, 4);
         else if (k == CreatureKind.THACH_QUY) b.add(Attributes.KNOCKBACK_RESISTANCE, 0.6).add(Attributes.ARMOR, 8);
         return b;

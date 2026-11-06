@@ -49,6 +49,49 @@ public final class YeuThuGameTests {
         h.succeed();
     }
 
+    /** Mỗi loài 1 hồn kỹ: tung ra đều trúng mục tiêu (zombie bất động); nhện để lại mạng; thú to hơn sinh vật thường. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void yeuThuSkillsHit(GameTestHelper h) {
+        var sl = h.getLevel();
+        StringBuilder bad = new StringBuilder();
+        java.util.List<Object[]> checks = new java.util.ArrayList<>();
+        int x = 4;
+        // 2 loài lao húc cần thế giới chạy -> đặt đầu tiên, trong vùng test; các chiêu khác trúng ngay khi tung
+        java.util.List<CreatureKind> order = new java.util.ArrayList<>(java.util.List.of(CreatureKind.HAC_GIAP_TE, CreatureKind.HUYET_NHA_TRU));
+        for (CreatureKind k : CreatureKind.BEASTS) if (!order.contains(k)) order.add(k);
+        for (CreatureKind k : order) {
+            LinhQuai m = beast(h, k, YeuThuAge.Y1000, x);
+            m.moveTo(m.getX(), m.getY(), m.getZ() + 2);
+            m.setNoAi(false);
+            var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(sl);
+            z.moveTo(h.absolutePos(new BlockPos(x, 2, 9)).getCenter().subtract(0, 0.5, 0));
+            z.setNoAi(true);
+            z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000);
+            z.setHealth(1000);
+            sl.addFreshEntity(z);
+            m.setTarget(z);
+            m.lookAt(z, 360, 360);
+            YeuThuSkills.cast(sl, m, z, YeuThuAge.Y1000);
+            checks.add(new Object[]{k, m, z, 1000f});
+            if (m.getScale() < CreatureKind.BEAST_SCALE) bad.append(k).append(" chua phong to; ");
+            x += 8;
+        }
+        if (YeuThuSkills.cooldown(YeuThuAge.Y100000) >= YeuThuSkills.cooldown(YeuThuAge.Y10)) bad.append("hoi chieu khong giam theo nam; ");
+        h.runAfterDelay(40, () -> {
+            for (Object[] c : checks) {
+                CreatureKind k = (CreatureKind) c[0];
+                var z = (net.minecraft.world.entity.monster.Zombie) c[2];
+                if (z.isAlive() && z.getHealth() >= (float) c[3]) bad.append(k).append(" khong trung (" + z.getHealth() + "/" + c[3] + " dist=" + String.format("%.1f", z.distanceTo((LinhQuai) c[1])) + " web=" + sl.getBlockState(z.blockPosition()) + "); ");
+                if (k == CreatureKind.THIET_GIAP_TRI_CHU && !sl.getBlockState(z.blockPosition()).is(Blocks.COBWEB)
+                        && !sl.getBlockState(z.blockPosition().above()).is(Blocks.COBWEB)) bad.append("khong co mang nhen; ");
+                z.discard();
+                ((LinhQuai) c[1]).discard();
+            }
+            if (bad.length() > 0) h.fail(bad.toString());
+            else h.succeed();
+        });
+    }
+
     @GameTest(template = "empty")
     public static void yeuThuTrieuUsesBeasts(GameTestHelper h) {
         if (ThuTrieuHandler.waveAge(15, 16, 0.5) != YeuThuAge.Y10000) { h.fail("thu linh phai 10000 nam"); return; }
