@@ -62,6 +62,8 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
     /** Trạng thái hồn kỹ Yêu Thú (YeuThuSkills). */
     int skillCd = 60, windup, charge, chargeLeft;
     Vec3 chargeDir = Vec3.ZERO;
+    /** Mục tiêu của hồn kỹ đang tung (giữ cả khi AI đổi/bỏ mục tiêu). */
+    LivingEntity skillTarget;
     final java.util.Set<Integer> chargeHits = new java.util.HashSet<>();
 
     public float toughness() { return toughness; }

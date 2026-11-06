@@ -236,14 +236,14 @@ public final class SkillEntries {
         Component name = nameWithLevel(Component.translatable(s.langKey()), lvl);
         switch (s) {
             case KIEM_1 -> {
-                ls.add(note("hukhong.skills.kiem_1.desc", "Kiếm khí xuyên tầm 8 block (Kiếm Ý Cốt +25%), trúng mọi mục tiêu trên đường."));
+                ls.add(note("hukhong.skills.kiem_1.desc", "Đinh kiếm từ trời giáng xuống găm vào tối đa 5 kẻ địch phía trước (10 block), giam cầm 3 giây."));
                 ls.add(meta(x, page, s.cost, cd));
                 ls.add(dmg(false, Skill.KIEM_1_COEF, m, x.ap(), 1));
             }
             case KIEM_2 -> {
-                ls.add(note("hukhong.skills.kiem_2.desc", "3 nhát chém quạt tầm 6 block, cách nhau 0,3 giây; mỗi nhát trúng mọi mục tiêu trong quạt."));
+                ls.add(note("hukhong.skills.kiem_2.desc", "6 thanh kiếm hộ thân xoay quanh người 10 giây: mỗi đòn bị đánh tiêu 1 kiếm, giảm 50%% sát thương và kiếm bay phản kích kẻ tấn công."));
                 ls.add(meta(x, page, s.cost, cd));
-                ls.add(dmg(false, Skill.KIEM_2_COEF, m, x.ap(), 3));
+                ls.add(dmg(false, Skill.KIEM_2_COEF, m, x.ap(), 1));
             }
             case KIEM_ULT -> {
                 ls.add(note("hukhong.skills.kiem_ult.desc", "Bật/tắt (phím T): lĩnh vực bán kính 5 block quanh bạn, mỗi %s giây chém mọi kẻ địch trong vùng và rơi mưa kiếm.",

@@ -109,7 +109,7 @@ public final class YeuThuSkills {
 
     private static List<LivingEntity> victims(ServerLevel sl, LinhQuai m, Vec3 c, double r) {
         return sl.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(c, c).inflate(r, 3, r),
-                e -> e != m && e.isAlive() && (e instanceof Player p ? !p.isSpectator() && !p.isCreative() : e == m.getTarget())
+                e -> e != m && e.isAlive() && (e instanceof Player p ? !p.isSpectator() && !p.isCreative() : e == m.getTarget() || e == m.skillTarget)
                         && e.position().distanceToSqr(c) <= r * r);
     }
 
@@ -118,6 +118,7 @@ public final class YeuThuSkills {
     }
 
     static void cast(ServerLevel sl, LinhQuai m, LivingEntity t, YeuThuAge age) {
+        m.skillTarget = t;
         Vec3 face = t.position().subtract(m.position()).multiply(1, 0, 1);
         face = face.lengthSqr() < 1e-4 ? m.getLookAngle().multiply(1, 0, 1).normalize() : face.normalize();
         switch (m.kind()) {

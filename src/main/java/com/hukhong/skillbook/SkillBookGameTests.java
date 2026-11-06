@@ -83,7 +83,7 @@ public final class SkillBookGameTests {
         SkillService.state(p).cooldownEnd[slot] = 0;
         com.hukhong.gametest.GameTestSupport.noCrit(p);
         float before = z.getHealth();
-        SkillService.cast(p, slot);
+        com.hukhong.skill.SkillScheduler.runNow(() -> SkillService.cast(p, slot)); // Thiên Kiếm Trấn: sát thương lúc đinh kiếm chạm đất
         float d = before - z.getHealth();
         z.discard();
         return d;

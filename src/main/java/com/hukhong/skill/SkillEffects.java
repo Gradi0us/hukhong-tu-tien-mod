@@ -45,8 +45,8 @@ public final class SkillEffects {
             case THE_1 -> chanDia(lv, p, d);
             case THE_2 -> thietBoSam(lv, p);
             case THE_ULT -> kimThan(lv, p);
-            case KIEM_1 -> tramKhi(lv, p);
-            case KIEM_2 -> lienHoanTram(lv, p);
+            case KIEM_1 -> KiemSwords.thienKiemTran(lv, p);
+            case KIEM_2 -> KiemSwords.thuHoKiem(lv, p);
             case KIEM_ULT -> { } // kênh bật/tắt: SkillService.cast -> kiemVucStart/Stop
             case MA_1 -> huyetTrao(lv, p);
             case MA_2 -> maKhiHoThe(lv, p);
@@ -219,6 +219,10 @@ public final class SkillEffects {
                 && !(e instanceof net.minecraft.world.entity.TamableAnimal t && t.isOwnedBy(p));
     }
 
+    static boolean validTarget(ServerPlayer p, LivingEntity e) { return valid(p, e); }
+
+    static float slashFor(ServerPlayer p, LivingEntity t, double coef) { return slash(p, t, coef); }
+
     /** Gây sát thương kỹ năng = coef x Công; bỏ khung bất tử để nhiều nhát liên tiếp đều trúng. Trả sát thương đã đặt. */
     private static float slash(ServerPlayer p, LivingEntity t, double coef) {
         float dmg = (float) (coef * com.hukhong.stats.StatService.attackPower(p));
@@ -281,58 +285,6 @@ public final class SkillEffects {
     private static int flyTicks(double dist) { return Math.max(2, Math.min(8, (int) Math.ceil(dist / 2.6))); }
 
     /** Trảm Khí: chém mạnh - kiếm Bản Mệnh vung cung trước mặt rồi tung dải kiếm khí lưỡi liềm xuyên hàng mục tiêu. */
-    private static void tramKhi(ServerLevel lv, ServerPlayer p) {
-        final double range = 8 * qiRange(p);
-        Fx.slash(lv, p, 35, 2.8, 0, 5, 1.8f);
-        lv.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.2f);
-        for (LivingEntity e : lineTargets(lv, p, range, 1.2)) slash(p, e, Skill.KIEM_1_COEF);
-        SkillScheduler.later(3, () -> { // dải kiếm khí ra đúng lúc kiếm vung tới giữa cung
-            if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
-            Vec3 look = p.getLookAngle(), from = p.getEyePosition().subtract(0, 0.5, 0).add(look.scale(1.2));
-            Fx.qi(l2, from, look.scale(range - 1.2), 1.9f, 0, 35, 11);
-            Fx.ribbon(l2, p, from, from.add(look.scale(range - 1.2)), 0, 4, 0, 0.16f, 0xBFE4FF);
-            l2.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 1.6f);
-            layer(l2, p.position(), SoundEvents.TRIDENT_THROW.value(), 0.6f, 1.8f);
-            layer(l2, p.position(), SoundEvents.AMETHYST_BLOCK_CHIME, 0.6f, 1.5f);
-        });
-    }
-
-    /**
-     * Liên Hoàn Trảm: 3 nhát quạt 6 block, mỗi nhát 70% Công, cách nhau 6 tick. Bản Mệnh Kiếm phóng to ~5x vung qua
-     * cả vùng chém (chéo trên, bổ dọc, chéo dưới), mỗi nhát tung thêm một dải kiếm khí.
-     */
-    public static final double KIEM_2_LIFESTEAL = 0.10;
-
-    private static void lienHoanTram(ServerLevel lv, ServerPlayer p) {
-        final double reach = 6 * qiRange(p);
-        final double[] rolls = {30, 90, -30};
-        for (int i = 0; i < 3; i++) {
-            final int k = i;
-            Runnable visual = () -> {
-                if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
-                Fx.slash(l2, p, rolls[k], Math.min(4.2, reach * 0.6), 0, 5, 5f);
-                l2.playSound(null, p.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.8f + 0.15f * k);
-            };
-            Runnable hit = () -> {
-                if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
-                for (LivingEntity e : coneTargets(l2, p, reach, 0.45)) {
-                    float hp0 = e.getHealth();
-                    slash(p, e, Skill.KIEM_2_COEF);
-                    float dealt = Math.max(0, hp0 - (e.isAlive() ? e.getHealth() : 0));
-                    if (dealt > 0) p.heal(dealt * (float) KIEM_2_LIFESTEAL); // Liên Hoàn Trảm: cố định 10% hút máu
-                }
-            };
-            Runnable qi = () -> {
-                if (p.isRemoved() || !p.isAlive() || !(p.level() instanceof ServerLevel l2)) return;
-                Vec3 look = p.getLookAngle(), from = p.getEyePosition().subtract(0, 0.5, 0).add(look.scale(1.5));
-                Fx.qi(l2, from, look.scale(reach * 0.85), 2.4f, 0, rolls[k], 10);
-                layer(l2, p.position(), SoundEvents.IRON_GOLEM_ATTACK, 0.35f, 1.6f + 0.2f * k);
-            };
-            if (i == 0) { visual.run(); hit.run(); } else { SkillScheduler.later(6 * i, visual); SkillScheduler.later(6 * i, hit); }
-            SkillScheduler.later(6 * i + 3, qi);
-        }
-    }
-
     // ---- Kiếm Vực (kênh): bật/tắt bằng phím T ----
 
     /** Tiêu hao mỗi giây = 10% tài nguyên tối đa; nhịp đánh + mưa kiếm mỗi 0,5s; khoá chống bấm liên tục 1s. */

@@ -93,7 +93,7 @@ class BalanceSimTest {
         switch (pl.path()) {
             case KIEM -> {
                 c.add(cast("Q", Skill.KIEM_1, Skill.KIEM_1_COEF * A * cm, sl));
-                c.add(cast("E", Skill.KIEM_2, 3 * Skill.KIEM_2_COEF * A * cm, sl));
+                c.add(cast("E", Skill.KIEM_2, com.hukhong.skill.KiemSwords.GUARD_SWORDS * Skill.KIEM_2_COEF * A * cm, sl)); // 6 kiếm phản kích
                 c.add(cast("T", Skill.KIEM_ULT, 8 * Skill.KIEM_ULT_COEF * A * cm, sl));
             }
             case MA -> {

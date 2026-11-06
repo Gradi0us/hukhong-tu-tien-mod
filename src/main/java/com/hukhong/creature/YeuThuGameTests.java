@@ -52,13 +52,24 @@ public final class YeuThuGameTests {
     /** Mỗi loài 1 hồn kỹ: tung ra đều trúng mục tiêu (zombie bất động); nhện để lại mạng; thú to hơn sinh vật thường. */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void yeuThuSkillsHit(GameTestHelper h) {
+        java.util.List<CreatureKind> rest = new java.util.ArrayList<>(CreatureKind.BEASTS);
+        rest.remove(CreatureKind.HAC_GIAP_TE);
+        rest.remove(CreatureKind.HUYET_NHA_TRU);
+        skillsHit(h, rest);
+    }
+
+    /** Chiêu lao húc cần thế giới chạy: mỗi loài 1 test riêng, đặt giữa vùng test. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void yeuThuChargeRhino(GameTestHelper h) { skillsHit(h, java.util.List.of(CreatureKind.HAC_GIAP_TE)); }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void yeuThuChargeBoar(GameTestHelper h) { skillsHit(h, java.util.List.of(CreatureKind.HUYET_NHA_TRU)); }
+
+    private static void skillsHit(GameTestHelper h, java.util.List<CreatureKind> order) {
         var sl = h.getLevel();
         StringBuilder bad = new StringBuilder();
         java.util.List<Object[]> checks = new java.util.ArrayList<>();
         int x = 4;
-        // 2 loài lao húc cần thế giới chạy -> đặt đầu tiên, trong vùng test; các chiêu khác trúng ngay khi tung
-        java.util.List<CreatureKind> order = new java.util.ArrayList<>(java.util.List.of(CreatureKind.HAC_GIAP_TE, CreatureKind.HUYET_NHA_TRU));
-        for (CreatureKind k : CreatureKind.BEASTS) if (!order.contains(k)) order.add(k);
         for (CreatureKind k : order) {
             LinhQuai m = beast(h, k, YeuThuAge.Y1000, x);
             m.moveTo(m.getX(), m.getY(), m.getZ() + 2);

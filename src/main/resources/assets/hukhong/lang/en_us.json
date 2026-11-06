@@ -242,8 +242,8 @@
   "hukhong.configuration.colorblind.tooltip": "Switches exp/resource bars to the Okabe-Ito palette.",
   "hukhong.configuration.showHud": "Show cultivation HUD",
   "hukhong.configuration.showHud.tooltip": "Hides level/resource bars and the skill bar.",
-  "hukhong.skill.kiem_1": "Sword Qi Slash",
-  "hukhong.skill.kiem_2": "Chain Slash",
+  "hukhong.skill.kiem_1": "Heaven Sword Seal",
+  "hukhong.skill.kiem_2": "Guardian Swords",
   "hukhong.skill.kiem_ult": "Myriad Swords Return",
   "hukhong.skill.ma_1": "Blood Claw",
   "hukhong.skill.ma_2": "Demonic Qi Ward",
@@ -1546,8 +1546,8 @@
   "hukhong.skills.truong.desc": "Hold the Spirit Staff, left click: fires a spell bolt, range %s blocks, cooldown %ss.",
   "hukhong.skills.truong.dmg": "Damage: %s Spell Power x %s (coef) x %s (quality) = %s per bolt, ~%s per second",
   "hukhong.skills.truong.name": "Spirit Staff (basic attack)",
-  "hukhong.skills.kiem_1.desc": "Sword qi pierces 8 blocks (Sword Intent bone +25%), hits every target in line.",
-  "hukhong.skills.kiem_2.desc": "3 fan slashes, 6 block reach, 0.3s apart; each slash hits every target in the fan.",
+  "hukhong.skills.kiem_1.desc": "Sword nails fall from the sky onto up to 5 enemies in front (10 blocks), imprisoning them for 3 seconds.",
+  "hukhong.skills.kiem_2.desc": "6 guardian swords orbit you for 10 seconds: each hit taken consumes one, halves that damage and the sword strikes back at the attacker.",
   "hukhong.skills.kiem_ult.desc": "Toggle (T): rise 2 blocks, swords fly from behind you diagonally forward to strike every enemy within 5 blocks every %s s. While channeling and 3s after: Unstoppable (no knockback / crowd control, -30%% damage taken).",
   "hukhong.skills.kiem_ult.meta": "Cost %s%% max %s per second (~%s/s) - toggle lock %ss",
   "hukhong.skills.kiem_ult.dps": "Per second: %s pulses = %s",
@@ -2703,5 +2703,7 @@
   "entity.hukhong.bao_viem_tich": "Blaze Lizard",
   "item.hukhong.bao_viem_tich_spawn_egg": "Blaze Lizard Spawn Egg",
   "item.hukhong.bao_viem_tich_hach": "Blaze Lizard Core",
-  "hukhong.poi.mob.bao_viem_tich": "Blaze Lizard"
+  "hukhong.poi.mob.bao_viem_tich": "Blaze Lizard",
+  "hukhong.kiem.guard.on": "Guardian Swords: %s swords",
+  "hukhong.kiem.guard.off": "Guardian swords spent"
 }

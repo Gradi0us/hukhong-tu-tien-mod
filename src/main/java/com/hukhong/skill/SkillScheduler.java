@@ -23,6 +23,20 @@ public final class SkillScheduler {
 
     public static void later(int ticks, Runnable r) { INCOMING.add(new Task(new int[]{Math.max(1, ticks)}, r)); }
 
+    /** TEST: chạy action rồi thực thi ngay (theo thứ tự hẹn) mọi việc mà CHÍNH action đó hẹn giờ; không đụng việc của nơi khác. */
+    public static void runNow(Runnable action) {
+        int n0 = INCOMING.size();
+        action.run();
+        for (int guard = 0; guard < 8 && INCOMING.size() > n0; guard++) {
+            List<Task> mine = new ArrayList<>(INCOMING.subList(n0, INCOMING.size()));
+            INCOMING.subList(n0, INCOMING.size()).clear();
+            mine.sort(java.util.Comparator.comparingInt(t -> t.left[0]));
+            for (Task t : mine) {
+                try { t.run.run(); } catch (RuntimeException ex) { LOG.warn("SkillScheduler task failed", ex); }
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onTick(ServerTickEvent.Post e) {
         TASKS.addAll(INCOMING);

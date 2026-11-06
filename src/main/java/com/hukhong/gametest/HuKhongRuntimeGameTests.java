@@ -173,7 +173,8 @@ public final class HuKhongRuntimeGameTests {
         SkillService.state(p).stance = true;
         int before = p.getData(ModAttachments.CULTIVATION).resource();
         float hp = z.getHealth();
-        SkillService.cast(p, slot);
+        if (path == Path.KIEM && slot == 0) com.hukhong.skill.SkillScheduler.runNow(() -> SkillService.cast(p, slot)); // sát thương khi kiếm chạm đất
+        else SkillService.cast(p, slot);
         int after = p.getData(ModAttachments.CULTIVATION).resource();
         if (cost0(path, slot)) { /* MA_1 mien phi */ } else if (after >= before) h.fail(path + " slot " + slot + " khong tru tai nguyen: " + before + " -> " + after);
         if (path == Path.MA && slot == 2) { // Huyet Hai: sat thuong theo nhip qua SkillScheduler
@@ -189,7 +190,7 @@ public final class HuKhongRuntimeGameTests {
 
     // E cua Dao/The/Ma va T cua Dao/The/Ma la ho tro/buff (khong gay sat thuong); con lai deu gay sat thuong len muc tieu truoc mat.
     @GameTest(template = "empty") public static void skillKiemQ(GameTestHelper h) { skillCase(h, Path.KIEM, 0, true); }
-    @GameTest(template = "empty") public static void skillKiemE(GameTestHelper h) { skillCase(h, Path.KIEM, 1, true); }
+    @GameTest(template = "empty") public static void skillKiemE(GameTestHelper h) { skillCase(h, Path.KIEM, 1, false); } // Thủ Hộ Chi Kiếm: phòng ngự
     @GameTest(template = "empty") public static void skillKiemR(GameTestHelper h) { skillCase(h, Path.KIEM, 2, true); }
     @GameTest(template = "empty") public static void skillKiemT(GameTestHelper h) { skillCase(h, Path.KIEM, 3, true); }
     @GameTest(template = "empty") public static void skillDaoQ(GameTestHelper h) { skillCase(h, Path.DAO, 0, true); }
@@ -261,7 +262,7 @@ public final class HuKhongRuntimeGameTests {
         z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100000);
         z.setHealth(100000);
         SkillService.state(p).stance = true;
-        for (int i = 0; i < 3; i++) { java.util.Arrays.fill(SkillService.state(p).cooldownEnd, 0L); SkillService.cast(p, 0); }
+        for (int i = 0; i < 3; i++) { z.invulnerableTime = 0; com.hukhong.gates.DamageRules.hurtBySkill(p, z, 5f); } // 3 lần gây sát thương
         int st = com.hukhong.skill.KiemRend.stacks(z);
         if (st < 3) h.fail("moi lan gay sat thuong phai them 1 tang Xe Toac: " + st);
         float hp = z.getHealth();
@@ -311,6 +312,59 @@ public final class HuKhongRuntimeGameTests {
         if (want != Math.round(com.hukhong.core.CultivationService.expToNext(23) * 0.10)) { h.fail("Nguyen Khong 10% sai: " + want); return; }
         if (com.hukhong.currency.ShopService.nguyenKhongMult(1) != 1 || com.hukhong.currency.ShopService.nguyenKhongMult(50) != 26) { h.fail("gia Nguyen Khong khong tang theo cap"); return; }
         h.succeed();
+    }
+
+    private static net.minecraft.world.entity.monster.Husk kDummy(GameTestHelper h, double x, double z) {
+        var m = spawn(h, EntityType.HUSK, x, 1, z);
+        m.setNoAi(true);
+        m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(5000);
+        m.setHealth(5000);
+        return m;
+    }
+
+    /** Kiếm Q Thiên Kiếm Trấn: đúng 5 kẻ gần nhất phía trước trúng + bị giam (kéo đi vẫn bị giữ lại); kẻ phía sau không. */
+    @GameTest(template = "empty", timeoutTicks = 120)
+    public static void kiemQPinsFiveEnemies(GameTestHelper h) {
+        ServerPlayer p = fake(h, 30, Set.of(Path.KIEM));
+        place(h, p, 2, 1, 0.5);
+        java.util.List<net.minecraft.world.entity.monster.Husk> front = new java.util.ArrayList<>();
+        for (int i = 0; i < 7; i++) front.add(kDummy(h, 1 + (i % 3), 2.5 + i));
+        var back = kDummy(h, 2, -3);
+        com.hukhong.skill.KiemSwords.thienKiemTran(h.getLevel(), p);
+        h.runAfterDelay(25, () -> {
+            int pinned = 0;
+            for (var m : front) if (com.hukhong.skill.KiemSwords.pinned(m)) { pinned++; if (m.getHealth() >= 5000) { h.fail("bi giam nhung khong mat mau"); return; } }
+            if (pinned != 5) { h.fail("phai giam dung 5: " + pinned); return; }
+            if (com.hukhong.skill.KiemSwords.pinned(back)) { h.fail("giam ca ke phia sau"); return; }
+            var m0 = front.get(0);
+            Vec3 at = m0.position();
+            m0.setPos(at.x + 3, at.y, at.z);
+            h.runAfterDelay(2, () -> {
+                if (m0.position().distanceTo(at) > 0.3) { h.fail("thoat giam cam"); return; }
+                h.runAfterDelay(70, () -> {
+                    if (com.hukhong.skill.KiemSwords.pinned(m0)) h.fail("giam qua 3 giay");
+                    else h.succeed();
+                });
+            });
+        });
+    }
+
+    /** Kiếm E Thủ Hộ Chi Kiếm: 6 kiếm, mỗi đòn giảm 50% + phản kích kẻ đánh; hết kiếm thì không đỡ nữa. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void kiemEGuardBlocksAndCounters(GameTestHelper h) {
+        ServerPlayer p = fake(h, 30, Set.of(Path.KIEM));
+        place(h, p, 2, 1, 2);
+        var a = kDummy(h, 4, 4);
+        var lv = h.getLevel();
+        com.hukhong.skill.KiemSwords.thuHoKiem(lv, p);
+        if (com.hukhong.skill.KiemSwords.guardSwords(p) != com.hukhong.skill.KiemSwords.GUARD_SWORDS) { h.fail("khong co 6 kiem"); return; }
+        for (int i = 0; i < 6; i++)
+            if (Math.abs(com.hukhong.skill.KiemSwords.block(lv, p, a, null) - 0.5) > 1e-9) { h.fail("don " + i + " khong giam 50%"); return; }
+        if (com.hukhong.skill.KiemSwords.block(lv, p, a, null) != 1) { h.fail("het kiem van do"); return; }
+        h.runAfterDelay(10, () -> {
+            if (a.getHealth() >= 5000) h.fail("kiem khong phan kich");
+            else h.succeed();
+        });
     }
 
     @GameTest(template = "empty")
