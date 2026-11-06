@@ -58,6 +58,11 @@ public final class DevYeuTest {
         var server = mc.getSingleplayerServer();
         if (mc.player == null || mc.level == null || server == null) return;
         mc.options.pauseOnLostFocus = false;
+        if (!movedAway) { // chạy ngầm: đẩy cửa sổ ra ngoài màn hình, không che máy người dùng
+            movedAway = true;
+            long w = mc.getWindow().getWindow();
+            org.lwjgl.glfw.GLFW.glfwSetWindowPos(w, -6000, -6000);
+        }
         if (mc.screen != null && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen)) mc.setScreen(null);
         if (mc.isPaused()) return;
         t++;
@@ -74,83 +79,63 @@ public final class DevYeuTest {
             LOG.info("YEUTEST nearest forest {}", reg);
             sp.connection.teleport(reg.cx() + 0.5, 190, reg.cz() + 110.5, 180, 30);
         });
-        if (t == 500) shot("01_forest_air");
-        if (t == 505) server.execute(() -> {
-            int logs = 0;
-            BlockPos c = new BlockPos(reg.cx(), 0, reg.cz());
-            for (int dx = -40; dx <= 40; dx += 2) for (int dz = -40; dz <= 40; dz += 2) {
-                int y = lv.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.getX() + dx, c.getZ() + dz);
-                if (lv.getBlockState(new BlockPos(c.getX() + dx, y - 1, c.getZ() + dz)).is(BlockTags.LOGS)) logs++;
-            }
-            LOG.info("YEUTEST log columns near center = {} / 1681, biome={}", logs, lv.getBiome(c.atY(80)).getRegisteredName());
-            int y = lv.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, reg.cx() + 12, reg.cz() + 12);
-            sp.connection.teleport(reg.cx() + 12.5, y + 2, reg.cz() + 12.5, 135, -15);
-        });
-        if (t == 620) shot("02_forest_ground");
-        if (t == 625) server.execute(() -> {
-            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 300;
-            for (int dx = -40; dx <= 40; dx++) for (int dz = -10; dz <= 40; dz++)
+        // 2026-11-06: kiểm tra hình ảnh Thiên Kiếp + Kỳ Ngộ
+        final int y0 = 230, x0 = reg == null ? 0 : reg.cx(), z0 = reg == null ? 0 : reg.cz() + 300;
+        if (t == 480) server.execute(() -> {
+            for (int dx = -45; dx <= 45; dx++) for (int dz = -30; dz <= 45; dz++) {
                 lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
-            // 2026-11-06: kích thước theo năm - thú <= 7 khối, Yêu Thụ 16-20 khối
-            // 2026-11-06: bản thường / bản Hư Không xâm thực cạnh nhau
-            Object[][] show = {{CreatureKind.THU_YEU, YeuThuAge.Y1000, false}, {CreatureKind.THU_YEU, YeuThuAge.Y1000, true},
-                    {CreatureKind.THUC_NHAN_HOA, YeuThuAge.Y1000, true}, {CreatureKind.VAN_NIEN_THU_VUONG, YeuThuAge.Y1000, true}, {CreatureKind.QUY_CO, YeuThuAge.Y1000, true}};
-            int[] xs = {-30, -18, -6, 10, 28};
-            for (int i = 0; i < show.length; i++) {
-                LinhQuai a = DaiSamLam.spawnBeast(lv, (CreatureKind) show[i][0], new BlockPos(x0 + xs[i], y0, z0 + 10), (YeuThuAge) show[i][1], MobSpawnType.COMMAND);
-                a.setNoAi(true); a.setYRot(180); a.setYHeadRot(180); a.yBodyRot = 180;
-                a.setCorrupted((Boolean) show[i][2]);
-                LOG.info("YEUTEST {} scale={} height={}", a.getDisplayName().getString(), a.getScale(), a.getBbHeight());
+                for (int dy = 0; dy < 30; dy++) lv.setBlock(new BlockPos(x0 + dx, y0 + dy, z0 + dz), Blocks.AIR.defaultBlockState(), 2);
             }
-            sp.connection.teleport(x0 + 0.5, y0 + 9, z0 - 24.5, 0, 14);
+            sp.setGameMode(GameType.CREATIVE);
+            sp.getAbilities().flying = false; sp.onUpdateAbilities();
+            sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0);
         });
-        if (t == 748) server.execute(() -> {
-            for (var q : lv.getEntitiesOfClass(LinhQuai.class, sp.getBoundingBox().inflate(80)))
-                LOG.info("YEUTEST at-shot {} pos={} alive={} hu={}", q.getType().toShortString(), q.blockPosition(), q.isAlive(), q.corrupted());
-            for (var q : mc.level.entitiesForRendering()) if (q instanceof LinhQuai lq) LOG.info("YEUTEST client {} pos={} hu={}", lq.getType().toShortString(), lq.blockPosition(), lq.corrupted());
+        if (t == 520) server.execute(() -> com.hukhong.breakthrough.ThienKiep.begin(sp, 3));
+        if (t == 545) shot("10_kiep_intro_a");
+        if (t == 590) shot("11_kiep_intro_b");
+        if (t == 616) shot("12_kiep_intro_end");
+        if (t == 640) server.execute(() -> sp.connection.teleport(x0 + 0.5, y0 + 4, z0 - 6.5, 0, 35));
+        if (t >= 660 && t <= 900 && t % 60 == 0) shot("13_kiep_fight_" + t);
+        if (t >= 905 && t <= 1000 && t % 30 == 5) shot("14_kiep_demons_" + t);
+        if (t >= 1200 && t <= 1290 && t % 15 == 0) shot("15_kiep_final_" + t);
+        if (t == 1300) shot("16_kiep_after");
+        if (t == 1310) server.execute(() -> {
+            com.hukhong.currency.Wallet.give(sp, 500);
+            sp.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BREAD, 4));
+            var T = com.hukhong.story.kyngo.KyNgoType.values();
+            for (int i = 0; i < T.length; i++) KYNGO[i] = com.hukhong.story.kyngo.KyNgoService.startAt(sp, T[i], new BlockPos(x0 - 24 + i * 16, y0, z0 + 30));
+            sp.connection.teleport(x0 + 0.5, y0 + 6, z0 - 10.5, 0, 12);
         });
-        if (t == 750) shot("03_giant_sizes");
-        // 2026-11-06: test cây đổ - Thụ Yêu 10000 năm đi xuyên hàng sồi, boss Thụ Vương giữa cụm cây
-        if (t == 760) server.execute(() -> {
-            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 400;
-            for (int dx = -40; dx <= 40; dx++) for (int dz = -10; dz <= 50; dz++)
-                lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
-            var oak = lv.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
-                    .getHolderOrThrow(net.minecraft.data.worldgen.features.TreeFeatures.OAK).value();
-            int planted = 0;
-            for (int i = 0; i < 6; i++) if (oak.place(lv, lv.getChunkSource().getGenerator(), lv.random, new BlockPos(x0 - 12 + (i % 2) * 3, y0, z0 + 8 + i * 4))) planted++;
-            for (int i = 0; i < 10; i++) {
-                double an = i * Math.PI * 2 / 10;
-                if (oak.place(lv, lv.getChunkSource().getGenerator(), lv.random, new BlockPos(x0 + 22 + (int) (Math.cos(an) * 7), y0, z0 + 25 + (int) (Math.sin(an) * 7)))) planted++;
-            }
-            LOG.info("YEUTEST fell planted={} logs={}", planted, countLogs(lv, x0, y0, z0));
-            sp.connection.teleport(x0 + 12.5, y0 + 13, z0 - 10.5, -15, 22);
-        });
-        if (t == 800) shot("04_trees_before");
-        if (t == 900) server.execute(() -> {
-            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 400;
-            LinhQuai w = DaiSamLam.spawnBeast(lv, CreatureKind.THU_YEU, new BlockPos(x0 - 11, y0, z0 - 2), YeuThuAge.Y10000, MobSpawnType.COMMAND);
-            var z = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(lv);
-            z.moveTo(x0 - 11.5, y0, z0 + 40.5); lv.addFreshEntity(z);
-            w.getNavigation().moveTo(x0 - 11.5, y0, z0 + 40.5, 1.4);
-            fellWalker = w;
-            LinhQuai boss = DaiSamLam.spawnBeast(lv, CreatureKind.VAN_NIEN_THU_VUONG, new BlockPos(x0 + 22, y0, z0 + 25), YeuThuAge.Y1000, MobSpawnType.COMMAND);
-            boss.setNoAi(true);
-            spawnedAt = System.currentTimeMillis();
-        });
-        if (spawnedAt > 0 && shotIdx < FALL_SHOTS.length && System.currentTimeMillis() - spawnedAt >= FALL_SHOTS[shotIdx]) shot("05_fall_" + FALL_SHOTS[shotIdx++] + "ms");
-        if (t > 900 && t < 1100 && t % 10 == 0 && fellWalker != null) server.execute(() -> {
-            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 400;
-            if (fellWalker.getNavigation().isDone()) fellWalker.getNavigation().moveTo(x0 - 11.5, y0, z0 + 40.5, 1.4);
-        });
-        if (t == 1100) server.execute(() -> {
-            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 400;
-            LOG.info("YEUTEST fell after logs={} walkerZ={}", countLogs(lv, x0, y0, z0), fellWalker == null ? -1 : fellWalker.getZ() - z0);
-        });
-        if (t == 1105) shot("06_trees_after");
-        if (t == 1130) { LOG.info("YEUTEST done"); mc.stop(); }
+        if (t == 1360) shot("20_kyngo_columns");
+        for (int i = 0; i < 4; i++) {
+            final int k = i;
+            int base = 1380 + i * 140;
+            if (t == base) server.execute(() -> {
+                var o = KYNGO[k].origin;
+                sp.connection.teleport(o.getX() + 0.5, y0, o.getZ() - 6.5, 0, 15);
+            });
+            if (t == base + 30) shot("2" + (k + 1) + "_reveal_" + k);
+            if (t == base + 85) server.execute(() -> {
+                var o = KYNGO[k].origin;
+                sp.connection.teleport(o.getX() + 0.5, y0 + 1.5, o.getZ() - 5.5, 0, 18);
+            });
+            if (t == base + 95) shot("3" + (k + 1) + "_scene_" + k);
+            if (t == base + 100) server.execute(() -> {
+                var in = KYNGO[k];
+                switch (in.type) {
+                    case LAO_NHAN -> com.hukhong.story.kyngo.KyNgoService.resolve(sp, in.token, "help");
+                    case DONG_PHU -> { for (var u : in.guards) { if (lv.getEntity(u) instanceof net.minecraft.world.entity.LivingEntity le) le.kill(); } }
+                    case THI_THE -> com.hukhong.story.kyngo.KyNgoService.resolve(sp, in.token, "search");
+                    case LINH_THU -> com.hukhong.story.kyngo.KyNgoService.resolve(sp, in.token, "free");
+                }
+            });
+            if (t == base + 106) shot("4" + (k + 1) + "_outcome_" + k);
+        }
+        if (t == 1960) { LOG.info("YEUTEST done"); mc.stop(); }
     }
 
+    private static final com.hukhong.story.kyngo.KyNgoInstance[] KYNGO = new com.hukhong.story.kyngo.KyNgoInstance[4];
+    private static boolean movedAway;
     private static LinhQuai fellWalker;
     private static volatile long spawnedAt;
     private static int shotIdx;

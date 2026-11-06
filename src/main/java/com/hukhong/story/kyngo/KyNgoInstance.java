@@ -30,6 +30,9 @@ public final class KyNgoInstance {
     public boolean rewarded;
     /** Đã có lựa chọn: không nhận lựa chọn nữa, chờ hết hạn để dọn. */
     public boolean resolved;
+    /** Người chơi đã tới gần (đã xem cảnh giới thiệu, đã nhận lựa chọn). */
+    public boolean approached;
+    public int age;
 
     KyNgoInstance(String token, KyNgoType type, ServerPlayer owner, ServerLevel level, BlockPos origin, long startTick) {
         this.token = token;

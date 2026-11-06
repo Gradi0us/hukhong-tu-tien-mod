@@ -58,7 +58,7 @@ public final class KyNgoService {
         if (!BY_TOKEN.isEmpty()) {
             for (KyNgoInstance i : List.copyOf(BY_TOKEN.values())) {
                 if (now - i.startTick >= LIFETIME_TICKS) finish(i);
-                else if (!i.resolved) KyNgoEncounters.tick(i);
+                else KyNgoEncounters.tick(i);
             }
         }
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {

@@ -49,13 +49,15 @@ public final class ThienKiep {
     static final String MOB_TAG = "hk_thien_kiep_mob";
     /** Thời gian: 30s + 1s/mốc, tối đa 45s. Tâm ma xuất hiện giữa kiếp. */
     static final int BASE_SECONDS = 30, MAX_SECONDS = 45;
-    static final int STRIKE_EVERY = 60, TELEGRAPH = 20, FIRST_STRIKE = 40;
+    /** INTRO: cảnh mở đầu (máy quay ngước lên lôi vân), chưa có sét. FINAL: lôi kiếp cuối trước khi kết thúc. */
+    static final int INTRO = 100, STRIKE_EVERY = 60, TELEGRAPH = 20, FIRST_STRIKE = INTRO + 30, FINAL_WARN = 50, CLOUD_H = 18;
     static final double MAX_DIST = 40.0, STRIKE_RADIUS = 2.5;
     static final int WEAKNESS_TICKS = 600;
 
     private static final class Strike {
-        final Vec3 pos; final long fireAt;
-        Strike(Vec3 pos, long fireAt) { this.pos = pos; this.fireAt = fireAt; }
+        final Vec3 pos; final long fireAt; final float radius; final boolean last;
+        Strike(Vec3 pos, long fireAt) { this(pos, fireAt, (float) STRIKE_RADIUS, false); }
+        Strike(Vec3 pos, long fireAt, float radius, boolean last) { this.pos = pos; this.fireAt = fireAt; this.radius = radius; this.last = last; }
     }
 
     private static final class Session {
@@ -63,7 +65,7 @@ public final class ThienKiep {
         final int duration; final ServerBossEvent bar;
         final List<Strike> strikes = new ArrayList<>();
         final List<UUID> mobs = new ArrayList<>();
-        int ticks; boolean spawnedMobs; int nextStrikeAt = FIRST_STRIKE;
+        int ticks; boolean spawnedMobs, finalWave; int nextStrikeAt = FIRST_STRIKE;
         Session(ServerPlayer p, int milestone, int duration) {
             this.player = p.getUUID();
             this.milestone = milestone;
@@ -91,11 +93,14 @@ public final class ThienKiep {
     public static boolean begin(ServerPlayer p, int milestone) {
         if (active(p) || isPassed(p, milestone)) return false;
         int seconds = Math.min(MAX_SECONDS, BASE_SECONDS + milestone);
-        Session s = new Session(p, milestone, seconds * 20);
+        Session s = new Session(p, milestone, INTRO + seconds * 20);
         SESSIONS.put(p.getUUID(), s);
         s.bar.addPlayer(p);
         p.sendSystemMessage(Component.translatable("hukhong.kiep.start", seconds));
-        s.level.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 1f, 0.8f);
+        s.level.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 1.6f, 0.5f);
+        s.level.playSound(null, p.blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.WEATHER, 0.5f, 0.5f);
+        if (s.level.dimensionType().hasSkyLight()) s.level.setWeatherParameters(0, s.duration + 40, true, true); // trời đất biến sắc
+        ThienKiepFx.intro(p, milestone);
         return true;
     }
 
@@ -108,6 +113,7 @@ public final class ThienKiep {
         p.getPersistentData().putInt(PASS_KEY, m);
         p.setHealth(p.getMaxHealth());
         BreakthroughEffects.play(p, CultivationService.get(p));
+        ThienKiepFx.success(p, s.start);
         p.sendSystemMessage(Component.translatable("hukhong.kiep.pass"));
     }
 
@@ -117,14 +123,19 @@ public final class ThienKiep {
         if (s == null) return;
         cleanup(s, p.server);
         if (debuff && p.isAlive()) p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, WEAKNESS_TICKS, 1, false, true));
+        ThienKiepFx.failure(p, s.level, s.start);
         p.sendSystemMessage(Component.translatable("hukhong.kiep.fail", Component.translatable(reasonKey)));
     }
 
     private static void cleanup(Session s, MinecraftServer srv) {
         s.bar.removeAllPlayers();
+        if (s.level.dimensionType().hasSkyLight()) s.level.setWeatherParameters(12000, 0, false, false); // mây tan
         for (UUID id : s.mobs) {
             var e = s.level.getEntity(id);
-            if (e != null) e.discard();
+            if (e != null) {
+                s.level.sendParticles(ParticleTypes.SQUID_INK, e.getX(), e.getY() + 0.8, e.getZ(), 25, 0.4, 0.6, 0.4, 0.05);
+                e.discard();
+            }
         }
         s.mobs.clear();
     }
@@ -152,12 +163,23 @@ public final class ThienKiep {
         s.bar.setProgress(Math.min(1f, s.ticks / (float) s.duration));
         ServerLevel lv = s.level;
 
-        if (s.ticks % 20 == 0) Fx.shake(lv, p.position(), 0.4f, 20, 32f);
-        if (s.ticks % 10 == 0)
-            lv.sendParticles(ParticleTypes.LARGE_SMOKE, p.getX(), p.getY() + 4, p.getZ(), 12, 3, 1, 3, 0.02);
-        if (s.ticks % 80 == 0) {
-            Fx.play(lv, FxType.STORM_CLOUD, p.position(), Vec3.ZERO, 16f, 0x1C1C2C, 100);
+        if (s.ticks % 20 == 0) Fx.shake(lv, p.position(), s.ticks < INTRO ? 0.25f : 0.4f, 20, 32f);
+        if (s.ticks % 80 == 1) {
+            Fx.play(lv, FxType.STORM_CLOUD, s.start.add(0, CLOUD_H - 6, 0), Vec3.ZERO, 22f, 0x1C1C2C, 100);
             lv.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 0.6f, 1.2f);
+        }
+        ThienKiepFx.vortex(lv, s.start, s.ticks, Math.min(1f, s.ticks / (float) INTRO));
+        if (s.ticks % 30 == 15) ThienKiepFx.distantFlash(lv, s.start);
+        for (UUID id : s.mobs) { var m = lv.getEntity(id); if (m != null && s.ticks % 3 == 0) ThienKiepFx.demonAura(lv, m); }
+        for (Strike k : s.strikes) ThienKiepFx.charge(lv, k.pos, 1f - (k.fireAt - s.ticks) / (float) (k.last ? FINAL_WARN : TELEGRAPH), k.last);
+        if (s.ticks < INTRO) return; // cảnh mở đầu: chỉ có mây tụ
+        if (!s.finalWave && s.ticks >= s.duration - FINAL_WARN - 10) { // lôi kiếp cuối: một cột sét lớn nhắm vào chỗ người chơi đứng
+            s.finalWave = true;
+            s.strikes.add(new Strike(p.position(), s.duration - 10, 4.5f, true));
+            Fx.groundRing(lv, p, p.position(), 4.5f, 0xFFF2B0, FINAL_WARN + 2);
+            Fx.rune(lv, p, p.position(), 5f, 0xFFE070, FINAL_WARN + 2, 8);
+            ThienKiepFx.title(p, "hukhong.kiep.final_title", "hukhong.kiep.final_sub", 0xFFE070);
+            lv.playSound(null, p.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.WEATHER, 2f, 0.5f);
         }
 
         if (!s.spawnedMobs && s.ticks >= s.duration / 2) {
@@ -165,7 +187,7 @@ public final class ThienKiep {
             spawnHeartDemons(p, s);
         }
 
-        if (s.ticks >= FIRST_STRIKE && s.ticks >= s.nextStrikeAt) {
+        if (!s.finalWave && s.ticks >= FIRST_STRIKE && s.ticks >= s.nextStrikeAt) {
             s.nextStrikeAt += STRIKE_EVERY;
             scheduleWave(p, s);
         }
@@ -199,11 +221,11 @@ public final class ThienKiep {
         ServerLevel lv = s.level;
         LightningBolt b = EntityType.LIGHTNING_BOLT.create(lv);
         if (b != null) { b.moveTo(k.pos); b.setVisualOnly(true); lv.addFreshEntity(b); }
-        Fx.play(lv, FxType.LIGHTNING_BOLT, k.pos, Vec3.ZERO, 1.2f, 0xB8D8FF);
-        lv.sendParticles(ParticleTypes.ELECTRIC_SPARK, k.pos.x, k.pos.y + 0.5, k.pos.z, 30, 0.8, 0.5, 0.8, 0.1);
+        Fx.play(lv, FxType.LIGHTNING_BOLT, k.pos, Vec3.ZERO, k.last ? 3f : 1.2f, 0xB8D8FF);
+        ThienKiepFx.impact(p, lv, k.pos, k.radius, k.last);
         double dx = p.getX() - k.pos.x, dz = p.getZ() - k.pos.z;
-        if (dx * dx + dz * dz <= STRIKE_RADIUS * STRIKE_RADIUS)
-            p.hurt(p.damageSources().lightningBolt(), p.getMaxHealth() * strikeFraction(s.milestone));
+        if (dx * dx + dz * dz <= k.radius * k.radius)
+            p.hurt(p.damageSources().lightningBolt(), p.getMaxHealth() * strikeFraction(s.milestone) * (k.last ? 1.6f : 1f));
     }
 
     /** Tâm Ma: 1..3 Vex thù địch quanh người chơi, gắn tag để dọn khi kết thúc. */
@@ -221,8 +243,11 @@ public final class ThienKiep {
             s.level.addFreshEntity(m);
             m.setTarget(p);
             s.mobs.add(m.getUUID());
+            ThienKiepFx.demonRise(s.level, m);
         }
         s.level.playSound(null, p.blockPosition(), SoundEvents.AMBIENT_CAVE.value(), SoundSource.HOSTILE, 1f, 0.7f);
+        s.level.playSound(null, p.blockPosition(), SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.HOSTILE, 1.5f, 0.6f);
+        ThienKiepFx.title(p, "", "hukhong.kiep.tam_ma_sub", 0xC060FF);
     }
 
     // ---------------------------------------------------------------- sự kiện thoát / chết / dừng

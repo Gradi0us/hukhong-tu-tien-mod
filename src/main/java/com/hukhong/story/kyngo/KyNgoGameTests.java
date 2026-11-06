@@ -144,11 +144,11 @@ public final class KyNgoGameTests {
         ServerPlayer p = player(h, abs);
         KyNgoInstance i = KyNgoService.startAt(p, KyNgoType.LINH_THU, abs);
         if (!(i.level.getEntity(i.main) instanceof LinhThu beast)) { h.fail("khong co linh thu"); return; }
-        if (!i.level.getBlockState(abs.east()).is(Blocks.OAK_FENCE)) { h.fail("khong co long nhot: " + i.level.getBlockState(abs.east()) + " placed=" + i.placed.keySet()); return; }
+        if (!i.level.getBlockState(abs.east()).is(Blocks.SPRUCE_FENCE)) { h.fail("khong co long nhot: " + i.level.getBlockState(abs.east()) + " placed=" + i.placed.keySet()); return; }
         if (KyNgoService.resolve(p, i.token, "free") != KyNgoService.Result.OK) { h.fail("free khong thanh cong"); return; }
         if (!beast.isTame() || !p.getUUID().equals(beast.getOwnerUUID())) { h.fail("linh thu chua thuoc ve nguoi choi"); return; }
         if (!beast.isAlive()) { h.fail("linh thu bi xoa"); return; }
-        if (i.level.getBlockState(abs.east()).is(Blocks.OAK_FENCE)) { h.fail("long nhot khong duoc go"); return; }
+        if (i.level.getBlockState(abs.east()).is(Blocks.SPRUCE_FENCE)) { h.fail("long nhot khong duoc go"); return; }
         beast.discard();
         h.succeed();
     }
