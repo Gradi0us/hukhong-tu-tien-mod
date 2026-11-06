@@ -95,6 +95,8 @@ final class KyNgoEncounters {
         return -1;
     }
 
+    static int ProcKitHash(BlockPos o, int dx, int dy, int dz) { return Math.abs(com.hukhong.structures.ProcKit.hash(o.getX() + dx, o.getY() + dy, o.getZ() + dz, 77)); }
+
     static net.minecraft.nbt.ListTag rot(float x, float y, float z) {
         var l = new net.minecraft.nbt.ListTag();
         for (float v : new float[]{x, y, z}) l.add(net.minecraft.nbt.FloatTag.valueOf(v));
@@ -152,6 +154,15 @@ final class KyNgoEncounters {
             if (corner) place(i, o.offset(dx, 3, dz), Blocks.SOUL_LANTERN.defaultBlockState());
             else if (rr.nextInt(4) == 0) place(i, o.offset(dx, 2, dz), Blocks.COBWEB.defaultBlockState());
         }
+        // núi đá bao ngoài vòng tường: vòm đá rêu, chừa cửa phía bắc
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) for (int dy = 0; dy <= 4; dy++) {
+            double r = Math.sqrt(dx * dx + dz * dz + dy * dy * 1.6);
+            if (r < 3.1 || r > 4.3 || (dz < 0 && Math.abs(dx) <= 1 && dy <= 2)) continue;
+            int hs = ProcKitHash(o, dx, dy, dz);
+            place(i, o.offset(dx, dy, dz), (hs % 3 == 0 ? Blocks.MOSSY_COBBLESTONE : hs % 3 == 1 ? Blocks.STONE : Blocks.ANDESITE).defaultBlockState());
+        }
+        place(i, o.offset(-2, 0, -4), Blocks.SOUL_LANTERN.defaultBlockState());
+        place(i, o.offset(2, 0, -4), Blocks.SOUL_LANTERN.defaultBlockState());
         place(i, o.offset(-1, 2, -2), Blocks.STONE_BRICK_SLAB.defaultBlockState()); // mái vòm cửa
         place(i, o.offset(0, 2, -2), Blocks.CHISELED_STONE_BRICKS.defaultBlockState());
         place(i, o.offset(1, 2, -2), Blocks.STONE_BRICK_SLAB.defaultBlockState());

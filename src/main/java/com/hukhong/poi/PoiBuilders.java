@@ -36,15 +36,15 @@ public final class PoiBuilders {
     public static int half(String b) {
         return switch (b) {
             case "stele" -> 5; case "shrine" -> 6; case "spring" -> 7; case "inn" -> 13; case "waterfall" -> 8; case "rift" -> 5;
-            case "cave" -> 11; case "battlefield" -> 15; case "grave" -> 5; case "ruin" -> 17; case "sword_mound" -> 13;
-            case "abyss" -> 13; case "dao_quan" -> 10; case "arena" -> 11; case "wuxing" -> 9; default -> 6;
+            case "cave" -> 12; case "battlefield" -> 18; case "grave" -> 9; case "ruin" -> 20; case "sword_mound" -> 14;
+            case "abyss" -> 13; case "dao_quan" -> 11; case "arena" -> 12; case "wuxing" -> 10; default -> 6;
         };
     }
 
     public static int height(String b) {
         return switch (b) {
-            case "inn" -> 14; case "waterfall" -> 12; case "sword_mound" -> 11; case "dao_quan" -> 10; case "cave" -> 10; case "ruin" -> 9;
-            case "battlefield", "abyss", "shrine", "stele" -> 8; default -> 6;
+            case "inn" -> 14; case "waterfall" -> 12; case "sword_mound" -> 20; case "dao_quan" -> 14; case "cave" -> 12; case "ruin" -> 12;
+            case "battlefield" -> 12; case "grave" -> 10; case "abyss", "shrine", "stele" -> 9; case "arena" -> 8; case "wuxing" -> 8; default -> 6;
         };
     }
 
@@ -105,7 +105,22 @@ public final class PoiBuilders {
             case "wuxing" -> wuxing(c);
             default -> stele(c);
         }
+        connect(l, cx, cz, half, y0, height(d.builder()));
         return new Built(y0, c.acts);
+    }
+
+    /** Nối hàng rào / tường / song sắt / kính (ProcKit đặt không cập nhật hàng xóm nên chúng thành cột rời). */
+    static void connect(ServerLevel l, int cx, int cz, int half, int y0, int h) {
+        BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
+        for (int dx = -half; dx <= half; dx++) for (int dz = -half; dz <= half; dz++) for (int y = y0 - 7; y <= y0 + h + 3; y++) {
+            BlockState st = l.getBlockState(mp.set(cx + dx, y, cz + dz));
+            Block b = st.getBlock();
+            if (b instanceof net.minecraft.world.level.block.FenceBlock || b instanceof net.minecraft.world.level.block.WallBlock
+                    || b instanceof net.minecraft.world.level.block.IronBarsBlock || b instanceof net.minecraft.world.level.block.StairBlock) {
+                BlockState n = Block.updateFromNeighbourShapes(st, l, mp);
+                if (n != st) l.setBlock(mp, n, 2 | 16);
+            }
+        }
     }
 
     /** Ngu hanh: Moc Hoa Tho Kim Thuy. */
@@ -159,6 +174,89 @@ public final class PoiBuilders {
             s(dx + face.getStepX(), 1, dz + face.getStepZ(), Blocks.RED_BED.defaultBlockState().setValue(BedBlock.FACING, face).setValue(BedBlock.PART, BedPart.HEAD));
         }
         void ladder(int dx, int dy, int dz, Direction face) { s(dx, dy, dz, Blocks.LADDER.defaultBlockState().setValue(LadderBlock.FACING, face)); }
+
+        // ---------------------------------------------------------- trang trí hoành tráng (2026-11-06)
+        void st(int dx, int dy, int dz, Block stairs, Direction facing) { ProcKit.stair(l, cx + dx, y0 + dy, cz + dz, stairs, facing); }
+        void stUp(int dx, int dy, int dz, Block stairs, Direction facing) {
+            s(dx, dy, dz, stairs.defaultBlockState().setValue(net.minecraft.world.level.block.StairBlock.FACING, facing)
+                    .setValue(net.minecraft.world.level.block.StairBlock.HALF, net.minecraft.world.level.block.state.properties.Half.TOP));
+        }
+        boolean air(int dx, int dy, int dz) { return l.getBlockState(new BlockPos(cx + dx, y0 + dy, cz + dz)).isAir(); }
+
+        /** Đèn đá kiểu cổ: chân tường đá, mâm phiến, đèn, nắp. */
+        void stoneLantern(int dx, int dz) {
+            b(dx, 0, dz, Blocks.STONE_BRICK_WALL); b(dx, 1, dz, Blocks.STONE_BRICK_WALL);
+            b(dx, 2, dz, Blocks.CHISELED_STONE_BRICKS); b(dx, 3, dz, Blocks.LANTERN);
+            s(dx, 4, dz, Blocks.STONE_BRICK_SLAB.defaultBlockState());
+        }
+
+        /** Lò lửa: đế đá đen, lửa hồn / lửa thường, xích treo bốn góc. */
+        void brazier(int dx, int dz, boolean soul) {
+            b(dx, 0, dz, Blocks.POLISHED_BLACKSTONE_BRICKS); b(dx, 1, dz, Blocks.POLISHED_BLACKSTONE_WALL);
+            s(dx, 2, dz, (soul ? Blocks.SOUL_CAMPFIRE : Blocks.CAMPFIRE).defaultBlockState());
+        }
+
+        /** Cổng tam quan (bài phường): 2 trụ, 2 xà, mái ngói hai tầng, biển hiệu giữa, đèn treo. Trục theo X tại hàng z. */
+        void paifang(int z, int w, int h, Block post, Block beam, Block roofStair, Block roofFull) {
+            for (int sx = -1; sx <= 1; sx += 2) {
+                f(sx * w, 0, z, sx * w, h, z, post);
+                b(sx * w, 0, z - 1, Blocks.POLISHED_ANDESITE); b(sx * w, 0, z + 1, Blocks.POLISHED_ANDESITE); // chân đế
+                st(sx * w, 1, z - 1, Blocks.POLISHED_ANDESITE_STAIRS, Direction.SOUTH);
+                st(sx * w, 1, z + 1, Blocks.POLISHED_ANDESITE_STAIRS, Direction.NORTH);
+            }
+            f(-w, h - 1, z, w, h - 1, z, beam);
+            f(-w - 1, h + 1, z, w + 1, h + 1, z, beam);
+            for (int x = -w - 2; x <= w + 2; x++) { st(x, h + 2, z - 1, roofStair, Direction.SOUTH); st(x, h + 2, z + 1, roofStair, Direction.NORTH); b(x, h + 2, z, roofFull); }
+            st(-w - 3, h + 2, z, roofStair, Direction.EAST); st(w + 3, h + 2, z, roofStair, Direction.WEST);
+            for (int x = -1; x <= 1; x++) { st(x, h + 3, z - 1, roofStair, Direction.SOUTH); st(x, h + 3, z + 1, roofStair, Direction.NORTH); b(x, h + 3, z, roofFull); }
+            b(0, h, z, Blocks.CHISELED_STONE_BRICKS); b(-1, h, z, Blocks.GOLD_BLOCK); b(1, h, z, Blocks.GOLD_BLOCK); // biển hiệu
+            ProcKit.hangLantern(l, cx - w + 1, y0 + h - 2, cz + z); ProcKit.hangLantern(l, cx + w - 1, y0 + h - 2, cz + z);
+        }
+
+        /** Gạch vụn rải rác trong bán kính r. */
+        void rubble(int r, int count, int salt) {
+            for (int i = 0; i < count; i++) {
+                int hx = h(i, salt, 1), hz = h(i, salt, 2);
+                int dx = hx % (2 * r + 1) - r, dz = hz % (2 * r + 1) - r;
+                if (dx * dx + dz * dz > r * r || !air(dx, 0, dz)) continue;
+                Block b = switch (hx % 5) { case 0 -> Blocks.COBBLESTONE_SLAB; case 1 -> Blocks.MOSSY_COBBLESTONE; case 2 -> Blocks.CRACKED_STONE_BRICKS; case 3 -> Blocks.STONE_BRICK_SLAB; default -> Blocks.MOSSY_STONE_BRICK_SLAB; };
+                b(dx, 0, dz, b);
+            }
+        }
+
+        /** Cây khô: thân gỗ sẫm, cành rào chĩa ra. */
+        void deadTree(int dx, int dz, int ht) {
+            f(dx, 0, dz, dx, ht, dz, Blocks.DARK_OAK_LOG);
+            b(dx + 1, ht - 1, dz, Blocks.DARK_OAK_FENCE); b(dx + 2, ht, dz, Blocks.DARK_OAK_FENCE);
+            b(dx - 1, ht - 2, dz, Blocks.DARK_OAK_FENCE); b(dx, ht - 1, dz + 1, Blocks.DARK_OAK_FENCE); b(dx, ht + 1, dz, Blocks.DARK_OAK_FENCE);
+        }
+
+        /** Kiếm cắm đất: lưỡi song sắt cao {@code blade}, chắn kiếm xích nằm ngang, núm lõi nặng. */
+        void plantedSword(int dx, int dz, int blade) {
+            f(dx, 0, dz, dx, blade - 1, dz, Blocks.IRON_BARS);
+            s(dx, blade, dz, Blocks.CHAIN.defaultBlockState().setValue(net.minecraft.world.level.block.ChainBlock.AXIS, h(dx, 7, dz) % 2 == 0 ? Direction.Axis.X : Direction.Axis.Z));
+            b(dx, blade + 1, dz, Blocks.HEAVY_CORE);
+        }
+
+        /** Sọ xoay ngẫu nhiên. */
+        void skull(int dx, int dy, int dz) {
+            s(dx, dy, dz, Blocks.SKELETON_SKULL.defaultBlockState().setValue(net.minecraft.world.level.block.SkullBlock.ROTATION, h(dx, dy, dz) % 16));
+        }
+
+        /** Tượng kỳ lân đá canh cửa (nhìn về {@code face}). */
+        void guardian(int dx, int dz, Direction face) {
+            b(dx, 0, dz, Blocks.POLISHED_ANDESITE); b(dx, 1, dz, Blocks.POLISHED_DEEPSLATE);
+            st(dx, 2, dz, Blocks.POLISHED_DEEPSLATE_STAIRS, face.getOpposite());
+            b(dx + face.getStepX(), 1, dz + face.getStepZ(), Blocks.POLISHED_DEEPSLATE_WALL);
+            b(dx, 3, dz, Blocks.DEEPSLATE_TILE_SLAB);
+        }
+
+        /** Cờ chiến trên cán cao. */
+        void warBanner(int dx, int dz, int ht, boolean red) {
+            f(dx, 0, dz, dx, ht, dz, Blocks.DARK_OAK_FENCE);
+            s(dx, ht + 1, dz, (red ? Blocks.RED_BANNER : Blocks.BLACK_BANNER).defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.BannerBlock.ROTATION, h(dx, ht, dz) % 16));
+        }
     }
 
     // ------------------------------------------------------------------ A1 Bia Da
@@ -172,6 +270,13 @@ public final class PoiBuilders {
         c.post(-2, 1); c.post(2, 1);
         c.act("stele", 0, 2, 0);
         ProcKit.decay(c.l, c.cx, c.cz, c.y0, 4, 5, c.seed);
+        // bệ bậc thềm, mái che, đèn đá, rùa đội bia
+        for (int k = -3; k <= 3; k++) { c.st(k, -1, 4, Blocks.STONE_BRICK_STAIRS, Direction.NORTH); }
+        c.b(0, 0, 1, Blocks.MOSSY_STONE_BRICKS); c.st(0, 0, 2, Blocks.STONE_BRICK_STAIRS, Direction.NORTH); // đầu rùa
+        c.b(-1, 0, -1, Blocks.MOSSY_STONE_BRICKS); c.b(1, 0, -1, Blocks.MOSSY_STONE_BRICKS);
+        c.stoneLantern(-3, -2); c.stoneLantern(3, -2);
+        for (int x = -2; x <= 2; x++) { c.st(x, 5, -1, Blocks.DARK_OAK_STAIRS, Direction.SOUTH); c.st(x, 5, 1, Blocks.DARK_OAK_STAIRS, Direction.NORTH); c.b(x, 5, 0, Blocks.DARK_OAK_PLANKS); }
+        c.b(-2, 4, 0, Blocks.DARK_OAK_FENCE); c.b(2, 4, 0, Blocks.DARK_OAK_FENCE);
     }
 
     // ------------------------------------------------------------------ A4 Tho Dia Mieu
@@ -190,6 +295,10 @@ public final class PoiBuilders {
         c.f(-4, 4, 3, 4, 4, 3, Blocks.RED_TERRACOTTA);
         c.f(0, -1, 1, 0, -1, 5, Blocks.DIRT_PATH);
         c.act("offer", 0, 2, -2);
+        // cổng tam quan đỏ, đèn đá, lư hương lớn trước miếu
+        c.paifang(5, 3, 4, Blocks.STRIPPED_MANGROVE_LOG, Blocks.RED_TERRACOTTA, Blocks.DEEPSLATE_TILE_STAIRS, Blocks.DEEPSLATE_TILES);
+        c.stoneLantern(-3, 1); c.stoneLantern(3, 1);
+        c.b(0, 0, 1, Blocks.CAULDRON); c.s(0, 1, 1, Blocks.CANDLE.defaultBlockState().setValue(CandleBlock.CANDLES, 4).setValue(CandleBlock.LIT, true));
     }
 
     // ------------------------------------------------------------------ A5 Linh Tuyen
@@ -201,6 +310,11 @@ public final class PoiBuilders {
         }
         c.post(5, 0); c.post(-5, 0); c.post(0, 5); c.post(0, -5);
         c.act("spring", 0, -1, 0);
+        // đình nghỉ bốn trụ có mái trên Linh Tuyền, đèn đá, hoa sen
+        for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) c.f(sx * 4, 0, sz * 4, sx * 4, 4, sz * 4, Blocks.STRIPPED_CHERRY_LOG);
+        ProcKit.hipRoof(c.l, c.cx, c.cz, c.y0 + 5, 5, 5, Blocks.DEEPSLATE_TILE_STAIRS, Blocks.DEEPSLATE_TILES);
+        ProcKit.hangLantern(c.l, c.cx, c.y0 + 4, c.cz);
+        c.b(-1, 0, 2, Blocks.LILY_PAD); c.b(2, 0, -1, Blocks.LILY_PAD); c.b(0, 0, -2, Blocks.LILY_PAD);
     }
 
     // ------------------------------------------------------------------ A6 Khach Diem
@@ -249,6 +363,12 @@ public final class PoiBuilders {
         }
         c.b(-3, 0, 1, Blocks.AMETHYST_CLUSTER); c.b(3, 0, -1, Blocks.AMETHYST_CLUSTER); c.b(2, 0, 2, Blocks.AMETHYST_CLUSTER);
         c.act("rift", 0, 2, 0);
+        // đất nứt tím, tinh thể nhọn, mảnh hắc diệu thạch lơ lửng
+        for (int k = 0; k < 8; k++) {
+            double a = k * Math.PI / 4; int x = (int) Math.round(Math.cos(a) * 4), z = (int) Math.round(Math.sin(a) * 4);
+            c.b(x, -1, z, Blocks.CRYING_OBSIDIAN); c.b(x, 0, z, Blocks.AMETHYST_CLUSTER);
+        }
+        c.b(-3, 6, 0, Blocks.OBSIDIAN); c.b(3, 7, 1, Blocks.CRYING_OBSIDIAN); c.b(0, 8, -2, Blocks.OBSIDIAN);
     }
 
     /** Mo / dong khe nut (kinh chan tim giua khung). */
@@ -286,6 +406,14 @@ public final class PoiBuilders {
         c.lectern(0, 0, 2, Direction.NORTH);
         c.act("tablet", 0, 0, 2);
         for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) ProcKit.hangLantern(c.l, c.cx + sx * 3, c.y0 + 3, c.cz + (sz > 0 ? 3 : -2));
+        // cửa động: cổng đá khắc ngoài lối vào, đèn đá, nhũ đá trong động
+        c.f(-3, 0, 10, -2, 4, 10, Blocks.CHISELED_STONE_BRICKS); c.f(2, 0, 10, 3, 4, 10, Blocks.CHISELED_STONE_BRICKS);
+        c.f(-3, 3, 10, 3, 4, 10, Blocks.STONE_BRICKS); c.fa(-1, 0, 10, 1, 2, 10);
+        c.b(0, 4, 10, Blocks.GILDED_BLACKSTONE);
+        c.stoneLantern(-4, 11); c.stoneLantern(4, 11);
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -5; dz <= 5; dz++)
+            if (c.h(dx, 9, dz) % 11 == 0 && c.air(dx, 3, dz) && !c.air(dx, 4, dz))
+                c.s(dx, 3, dz, Blocks.POINTED_DRIPSTONE.defaultBlockState().setValue(net.minecraft.world.level.block.PointedDripstoneBlock.TIP_DIRECTION, Direction.DOWN));
     }
 
     /** Mo / dong an khoa phong bao vat. */
@@ -297,34 +425,108 @@ public final class PoiBuilders {
 
     // ------------------------------------------------------------------ A3 Co Chien Truong
     private static void battlefield(C c) {
-        for (int dx = -14; dx <= 14; dx++) for (int dz = -14; dz <= 14; dz++) {
-            if (dx * dx + dz * dz > 14 * 14) continue;
-            int hs = c.h(dx, 0, dz);
-            if (hs < 70) c.b(dx, -1, dz, Blocks.COARSE_DIRT);
-            else if (hs < 78) { int hh = 2 + (hs & 1); for (int k = 0; k < hh; k++) c.b(dx, k, dz, Blocks.IRON_BARS); }
-            else if (hs < 84) c.b(dx, 0, dz, Blocks.BONE_BLOCK);
-            else if (hs < 89) c.b(dx, 0, dz, Blocks.DEAD_BUSH);
-            else if (hs < 91) c.b(dx, 0, dz, Blocks.COBWEB);
-            else if (hs < 93) c.b(dx, 0, dz, Blocks.SKELETON_SKULL);
+        // nền đất cháy: đất thô, sỏi, đất hồn, bùn; hố bom có than hồng
+        for (int dx = -17; dx <= 17; dx++) for (int dz = -17; dz <= 17; dz++) {
+            int d2 = dx * dx + dz * dz;
+            if (d2 > 17 * 17) continue;
+            int hs = c.h(dx, -1, dz) % 100;
+            c.b(dx, -1, dz, hs < 30 ? Blocks.COARSE_DIRT : hs < 48 ? Blocks.GRAVEL : hs < 62 ? Blocks.SOUL_SOIL : hs < 72 ? Blocks.MUD : hs < 80 ? Blocks.PODZOL : Blocks.ROOTED_DIRT);
         }
-        c.f(0, 0, 0, 0, 6, 0, Blocks.DARK_OAK_FENCE);
-        c.b(0, 7, 0, Blocks.BLACK_BANNER);
-        for (int k = 0; k < 4; k++) { int dx = (k & 1) == 0 ? 6 : -6, dz = (k & 2) == 0 ? 6 : -6; c.b(dx, 0, dz, Blocks.DARK_OAK_FENCE); c.b(dx, 1, dz, Blocks.SOUL_LANTERN); }
+        int[][] craters = {{-9, -6, 3}, {8, 7, 3}, {10, -9, 2}, {-6, 10, 2}};
+        for (int[] k : craters) for (int dx = -k[2]; dx <= k[2]; dx++) for (int dz = -k[2]; dz <= k[2]; dz++) {
+            int d2 = dx * dx + dz * dz;
+            if (d2 > k[2] * k[2]) continue;
+            c.a(k[0] + dx, -1, k[1] + dz);
+            c.b(k[0] + dx, -2, k[1] + dz, d2 <= 1 ? Blocks.MAGMA_BLOCK : c.h(dx, -2, dz) % 3 == 0 ? Blocks.BLACKSTONE : Blocks.BASALT);
+            if (d2 == 0) c.s(k[0], -1, k[1], Blocks.CAMPFIRE.defaultBlockState()); // tàn lửa còn cháy
+        }
+        // tường thành đổ nát hai phía (răng cưa, lỗ thủng)
+        for (int sx = -1; sx <= 1; sx += 2) for (int dz = -12; dz <= 12; dz++) {
+            int ht = 2 + c.h(sx, 0, dz) % 4;
+            if (c.h(sx, 1, dz) % 7 == 0) continue; // lỗ thủng
+            for (int y = 0; y < ht; y++) c.b(sx * 15, y, dz, c.h(sx, y, dz) % 3 == 0 ? Blocks.CRACKED_STONE_BRICKS : c.h(sx, y, dz) % 3 == 1 ? Blocks.MOSSY_STONE_BRICKS : Blocks.STONE_BRICKS);
+            if (dz % 2 == 0 && ht >= 4) c.b(sx * 15, ht, dz, Blocks.STONE_BRICK_WALL);
+            if (c.h(sx, 2, dz) % 5 == 0) c.b(sx * 14, 0, dz, Blocks.COBBLESTONE_SLAB);
+        }
+        // đài tưởng niệm giữa: bệ ba bậc, trụ đá đen cao, cờ trên đỉnh, 4 lò lửa hồn
+        c.f(-3, 0, -3, 3, 0, 3, Blocks.POLISHED_BLACKSTONE_BRICKS);
+        c.f(-2, 1, -2, 2, 1, 2, Blocks.POLISHED_BLACKSTONE);
+        for (int k = -3; k <= 3; k++) { c.st(k, 1, -3, Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS, Direction.SOUTH); c.st(k, 1, 3, Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS, Direction.NORTH); }
+        for (int k = -2; k <= 2; k++) { c.st(-3, 1, k, Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS, Direction.EAST); c.st(3, 1, k, Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS, Direction.WEST); }
+        c.f(0, 2, 0, 0, 8, 0, Blocks.POLISHED_BLACKSTONE_BRICKS);
+        c.b(0, 4, 0, Blocks.CHISELED_POLISHED_BLACKSTONE); c.b(0, 7, 0, Blocks.GILDED_BLACKSTONE);
+        for (int k = 0; k < 4; k++) { Direction d = Direction.from2DDataValue(k); c.st(d.getStepX(), 2, d.getStepZ(), Blocks.POLISHED_BLACKSTONE_STAIRS, d.getOpposite()); }
+        c.warBanner(0, 0, 9, false);
+        c.b(0, 9, 0, Blocks.DARK_OAK_FENCE);
+        for (int k = 0; k < 4; k++) { int dx = (k & 1) == 0 ? 2 : -2, dz = (k & 2) == 0 ? 2 : -2; c.s(dx, 2, dz, Blocks.SOUL_LANTERN.defaultBlockState()); }
+        for (int k = 0; k < 4; k++) { int dx = (k & 1) == 0 ? 6 : -6, dz = (k & 2) == 0 ? 6 : -6; c.brazier(dx, dz, true); }
+        // cờ chiến rách, cọc giáo, rừng vũ khí cắm đất, đống xương, sọ
+        int[][] banners = {{-11, -12, 6, 1}, {11, -11, 5, 0}, {-12, 9, 5, 0}, {12, 11, 6, 1}, {-4, -14, 4, 1}, {5, 14, 4, 0}};
+        for (int[] bn : banners) c.warBanner(bn[0], bn[1], bn[2], bn[3] == 1);
+        for (int dx = -16; dx <= 16; dx++) for (int dz = -16; dz <= 16; dz++) {
+            int d2 = dx * dx + dz * dz;
+            if (d2 < 30 || d2 > 16 * 16 || !c.air(dx, 0, dz)) continue;
+            int hs = c.h(dx, 0, dz) % 1000;
+            if (hs < 22) c.plantedSword(dx, dz, 1 + hs % 2); // kiếm cắm đất
+            else if (hs < 34) { c.b(dx, 0, dz, Blocks.DARK_OAK_FENCE); c.b(dx, 1, dz, Blocks.DARK_OAK_FENCE); c.b(dx, 2, dz, Blocks.END_ROD); } // giáo
+            else if (hs < 37) c.s(dx, 0, dz, Blocks.BONE_BLOCK.defaultBlockState().setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS, hs % 2 == 0 ? Direction.Axis.X : Direction.Axis.Z));
+            else if (hs < 54) c.skull(dx, 0, dz);
+            else if (hs < 64) c.b(dx, 0, dz, Blocks.DEAD_BUSH);
+            else if (hs < 70) c.b(dx, 0, dz, Blocks.COBWEB);
+            else if (hs < 76) c.b(dx, 0, dz, Blocks.CHAIN);
+        }
+        // xác máy bắn đá đổ nghiêng
+        c.f(-9, 0, 2, -5, 0, 2, Blocks.DARK_OAK_LOG); c.f(-9, 0, 4, -5, 0, 4, Blocks.DARK_OAK_LOG);
+        c.f(-7, 1, 2, -7, 1, 4, Blocks.STRIPPED_DARK_OAK_LOG);
+        c.st(-8, 1, 3, Blocks.DARK_OAK_STAIRS, Direction.EAST); c.b(-6, 2, 3, Blocks.DARK_OAK_FENCE); c.b(-5, 3, 3, Blocks.DARK_OAK_FENCE); c.b(-4, 4, 3, Blocks.DARK_OAK_FENCE);
+        c.b(-3, 4, 3, Blocks.CAULDRON); c.b(-9, 1, 2, Blocks.DARK_OAK_FENCE); c.b(-9, 1, 4, Blocks.DARK_OAK_FENCE);
+        for (int k = 0; k < 3; k++) c.b(-10 + k, 0, 6, Blocks.COBBLESTONE); // đạn đá rơi
+        // trống trận vỡ, xe chở tên
+        c.b(7, 0, -4, Blocks.BARREL); c.b(8, 0, -4, Blocks.BARREL); c.b(7, 1, -4, Blocks.TARGET);
+        c.f(5, 0, -6, 9, 0, -6, Blocks.SPRUCE_SLAB);
+        c.rubble(16, 60, 7);
         c.act("center", 0, 0, 0);
     }
 
     // ------------------------------------------------------------------ A20 Mo Vo Danh
     private static void grave(C c) {
-        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
-            int d2 = dx * dx + dz * dz;
-            if (d2 <= 5) c.b(dx, 0, dz, Blocks.PODZOL);
-            if (d2 <= 1) c.b(dx, 1, dz, Blocks.COARSE_DIRT);
+        // sân mộ lát đá có tường thấp, gò mộ phía sau, bia cao có mái, thần đạo với đèn đá và kỳ lân
+        for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) {
+            int ad = Math.max(Math.abs(dx), Math.abs(dz));
+            if (ad <= 7) c.b(dx, -1, dz, c.h(dx, -1, dz) % 4 == 0 ? Blocks.MOSSY_STONE_BRICKS : c.h(dx, -1, dz) % 4 == 1 ? Blocks.CRACKED_STONE_BRICKS : Blocks.PODZOL);
+            if (ad == 8 && !(Math.abs(dx) <= 1 && dz == 8)) {
+                c.b(dx, 0, dz, Blocks.MOSSY_COBBLESTONE_WALL);
+                if ((dx + dz) % 4 == 0) { c.b(dx, 1, dz, Blocks.MOSSY_COBBLESTONE_WALL); c.b(dx, 2, dz, Blocks.SOUL_LANTERN); }
+            }
         }
-        c.f(0, 1, -3, 0, 2, -3, Blocks.POLISHED_DEEPSLATE);
-        c.b(0, 3, -3, Blocks.COBBLED_DEEPSLATE_SLAB);
+        // gò mộ hình vòm
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -8; dz <= -3; dz++) {
+            double r = Math.sqrt(dx * dx + (dz + 6) * (dz + 6) * 1.4);
+            int ht = (int) Math.round(3.2 - r * 0.8);
+            for (int y = 0; y < ht; y++) c.b(dx, y, dz, y == ht - 1 ? (c.h(dx, y, dz) % 3 == 0 ? Blocks.MOSS_BLOCK : Blocks.PODZOL) : Blocks.COARSE_DIRT);
+        }
+        // bia mộ: bệ, thân đá sẫm cao, chữ khắc, mái nhỏ
+        c.f(-1, 0, -3, 1, 0, -3, Blocks.POLISHED_DEEPSLATE);
         c.b(0, 0, -3, Blocks.COBBLED_DEEPSLATE);
-        c.b(-2, 0, -3, Blocks.DEAD_BUSH); c.b(2, 0, -3, Blocks.DEAD_BUSH);
-        c.b(-3, 0, 1, Blocks.DARK_OAK_FENCE); c.b(-3, 1, 1, Blocks.SOUL_LANTERN);
+        c.f(0, 1, -3, 0, 3, -3, Blocks.POLISHED_DEEPSLATE);
+        c.b(0, 2, -3, Blocks.CHISELED_DEEPSLATE);
+        c.b(-1, 1, -3, Blocks.DEEPSLATE_TILE_WALL); c.b(1, 1, -3, Blocks.DEEPSLATE_TILE_WALL);
+        c.st(-1, 4, -3, Blocks.DEEPSLATE_TILE_STAIRS, Direction.EAST); c.st(1, 4, -3, Blocks.DEEPSLATE_TILE_STAIRS, Direction.WEST);
+        c.b(0, 4, -3, Blocks.DEEPSLATE_TILES); c.b(0, 5, -3, Blocks.DEEPSLATE_TILE_SLAB);
+        // lư hương + nến + mâm lễ
+        c.b(0, 0, -1, Blocks.CAULDRON); c.s(0, 1, -1, Blocks.CANDLE.defaultBlockState().setValue(CandleBlock.CANDLES, 3).setValue(CandleBlock.LIT, true));
+        c.b(-1, 0, -2, Blocks.POLISHED_DEEPSLATE_SLAB); c.b(1, 0, -2, Blocks.POLISHED_DEEPSLATE_SLAB);
+        c.s(-1, 1, -2, Blocks.WHITE_CANDLE.defaultBlockState().setValue(CandleBlock.LIT, true));
+        c.s(1, 1, -2, Blocks.WHITE_CANDLE.defaultBlockState().setValue(CandleBlock.LIT, true));
+        c.b(-2, 0, -2, Blocks.FLOWER_POT); c.b(2, 0, -2, Blocks.POTTED_WITHER_ROSE);
+        // thần đạo
+        c.f(-1, -1, 0, 1, -1, 8, Blocks.STONE_BRICKS);
+        c.f(0, -1, 0, 0, -1, 8, Blocks.POLISHED_ANDESITE);
+        c.stoneLantern(-3, 2); c.stoneLantern(3, 2); c.stoneLantern(-3, 6); c.stoneLantern(3, 6);
+        c.guardian(-2, 7, Direction.SOUTH); c.guardian(2, 7, Direction.SOUTH);
+        c.deadTree(-6, -6, 5); c.deadTree(6, -5, 4); c.deadTree(-6, 5, 3);
+        for (int dx = -7; dx <= 7; dx++) for (int dz = -7; dz <= 7; dz++)
+            if (c.air(dx, 0, dz) && c.h(dx, 0, dz) % 23 == 0) c.b(dx, 0, dz, c.h(dx, 1, dz) % 2 == 0 ? Blocks.DEAD_BUSH : Blocks.COBWEB);
         c.act("grave", 0, 1, -3);
     }
 
@@ -358,21 +560,63 @@ public final class PoiBuilders {
         c.b(0, 1, -16, Blocks.AIR);
         c.chest(0, 1, -16, Direction.SOUTH);
         c.fa(-1, 0, 17, 1, 3, 17);
+        // cổng tam quan đổ nghiêng ngoài cửa nam, trụ gãy, tượng canh, lò lửa sân trong
+        c.paifang(19, 3, 5, Blocks.CHISELED_STONE_BRICKS, Blocks.STONE_BRICKS, Blocks.DEEPSLATE_TILE_STAIRS, Blocks.DEEPSLATE_TILES);
+        c.a(3, 7, 19); c.a(4, 7, 19); c.a(5, 7, 19); c.a(-5, 6, 19); // mái sứt
+        c.guardian(-3, 20, Direction.SOUTH); c.guardian(3, 20, Direction.SOUTH);
+        for (int sx = -1; sx <= 1; sx += 2) for (int z = 6; z <= 14; z += 4) {
+            int ht = 1 + c.h(sx, z, 0) % 4;
+            c.f(sx * 3, 0, z, sx * 3, ht, z, Blocks.QUARTZ_PILLAR);
+            if (ht < 3) c.b(sx * 3 + sx, 0, z, Blocks.QUARTZ_SLAB);
+        }
+        c.brazier(-3, -10, false); c.brazier(3, -10, false);
+        c.rubble(18, 70, 11);
     }
 
     // ------------------------------------------------------------------ A11 Kiem Trung
     private static void swordMound(C c) {
-        for (int dx = -11; dx <= 11; dx++) for (int dz = -11; dz <= 11; dz++) {
+        // núi đá giữa, cự kiếm cao ~16 khối cắm xuống; rừng kiếm quanh vòng tròn; vòng đá khắc phù
+        for (int dx = -13; dx <= 13; dx++) for (int dz = -13; dz <= 13; dz++) {
             double r = Math.sqrt(dx * dx + dz * dz);
-            if (r > 11 || r < 3.5) continue;
-            int hs = c.h(dx, 0, dz);
-            if (hs % 5 == 0) { int hh = 1 + (int) ((11 - r) / 4) + (hs & 1); for (int k = 0; k < hh; k++) c.b(dx, k, dz, Blocks.IRON_BARS); if (hs % 10 == 0) c.b(dx, hh, dz, Blocks.CHAIN); }
+            if (r > 13) continue;
+            c.b(dx, -1, dz, r < 4 ? Blocks.POLISHED_ANDESITE : r < 5 ? Blocks.CHISELED_STONE_BRICKS : c.h(dx, -1, dz) % 3 == 0 ? Blocks.GRAVEL : Blocks.STONE);
+            if (r >= 9.5 && r < 10.5) c.b(dx, -1, dz, c.h(dx, 0, dz) % 4 == 0 ? Blocks.CHISELED_STONE_BRICKS : Blocks.POLISHED_DEEPSLATE);
+            if (r > 4.5 && r < 11 && c.h(dx, 0, dz) % 9 == 0) { // kiếm cắm đất
+                c.plantedSword(dx, dz, 1 + c.h(dx, 1, dz) % 3);
+            }
         }
-        c.f(-3, -1, -3, 3, -1, 3, Blocks.POLISHED_ANDESITE);
-        c.f(0, 0, 0, 0, 8, 0, Blocks.IRON_BLOCK);
-        c.f(-2, 2, 0, 2, 2, 0, Blocks.QUARTZ_BLOCK);
-        c.b(0, 9, 0, Blocks.GOLD_BLOCK);
-        c.chest(3, 0, 0, Direction.WEST);
+        // núi đá
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) {
+            double r = Math.sqrt(dx * dx + dz * dz);
+            int ht = (int) Math.round(3 - r * 0.75);
+            for (int y = 0; y < ht; y++) c.b(dx, y, dz, c.h(dx, y, dz) % 3 == 0 ? Blocks.MOSSY_COBBLESTONE : c.h(dx, y, dz) % 3 == 1 ? Blocks.COBBLESTONE : Blocks.ANDESITE);
+        }
+        // lưỡi kiếm: lõi khối sắt, mép song sắt, rãnh xích
+        for (int y = 1; y <= 10; y++) {
+            c.b(0, y, 0, Blocks.IRON_BLOCK);
+            c.b(-1, y, 0, y > 2 ? Blocks.IRON_BARS : Blocks.IRON_BLOCK); c.b(1, y, 0, y > 2 ? Blocks.IRON_BARS : Blocks.IRON_BLOCK);
+        }
+        c.b(0, 0, 0, Blocks.IRON_BLOCK);
+        // chắn kiếm vàng + thạch anh
+        c.f(-3, 11, 0, 3, 11, 0, Blocks.GOLD_BLOCK);
+        c.st(-4, 11, 0, Blocks.QUARTZ_STAIRS, Direction.EAST); c.st(4, 11, 0, Blocks.QUARTZ_STAIRS, Direction.WEST);
+        c.b(0, 11, -1, Blocks.QUARTZ_BLOCK); c.b(0, 11, 1, Blocks.QUARTZ_BLOCK);
+        c.b(0, 11, 0, Blocks.EMERALD_BLOCK); // ngọc chắn kiếm
+        // chuôi + núm
+        c.f(0, 12, 0, 0, 14, 0, Blocks.STRIPPED_DARK_OAK_LOG);
+        c.b(0, 15, 0, Blocks.GOLD_BLOCK); c.b(0, 16, 0, Blocks.GLOWSTONE);
+        c.b(0, 13, -1, Blocks.RED_WOOL); c.b(0, 13, 1, Blocks.RED_WOOL); // tua kiếm
+        // dây xích trấn kiếm từ 4 trụ đá
+        for (int k = 0; k < 4; k++) {
+            int sx = (k & 1) == 0 ? 6 : -6, sz = (k & 2) == 0 ? 6 : -6;
+            c.f(sx, 0, sz, sx, 6, sz, Blocks.POLISHED_DEEPSLATE);
+            c.b(sx, 3, sz, Blocks.CHISELED_DEEPSLATE);
+            c.b(sx, 7, sz, Blocks.SOUL_LANTERN);
+            int mx = sx / 2, mz = sz / 2;
+            c.b(sx - Integer.signum(sx), 6, sz - Integer.signum(sz), Blocks.CHAIN); c.b(mx + Integer.signum(sx), 7, mz + Integer.signum(sz), Blocks.CHAIN);
+        }
+        c.stoneLantern(0, 12); c.stoneLantern(0, -12); c.stoneLantern(12, 0); c.stoneLantern(-12, 0);
+        c.chest(3, 0, 0, Direction.WEST, 2);
         c.act("chest", 3, 0, 0);
         for (int k = 0; k < 8; k++) { double a = k * Math.PI / 4; c.act("sp_room", (int) Math.round(Math.cos(a) * 7), 0, (int) Math.round(Math.sin(a) * 7)); }
     }
@@ -396,6 +640,15 @@ public final class PoiBuilders {
         c.chest(0, -5, 0, Direction.EAST);
         c.act("chest", 0, -5, 0);
         for (int k = 0; k < 6; k++) { double a = k * Math.PI / 3; c.act("sp_room", (int) Math.round(Math.cos(a) * 4), -5, (int) Math.round(Math.sin(a) * 4)); }
+        // gai hắc diệu thạch quanh vực, xích treo xuống đáy, lửa hồn đáy vực
+        for (int k = 0; k < 10; k++) {
+            double a = k * Math.PI / 5; int x = (int) Math.round(Math.cos(a) * 7.5), z = (int) Math.round(Math.sin(a) * 7.5);
+            int ht = 2 + c.h(x, 0, z) % 4;
+            c.f(x, 0, z, x, ht, z, k % 2 == 0 ? Blocks.OBSIDIAN : Blocks.CRYING_OBSIDIAN);
+            c.b(x, ht + 1, z, Blocks.POINTED_DRIPSTONE);
+        }
+        for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) for (int y = -4; y <= 4; y++) c.b(sx * 3, y, sz * 3, y <= 0 ? Blocks.CHAIN : Blocks.AIR);
+        for (int k = 0; k < 6; k++) { double a = k * Math.PI / 3 + 0.5; c.s((int) Math.round(Math.cos(a) * 2), -5, (int) Math.round(Math.sin(a) * 2), Blocks.SOUL_CAMPFIRE.defaultBlockState()); }
     }
 
     // ------------------------------------------------------------------ A13 Dao Quan Son Dinh
@@ -412,6 +665,13 @@ public final class PoiBuilders {
         c.act("claim", 0, 0, 0);
         for (int sx = -1; sx <= 1; sx += 2) { ProcKit.hangLantern(c.l, c.cx + sx * 4, c.y0 + 4, c.cz); }
         c.f(-1, -1, 9, 1, -1, 9, Blocks.QUARTZ_STAIRS);
+        // mái tầng hai, chuông đồng, cổng tam quan, đèn đá, lư hương, bậc thềm
+        ProcKit.hipRoof(c.l, c.cx, c.cz, c.y0 + 8, 3, 3, Blocks.DEEPSLATE_TILE_STAIRS, Blocks.DEEPSLATE_TILES);
+        c.f(-2, 6, -2, 2, 7, 2, Blocks.QUARTZ_PILLAR); c.fa(-1, 6, -1, 1, 7, 1);
+        c.b(0, 4, 0, Blocks.BELL);
+        c.paifang(10, 3, 4, Blocks.QUARTZ_PILLAR, Blocks.QUARTZ_BLOCK, Blocks.DEEPSLATE_TILE_STAIRS, Blocks.DEEPSLATE_TILES);
+        c.stoneLantern(-6, 6); c.stoneLantern(6, 6); c.stoneLantern(-6, -6); c.stoneLantern(6, -6);
+        c.b(0, 0, 3, Blocks.CAULDRON); c.s(0, 1, 3, Blocks.CANDLE.defaultBlockState().setValue(CandleBlock.CANDLES, 4).setValue(CandleBlock.LIT, true));
     }
 
     // ------------------------------------------------------------------ A14 Vo Dai Thiet Coc
@@ -426,6 +686,14 @@ public final class PoiBuilders {
         c.chest(0, 1, -8, Direction.SOUTH);
         c.act("chest", 0, 1, -8);
         c.act("sp_room", -4, 0, 0); c.act("sp_room", 4, 0, 0); c.act("sp_room", 0, 0, 4); c.act("sp_room", 0, 0, -3);
+        // khán đài bậc hai bên, cờ, lò lửa bốn góc, giá binh khí
+        for (int z = -7; z <= 7; z++) for (int sx = -1; sx <= 1; sx += 2) {
+            c.st(sx * 10, 0, z, Blocks.STONE_BRICK_STAIRS, sx < 0 ? Direction.EAST : Direction.WEST);
+            c.b(sx * 11, 0, z, Blocks.STONE_BRICKS); c.st(sx * 11, 1, z, Blocks.STONE_BRICK_STAIRS, sx < 0 ? Direction.EAST : Direction.WEST);
+        }
+        for (int k = 0; k < 4; k++) { int dx = (k & 1) == 0 ? 10 : -10, dz = (k & 2) == 0 ? 10 : -10; c.brazier(dx, dz, false); }
+        c.warBanner(-11, -9, 4, true); c.warBanner(11, -9, 4, true); c.warBanner(-11, 9, 4, false); c.warBanner(11, 9, 4, false);
+        for (int x = -3; x <= 3; x += 2) { c.b(x, 0, 10, Blocks.SPRUCE_FENCE); c.b(x, 1, 10, Blocks.LIGHTNING_ROD); }
     }
 
     // ------------------------------------------------------------------ A15 Ngu Hanh Tran Dai
@@ -446,6 +714,14 @@ public final class PoiBuilders {
         c.act("claim", 0, 0, 0);
         c.lectern(0, 0, 7, Direction.NORTH);
         c.act("tablet", 0, 0, 7);
+        // âm dương giữa trận, vòng ngoài đèn đá, mỗi trụ có đế bậc
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+            if (dx * dx + dz * dz > 5 || (dx == 0 && dz == 0)) continue;
+            boolean yang = dx > 0 || (dx == 0 && dz < 0);
+            if (Math.abs(dx) + Math.abs(dz) == 1) yang = !yang; // chấm ngược màu
+            c.b(dx, -1, dz, yang ? Blocks.WHITE_CONCRETE : Blocks.BLACK_CONCRETE);
+        }
+        for (int k = 0; k < 10; k++) { double a = k * Math.PI / 5 + Math.PI / 10; c.stoneLantern((int) Math.round(Math.sin(a) * 8.5), (int) Math.round(-Math.cos(a) * 8.5)); }
     }
 
     /** Dat tru/can o trang thai sang (da kich hoat) hay tat: chi dung cho Ngu Hanh Tran Dai (SEA_LANTERN <-> POLISHED_ANDESITE nhe). */

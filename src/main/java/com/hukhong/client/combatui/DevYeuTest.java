@@ -132,7 +132,7 @@ public final class DevYeuTest {
             if (t == base + 106) shot("4" + (k + 1) + "_outcome_" + k);
         }
         // 2026-11-06: Bảo Rương 4 cấp + cột sáng đồ rơi
-        if (t == 1970) server.execute(() -> {
+        if (t == 1970 && false) server.execute(() -> {
             for (int i = 0; i < 4; i++) com.hukhong.treasure.TreasureFx.place(lv, new BlockPos(x0 - 6 + i * 4, y0, z0 + 8), i, net.minecraft.core.Direction.NORTH);
             net.minecraft.world.item.ItemStack[] drops = {new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND),
                     new net.minecraft.world.item.ItemStack(com.hukhong.resource.ResourceRegistry.LINH_DUOC.values().iterator().next().get()),
@@ -165,11 +165,36 @@ public final class DevYeuTest {
         if (t == 2065) shot("53_loot_beams");
         if (t == 2075) server.execute(() -> { lv.setDayTime(18000); });
         if (t == 2100) shot("54_loot_beams_night");
-        if (t == 2110) { LOG.info("YEUTEST done"); mc.stop(); }
+        // 2026-11-06: công trình địa điểm làm lại
+        if (t == 2110) server.execute(() -> {
+            var data = com.hukhong.poi.PoiSavedData.get(lv);
+            for (int i = 0; i < POIS.length; i++) {
+                int px = x0 - 100 + (i % 4) * 66, pz = z0 + 140 + (i / 4) * 66;
+                for (int dx = -26; dx <= 26; dx++) for (int dz = -26; dz <= 26; dz++) {
+                    lv.setBlock(new BlockPos(px + dx, y0 - 1, pz + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+                    for (int dy = 0; dy < 24; dy++) lv.setBlock(new BlockPos(px + dx, y0 + dy, pz + dz), Blocks.AIR.defaultBlockState(), 2);
+                }
+                String want = POIS[i];
+                var def = com.hukhong.poi.PoiDefs.all().stream().filter(d -> d.builder().equals(want)).findFirst().orElse(null);
+                if (def == null) { LOG.info("YEUTEST poi missing {}", want); continue; }
+                com.hukhong.poi.PoiPlacer.place(lv, data, def, px, pz);
+            }
+            lv.setDayTime(6000);
+        });
+        for (int i = 0; i < POIS.length; i++) {
+            int base = 2160 + i * 50, px = x0 - 100 + (i % 4) * 66, pz = z0 + 140 + (i / 4) * 66;
+            final int fi = i;
+            if (t == base) server.execute(() -> sp.connection.teleport(px + 0.5, y0 + 20, pz + 30.5, 180, 32));
+            if (t == base + 18) shot("6" + fi + "_poi_" + POIS[fi] + "_air");
+            if (t == base + 20) server.execute(() -> sp.connection.teleport(px + 0.5, y0 + 2.5, pz + 15.5, 180, 4));
+            if (t == base + 40) shot("6" + fi + "_poi_" + POIS[fi] + "_ground");
+        }
+        if (t == 2160 + POIS.length * 50 + 5) { LOG.info("YEUTEST done"); mc.stop(); }
     }
 
     private static final com.hukhong.story.kyngo.KyNgoInstance[] KYNGO = new com.hukhong.story.kyngo.KyNgoInstance[4];
     private static boolean movedAway;
+    static final String[] POIS = {"battlefield", "grave", "sword_mound", "ruin", "shrine", "dao_quan", "wuxing", "abyss", "cave", "arena"};
     static final boolean RUN_KIEP = false, RUN_KYNGO = false;
     private static LinhQuai fellWalker;
     private static volatile long spawnedAt;
