@@ -66,6 +66,9 @@ public record QuestData(int chapter, List<String> flags) {
         return new QuestData(chapter, List.copyOf(l));
     }
 
+    /** Đặt / xóa (value null) cờ dạng prefix+value. */
+    public QuestData with(String prefix, String value) { return replaceFlag(prefix, value); }
+
     public QuestData withStep(String id) { return replaceFlag("step:", id.isEmpty() ? null : id).replaceFlag("prog:", null); }
 
     public QuestData withProg(int n) { return replaceFlag("prog:", n <= 0 ? null : Integer.toString(n)); }

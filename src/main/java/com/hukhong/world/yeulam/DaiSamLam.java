@@ -61,6 +61,11 @@ public final class DaiSamLam {
 
     public static boolean corruptedAt(long seed, double x, double z) { return corrupted(seed, at(seed, x, z)); }
 
+    /** Còn bị xâm thực (chưa được người chơi giải phóng qua Lịch Luyện). */
+    public static boolean corruptedLive(ServerLevel sl, Region r) { return corrupted(sl.getSeed(), r) && !CleansedForests.get(sl.getServer().overworld()).has(r); }
+
+    public static boolean corruptedLiveAt(ServerLevel sl, double x, double z) { return corruptedLive(sl, at(sl.getSeed(), x, z)); }
+
     /** Vùng chứa (x, z), null nếu ngoài mọi Đại Sâm Lâm. */
     public static Region at(long seed, double x, double z) {
         int gx = Math.floorDiv((int) Math.floor(x), CELL), gz = Math.floorDiv((int) Math.floor(z), CELL);
@@ -99,7 +104,7 @@ public final class DaiSamLam {
         Region r = at(seed, p.getX(), p.getZ());
         boolean in = r != null;
         Boolean was = INSIDE.put(p.getUUID(), in);
-        boolean bad = corrupted(seed, r);
+        boolean bad = corruptedLive(sl, r);
         if (was != null && was != in)
             p.displayClientMessage(Component.translatable(in ? (bad ? "hukhong.dai_sam_lam.enter_hu" : "hukhong.dai_sam_lam.enter") : "hukhong.dai_sam_lam.leave")
                     .withColor(in ? (bad ? 0xB060FF : 0x7FD27F) : 0xB0B0B0), true);
@@ -120,7 +125,7 @@ public final class DaiSamLam {
         int y = sl.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         BlockPos bp = new BlockPos(x, y, z);
         if (!sl.getFluidState(bp.below()).isEmpty() || !sl.getBlockState(bp).isAir()) return null;
-        boolean bad = corrupted(sl.getSeed(), r);
+        boolean bad = corruptedLive(sl, r);
         CreatureKind k = bad && rnd.nextDouble() < CORRUPT_PLANT_BIAS ? CreatureKind.PLANTS.get(rnd.nextInt(CreatureKind.PLANTS.size()))
                 : BEASTS.get(rnd.nextInt(BEASTS.size()));
         LinhQuai m = spawnBeast(sl, k, bp, YeuThuAge.roll(r.depth(x, z), rnd), MobSpawnType.EVENT);

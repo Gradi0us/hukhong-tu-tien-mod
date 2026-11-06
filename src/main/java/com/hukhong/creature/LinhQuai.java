@@ -111,7 +111,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
             if (kind.mini() && a.ordinal() < YeuThuAge.Y1000.ordinal()) a = YeuThuAge.Y1000; // boss Yêu Thú: ít nhất thiên niên
             setAge(a);
             if (kind.plant() && l.getLevel().dimension() == net.minecraft.world.level.Level.OVERWORLD
-                    && com.hukhong.world.yeulam.DaiSamLam.corruptedAt(l.getLevel().getSeed(), getX(), getZ())
+                    && com.hukhong.world.yeulam.DaiSamLam.corruptedLiveAt(l.getLevel().getLevel(), getX(), getZ())
                     && getRandom().nextDouble() < com.hukhong.world.yeulam.DaiSamLam.CORRUPT_CHANCE) setCorrupted(true);
         }
         return r;

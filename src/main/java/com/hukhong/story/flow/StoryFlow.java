@@ -141,6 +141,7 @@ public final class StoryFlow {
             q = q.withProg(ow == null ? 1 : CitySavedData.get(ow).invasionsWon() + 1);
         }
         save(p, q);
+        if (s.kind() == FlowSteps.Kind.JOURNEY) save(p, quest(p).with(com.hukhong.story.journey.LichLuyen.F_TASK, null)); // bỏ nhiệm vụ tùy chọn cũ, vào nhiệm vụ cốt truyện
         if (newChapter) beat(p, "hukhong.flow.ch." + s.chapter(), 3);
         switch (s.kind()) {
             case KILL -> WaveCountdown.start(p, s.id()); // 30s chuan bi roi quai moi toi
@@ -148,6 +149,7 @@ public final class StoryFlow {
             case DUEL -> spawnDuelNpc(p, s);
             default -> { }
         }
+        com.hukhong.story.journey.LichLuyen.ensure(p, s);
         setObjective(p, s);
     }
 
@@ -165,6 +167,7 @@ public final class StoryFlow {
         StoryData sd = StoryService.get(p);
         return switch (s.kind()) {
             case TALK, DUEL, ALTAR, LINH_KHI -> false;
+            case JOURNEY -> q.prog() >= s.n();
             case KILL -> q.prog() >= s.n();
             case REACH -> {
                 BlockPos t = cityPos(p, s.arg());
@@ -205,6 +208,7 @@ public final class StoryFlow {
 
     // ------------------------------------------------------------------ mục tiêu
     static void setObjective(ServerPlayer p, FlowSteps.Step s) {
+        if (com.hukhong.story.journey.LichLuyen.objective(p, s)) return;
         int prog = quest(p).prog();
         Object a1 = s.kind() == FlowSteps.Kind.KILL ? Math.min(prog, s.n()) : s.n();
         Component text = Component.translatable(s.objKey(), a1, s.n());
@@ -452,6 +456,8 @@ public final class StoryFlow {
         if (s == null) return;
         WaveCountdown.tick(p, s);
         maintain(p, s);
+        s = current(p);
+        if (s != null) com.hukhong.story.journey.LichLuyen.tick(p, s);
         s = current(p);
         if (s != null && !s.id().equals(Objectives.currentId(p))) setObjective(p, s);
     }

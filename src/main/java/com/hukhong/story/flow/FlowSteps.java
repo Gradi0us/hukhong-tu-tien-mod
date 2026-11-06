@@ -10,7 +10,7 @@ import java.util.List;
 public final class FlowSteps {
     private FlowSteps() {}
 
-    public enum Kind { TALK, KILL, REACH, ALTAR, LINH_KHI, MILESTONE, LEVEL, SECT, DOCS, LAIR_SEEN, CHG, INVASION, BICANH, DUEL, GATE, ENDING }
+    public enum Kind { TALK, KILL, REACH, ALTAR, LINH_KHI, MILESTONE, LEVEL, SECT, DOCS, LAIR_SEEN, CHG, INVASION, BICANH, DUEL, GATE, ENDING, JOURNEY }
 
     /** n: số lượng / cấp / chỉ số CHG; arg: id thành / npc. */
     public record Step(String id, int chapter, Kind kind, int n, String arg, String group) {
@@ -25,6 +25,7 @@ public final class FlowSteps {
 
     /** Cuối mỗi chương: tu luyện tới mốc rồi đột phá ở Ấn Hồn Đài. */
     private static void tail(int ch) {
+        add("c" + ch + "_journey", ch, Kind.JOURNEY, 2, ""); // Lịch Luyện: 2 nhiệm vụ dẫn truyện trước khi cày cấp
         add("c" + ch + "_grind", ch, Kind.LEVEL, ch * 10, "");
         add("c" + ch + "_ms", ch, Kind.MILESTONE, ch * 10, "");
     }
@@ -76,6 +77,7 @@ public final class FlowSteps {
         add("c9_modao", 9, Kind.TALK, 0, "mo_dao");
         tail(9);
         // Chương 10: Khảo Hạch (90-100)
+        add("c10_journey", 10, Kind.JOURNEY, 2, "");
         add("c10_grind", 10, Kind.LEVEL, 98, "");
         add("c10_chg4", 10, Kind.CHG, 4, "");
         add("c10_gate", 10, Kind.GATE, 0, "");

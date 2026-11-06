@@ -126,20 +126,31 @@ public final class HuHoa {
      * Quai cung cap cho ~3% yeu cau cap o cap 1-20 (~30 quai/cap), giam dan xuong ~1.6% o cap cao.
      * x0.1 neu quai thap hon nguoi choi >= 10 cap.
      */
+    /**
+     * EXP giết quái (2026-11-06, cân lại tốc độ lên cấp): tính theo CẤP NGƯỜI CHƠI, không theo cấp quái.
+     * Quái ngang cấp, trọng số 1: cần {@link #killsPerLevel} con / cấp (10 con ở cấp 1 -> 55 con ở cấp 100).
+     * Chênh cấp chỉ là hệ số nhẹ: quái cao hơn tối đa x1.5, thấp hơn giảm dần (thấp hơn 15 cấp còn x0.1).
+     * Một lần giết không vượt quá 1.5 thanh EXP (chặn quái scale/yêu thú cổ niên/tinh anh cho quá nhiều).
+     */
     public static long exp(double w, int level, int playerLevel) {
-        double e = com.hukhong.core.CultivationService.expToNext(level) * levelExpMult(level);
-        double f = level <= playerLevel - 10 ? 0.1 : 1.0;
-        double raw = w * e * f;
-        // ROOT CAUSE "giet quai khong co EXP": quai cap thap cho < 0.5 EXP -> Math.round = 0.
-        // Quai ngang/cao hon nguoi choi (f == 1) luon cho >= 1 EXP.
-        return f >= 1.0 && w > 0 ? Math.max(1, Math.round(raw)) : Math.round(raw);
+        if (w <= 0) return 0;
+        int pl = Math.max(1, playerLevel);
+        double bar = com.hukhong.core.CultivationService.expToNext(pl);
+        double raw = w * bar / killsPerLevel(pl) * levelFactor(level - pl);
+        return Math.max(1, Math.round(Math.min(raw, bar * MAX_BARS_PER_KILL)));
     }
 
-    /** Ty le yeu cau cap moi quai (tren 1 don vi trong so w): 0.030 cho cap 1-20, giam tuyen tinh toi 0.016 o cap 100. */
-    public static double levelExpMult(int level) {
-        if (level <= 20) return 0.030;
-        double t = Math.min(1.0, (level - 20) / 80.0);
-        return 0.030 - t * (0.030 - 0.016);
+    public static final double MAX_BARS_PER_KILL = 1.5;
+
+    /** Phần thanh EXP mỗi quái ngang cấp trọng số 1 (= 1 / killsPerLevel); giữ cho mô phỏng cân bằng. */
+    public static double levelExpMult(int level) { return 1.0 / killsPerLevel(level); }
+
+    /** Số quái ngang cấp (trọng số 1) cần giết để lên 1 cấp. */
+    public static double killsPerLevel(int playerLevel) { return 10 + 0.45 * Math.max(0, playerLevel - 1); }
+
+    /** Hệ số chênh cấp: +4%/cấp cao hơn (tối đa x1.5), -6%/cấp thấp hơn (tối thiểu x0.1). */
+    public static double levelFactor(int diff) {
+        return diff >= 0 ? Math.min(1.5, 1 + 0.04 * diff) : Math.max(0.1, 1 + 0.06 * diff);
     }
 
     /** Trần max_health vanilla (RangedAttribute). HP thiết kế vượt trần được quy đổi thành giảm sát thương nhận. */

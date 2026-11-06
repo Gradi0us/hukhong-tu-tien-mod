@@ -43,7 +43,7 @@ class W2MathTest {
         // truoc fix: round(40/540)=0
         assertTrue(HuHoa.exp(1.0, 1, 1) >= 1);
         assertTrue(HuHoa.exp(1.0, 2, 5) >= 1);
-        assertEquals(0, HuHoa.exp(1.0, 1, 20)); // quai thap hon >=10 cap: van bi phat
+        assertTrue(HuHoa.exp(1.0, 1, 20) * 9 < HuHoa.exp(1.0, 20, 20)); // quai thap hon nhieu cap: van bi phat (x0.1)
     }
 
     @Test void spawnBlockRule() {
