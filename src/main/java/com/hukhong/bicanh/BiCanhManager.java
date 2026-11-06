@@ -399,7 +399,8 @@ public final class BiCanhManager {
         m.finalizeSpawn(dim, dim.getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.EVENT, null);
         int lv = run.tier.mobLevel; // cap quai = cap cua bac Bi Canh (hien thi va chi so khop nhau)
         if (m instanceof com.hukhong.creature.LinhQuai q && q.kind() != null && q.kind().beast())
-            q.setAge(BiCanhVariety.beastAge(run.tier, boss, new Random(dim.random.nextLong())));
+        { q.setAge(BiCanhVariety.beastAge(run.tier, boss, new Random(dim.random.nextLong())));
+            q.capHeight(BiCanhLayout.HEIGHT - 2); } // trần Bí Cảnh thấp
         HuHoa.applyStats(m, lv, hpMul * run.mod.hp, dmgMul * run.mod.dmg);
         var spd = m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
         if (run.mod.speed > 0 && spd != null)

@@ -110,6 +110,17 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         return r;
     }
 
+    /** Ép chiều cao tối đa (vd. trong Bí Cảnh trần thấp). */
+    public void capHeight(double maxH) {
+        YeuThuAge a = age();
+        if (a == null) return;
+        double s = YeuThuSize.scale(kind, a);
+        if (kind.h * s <= maxH) return;
+        ageMod(net.minecraft.world.entity.ai.attributes.Attributes.SCALE, maxH / kind.h - 1,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE);
+        refreshDimensions();
+    }
+
     /** Năm tuổi (null nếu không phải Yêu Thú). */
     public YeuThuAge age() { int a = entityData.get(AGE); return a < 0 ? null : YeuThuAge.of(a); }
 
@@ -124,7 +135,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         ageMod(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, a.hpMul - 1, mul);
         ageMod(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, a.dmgMul - 1, mul);
         ageMod(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, a.armor, add);
-        ageMod(net.minecraft.world.entity.ai.attributes.Attributes.SCALE, CreatureKind.BEAST_SCALE * a.scale - 1, add);
+        ageMod(net.minecraft.world.entity.ai.attributes.Attributes.SCALE, YeuThuSize.scale(kind, a) - 1, add); // 2026-11-06: thú <= 7 khối, Yêu Thụ tới 16-20 khối
         ageMod(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE, Math.min(1, a.ordinal() * 0.2), add);
         if (a.ordinal() >= YeuThuAge.Y10000.ordinal()) setPersistenceRequired();
         toughness = (float) Math.max(1.0, wanted / Math.max(1, getMaxHealth())); // máu vượt trần 1024 -> giảm sát thương nhận
@@ -160,6 +171,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         }
         if (kind.mini()) MiniBossSkills.tick(this);
         if (kind.beast() && !kind.mini()) YeuThuSkills.tick(this);
+        if (kind.beast()) YeuThuSize.tick(this);
         if (kind == CreatureKind.BANG_HON) freezeAura();
         if (kind == CreatureKind.SA_TRUNG) burrowTick();
     }

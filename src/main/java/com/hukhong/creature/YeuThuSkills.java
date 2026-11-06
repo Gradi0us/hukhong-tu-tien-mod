@@ -87,7 +87,7 @@ public final class YeuThuSkills {
             case BICH_NHAN_THIEM -> Fx.telegraphCircle(sl, null, t.position().add(0, 0.05, 0), 3f, WINDUP, 0x6FBF4A);
             case THIET_GIAP_TRI_CHU -> Fx.telegraphCircle(sl, null, t.position().add(0, 0.05, 0), 2.5f, WINDUP, 0xD8D8D8);
             case NGAN_LAN_MANG -> Fx.telegraphLine(sl, null, at, t.position().subtract(m.position()), 1.2f, WINDUP, c);
-            case THU_YEU -> Fx.telegraphCircle(sl, null, t.position().add(0, 0.05, 0), 3.5f, WINDUP, 0x6A8A3A);
+            case THU_YEU -> Fx.telegraphCircle(sl, null, t.position().add(0, 0.05, 0), 3.5f * YeuThuSize.skillK(m), WINDUP, 0x6A8A3A);
             case THUC_NHAN_HOA, DANG_XA -> Fx.telegraphLine(sl, null, at, t.position().subtract(m.position()), 1.0f, WINDUP, 0x4FBF4A);
             case QUY_CO -> Fx.telegraphCircle(sl, null, m.position().add(0, 0.05, 0), 4.5f, WINDUP, 0xC070C0);
             case U_ANH_BAO -> { m.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, WINDUP + 4, 0, false, false));
@@ -146,18 +146,25 @@ public final class YeuThuSkills {
 
     /** Thụ Yêu: rễ trồi lên quanh mục tiêu, trói chặt 2 giây. */
     private static void roots(ServerLevel sl, LinhQuai m, LivingEntity t) {
-        for (LivingEntity e : victims(sl, m, t.position(), 3.5)) {
+        float k = YeuThuSize.skillK(m);
+        for (LivingEntity e : victims(sl, m, t.position(), 3.5 * k)) {
             hit(m, e, 1.2f);
             e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 6));
             e.setDeltaMovement(0, Math.min(0, e.getDeltaMovement().y), 0);
             e.hurtMarked = true;
         }
-        for (int i = 0; i < 10; i++) {
-            double a = i * Math.PI / 5, r = 1.2 + (i % 3) * 0.8;
+        int n = (int) (10 * k);
+        for (int i = 0; i < n; i++) { // rễ nhọn đâm lên thành cột, xoắn nhẹ
+            double a = i * Math.PI * 2 / n, r = (1.2 + (i % 3) * 0.8) * k;
             double x = t.getX() + Math.cos(a) * r, z = t.getZ() + Math.sin(a) * r;
-            for (int y = 0; y < 5; y++) sl.sendParticles(dust(0x6B4A2A, 1.3f), x, t.getY() + y * 0.3, z, 1, 0.05, 0, 0.05, 0);
+            int hgt = (int) (5 * k);
+            for (int y = 0; y < hgt; y++) {
+                double tw = y * 0.15;
+                sl.sendParticles(dust(y < hgt - 1 ? 0x6B4A2A : 0x8FD45A, 1.4f), x + Math.cos(a + tw) * 0.15, t.getY() + y * 0.3, z + Math.sin(a + tw) * 0.15, 1, 0.03, 0, 0.03, 0);
+            }
         }
-        sl.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ROOTED_DIRT.defaultBlockState()), t.getX(), t.getY() + 0.2, t.getZ(), 40, 1.5, 0.2, 1.5, 0.1);
+        if (k > 1.5) { Fx.groundCrack(sl, null, t.position().add(0, 0.06, 0), 3.5f * k, 0x6B4A2A, 10, 40); Fx.shake(sl, t.position(), 0.6f, 10, 12 * k); }
+        sl.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.ROOTED_DIRT.defaultBlockState()), t.getX(), t.getY() + 0.2, t.getZ(), (int) (40 * k), 1.5 * k, 0.2, 1.5 * k, 0.1);
         sl.playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvents.ROOTED_DIRT_BREAK, SoundSource.HOSTILE, 1.5f, 0.6f);
     }
 

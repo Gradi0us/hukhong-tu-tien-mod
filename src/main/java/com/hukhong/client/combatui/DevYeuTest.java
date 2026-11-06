@@ -91,30 +91,35 @@ public final class DevYeuTest {
             int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 300;
             for (int dx = -40; dx <= 40; dx++) for (int dz = -10; dz <= 40; dz++)
                 lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
-            var kinds = new java.util.ArrayList<>(CreatureKind.PLANTS); kinds.add(CreatureKind.VAN_NIEN_THU_VUONG); // 2026-11-06: Yêu Thú thực vật
-            for (int i = 0; i < kinds.size(); i++) {
-                LinhQuai a = DaiSamLam.spawnBeast(lv, kinds.get(i), new BlockPos(x0 - 24 + i * 12, y0, z0 + 6), YeuThuAge.Y1000, MobSpawnType.COMMAND);
+            // 2026-11-06: kích thước theo năm - thú <= 7 khối, Yêu Thụ 16-20 khối
+            Object[][] show = {{CreatureKind.XICH_VAN_HO, YeuThuAge.Y1000}, {CreatureKind.HAC_GIAP_TE, YeuThuAge.Y100000},
+                    {CreatureKind.THU_YEU, YeuThuAge.Y10000}, {CreatureKind.VAN_NIEN_THU_VUONG, YeuThuAge.Y100000}, {CreatureKind.QUY_CO, YeuThuAge.Y100000}};
+            int[] xs = {-34, -20, -2, 22, 40};
+            for (int i = 0; i < show.length; i++) {
+                LinhQuai a = DaiSamLam.spawnBeast(lv, (CreatureKind) show[i][0], new BlockPos(x0 + xs[i], y0, z0 + 10), (YeuThuAge) show[i][1], MobSpawnType.COMMAND);
                 a.setNoAi(true); a.setYRot(180); a.setYHeadRot(180); a.yBodyRot = 180;
-                LOG.info("YEUTEST {} scale={} bb={}", a.getDisplayName().getString(), a.getScale(), a.getBbWidth());
+                LOG.info("YEUTEST {} scale={} height={}", a.getDisplayName().getString(), a.getScale(), a.getBbHeight());
             }
-            sp.connection.teleport(x0 + 0.5, y0 + 9, z0 - 22.5, 0, 18);
+            sp.connection.teleport(x0 + 0.5, y0 + 14, z0 - 42.5, 0, 12);
         });
-        if (t == 720) shot("03_plant_beasts");
+        if (t == 720) shot("03_giant_sizes");
         if (t == 760) server.execute(() -> {
             int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 320;
             for (var old : lv.getEntitiesOfClass(LinhQuai.class, new net.minecraft.world.phys.AABB(x0 - 60, y0 - 5, z0 - 40, x0 + 60, y0 + 20, z0 + 40))) old.discard();
-            CreatureKind[] demo = CreatureKind.PLANTS.toArray(new CreatureKind[0]);
-            for (int i = 0; i < demo.length; i++) {
-                int x = x0 - 24 + i * 16;
-                LinhQuai m = DaiSamLam.spawnBeast(lv, demo[i], new BlockPos(x, y0, z0), YeuThuAge.Y10000, MobSpawnType.COMMAND);
-                var z = net.minecraft.world.entity.EntityType.ZOMBIE.create(lv);
-                z.moveTo(x + 0.5, y0, z0 + 7.5, 180, 0);
-                z.setNoAi(true); z.setPersistenceRequired(); z.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000); z.setHealth(1000);
-                lv.addFreshEntity(z);
-                m.setTarget(z);
-                com.hukhong.creature.YeuThuSkills.start(lv, m, z, YeuThuAge.Y10000);
-            }
-            sp.connection.teleport(x0 + 0.5, y0 + 10, z0 - 16.5, 0, 25);
+            LinhQuai boss = DaiSamLam.spawnBeast(lv, CreatureKind.VAN_NIEN_THU_VUONG, new BlockPos(x0, y0, z0 + 12), YeuThuAge.Y10000, MobSpawnType.COMMAND);
+            boss.setNoAi(true);
+            var bz = net.minecraft.world.entity.EntityType.ZOMBIE.create(lv);
+            bz.moveTo(x0 + 0.5, y0, z0 + 2.5, 180, 0); bz.setNoAi(true); bz.setPersistenceRequired();
+            lv.addFreshEntity(bz);
+            try {
+                var ls = com.hukhong.creature.MiniBossSkills.class.getDeclaredMethod("leafStorm", net.minecraft.server.level.ServerLevel.class, LinhQuai.class);
+                ls.setAccessible(true);
+                var vd = com.hukhong.creature.MiniBossSkills.class.getDeclaredMethod("vanDang", net.minecraft.server.level.ServerLevel.class, LinhQuai.class);
+                vd.setAccessible(true);
+                vd.invoke(null, lv, boss);
+                com.hukhong.skill.SkillScheduler.later(22, () -> { try { ls.invoke(null, lv, boss); } catch (Exception ex) { LOG.error("leafStorm", ex); } });
+            } catch (Exception ex) { LOG.error("YEUTEST boss skill", ex); }
+            sp.connection.teleport(x0 + 0.5, y0 + 12, z0 - 22.5, 0, 22);
         });
         if (t == 790) shot("04_skill_windup");
         if (t == 812) shot("05_skill_cast");

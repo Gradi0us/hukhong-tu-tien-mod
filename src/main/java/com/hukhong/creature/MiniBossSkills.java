@@ -37,14 +37,14 @@ public final class MiniBossSkills {
         LivingEntity t = m.getTarget();
         if (t == null || !t.isAlive() || t.distanceToSqr(m) > 20 * 20) return;
         int phase = (m.tickCount % CD);
-        int which = (m.tickCount / CD) % 2;
+        int which = (m.tickCount / CD) % (m.kind() == CreatureKind.VAN_NIEN_THU_VUONG ? 3 : 2);
         if (phase == CD - WINDUP) telegraph(sl, m, which); // báo trước
         if (phase == 0 && m.tickCount > 0) {
             switch (m.kind()) {
                 case HU_LANG_VUONG -> { if (which == 0) howl(sl, m); else lunge(sl, m, t); }
                 case THACH_CU_NHAN -> { if (which == 0) quake(sl, m); else boulders(sl, m); }
                 case HUYET_YEU_VUONG -> { if (which == 0) bloodTide(sl, m); else needles(sl, m, t); }
-                case VAN_NIEN_THU_VUONG -> { if (which == 0) vanDang(sl, m); else sprouts(sl, m, t); }
+                case VAN_NIEN_THU_VUONG -> { if (which == 0) vanDang(sl, m); else if (which == 1) sprouts(sl, m, t); else leafStorm(sl, m); }
                 default -> { }
             }
         }
@@ -68,7 +68,7 @@ public final class MiniBossSkills {
     }
 
     private static void telegraph(ServerLevel sl, LinhQuai m, int which) {
-        float r = switch (m.kind()) { case THACH_CU_NHAN -> which == 0 ? 7f : 3f; case HUYET_YEU_VUONG -> which == 0 ? 9f : 4f; case VAN_NIEN_THU_VUONG -> which == 0 ? 10f : 5f; default -> which == 0 ? 4f : 6f; };
+        float r = switch (m.kind()) { case THACH_CU_NHAN -> which == 0 ? 7f : 3f; case HUYET_YEU_VUONG -> which == 0 ? 9f : 4f; case VAN_NIEN_THU_VUONG -> (which == 0 ? 10f : which == 1 ? 5f : 8f) * YeuThuSize.skillK(m); default -> which == 0 ? 4f : 6f; };
         Fx.telegraphCircle(sl, null, m.position().add(0, 0.05, 0), r, WINDUP, 0xFF3020);
         sl.playSound(null, m.getX(), m.getY(), m.getZ(), SoundEvents.EVOKER_PREPARE_ATTACK, SoundSource.HOSTILE, 1.2f, 0.6f);
     }
@@ -121,14 +121,23 @@ public final class MiniBossSkills {
     /** Vạn Đằng Triền: rễ trồi khắp bán kính 10, trói + sát thương, Thụ Vương hồi 5% máu mỗi người trúng. */
     private static void vanDang(ServerLevel sl, LinhQuai m) {
         Vec3 c = m.position();
-        for (Player p : players(sl, m, 10)) {
+        float k = YeuThuSize.skillK(m);
+        for (int i = 0; i < 18 * k; i++) { // rừng rễ nhọn trồi khắp vùng
+            double a = sl.random.nextDouble() * Math.PI * 2, r = 2 + sl.random.nextDouble() * 8 * k;
+            double x = c.x + Math.cos(a) * r, z = c.z + Math.sin(a) * r;
+            int hgt = 4 + sl.random.nextInt((int) (4 * k) + 1);
+            for (int y = 0; y < hgt; y++)
+                sl.sendParticles(new DustParticleOptions(y < hgt - 1 ? new Vector3f(.42f, .29f, .16f) : new Vector3f(.56f, .83f, .35f), 1.8f), x, c.y + y * 0.35, z, 2, 0.08, 0, 0.08, 0);
+        }
+        Fx.shake(sl, c, 1.4f, 20, 30 * k);
+        for (Player p : players(sl, m, 10 * k)) {
             p.hurt(m.damageSources().mobAttack(m), atk(m) * 1.2f);
             p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 6));
             p.addEffect(new MobEffectInstance(MobEffects.POISON, 80, 1));
             p.displayClientMessage(Component.translatable("hukhong.thu_vuong.roots").withColor(0x8FD45A), true);
             m.heal(m.getMaxHealth() * 0.05f);
         }
-        Fx.groundCrack(sl, null, c.add(0, 0.06, 0), 10f, 0x6B4A2A, 16, 60);
+        Fx.groundCrack(sl, null, c.add(0, 0.06, 0), 10f * k, 0x6B4A2A, 16, 60);
         sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.ROOTED_DIRT.defaultBlockState()),
                 c.x, c.y + 0.3, c.z, 160, 5, 0.3, 5, 0.3);
         sl.playSound(null, c.x, c.y, c.z, SoundEvents.ROOTED_DIRT_BREAK, SoundSource.HOSTILE, 2.5f, 0.4f);
@@ -149,6 +158,33 @@ public final class MiniBossSkills {
         }
         for (Player p : players(sl, m, 24)) p.displayClientMessage(Component.translatable("hukhong.thu_vuong.sprout").withColor(0x8FD45A), true);
         sl.playSound(null, m.getX(), m.getY(), m.getZ(), SoundEvents.BIG_DRIPLEAF_TILT_DOWN, SoundSource.HOSTILE, 2f, 0.5f);
+    }
+
+    /** Lá Kiếm Phong Bạo: lốc lá sắc xoáy ra từ tán cây, cắt người trong bán kính 8 x thân, hất lên. */
+    private static void leafStorm(ServerLevel sl, LinhQuai m) {
+        float k = YeuThuSize.skillK(m);
+        Vec3 c = m.position();
+        double h = m.getBbHeight();
+        for (int ring = 0; ring < 4; ring++) {
+            double r = (2 + ring * 2) * k, y = c.y + 1 + ring * h * 0.15;
+            int n = (int) (24 + ring * 10);
+            for (int i = 0; i < n; i++) {
+                double a = i * Math.PI * 2 / n + ring * 0.4;
+                sl.sendParticles(ParticleTypes.CHERRY_LEAVES, c.x + Math.cos(a) * r, y, c.z + Math.sin(a) * r, 1, 0, 0, 0, 0);
+                sl.sendParticles(new DustParticleOptions(new Vector3f(.35f, .8f, .3f), 1.3f), c.x + Math.cos(a) * r, y + 0.3, c.z + Math.sin(a) * r,
+                        1, -Math.sin(a) * 0.5, 0.05, Math.cos(a) * 0.5, 0.4);
+            }
+        }
+        Fx.play(sl, FxType.SHOCKWAVE, c.add(0, 1, 0), Vec3.ZERO, 8f * k, 0x6FD45A, 18);
+        for (Player p : players(sl, m, 8 * k)) {
+            p.hurt(m.damageSources().mobAttack(m), atk(m) * 1.0f);
+            Vec3 out = p.position().subtract(c).multiply(1, 0, 1).normalize().scale(1.2);
+            p.setDeltaMovement(out.x, 0.7, out.z);
+            p.hurtMarked = true;
+            p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 1));
+        }
+        sl.playSound(null, c.x, c.y, c.z, SoundEvents.ELYTRA_FLYING, SoundSource.HOSTILE, 2f, 0.6f);
+        sl.playSound(null, c.x, c.y, c.z, SoundEvents.AZALEA_LEAVES_BREAK, SoundSource.HOSTILE, 2.5f, 0.5f);
     }
 
     // ---------------------------------------------------------------- Thạch Cự Nhân
