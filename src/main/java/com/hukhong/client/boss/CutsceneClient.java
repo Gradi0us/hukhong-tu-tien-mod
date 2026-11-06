@@ -97,6 +97,12 @@ public final class CutsceneClient {
         playerPitch = mc.player.getXRot();
     }
 
+    /** Đang chiếu cảnh: ẩn bảng tên của chính mình (camera đứng ngoài người chơi). */
+    @SubscribeEvent
+    public static void onNameTag(net.neoforged.neoforge.client.event.RenderNameTagEvent e) {
+        if (cur != null && e.getEntity() == Minecraft.getInstance().player) e.setCanRender(net.neoforged.neoforge.common.util.TriState.FALSE);
+    }
+
     @SubscribeEvent
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut e) { cur = null; cam = null; prevCamera = null; }
 

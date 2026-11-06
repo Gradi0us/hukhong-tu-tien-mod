@@ -113,7 +113,7 @@ public final class CultivationService {
     }
 
     public static void addExp(ServerPlayer p, long amount) {
-        update(p, applyExp(get(p), com.hukhong.poi.PoiBoost.boost(p, com.hukhong.endgame.WorldTier.spiritBoost(p, com.hukhong.world.calendar.LinhKhiTrieu.boost(p, amount))))); // Linh Tuyen x1.3 / Thac Linh Khi x1.5 (poi/PoiBoost); Linh Khi Trieu x1.5 trong vung; Linh Khi Phuc Hung x1.3 trong vung Hu Hoa cu
+        update(p, applyExp(get(p), com.hukhong.dongphu.DongPhuService.boost(p, com.hukhong.poi.PoiBoost.boost(p, com.hukhong.endgame.WorldTier.spiritBoost(p, com.hukhong.world.calendar.LinhKhiTrieu.boost(p, amount)))))); // Dong Phu Tu Linh; Linh Tuyen x1.3 / Thac Linh Khi x1.5 (poi/PoiBoost); Linh Khi Trieu x1.5 trong vung; Linh Khi Phuc Hung x1.3 trong vung Hu Hoa cu
     }
 
     public static void setLevel(ServerPlayer p, int level) {

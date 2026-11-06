@@ -1,0 +1,12 @@
+{
+ "type": "minecraft:block",
+ "pools": [
+  {
+   "rolls": 1,
+   "entries": [
+    { "type": "minecraft:item", "name": "hukhong:dong_phu_tran_ban" }
+   ],
+   "conditions": [ { "condition": "minecraft:survives_explosion" } ]
+  }
+ ]
+}

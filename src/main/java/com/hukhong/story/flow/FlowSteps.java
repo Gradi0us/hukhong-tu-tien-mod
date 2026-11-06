@@ -10,7 +10,7 @@ import java.util.List;
 public final class FlowSteps {
     private FlowSteps() {}
 
-    public enum Kind { TALK, KILL, REACH, ALTAR, LINH_KHI, MILESTONE, LEVEL, SECT, DOCS, LAIR_SEEN, CHG, INVASION, BICANH, DUEL, GATE, ENDING, JOURNEY }
+    public enum Kind { TALK, KILL, REACH, ALTAR, LINH_KHI, MILESTONE, LEVEL, SECT, DOCS, LAIR_SEEN, CHG, INVASION, BICANH, DUEL, GATE, ENDING, JOURNEY, NEMESIS }
 
     /** n: số lượng / cấp / chỉ số CHG; arg: id thành / npc. */
     public record Step(String id, int chapter, Kind kind, int n, String arg, String group) {
@@ -44,6 +44,7 @@ public final class FlowSteps {
         add("pro_altar", 0, Kind.ALTAR, 0, "");
         // Chương 1: Hạt Bụi (1-9)
         add("c1_talk", 1, Kind.TALK, 0, "mo_dao");
+        add("c1_nemesis", 1, Kind.NEMESIS, 1, "vision"); // Phản Thần Dạ Khuyết lần 1: hiện ra xa
         tail(1);
         // Chương 2: Nhập Đạo (10-19)
         add("c2_sect", 2, Kind.SECT, 0, "");
@@ -55,6 +56,7 @@ public final class FlowSteps {
         tail(3);
         // Chương 4: Bóng Dạ (30-39)
         add("c4_docs", 4, Kind.DOCS, 2, "");
+        add("c4_nemesis", 4, Kind.NEMESIS, 2, "taunt");
         add("c4_hua_co", 4, Kind.TALK, 0, "hua_co");
         tail(4);
         // Chương 5: Cơ Duyên Bị Cướp (40-49)
@@ -63,6 +65,7 @@ public final class FlowSteps {
         tail(5);
         // Chương 6: Địa Môn - lộ hang ổ (50-59)
         add("c6_lair", 6, Kind.LAIR_SEEN, 0, "");
+        add("c6_nemesis", 6, Kind.NEMESIS, 3, "fight");
         add("c6_modao", 6, Kind.TALK, 0, "mo_dao");
         tail(6);
         // Chương 7: Thạch Hống (60-69)
@@ -74,6 +77,7 @@ public final class FlowSteps {
         tail(8);
         // Chương 9: Kiếm Vong (80-89)
         add("c9_chg3", 9, Kind.CHG, 3, "");
+        add("c9_nemesis", 9, Kind.NEMESIS, 4, "revelation");
         add("c9_modao", 9, Kind.TALK, 0, "mo_dao");
         tail(9);
         // Chương 10: Khảo Hạch (90-100)

@@ -75,6 +75,7 @@ public final class PoiRewards {
     /** Tien te + vat pham thang vao nguoi choi. */
     public static void giveAll(ServerPlayer p, PoiDef d, RandomSource r) {
         currencies(p, d, r);
+        com.hukhong.memory.MemoryDrops.onPoiLoot(p, d.builder()); // Ký Ức: lần đầu nhận từ loại địa điểm này
         giveStacks(p, itemStacks(d, r, CultivationService.get(p).paths()));
     }
 

@@ -78,7 +78,7 @@ public final class CreatureRegistry {
         TYPES.register(bus);
         ITEMS.register(bus);
         ATTACHMENTS.register(bus);
-        bus.addListener((RegisterGameTestsEvent e) -> { e.register(CreatureGameTests.class); e.register(YeuThuGameTests.class); });
+        bus.addListener((RegisterGameTestsEvent e) -> { e.register(CreatureGameTests.class); e.register(YeuThuGameTests.class); e.register(com.hukhong.creature.pet.PetEvoGameTests.class); });
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.SPAWN_EGGS) for (var i : EGGS.values()) e.accept(i.get());
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) for (var i : MATERIALS.values()) e.accept(i.get());

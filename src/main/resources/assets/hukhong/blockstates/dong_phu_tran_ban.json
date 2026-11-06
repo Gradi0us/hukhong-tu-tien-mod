@@ -1,0 +1,9 @@
+{
+ "variants": {
+  "tier=1": { "model": "hukhong:block/dong_phu_tran_ban" },
+  "tier=2": { "model": "hukhong:block/dong_phu_tran_ban" },
+  "tier=3": { "model": "hukhong:block/dong_phu_tran_ban" },
+  "tier=4": { "model": "hukhong:block/dong_phu_tran_ban" },
+  "tier=5": { "model": "hukhong:block/dong_phu_tran_ban" }
+ }
+}

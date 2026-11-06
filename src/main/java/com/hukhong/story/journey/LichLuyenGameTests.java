@@ -47,7 +47,8 @@ public final class LichLuyenGameTests {
     public static void journeyStepAssignsStoryTaskAndAdvances(GameTestHelper h) {
         ServerPlayer p = player(h, 5);
         DialogueService.setQuest(p, QuestData.DEFAULT.withChapter(1).withFlag(StoryFlow.F_V2).withStep("c1_talk"));
-        StoryFlow.complete(p, "c1_talk"); // vào c1_journey
+        StoryFlow.complete(p, "c1_talk");
+        StoryFlow.complete(p, "c1_nemesis"); // sau cảnh Dạ Khuyết -> c1_journey
         FlowSteps.Step s = StoryFlow.current(p);
         if (s == null || s.kind() != FlowSteps.Kind.JOURNEY) { h.fail("khong vao buoc Lich Luyen: " + s); return; }
         LichLuyen.Cur c = LichLuyen.current(p);

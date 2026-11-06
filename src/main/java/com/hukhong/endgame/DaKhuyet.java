@@ -66,6 +66,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
         b.define(PHASE, 1);
+        b.define(AVATAR, false);
     }
 
     @Override public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
@@ -75,10 +76,20 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
 
     @Override public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        if (getTags().contains("hk_nemesis_avatar")) entityData.set(AVATAR, true);
         if (tag.contains("DkPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("DkPhase"))));
     }
 
     public int phase() { return entityData.get(PHASE); }
+
+    /** Phân thân trong tuyến truyện (story/nemesis): không đấu trường, không nhạc, không thanh boss cuối, không đổi pha. */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> AVATAR =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(DaKhuyet.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    public boolean avatar() { return entityData.get(AVATAR) || getTags().contains("hk_nemesis_avatar"); }
+
+    /** Đánh dấu phân thân (đồng bộ xuống client để tên không gắn cấp boss cuối). */
+    public void markAvatar() { addTag("hk_nemesis_avatar"); entityData.set(AVATAR, true); }
 
     // ------------------------------------------------------------ PhasedBoss (moi pha la mot mat trang khuyet dan)
     @Override public String phaseId() { return "da_khuyet"; }
@@ -112,17 +123,17 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     }
 
     @Override public boolean isPushable() { return false; }
-    @Override public Component getDisplayName() { return com.hukhong.entity.BossLevel.tag(super.getDisplayName(), EndgameKit.BOSS_LEVEL); }
+    @Override public Component getDisplayName() { if (avatar()) return super.getDisplayName(); return com.hukhong.entity.BossLevel.tag(super.getDisplayName(), EndgameKit.BOSS_LEVEL); }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
     @Override public boolean isImmobile() { return super.isImmobile() || windup > 0 || (director != null && director.frozen()); }
-    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bar.addPlayer(p); }
+    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); if (!avatar()) bar.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
 
     @Override public void onAddedToLevel() {
         super.onAddedToLevel();
-        if (!level().isClientSide) { com.hukhong.audio.BossMusic.watch(this, "da_khuyet"); com.hukhong.arena.BossArena.attach(this, EndgameKit.MAIN_RADIUS - 1, null, false, new net.minecraft.core.BlockPos(0, EndgameKit.CENTER_Y, 0)); }
+        if (!level().isClientSide && !avatar()) { com.hukhong.audio.BossMusic.watch(this, "da_khuyet"); com.hukhong.arena.BossArena.attach(this, EndgameKit.MAIN_RADIUS - 1, null, false, new net.minecraft.core.BlockPos(0, EndgameKit.CENTER_Y, 0)); }
     }
 
     /** Xuất hiện: thoại + title cho người chơi quanh đó. */
@@ -139,7 +150,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     /** isImmobile() (windup > 0) làm LivingEntity.aiStep bỏ qua customServerAiStep => windup phải giảm ở tick(). */
     @Override public void tick() {
         super.tick();
-        if (level() instanceof ServerLevel sl0 && isAlive()) director.tick(sl0);
+        if (level() instanceof ServerLevel sl0 && isAlive() && !avatar()) director.tick(sl0);
         if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
     }
 
@@ -202,13 +213,14 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
 
     @Override public void die(DamageSource src) {
         super.die(src);
-        if (!(level() instanceof ServerLevel sl)) return;
+        if (!(level() instanceof ServerLevel sl) || avatar()) return;
         for (ServerPlayer p : sl.players())
             if (p.distanceToSqr(this) < 100 * 100) p.displayClientMessage(Component.translatable("hukhong.endgame.dakhuyet.fall"), false);
     }
 
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recentlyHit) {
         super.dropCustomDeathLoot(sl, src, recentlyHit);
+        if (avatar()) return;
         com.hukhong.currency.Wallet.grantHonTinhBoss(sl, position(), src, 20 + random.nextInt(8));
     }
 

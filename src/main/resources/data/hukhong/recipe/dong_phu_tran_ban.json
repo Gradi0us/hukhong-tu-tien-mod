@@ -1,0 +1,19 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "category": "misc",
+ "pattern": [
+  "BGB",
+  "ASA",
+  "BGB"
+ ],
+ "key": {
+  "B": { "item": "minecraft:stone_bricks" },
+  "G": { "item": "minecraft:gold_ingot" },
+  "A": { "item": "minecraft:amethyst_shard" },
+  "S": { "item": "hukhong:linh_thach_ha" }
+ },
+ "result": {
+  "id": "hukhong:dong_phu_tran_ban",
+  "count": 1
+ }
+}

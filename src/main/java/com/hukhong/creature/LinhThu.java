@@ -1,8 +1,10 @@
 package com.hukhong.creature;
 
 import com.hukhong.creature.pet.FetchItemsGoal;
+import com.hukhong.creature.pet.PetBranch;
 import com.hukhong.creature.pet.PetMath;
 import com.hukhong.creature.pet.PetService;
+import com.hukhong.creature.pet.PetSkills;
 import com.hukhong.entity.HuHoa;
 import com.hukhong.entity.HuMob;
 import net.minecraft.nbt.CompoundTag;
@@ -55,9 +57,13 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(LinhThu.class, EntityDataSerializers.INT);
+    /** Tang tien hoa (0 = chua) va nhanh (ordinal PetBranch, -1 = chua chon) - dong bo ve client de hien ten. */
+    private static final EntityDataAccessor<Integer> PET_STAGE = SynchedEntityData.defineId(LinhThu.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> PET_BRANCH = SynchedEntityData.defineId(LinhThu.class, EntityDataSerializers.INT);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final CreatureKind kind;
     private int skillCd = 60, charmCd = 40;
+    private int bond, formSkillCd = 60, frenzyTicks;
 
     public LinhThu(EntityType<? extends LinhThu> t, Level l) {
         super(t, l);
@@ -82,6 +88,8 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
         b.define(LEVEL, 1);
+        b.define(PET_STAGE, 0);
+        b.define(PET_BRANCH, -1);
     }
 
     @Override protected void registerGoals() {
@@ -153,6 +161,10 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
             sp.displayClientMessage(Component.translatable("hukhong.pet.tame." + r.name().toLowerCase(), getDisplayName()), true);
             return InteractionResult.CONSUME;
         }
+        if (isTame() && isOwnedBy(p) && !held.isEmpty()) { // xuc tac (tien hoa) / thuc an (than mat)
+            InteractionResult r = PetService.useItem(this, p, held);
+            if (r != InteractionResult.PASS) return r;
+        }
         if (isTame() && isOwnedBy(p) && h == InteractionHand.MAIN_HAND && held.isEmpty() && p.isSecondaryUseActive()) {
             if (!level().isClientSide) {
                 setOrderedToSit(!isOrderedToSit());
@@ -173,6 +185,7 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
         }
         if (kind.fly && !onGround()) setDeltaMovement(getDeltaMovement().multiply(1, 0.6, 1));
         if (tickCount % 40 == 0) PetService.syncLevel(this);
+        if (isTame()) PetSkills.tick(this);
         if (kind == CreatureKind.THIET_BOI_HUNG && !isTame()) roar();
         if (kind == CreatureKind.LINH_HO && isTame() && !isOrderedToSit() && --charmCd <= 0 && getOwner() instanceof ServerPlayer o) {
             charmCd = PetMath.CHARM_COOLDOWN;
@@ -196,7 +209,10 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
 
     @Override public boolean doHurtTarget(Entity e) {
         boolean r = super.doHurtTarget(e);
-        if (r && !level().isClientSide) triggerAnim("attack", "attack");
+        if (r && !level().isClientSide) {
+            triggerAnim("attack", "attack");
+            PetSkills.onHit(this);
+        }
         return r;
     }
 
@@ -207,19 +223,50 @@ public class LinhThu extends TamableAnimal implements GeoEntity, HuMob {
 
     // ---- hien thi / luu ----
     @Override public Component getDisplayName() {
-        return isTame() || kind == CreatureKind.THIET_BOI_HUNG ? HuHoa.name(huLevel(), getTypeName()) : super.getDisplayName();
+        Component base = isTame() || kind == CreatureKind.THIET_BOI_HUNG ? HuHoa.name(huLevel(), getTypeName()) : super.getDisplayName();
+        PetBranch b = petBranch();
+        return b != null && petStage() > 0 ? Component.empty().append(b.formName(petStage())).append(" ").append(base) : base;
     }
+
+    // ---- tien hoa / than mat (logic o PetForm, PetService) ----
+    public int petStage() { return entityData.get(PET_STAGE); }
+
+    public PetBranch petBranch() {
+        int i = entityData.get(PET_BRANCH);
+        return i < 0 ? null : PetBranch.values()[i];
+    }
+
+    public void setPetForm(int stage, PetBranch branch) {
+        entityData.set(PET_STAGE, Math.max(0, stage));
+        entityData.set(PET_BRANCH, branch == null ? -1 : branch.ordinal());
+    }
+
+    public int bond() { return bond; }
+    public void setBond(int v) { bond = Math.max(0, Math.min(100, v)); }
+    public int frenzyTicks() { return frenzyTicks; }
+    public void setFrenzyTicks(int v) { frenzyTicks = Math.max(0, v); }
+    public int formSkillCd() { return formSkillCd; }
+    public void setFormSkillCd(int v) { formSkillCd = Math.max(0, v); }
+
+    /** Phuc hoi tu ban chup khi hoi sinh (du lieu thu da chet). */
+    public void restoreSnapshot(CompoundTag tag) { readAdditionalSaveData(tag); }
 
     @Override public boolean shouldShowName() { return isTame() || kind == CreatureKind.THIET_BOI_HUNG || super.shouldShowName(); }
 
     @Override public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt(HuHoa.TAG_LEVEL, huLevel());
+        tag.putInt("PetStage", petStage());
+        PetBranch b = petBranch();
+        if (b != null) tag.putString("PetBranch", b.id);
+        tag.putInt("PetBond", bond);
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains(HuHoa.TAG_LEVEL)) entityData.set(LEVEL, tag.getInt(HuHoa.TAG_LEVEL));
+        if (tag.contains("PetStage")) setPetForm(tag.getInt("PetStage"), tag.contains("PetBranch") ? PetBranch.byId(tag.getString("PetBranch")) : null);
+        if (tag.contains("PetBond")) bond = Math.max(0, Math.min(100, tag.getInt("PetBond")));
     }
 
     @Override public int huLevel() { return entityData.get(LEVEL); }

@@ -62,7 +62,12 @@ public final class DevYeuTest {
             movedAway = true;
             long w = mc.getWindow().getWindow();
             org.lwjgl.glfw.GLFW.glfwSetWindowPos(w, -6000, -6000);
+            org.lwjgl.glfw.GLFW.glfwSetWindowAttrib(w, org.lwjgl.glfw.GLFW.GLFW_FOCUS_ON_SHOW, org.lwjgl.glfw.GLFW.GLFW_FALSE);
+            org.lwjgl.glfw.GLFW.glfwSetWindowAttrib(w, org.lwjgl.glfw.GLFW.GLFW_FLOATING, org.lwjgl.glfw.GLFW.GLFW_FALSE);
         }
+        // không bao giờ giữ chuột của người dùng
+        if (mc.mouseHandler.isMouseGrabbed()) mc.mouseHandler.releaseMouse();
+        org.lwjgl.glfw.GLFW.glfwSetInputMode(mc.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_CURSOR, org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL);
         if (mc.screen != null && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen)) mc.setScreen(null);
         if (mc.isPaused()) return;
         t++;
@@ -166,6 +171,9 @@ public final class DevYeuTest {
         if (t == 2075) server.execute(() -> { lv.setDayTime(18000); });
         if (t == 2100) shot("54_loot_beams_night");
         // 2026-11-06: công trình địa điểm làm lại
+        // 2026-11-06 (b): Dạ Khuyết, Ký Ức, Động Phủ, Linh Thú
+        if (t == 560 && !RUN_POI) t = 2999;
+        if (!RUN_POI && t >= 3000) { scenes2(server, sp, lv, x0, y0, z0); return; }
         if (t == 2110) server.execute(() -> {
             var data = com.hukhong.poi.PoiSavedData.get(lv);
             for (int i = 0; i < POIS.length; i++) {
@@ -195,7 +203,85 @@ public final class DevYeuTest {
     private static final com.hukhong.story.kyngo.KyNgoInstance[] KYNGO = new com.hukhong.story.kyngo.KyNgoInstance[4];
     private static boolean movedAway;
     static final String[] POIS = {"battlefield", "grave", "sword_mound", "ruin", "shrine", "dao_quan", "wuxing", "abyss", "cave", "arena"};
-    static final boolean RUN_KIEP = false, RUN_KYNGO = false;
+    static final boolean RUN_KIEP = false, RUN_KYNGO = false, RUN_POI = false;
+
+    static void cmd(net.minecraft.server.MinecraftServer server, ServerPlayer sp, String c) {
+        server.getCommands().performPrefixedCommand(sp.createCommandSourceStack().withPermission(4).withSuppressedOutput(), c);
+    }
+
+    static double lastY;
+    static void scenes2(net.minecraft.server.MinecraftServer server, ServerPlayer sp, net.minecraft.server.level.ServerLevel lv, int x0, int y0, int z0) {
+        int u = t - 3000;
+        if (Math.abs(sp.getY() - lastY) > 2) LOG.info("YEUTEST ydrop u={} {} -> {}", u, lastY, sp.position());
+        lastY = sp.getY();
+        if (u == 0) server.execute(() -> {
+            for (int dx = -48; dx <= 48; dx++) for (int dz = -48; dz <= 48; dz++) {
+                lv.setBlock(new BlockPos(x0 + dx, y0 - 2, z0 + dz), Blocks.STONE.defaultBlockState(), 2);
+                lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+                for (int dy = 0; dy < 30; dy++) lv.setBlock(new BlockPos(x0 + dx, y0 + dy, z0 + dz), Blocks.AIR.defaultBlockState(), 2);
+            }
+            lv.setDayTime(18000);
+            com.hukhong.core.CultivationService.setLevel(sp, 65);
+            sp.setGameMode(GameType.CREATIVE);
+            sp.getAbilities().flying = true; sp.onUpdateAbilities();
+            sp.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_RESISTANCE, 99999, 4, false, false));
+            sp.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 99999, 4, false, false));
+            sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0);
+        });
+        if (u == 20) server.execute(() -> com.hukhong.story.nemesis.NemesisService.start(sp, com.hukhong.story.flow.FlowSteps.get("c1_nemesis")));
+        for (int k : new int[]{50, 90, 130, 170, 210}) if (u == k) shot("70_nemesis_vision_" + k);
+        if (u == 300) server.execute(() -> com.hukhong.story.nemesis.NemesisService.start(sp, com.hukhong.story.flow.FlowSteps.get("c4_nemesis")));
+        for (int k : new int[]{320, 350, 390, 430}) if (u == k) shot("71_nemesis_taunt_" + k);
+        if (u == 515) server.execute(() -> { sp.setGameMode(GameType.SURVIVAL); sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0); });
+        if (u == 850) server.execute(() -> { sp.setGameMode(GameType.CREATIVE); sp.getAbilities().flying = true; sp.onUpdateAbilities(); sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0); });
+        if (u == 520) server.execute(() -> com.hukhong.story.nemesis.NemesisService.start(sp, com.hukhong.story.flow.FlowSteps.get("c6_nemesis")));
+        for (int k : new int[]{540, 580, 620, 680}) if (u == k) shot("72_nemesis_fight_" + k);
+        if (u == 700) server.execute(() -> { var a = com.hukhong.story.nemesis.NemesisService.avatar(sp); if (a != null) { a.setHealth(a.getMaxHealth() * 0.3f); a.hurt(sp.damageSources().playerAttack(sp), 1f); } });
+        for (int k : new int[]{705, 720, 750, 790}) if (u == k) shot("73_nemesis_retreat_" + k);
+        if (u == 860) server.execute(() -> com.hukhong.story.nemesis.NemesisService.start(sp, com.hukhong.story.flow.FlowSteps.get("c9_nemesis")));
+        for (int k : new int[]{890, 950, 1010, 1070}) if (u == k) shot("74_nemesis_reveal_" + k);
+        if (u == 1200) server.execute(() -> cmd(server, sp, "hkkyuc play 4"));
+        for (int k : new int[]{1230, 1290, 1350, 1430}) if (u == k) shot("75_memory4_" + k);
+        if (u == 1550) server.execute(() -> cmd(server, sp, "hkkyuc play 6"));
+        for (int k : new int[]{1580, 1640, 1700, 1780}) if (u == k) shot("76_memory6_" + k);
+        if (u == 1900) server.execute(() -> {
+            lv.setDayTime(13500);
+            BlockPos bp = new BlockPos(x0 + 6, y0, z0 + 6);
+            lv.setBlock(bp, com.hukhong.dongphu.DongPhuRegistry.TRAN_BAN.get().defaultBlockState(), 3);
+            com.hukhong.dongphu.DongPhuService.claim(sp, lv, bp);
+            sp.connection.teleport(x0 + 6.5, y0 + 1, z0 + 1.5, 0, 20);
+        });
+        for (int k : new int[]{1910, 1930, 1960}) if (u == k) shot("77_dongphu_claim_" + k);
+        if (u == 2000) server.execute(() -> sp.connection.teleport(x0 + 6.5, y0 + 22, z0 - 14.5, 0, 45));
+        if (u == 2020) shot("77_dongphu_air");
+        if (u == 2040) server.execute(() -> sp.connection.teleport(x0 + 6.5, y0 + 1.2, z0 + 3.5, 0, 25));
+        if (u == 2060) shot("77_dongphu_close");
+        if (u == 2100) server.execute(() -> {
+            lv.setDayTime(6000);
+            var et = com.hukhong.creature.CreatureRegistry.type(com.hukhong.creature.CreatureKind.THIET_BOI_HUNG_CON);
+            var e = et.create(lv);
+            if (e instanceof com.hukhong.creature.LinhThu lt) {
+                lt.moveTo(x0 - 3.5, y0, z0 + 7.5, 180, 0);
+                lv.addFreshEntity(lt);
+                lt.setHealth(1f);
+                LOG.info("YEUTEST tame {}", com.hukhong.creature.pet.PetService.tryTame(sp, lt));
+                lt.setHealth(lt.getMaxHealth());
+            }
+            sp.connection.teleport(x0 - 1.5, y0, z0 - 1.5, 0, 12);
+            cmd(server, sp, "hkpet bond 80");
+            cmd(server, sp, "give @s hukhong:huyet_yeu_tinh_huyet 4");
+        });
+        if (u == 2130) shot("78_pet_hud");
+        if (u == 2140) server.execute(() -> cmd(server, sp, "hkpet evolve huyet_sat"));
+        for (int k : new int[]{2150, 2170, 2200, 2240}) if (u == k) shot("79_pet_evo1_" + k);
+        if (u == 2300) server.execute(() -> { var pt = com.hukhong.creature.pet.PetService.loaded(sp, "battle"); if (pt != null) pt.setHealth(pt.getMaxHealth() * 0.4f); });
+        if (u == 2320) shot("79_pet_hud_dmg");
+        if (u == 2340) server.execute(() -> cmd(server, sp, "hkpet evolve huyet_sat"));
+        for (int k : new int[]{2350, 2380, 2420}) if (u == k) shot("79_pet_evo2_" + k);
+        if (u == 2480) { LOG.info("YEUTEST done"); mc().stop(); }
+    }
+
+    static net.minecraft.client.Minecraft mc() { return net.minecraft.client.Minecraft.getInstance(); }
     private static LinhQuai fellWalker;
     private static volatile long spawnedAt;
     private static int shotIdx;

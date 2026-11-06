@@ -94,6 +94,7 @@ public final class StoryFlow {
         if (q.has(F_DONE)) return;
         FlowSteps.Step s = current(p);
         if (s != null) setObjective(p, s);
+        if (s != null && s.kind() == FlowSteps.Kind.NEMESIS) com.hukhong.story.nemesis.NemesisService.resume(p, s);
     }
 
     /** Save cũ (chưa có luồng): chương theo cảnh giới; cờ chN_done cũ đánh dấu các bước thoại đã xong. */
@@ -147,6 +148,7 @@ public final class StoryFlow {
             case KILL -> WaveCountdown.start(p, s.id()); // 30s chuan bi roi quai moi toi
             case TALK -> { if (s.arg().equals("su_phu")) spawnNpc(p, "su_phu", 4); }
             case DUEL -> spawnDuelNpc(p, s);
+            case NEMESIS -> com.hukhong.story.nemesis.NemesisService.start(p, s);
             default -> { }
         }
         com.hukhong.story.journey.LichLuyen.ensure(p, s);
@@ -166,7 +168,7 @@ public final class StoryFlow {
         CultivationData d = CultivationService.get(p);
         StoryData sd = StoryService.get(p);
         return switch (s.kind()) {
-            case TALK, DUEL, ALTAR, LINH_KHI -> false;
+            case TALK, DUEL, ALTAR, LINH_KHI, NEMESIS -> false; // NEMESIS: NemesisService tu hoan thanh buoc
             case JOURNEY -> q.prog() >= s.n();
             case KILL -> q.prog() >= s.n();
             case REACH -> {
@@ -196,7 +198,7 @@ public final class StoryFlow {
     public static void onProgress(ServerPlayer p) {
         if (!active(p)) return;
         FlowSteps.Step s = current(p);
-        if (s == null) return;
+        if (s == null || s.kind() == FlowSteps.Kind.NEMESIS) return; // không nhảy chương giữa cảnh Dạ Khuyết
         CultivationData d = CultivationService.get(p);
         int target = FlowSteps.chapterFor(d.level(), d.milestoneLocked());
         if (target > s.chapter() && !(s.chapter() == 0 && target < 2)) {
@@ -208,6 +210,7 @@ public final class StoryFlow {
 
     // ------------------------------------------------------------------ mục tiêu
     static void setObjective(ServerPlayer p, FlowSteps.Step s) {
+        if (s.kind() == FlowSteps.Kind.NEMESIS) { com.hukhong.story.nemesis.NemesisService.objective(p, s); return; }
         if (com.hukhong.story.journey.LichLuyen.objective(p, s)) return;
         int prog = quest(p).prog();
         Object a1 = s.kind() == FlowSteps.Kind.KILL ? Math.min(prog, s.n()) : s.n();

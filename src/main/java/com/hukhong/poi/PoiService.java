@@ -162,6 +162,7 @@ public final class PoiService {
         for (ServerPlayer p : ow.players()) {
             if (i.dist2(p.getX(), p.getZ()) > 60.0 * 60.0) continue;
             PoiRewards.currencies(p, d, ow.random);
+            com.hukhong.memory.MemoryDrops.onPoiLoot(p, d.builder()); // Ký Ức: lần đầu nhận từ loại địa điểm này
             if (chest == null) PoiRewards.giveStacks(p, PoiRewards.itemStacks(d, ow.random, CultivationService.get(p).paths()));
             if (StoryHooks.allowed(p, d.lore())) StoryHooks.complete(p, d.lore());
             p.sendSystemMessage(Component.translatable("hukhong.poi.cleared", Component.translatable(d.nameKey())));

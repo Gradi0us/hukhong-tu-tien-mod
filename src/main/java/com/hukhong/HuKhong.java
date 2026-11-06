@@ -28,11 +28,13 @@ public class HuKhong {
         com.hukhong.story.StoryRegistry.register(modBus);
         com.hukhong.chg.ChgRegistry.register(modBus);
         com.hukhong.treasure.TreasureRegistry.register(modBus);
+        com.hukhong.dongphu.DongPhuRegistry.register(modBus);
         com.hukhong.endgame.EndgameRegistry.register(modBus);
         com.hukhong.city.ambient.AmbientRegistry.register(modBus);
         com.hukhong.resource.ResourceRegistry.register(modBus);
         com.hukhong.creature.CreatureRegistry.register(modBus);
         com.hukhong.phapkhi.PhapKhiRegistry.register(modBus);
+        com.hukhong.memory.MemoryRegistry.register(modBus);
         modBus.addListener(SyncPayload::register);
         modBus.addListener((net.neoforged.neoforge.event.RegisterGameTestsEvent e) -> { e.register(com.hukhong.gametest.HuKhongGameTests.class); e.register(com.hukhong.gametest.ObjectiveGameTests.class); });
         NeoForge.EVENT_BUS.register(com.hukhong.item.PillDrops.class);

@@ -135,7 +135,8 @@ public final class VoidSpread extends SavedData {
                     if (dx == 0 && dz == 0) continue;
                     DaiSamLam.Region n = DaiSamLam.cell(seed, s.gx() + dx, s.gz() + dz);
                     // loại: không có rừng, đã bị xâm thực (tĩnh/lan), đã giải phóng
-                    if (n != null && !DaiSamLam.corruptedLive(ow, n) && !CleansedForests.get(ow).has(n)) cand.add(n);
+                    if (n != null && !DaiSamLam.corruptedLive(ow, n) && !CleansedForests.get(ow).has(n)
+                            && !com.hukhong.dongphu.DongPhuService.wardTouches(ow, n.cx(), n.cz(), n.r())) cand.add(n); // Hộ Trận Động Phủ chặn lan
                 }
             if (cand.isEmpty()) continue;
             DaiSamLam.Region pick = cand.get(rnd.nextInt(cand.size()));
