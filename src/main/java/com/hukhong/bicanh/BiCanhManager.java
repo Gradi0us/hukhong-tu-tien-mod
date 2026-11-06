@@ -438,8 +438,7 @@ public final class BiCanhManager {
         run.active = -1;
         if (r.kind() == Kind.WAVE && run.roomTypes[idx] == BiCanhVariety.RoomType.TINH_ANH) {
             BlockPos cp = BiCanhArena.roomCenter(run.origin, r).offset(0, 0, 3);
-            dim.setBlock(cp, Blocks.CHEST.defaultBlockState(), 3);
-            if (dim.getBlockEntity(cp) instanceof ChestBlockEntity ce) {
+            if (com.hukhong.treasure.TreasureFx.place(dim, cp, Math.min(3, run.tier.ordinal() / 2), Direction.NORTH) instanceof net.minecraft.world.Container ce) {
                 List<ItemStack> loot = BiCanhLoot.stacks(run.tier, new Random(dim.random.nextLong()));
                 for (int k = 0; k < loot.size() && k < ce.getContainerSize(); k++) ce.setItem(k, loot.get(k));
             }
@@ -466,8 +465,8 @@ public final class BiCanhManager {
         int n = Math.min(online.size(), 10);
         for (int i = 0; i < n; i++) {
             BlockPos cp = new BlockPos(cx, o.getY(), o.getZ() - n / 2 + i);
-            dim.setBlock(cp, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.WEST), 3);
-            if (dim.getBlockEntity(cp) instanceof ChestBlockEntity ce) {
+            int ct = run.theme == BiCanhVariety.Theme.HU_KHONG ? 3 : Math.min(3, 1 + run.tier.ordinal() / 2);
+            if (com.hukhong.treasure.TreasureFx.place(dim, cp, ct, Direction.WEST) instanceof net.minecraft.world.Container ce) {
                 List<ItemStack> loot = BiCanhLoot.stacks(run.tier, rnd);
                 loot = new java.util.ArrayList<>(loot);
                 for (int b = 0; b < run.mod.bonusLoot; b++) loot.addAll(BiCanhLoot.stacks(run.tier, rnd)); // Biến Số: thêm thưởng

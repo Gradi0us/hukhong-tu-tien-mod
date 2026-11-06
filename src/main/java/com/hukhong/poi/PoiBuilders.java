@@ -143,7 +143,13 @@ public final class PoiBuilders {
         void act(String k, int dx, int dy, int dz) { acts.add(new PoiInstance.Act(k, cx + dx, y0 + dy, cz + dz)); }
 
         void post(int dx, int dz) { b(dx, 0, dz, Blocks.OAK_FENCE); b(dx, 1, dz, Blocks.LANTERN); }
-        void chest(int dx, int dy, int dz, Direction face) { s(dx, dy, dz, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, face)); }
+        void chest(int dx, int dy, int dz, Direction face) { chest(dx, dy, dz, face, 1); }
+
+        /** Bảo Rương cấp {@code tier} (0 Gỗ Đồng .. 3 Hư Không) thay rương thường. */
+        void chest(int dx, int dy, int dz, Direction face, int tier) {
+            s(dx, dy, dz, com.hukhong.treasure.TreasureRegistry.BAO_RUONG.get().defaultBlockState()
+                    .setValue(com.hukhong.treasure.BaoRuongBlock.FACING, face).setValue(com.hukhong.treasure.BaoRuongBlock.TIER, tier));
+        }
         void lectern(int dx, int dy, int dz, Direction face) { s(dx, dy, dz, Blocks.LECTERN.defaultBlockState().setValue(LecternBlock.FACING, face)); }
         void lever(int dx, int dy, int dz, Direction face) {
             s(dx, dy, dz, Blocks.LEVER.defaultBlockState().setValue(LeverBlock.FACE, AttachFace.WALL).setValue(LeverBlock.FACING, face).setValue(LeverBlock.POWERED, false));

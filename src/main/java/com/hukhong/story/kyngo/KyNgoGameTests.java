@@ -116,7 +116,7 @@ public final class KyNgoGameTests {
             if (g instanceof LivingEntity le) le.kill();
         }
         h.runAfterDelay(5, () -> {
-            if (!i.level.getBlockState(abs).is(Blocks.CHEST)) { h.fail("ruong chua xuat hien"); return; }
+            if (!i.level.getBlockState(abs).is(com.hukhong.treasure.TreasureRegistry.BAO_RUONG.get())) { h.fail("ruong chua xuat hien"); return; }
             if (Wallet.honTinh(p) < 1) { h.fail("khong nhan Hon Tinh"); return; }
             KyNgoService.finish(i);
             h.succeed();
@@ -129,11 +129,11 @@ public final class KyNgoGameTests {
         BlockPos abs = h.absolutePos(REL);
         ServerPlayer p = player(h, abs);
         KyNgoInstance i = KyNgoService.startAt(p, KyNgoType.THI_THE, abs);
-        if (!i.level.getBlockState(abs.east()).is(Blocks.CHEST)) { h.fail("khong co ruong ben than: " + i.level.getBlockState(abs.east()) + " origin=" + i.level.getBlockState(abs) + " below=" + i.level.getBlockState(abs.below()) + " ents=" + alive(i)); return; }
+        if (!i.level.getBlockState(abs.east()).is(com.hukhong.treasure.TreasureRegistry.BAO_RUONG.get())) { h.fail("khong co ruong ben than: " + i.level.getBlockState(abs.east()) + " origin=" + i.level.getBlockState(abs) + " below=" + i.level.getBlockState(abs.below()) + " ents=" + alive(i)); return; }
         if (KyNgoService.resolve(p, i.token, "search") != KyNgoService.Result.OK) { h.fail("search khong thanh cong"); return; }
         if (!i.resolved) { h.fail("chua danh dau ket thuc"); return; }
         KyNgoService.finish(i);
-        if (i.level.getBlockState(abs.east()).is(Blocks.CHEST)) { h.fail("ruong khong duoc don"); return; }
+        if (i.level.getBlockState(abs.east()).is(com.hukhong.treasure.TreasureRegistry.BAO_RUONG.get())) { h.fail("ruong khong duoc don"); return; }
         h.succeed();
     }
 

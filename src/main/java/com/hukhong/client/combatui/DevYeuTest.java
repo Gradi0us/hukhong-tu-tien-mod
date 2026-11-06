@@ -90,7 +90,7 @@ public final class DevYeuTest {
             sp.getAbilities().flying = false; sp.onUpdateAbilities();
             sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0);
         });
-        if (t == 520) server.execute(() -> com.hukhong.breakthrough.ThienKiep.begin(sp, 3));
+        if (t == 520 && RUN_KIEP) server.execute(() -> com.hukhong.breakthrough.ThienKiep.begin(sp, 3));
         if (t == 545) shot("10_kiep_intro_a");
         if (t == 590) shot("11_kiep_intro_b");
         if (t == 616) shot("12_kiep_intro_end");
@@ -99,7 +99,7 @@ public final class DevYeuTest {
         if (t >= 905 && t <= 1000 && t % 30 == 5) shot("14_kiep_demons_" + t);
         if (t >= 1200 && t <= 1290 && t % 15 == 0) shot("15_kiep_final_" + t);
         if (t == 1300) shot("16_kiep_after");
-        if (t == 1310) server.execute(() -> {
+        if (t == 1310 && RUN_KYNGO) server.execute(() -> {
             com.hukhong.currency.Wallet.give(sp, 500);
             sp.getInventory().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BREAD, 4));
             var T = com.hukhong.story.kyngo.KyNgoType.values();
@@ -110,17 +110,17 @@ public final class DevYeuTest {
         for (int i = 0; i < 4; i++) {
             final int k = i;
             int base = 1380 + i * 140;
-            if (t == base) server.execute(() -> {
+            if (t == base && KYNGO[k] != null) server.execute(() -> {
                 var o = KYNGO[k].origin;
                 sp.connection.teleport(o.getX() + 0.5, y0, o.getZ() - 6.5, 0, 15);
             });
             if (t == base + 30) shot("2" + (k + 1) + "_reveal_" + k);
-            if (t == base + 85) server.execute(() -> {
+            if (t == base + 85 && KYNGO[k] != null) server.execute(() -> {
                 var o = KYNGO[k].origin;
                 sp.connection.teleport(o.getX() + 0.5, y0 + 1.5, o.getZ() - 5.5, 0, 18);
             });
             if (t == base + 95) shot("3" + (k + 1) + "_scene_" + k);
-            if (t == base + 100) server.execute(() -> {
+            if (t == base + 100 && KYNGO[k] != null) server.execute(() -> {
                 var in = KYNGO[k];
                 switch (in.type) {
                     case LAO_NHAN -> com.hukhong.story.kyngo.KyNgoService.resolve(sp, in.token, "help");
@@ -131,11 +131,46 @@ public final class DevYeuTest {
             });
             if (t == base + 106) shot("4" + (k + 1) + "_outcome_" + k);
         }
-        if (t == 1960) { LOG.info("YEUTEST done"); mc.stop(); }
+        // 2026-11-06: Bảo Rương 4 cấp + cột sáng đồ rơi
+        if (t == 1970) server.execute(() -> {
+            for (int i = 0; i < 4; i++) com.hukhong.treasure.TreasureFx.place(lv, new BlockPos(x0 - 6 + i * 4, y0, z0 + 8), i, net.minecraft.core.Direction.NORTH);
+            net.minecraft.world.item.ItemStack[] drops = {new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND),
+                    new net.minecraft.world.item.ItemStack(com.hukhong.resource.ResourceRegistry.LINH_DUOC.values().iterator().next().get()),
+                    new net.minecraft.world.item.ItemStack(com.hukhong.currency.CurrencyRegistry.class.getName().isEmpty() ? net.minecraft.world.item.Items.STONE : net.minecraft.world.item.Items.NETHER_STAR),
+                    new net.minecraft.world.item.ItemStack(com.hukhong.chg.ChgRegistry.CORES.get(0).get())};
+            for (int i = 0; i < drops.length; i++) {
+                var ie = new net.minecraft.world.entity.item.ItemEntity(lv, x0 - 6 + i * 4 + 0.5, y0 + 0.2, z0 + 3.5, drops[i], 0, 0, 0);
+                ie.setNoPickUpDelay(); ie.setPickUpDelay(32767); ie.setUnlimitedLifetime();
+                lv.addFreshEntity(ie);
+            }
+            sp.connection.teleport(x0 + 0.5, y0 + 2.2, z0 - 3.5, 0, 22);
+        });
+        if (t == 2005) server.execute(() -> sp.connection.teleport(x0 + 2.5, y0 + 1.4, z0 + 5.0, 0, 20));
+        if (t == 2012) shot("50_treasure_closed");
+        if (t == 2015) server.execute(() -> {
+            for (int i = 0; i < 4; i++) {
+                BlockPos cp = new BlockPos(x0 - 6 + i * 4, y0, z0 + 8);
+                var st = lv.getBlockState(cp);
+                lv.getBlockState(cp).useWithoutItem(lv, sp, new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(cp), net.minecraft.core.Direction.UP, cp, false));
+                sp.closeContainer();
+                if (lv.getBlockEntity(cp) instanceof com.hukhong.treasure.BaoRuongBE be) be.startOpen(sp);
+            }
+        });
+        if (t == 2022) shot("51_treasure_opening");
+        if (t == 2030) for (int i = 0; i < 4; i++) { var cp = new BlockPos(x0 - 6 + i * 4, y0, z0 + 8); var cb = mc.level.getBlockEntity(cp); var sb = lv.getBlockEntity(cp); LOG.info("YEUTEST chest {} client={} open={} server={} state={}", i, cb, cb instanceof com.hukhong.treasure.BaoRuongBE b ? b.isOpen() : null, sb instanceof com.hukhong.treasure.BaoRuongBE b2 ? b2.isOpen() : null, mc.level.getBlockState(cp)); }
+        if (t == 2045) shot("52_treasure_open");
+        if (t == 2050) server.execute(() -> sp.connection.teleport(x0 - 1.5, y0 + 2.0, z0 + 3.0, 30, 25));
+        if (t == 2058) shot("52b_treasure_side");
+        if (t == 2060) server.execute(() -> sp.connection.teleport(x0 + 0.5, y0 + 1.6, z0 - 1.5, 0, 30));
+        if (t == 2065) shot("53_loot_beams");
+        if (t == 2075) server.execute(() -> { lv.setDayTime(18000); });
+        if (t == 2100) shot("54_loot_beams_night");
+        if (t == 2110) { LOG.info("YEUTEST done"); mc.stop(); }
     }
 
     private static final com.hukhong.story.kyngo.KyNgoInstance[] KYNGO = new com.hukhong.story.kyngo.KyNgoInstance[4];
     private static boolean movedAway;
+    static final boolean RUN_KIEP = false, RUN_KYNGO = false;
     private static LinhQuai fellWalker;
     private static volatile long spawnedAt;
     private static int shotIdx;

@@ -27,6 +27,7 @@ public class HuKhong {
         com.hukhong.vfx.ModParticles.register(modBus);
         com.hukhong.story.StoryRegistry.register(modBus);
         com.hukhong.chg.ChgRegistry.register(modBus);
+        com.hukhong.treasure.TreasureRegistry.register(modBus);
         com.hukhong.endgame.EndgameRegistry.register(modBus);
         com.hukhong.city.ambient.AmbientRegistry.register(modBus);
         com.hukhong.resource.ResourceRegistry.register(modBus);

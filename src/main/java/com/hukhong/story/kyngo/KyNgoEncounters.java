@@ -218,7 +218,7 @@ final class KyNgoEncounters {
             i.main = tag.getUUID();
         }
         BlockPos cp = i.origin.offset(1, 0, 0);
-        if (place(i, cp, Blocks.CHEST.defaultBlockState()) && i.level.getBlockEntity(cp) instanceof Container c) {
+        if (place(i, cp, com.hukhong.treasure.TreasureRegistry.BAO_RUONG.get().defaultBlockState()) && i.level.getBlockEntity(cp) instanceof Container c) {
             int slot = 0;
             List<BookSkill> sk = BookSkill.universal();
             if (!sk.isEmpty()) c.setItem(slot++, SkillBookRegistry.stack(sk.get(i.level.random.nextInt(sk.size()))));
@@ -281,7 +281,9 @@ final class KyNgoEncounters {
         }
         i.rewarded = true;
         RandomSource r = i.level.random;
-        if (place(i, i.origin, Blocks.CHEST.defaultBlockState()) && i.level.getBlockEntity(i.origin) instanceof Container c) {
+        if (place(i, i.origin, com.hukhong.treasure.TreasureRegistry.BAO_RUONG.get().defaultBlockState()
+                .setValue(com.hukhong.treasure.BaoRuongBlock.TIER, 1).setValue(com.hukhong.treasure.BaoRuongBlock.FACING, net.minecraft.core.Direction.SOUTH))
+                && i.level.getBlockEntity(i.origin) instanceof Container c) {
             c.setItem(0, randomPill(r));
             c.setItem(1, randomPill(r));
         }
