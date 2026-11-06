@@ -92,17 +92,24 @@ public final class DevYeuTest {
             for (int dx = -40; dx <= 40; dx++) for (int dz = -10; dz <= 40; dz++)
                 lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
             // 2026-11-06: kích thước theo năm - thú <= 7 khối, Yêu Thụ 16-20 khối
-            Object[][] show = {{CreatureKind.XICH_VAN_HO, YeuThuAge.Y1000}, {CreatureKind.HAC_GIAP_TE, YeuThuAge.Y100000},
-                    {CreatureKind.THU_YEU, YeuThuAge.Y10000}, {CreatureKind.VAN_NIEN_THU_VUONG, YeuThuAge.Y100000}, {CreatureKind.QUY_CO, YeuThuAge.Y100000}};
-            int[] xs = {-34, -20, -2, 22, 40};
+            // 2026-11-06: bản thường / bản Hư Không xâm thực cạnh nhau
+            Object[][] show = {{CreatureKind.THU_YEU, YeuThuAge.Y1000, false}, {CreatureKind.THU_YEU, YeuThuAge.Y1000, true},
+                    {CreatureKind.THUC_NHAN_HOA, YeuThuAge.Y1000, true}, {CreatureKind.VAN_NIEN_THU_VUONG, YeuThuAge.Y1000, true}, {CreatureKind.QUY_CO, YeuThuAge.Y1000, true}};
+            int[] xs = {-30, -18, -6, 10, 28};
             for (int i = 0; i < show.length; i++) {
                 LinhQuai a = DaiSamLam.spawnBeast(lv, (CreatureKind) show[i][0], new BlockPos(x0 + xs[i], y0, z0 + 10), (YeuThuAge) show[i][1], MobSpawnType.COMMAND);
                 a.setNoAi(true); a.setYRot(180); a.setYHeadRot(180); a.yBodyRot = 180;
+                a.setCorrupted((Boolean) show[i][2]);
                 LOG.info("YEUTEST {} scale={} height={}", a.getDisplayName().getString(), a.getScale(), a.getBbHeight());
             }
-            sp.connection.teleport(x0 + 0.5, y0 + 14, z0 - 42.5, 0, 12);
+            sp.connection.teleport(x0 + 0.5, y0 + 9, z0 - 24.5, 0, 14);
         });
-        if (t == 720) shot("03_giant_sizes");
+        if (t == 748) server.execute(() -> {
+            for (var q : lv.getEntitiesOfClass(LinhQuai.class, sp.getBoundingBox().inflate(80)))
+                LOG.info("YEUTEST at-shot {} pos={} alive={} hu={}", q.getType().toShortString(), q.blockPosition(), q.isAlive(), q.corrupted());
+            for (var q : mc.level.entitiesForRendering()) if (q instanceof LinhQuai lq) LOG.info("YEUTEST client {} pos={} hu={}", lq.getType().toShortString(), lq.blockPosition(), lq.corrupted());
+        });
+        if (t == 750) shot("03_giant_sizes");
         if (t == 760) server.execute(() -> {
             int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 320;
             for (var old : lv.getEntitiesOfClass(LinhQuai.class, new net.minecraft.world.phys.AABB(x0 - 60, y0 - 5, z0 - 40, x0 + 60, y0 + 20, z0 + 40))) old.discard();

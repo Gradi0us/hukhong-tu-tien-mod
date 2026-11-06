@@ -54,6 +54,13 @@ public final class DaiSamLam {
         return new Region(cx, cz, r);
     }
 
+    /** 2026-11-06: 1/3 số Đại Sâm Lâm bị Hư Không xâm thực - quái cây ở đó có tỉ lệ biến dị (mạnh hơn). */
+    public static final double CORRUPT_CHANCE = 0.45, CORRUPT_PLANT_BIAS = 0.6;
+
+    public static boolean corrupted(long seed, Region r) { return r != null && Math.floorMod(mix(seed ^ 0x48555L, r.cx(), r.cz()), 3) == 0; }
+
+    public static boolean corruptedAt(long seed, double x, double z) { return corrupted(seed, at(seed, x, z)); }
+
     /** Vùng chứa (x, z), null nếu ngoài mọi Đại Sâm Lâm. */
     public static Region at(long seed, double x, double z) {
         int gx = Math.floorDiv((int) Math.floor(x), CELL), gz = Math.floorDiv((int) Math.floor(z), CELL);
@@ -92,8 +99,12 @@ public final class DaiSamLam {
         Region r = at(seed, p.getX(), p.getZ());
         boolean in = r != null;
         Boolean was = INSIDE.put(p.getUUID(), in);
+        boolean bad = corrupted(seed, r);
         if (was != null && was != in)
-            p.displayClientMessage(Component.translatable(in ? "hukhong.dai_sam_lam.enter" : "hukhong.dai_sam_lam.leave").withColor(in ? 0x7FD27F : 0xB0B0B0), true);
+            p.displayClientMessage(Component.translatable(in ? (bad ? "hukhong.dai_sam_lam.enter_hu" : "hukhong.dai_sam_lam.enter") : "hukhong.dai_sam_lam.leave")
+                    .withColor(in ? (bad ? 0xB060FF : 0x7FD27F) : 0xB0B0B0), true);
+        if (in && bad) // không khí Hư Không: bụi tím đen trôi quanh người chơi
+            sl.sendParticles(p, net.minecraft.core.particles.ParticleTypes.REVERSE_PORTAL, false, p.getX(), p.getY() + 2, p.getZ(), 30, 8, 3, 8, 0.02);
         if (in && p.tickCount % SPAWN_PERIOD == 0) spawnNear(sl, p, r);
     }
 
@@ -109,7 +120,12 @@ public final class DaiSamLam {
         int y = sl.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         BlockPos bp = new BlockPos(x, y, z);
         if (!sl.getFluidState(bp.below()).isEmpty() || !sl.getBlockState(bp).isAir()) return null;
-        return spawnBeast(sl, BEASTS.get(rnd.nextInt(BEASTS.size())), bp, YeuThuAge.roll(r.depth(x, z), rnd), MobSpawnType.EVENT);
+        boolean bad = corrupted(sl.getSeed(), r);
+        CreatureKind k = bad && rnd.nextDouble() < CORRUPT_PLANT_BIAS ? CreatureKind.PLANTS.get(rnd.nextInt(CreatureKind.PLANTS.size()))
+                : BEASTS.get(rnd.nextInt(BEASTS.size()));
+        LinhQuai m = spawnBeast(sl, k, bp, YeuThuAge.roll(r.depth(x, z), rnd), MobSpawnType.EVENT);
+        if (m != null && bad && k.plant() && !m.corrupted() && rnd.nextDouble() < CORRUPT_CHANCE) m.setCorrupted(true);
+        return m;
     }
 
     public static LinhQuai spawnBeast(ServerLevel sl, CreatureKind k, BlockPos bp, YeuThuAge age, MobSpawnType type) {

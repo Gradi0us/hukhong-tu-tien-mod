@@ -267,6 +267,7 @@ public class PhapTurret extends PathfinderMob {
     @Override
     public void tick() {
         super.tick();
+        if (level() instanceof ServerLevel fs && tickCount % 10 == 1) com.hukhong.world.TreeFell.fellIn(fs, getBoundingBox().inflate(0.4), 4); // trụ đá trồi lên / lớn lên: làm đổ cây chạm vào
         if (!(level() instanceof ServerLevel sl)) {
             if (tickCount % 4 == 0) level().addParticle(ParticleTypes.CRIT, getX(), getY() + 1.2, getZ(), 0, 0.05, 0);
             return;

@@ -138,6 +138,7 @@ public final class MiniBossSkills {
             m.heal(m.getMaxHealth() * 0.05f);
         }
         Fx.groundCrack(sl, null, c.add(0, 0.06, 0), 10f * k, 0x6B4A2A, 16, 60);
+        com.hukhong.world.TreeFell.fellRadius(sl, c, 8 * k, 8, 10); // rừng rễ trồi lên quật đổ cây
         sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.ROOTED_DIRT.defaultBlockState()),
                 c.x, c.y + 0.3, c.z, 160, 5, 0.3, 5, 0.3);
         sl.playSound(null, c.x, c.y, c.z, SoundEvents.ROOTED_DIRT_BREAK, SoundSource.HOSTILE, 2.5f, 0.4f);
@@ -198,6 +199,7 @@ public final class MiniBossSkills {
             p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2));
         }
         Fx.groundCrack(sl, null, c.add(0, 0.06, 0), 7.5f, 0x8A7A60, 12, 50);
+        com.hukhong.world.TreeFell.fellRadius(sl, c, 7, 6, 6); // động đất làm đổ cây
         Fx.play(sl, FxType.SHOCKWAVE, c.add(0, 0.3, 0), Vec3.ZERO, 7f, 0xC0A070, 16);
         Fx.shake(sl, c, 1.2f, 16, 24f);
         sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState()),

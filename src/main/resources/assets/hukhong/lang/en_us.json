@@ -2798,5 +2798,9 @@
   "item.hukhong.quy_co_bao_tu": "Fiend Spores",
   "item.hukhong.thu_vuong_linh_qua": "Tree King Spirit Fruit",
   "hukhong.thu_vuong.roots": "Myriad Roots! Roots burst out and bind!",
-  "hukhong.thu_vuong.sprout": "The Tree King calls forth demon sprouts!"
+  "hukhong.thu_vuong.sprout": "The Tree King calls forth demon sprouts!",
+  "hukhong.yeu_thu.corrupt_prefix": "[Voidtainted] ",
+  "hukhong.dai_sam_lam.enter_hu": "This great forest is tainted by the Void... its plant beasts are mutated and fiercer.",
+  "hukhong.phap.element.pick_title": "Choose Your Element",
+  "hukhong.phap.element.pick_hint": "Click an element to inspect it, then Confirm."
 }

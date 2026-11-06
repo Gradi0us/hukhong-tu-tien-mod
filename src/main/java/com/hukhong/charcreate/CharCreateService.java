@@ -30,6 +30,8 @@ public final class CharCreateService {
 
     /** Bit cờ trong mask gói xác nhận: Pháp Tu đã dùng lượt reroll nguyên tố duy nhất. */
     public static final int REROLL_BIT = 1 << 8;
+    /** 2026-11-06: Pháp Tu tự chọn nguyên tố - 3 bit (ordinal + 1, 0 = chưa chọn) bắt đầu từ bit 9. */
+    public static final int ELEMENT_SHIFT = 9, ELEMENT_MASK = 7 << ELEMENT_SHIFT;
     private static final int PATH_MASK = (1 << Path.values().length) - 1;
 
     public static int requiredPicks(CharRoll roll) { return Math.min(roll.slots(), UNLOCKED.size()); }
@@ -66,14 +68,17 @@ public final class CharCreateService {
         Set<Path> set = EnumSet.noneOf(Path.class);
         for (Path x : Path.values()) if ((mask & (1 << x.ordinal())) != 0) set.add(x);
         boolean rerolled = (mask & REROLL_BIT) != 0;
-        boolean extraBits = (mask & ~(PATH_MASK | REROLL_BIT)) != 0;
-        if (extraBits || set.size() != requiredPicks(roll) || !UNLOCKED.containsAll(set)) {
+        boolean extraBits = (mask & ~(PATH_MASK | REROLL_BIT | ELEMENT_MASK)) != 0;
+        int el = (mask & ELEMENT_MASK) >> ELEMENT_SHIFT;
+        com.hukhong.phaptu.PhapElement chosen = el >= 1 && el <= com.hukhong.phaptu.PhapElement.values().length
+                ? com.hukhong.phaptu.PhapElement.values()[el - 1] : null;
+        if (extraBits || set.size() != requiredPicks(roll) || !UNLOCKED.containsAll(set) || (set.contains(Path.PHAP) && chosen == null)) {
             open(p, roll); // yêu cầu không hợp lệ: mở lại
             return;
         }
         Map<Path, Aptitude> apt = new EnumMap<>(Path.class);
         for (Path x : set) apt.put(x, roll.aptitude().get(x));
-        com.hukhong.phaptu.PhapTu.setElement(p, set.contains(Path.PHAP) ? com.hukhong.phaptu.PhapElement.roll(roll.seed(), rerolled) : null);
+        com.hukhong.phaptu.PhapTu.setElement(p, set.contains(Path.PHAP) ? chosen : null); // tự chọn (trước: roll ngẫu nhiên)
         CultivationData nd = d.withCharacter(set, apt, roll.origin().id, roll);
         // Tiên Thiên: cấp khởi đầu (đơn đạo 1..10; đa đạo tới 20). Đặt trực tiếp, không qua EXP.
         nd = applyStartLevel(nd, TienThien.startLevel(apt.values(), roll.seed()));

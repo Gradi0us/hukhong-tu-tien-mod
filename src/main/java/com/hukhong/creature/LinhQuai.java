@@ -52,6 +52,10 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
     private static final EntityDataAccessor<Boolean> BURROWED = SynchedEntityData.defineId(LinhQuai.class, EntityDataSerializers.BOOLEAN);
     /** Năm tuổi Yêu Thú (ordinal YeuThuAge), -1 = không phải Yêu Thú. */
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(LinhQuai.class, EntityDataSerializers.INT);
+    /** Hư Không xâm thực (2026-11-06): quái cây biến dị, mạnh hơn, model + texture riêng (id_hu). */
+    private static final EntityDataAccessor<Boolean> CORRUPT = SynchedEntityData.defineId(LinhQuai.class, EntityDataSerializers.BOOLEAN);
+    public static final net.minecraft.resources.ResourceLocation CORRUPT_MOD = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("hukhong", "hu_xam_thuc");
+    public static final double CORRUPT_HP = 1.6, CORRUPT_DMG = 1.4, CORRUPT_ARMOR = 4, CORRUPT_SPEED = 0.10;
     public static final net.minecraft.resources.ResourceLocation AGE_MOD = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("hukhong", "yeu_thu_age");
     public static final int EMERGE_WARN_TICKS = 20, BURROW_IDLE_TICKS = 100;
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -83,7 +87,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
 
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
-        b.define(LEVEL, 1).define(BURROWED, false).define(AGE, -1);
+        b.define(LEVEL, 1).define(BURROWED, false).define(AGE, -1).define(CORRUPT, false);
     }
 
     @Override protected void registerGoals() {
@@ -106,8 +110,35 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
             YeuThuAge a = YeuThuAge.roll(depth, getRandom());
             if (kind.mini() && a.ordinal() < YeuThuAge.Y1000.ordinal()) a = YeuThuAge.Y1000; // boss Yêu Thú: ít nhất thiên niên
             setAge(a);
+            if (kind.plant() && l.getLevel().dimension() == net.minecraft.world.level.Level.OVERWORLD
+                    && com.hukhong.world.yeulam.DaiSamLam.corruptedAt(l.getLevel().getSeed(), getX(), getZ())
+                    && getRandom().nextDouble() < com.hukhong.world.yeulam.DaiSamLam.CORRUPT_CHANCE) setCorrupted(true);
         }
         return r;
+    }
+
+    public boolean corrupted() { return entityData.get(CORRUPT); }
+
+    /** Biến thành quái Hư Không xâm thực: +60% máu, +40% công, +4 giáp, +10% tốc độ, Hồn Cốt x2. */
+    public void setCorrupted(boolean v) {
+        if (v == corrupted()) return;
+        double before = getMaxHealth();
+        entityData.set(CORRUPT, v);
+        corruptMod(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, v ? CORRUPT_HP - 1 : 0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        corruptMod(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE, v ? CORRUPT_DMG - 1 : 0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        corruptMod(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR, v ? CORRUPT_ARMOR : 0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE);
+        corruptMod(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, v ? CORRUPT_SPEED : 0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+        double after = Math.max(1, getMaxHealth()), wanted = v ? before * CORRUPT_HP : before / CORRUPT_HP;
+        toughness = (float) Math.max(1.0, toughness * wanted / after); // máu vượt trần 1024 -> chuyển thành giảm sát thương nhận
+        setHealth(getMaxHealth());
+    }
+
+    private void corruptMod(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> at, double v,
+                            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation op) {
+        var inst = getAttribute(at);
+        if (inst == null) return;
+        inst.removeModifier(CORRUPT_MOD);
+        if (v != 0) inst.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(CORRUPT_MOD, v, op));
     }
 
     /** Ép chiều cao tối đa (vd. trong Bí Cảnh trần thấp). */
@@ -165,6 +196,12 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
                     level().addParticle(dust, getX() + Math.cos(a) * rr, getY() + 0.1 + getBbHeight() * 0.5 * (i % 2), getZ() + Math.sin(a) * rr, 0, 0, 0);
                 }
             }
+            if (corrupted() && tickCount % 2 == 0) { // khí Hư Không: hạt tím đen rỉ ra + mảnh tinh thể lơ lửng
+                level().addParticle(ParticleTypes.REVERSE_PORTAL, getRandomX(0.8), getY() + getBbHeight() * random.nextDouble(), getRandomZ(0.8), 0, 0.02, 0);
+                if (tickCount % 6 == 0) level().addParticle(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.35f, 0.1f, 0.55f), 1.6f),
+                        getRandomX(1.0), getY() + getBbHeight() * random.nextDouble(), getRandomZ(1.0), 0, 0, 0);
+                if (tickCount % 10 == 0) level().addParticle(ParticleTypes.SQUID_INK, getRandomX(0.5), getY() + 0.2, getRandomZ(0.5), 0, 0.01, 0);
+            }
             if (kind == CreatureKind.BANG_HON && tickCount % 4 == 0)
                 level().addParticle(ParticleTypes.SNOWFLAKE, getRandomX(0.6), getRandomY(), getRandomZ(0.6), 0, 0.02, 0);
             return;
@@ -172,6 +209,14 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         if (kind.mini()) MiniBossSkills.tick(this);
         if (kind.beast() && !kind.mini()) YeuThuSkills.tick(this);
         if (kind.beast()) YeuThuSize.tick(this);
+        if (level() instanceof ServerLevel fsl && (kind.mini() || getBbHeight() >= 4.5) && tickCount % 10 == 0
+                && fsl.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
+            if (kind.mini() && !getPersistentData().getBoolean("hk_cleared")) { // vùng boss: dọn sạch cây quanh chỗ đứng
+                getPersistentData().putBoolean("hk_cleared", true);
+                com.hukhong.world.TreeFell.fellRadius(fsl, position(), 10 + getBbWidth(), getBbHeight() + 4, 40);
+            } else if (getDeltaMovement().horizontalDistanceSqr() > 1e-4 || horizontalCollision) // thân to đi qua: quật đổ cây trên đường
+                com.hukhong.world.TreeFell.fellIn(fsl, getBoundingBox().inflate(0.6, 0, 0.6).expandTowards(getDeltaMovement().multiply(6, 0, 6)), 3);
+        }
         if (kind == CreatureKind.BANG_HON) freezeAura();
         if (kind == CreatureKind.SA_TRUNG) burrowTick();
     }
@@ -287,9 +332,11 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
 
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recent) {
         super.dropCustomDeathLoot(sl, src, recent);
+        if (corrupted() && com.hukhong.gates.RewardGate.canReward(this)) // Hư Không: thêm Hồn Tinh
+            spawnAtLocation(new net.minecraft.world.item.ItemStack(com.hukhong.item.ModItems.HON_TINH.get(), 1 + getRandom().nextInt(2)));
         CreatureCommon.rollDrops(this, kind);
         YeuThuAge ag = age();
-        if (ag != null && ag.boneChance > 0 && com.hukhong.gates.RewardGate.canReward(this) && getRandom().nextDouble() < ag.boneChance) {
+        if (ag != null && ag.boneChance > 0 && com.hukhong.gates.RewardGate.canReward(this) && getRandom().nextDouble() < ag.boneChance * (corrupted() ? 2 : 1)) {
             var bones = com.hukhong.honcot.Bone.values();
             spawnAtLocation(com.hukhong.honcot.HonCotRegistry.stack(bones[getRandom().nextInt(bones.length)], ag.boneTier,
                     40 + ag.ordinal() * 10 + getRandom().nextInt(25)));
@@ -301,7 +348,8 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
     @Override public Component getDisplayName() {
         YeuThuAge ag = age();
         if (ag == null) return HuHoa.name(huLevel(), getTypeName());
-        return Component.empty().append(Component.literal("[").append(Component.translatable(ag.langKey())).append("] ")
+        Component pre = corrupted() ? Component.translatable("hukhong.yeu_thu.corrupt_prefix").withColor(0xA040FF) : Component.empty();
+        return Component.empty().append(pre).append(Component.literal("[").append(Component.translatable(ag.langKey())).append("] ")
                 .withColor(ag.color == 0x2A2A2A ? 0x6E6E6E : ag.color)).append(HuHoa.name(huLevel(), getTypeName()));
     }
     @Override public boolean shouldShowName() { return !burrowed(); }
@@ -337,6 +385,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         tag.putBoolean("Burrowed", burrowed());
         tag.putInt("YeuThuAge", entityData.get(AGE));
         tag.putFloat("YeuThuTough", toughness);
+        tag.putBoolean("HuXamThuc", corrupted());
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
@@ -345,6 +394,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         if (tag.getBoolean("Burrowed")) { entityData.set(BURROWED, true); setInvisible(true); }
         if (tag.contains("YeuThuAge")) entityData.set(AGE, tag.getInt("YeuThuAge"));
         if (tag.contains("YeuThuTough")) toughness = Math.max(1f, tag.getFloat("YeuThuTough"));
+        if (tag.getBoolean("HuXamThuc")) entityData.set(CORRUPT, true);
     }
 
     @Override public int huLevel() { return entityData.get(LEVEL); }

@@ -476,6 +476,7 @@ public final class PhapSkills {
                     e.hurtMarked = true;
                 }
                 Fx.elem(lv, p, Fx.E_SPIKES, o.add(f.scale(1.2)), f.scale(10.5), 1.0f, col, 36);
+                for (int k = 2; k <= 11; k += 3) com.hukhong.world.TreeFell.fellRadius(lv, o.add(f.scale(k)), 1.5, 4, 2); // gai đá dọc đường làm đổ cây
                 Fx.groundCrack(lv, p, o.add(f.scale(5.5)).add(0, 0.06, 0), 2.2f, col, 2, 40);
                 sound(lv, o, SoundEvents.GRAVEL_BREAK, 1f, 0.7f);
             }

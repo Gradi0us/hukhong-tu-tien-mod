@@ -2798,5 +2798,9 @@
   "item.hukhong.quy_co_bao_tu": "Quỷ Cô Bào Tử",
   "item.hukhong.thu_vuong_linh_qua": "Thụ Vương Linh Quả",
   "hukhong.thu_vuong.roots": "Vạn Đằng Triền! Rễ cây trồi lên quấn chặt!",
-  "hukhong.thu_vuong.sprout": "Thụ Vương gọi mầm yêu lên!"
+  "hukhong.thu_vuong.sprout": "Thụ Vương gọi mầm yêu lên!",
+  "hukhong.yeu_thu.corrupt_prefix": "[Hư Hóa] ",
+  "hukhong.dai_sam_lam.enter_hu": "Đại Sâm Lâm này đã bị Hư Không xâm thực... quái cây ở đây biến dị và hung bạo hơn.",
+  "hukhong.phap.element.pick_title": "Chọn Nguyên Tố Pháp Tu",
+  "hukhong.phap.element.pick_hint": "Bấm một nguyên tố để xem, rồi Xác nhận."
 }

@@ -307,6 +307,7 @@ public final class ThoService {
                 PhapSkills.knock(e, pt, 0.4, 0.3);
             }
             ThoFx.tLand(lv, p, pt, (float) PhapMath.THO_T_IMPACT_RADIUS, w);
+            com.hukhong.world.TreeFell.fellRadius(lv, pt, PhapMath.THO_T_IMPACT_RADIUS, 6, 4); // núi đá giáng xuống quật đổ cây
         }
         ThoFx.tWaveShake(lv, s.center, w);
         s.waveLanded = w + 1;
@@ -346,6 +347,7 @@ public final class ThoService {
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
         double frac = d.resourceMax() <= 0 ? 0 : d.resource() / (double) d.resourceMax();
         double amount = s.dmg * PhapMath.thoTBlastMult(frac);
+        com.hukhong.world.TreeFell.fellRadius(lv, c, PhapMath.THO_T_BLAST_RADIUS * 0.7, 8, 12); // kích nổ núi đá
         for (LivingEntity e : PhapSkills.around(lv, p, c, PhapMath.THO_T_BLAST_RADIUS)) {
             PhapSkills.hit(p, e, amount);
             s.tDealt += amount;
@@ -456,6 +458,7 @@ public final class ThoService {
         s.fRadius = PhapMath.THO_R_RADIUS_MIN;
         s.fCenter = PhapSkills.ground(lv, center.add(0, 1, 0));
         ThoFx.fieldStart(lv, p, s.fCenter, (float) s.fRadius);
+        com.hukhong.world.TreeFell.fellRadius(lv, s.fCenter, s.fRadius, 5, 6); // gai đất trồi lên làm đổ cây trong vùng
         p.displayClientMessage(Component.translatable("hukhong.phap.tho.r.start").withColor(COL), true);
     }
 

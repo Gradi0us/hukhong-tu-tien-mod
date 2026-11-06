@@ -25,7 +25,21 @@ public final class CreatureRenderers {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void register(EntityRenderersEvent.RegisterRenderers e) {
         for (CreatureKind k : CreatureKind.values())
-            e.registerEntityRenderer((EntityType) CreatureRegistry.type(k), c -> (net.minecraft.client.renderer.entity.EntityRenderer) make(c, k.id));
+            e.registerEntityRenderer((EntityType) CreatureRegistry.type(k), c -> (net.minecraft.client.renderer.entity.EntityRenderer) (k.plant() ? makePlant(c, k.id) : make(c, k.id)));
+    }
+
+    /** Yêu Thú thực vật: bị Hư Không xâm thực thì dùng model + texture id_hu (tinh thể hư không mọc trên thân, vân nứt tím). */
+    @SuppressWarnings("unchecked")
+    private static <T extends Entity & GeoAnimatable> GeoEntityRenderer<T> makePlant(EntityRendererProvider.Context c, String id) {
+        ResourceLocation base = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, id);
+        ResourceLocation geoHu = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "geo/entity/" + id + "_hu.geo.json");
+        ResourceLocation texHu = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "textures/entity/" + id + "_hu.png");
+        var model = new DefaultedEntityGeoModel<T>(base) {
+            private boolean hu(T a) { return a instanceof com.hukhong.creature.LinhQuai q && q.corrupted(); }
+            @Override public ResourceLocation getModelResource(T a) { return hu(a) ? geoHu : super.getModelResource(a); }
+            @Override public ResourceLocation getTextureResource(T a) { return hu(a) ? texHu : super.getTextureResource(a); }
+        };
+        return HuRenderers.glow(new GeoEntityRenderer<T>(c, model));
     }
 
     private static <T extends Entity & GeoAnimatable> GeoEntityRenderer<T> make(EntityRendererProvider.Context c, String id) {
