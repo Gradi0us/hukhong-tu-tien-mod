@@ -110,29 +110,59 @@ public final class DevYeuTest {
             for (var q : mc.level.entitiesForRendering()) if (q instanceof LinhQuai lq) LOG.info("YEUTEST client {} pos={} hu={}", lq.getType().toShortString(), lq.blockPosition(), lq.corrupted());
         });
         if (t == 750) shot("03_giant_sizes");
+        // 2026-11-06: test cây đổ - Thụ Yêu 10000 năm đi xuyên hàng sồi, boss Thụ Vương giữa cụm cây
         if (t == 760) server.execute(() -> {
-            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 320;
-            for (var old : lv.getEntitiesOfClass(LinhQuai.class, new net.minecraft.world.phys.AABB(x0 - 60, y0 - 5, z0 - 40, x0 + 60, y0 + 20, z0 + 40))) old.discard();
-            LinhQuai boss = DaiSamLam.spawnBeast(lv, CreatureKind.VAN_NIEN_THU_VUONG, new BlockPos(x0, y0, z0 + 12), YeuThuAge.Y10000, MobSpawnType.COMMAND);
-            boss.setNoAi(true);
-            var bz = net.minecraft.world.entity.EntityType.ZOMBIE.create(lv);
-            bz.moveTo(x0 + 0.5, y0, z0 + 2.5, 180, 0); bz.setNoAi(true); bz.setPersistenceRequired();
-            lv.addFreshEntity(bz);
-            try {
-                var ls = com.hukhong.creature.MiniBossSkills.class.getDeclaredMethod("leafStorm", net.minecraft.server.level.ServerLevel.class, LinhQuai.class);
-                ls.setAccessible(true);
-                var vd = com.hukhong.creature.MiniBossSkills.class.getDeclaredMethod("vanDang", net.minecraft.server.level.ServerLevel.class, LinhQuai.class);
-                vd.setAccessible(true);
-                vd.invoke(null, lv, boss);
-                com.hukhong.skill.SkillScheduler.later(22, () -> { try { ls.invoke(null, lv, boss); } catch (Exception ex) { LOG.error("leafStorm", ex); } });
-            } catch (Exception ex) { LOG.error("YEUTEST boss skill", ex); }
-            sp.connection.teleport(x0 + 0.5, y0 + 12, z0 - 22.5, 0, 22);
+            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 400;
+            for (int dx = -40; dx <= 40; dx++) for (int dz = -10; dz <= 50; dz++)
+                lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+            var oak = lv.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
+                    .getHolderOrThrow(net.minecraft.data.worldgen.features.TreeFeatures.OAK).value();
+            int planted = 0;
+            for (int i = 0; i < 6; i++) if (oak.place(lv, lv.getChunkSource().getGenerator(), lv.random, new BlockPos(x0 - 12 + (i % 2) * 3, y0, z0 + 8 + i * 4))) planted++;
+            for (int i = 0; i < 10; i++) {
+                double an = i * Math.PI * 2 / 10;
+                if (oak.place(lv, lv.getChunkSource().getGenerator(), lv.random, new BlockPos(x0 + 22 + (int) (Math.cos(an) * 7), y0, z0 + 25 + (int) (Math.sin(an) * 7)))) planted++;
+            }
+            LOG.info("YEUTEST fell planted={} logs={}", planted, countLogs(lv, x0, y0, z0));
+            sp.connection.teleport(x0 + 12.5, y0 + 13, z0 - 10.5, -15, 22);
         });
-        if (t == 790) shot("04_skill_windup");
-        if (t == 812) shot("05_skill_cast");
-        if (t == 830) shot("06_skill_after");
-        if (t == 860) { LOG.info("YEUTEST done"); mc.stop(); }
+        if (t == 800) shot("04_trees_before");
+        if (t == 900) server.execute(() -> {
+            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 400;
+            LinhQuai w = DaiSamLam.spawnBeast(lv, CreatureKind.THU_YEU, new BlockPos(x0 - 11, y0, z0 - 2), YeuThuAge.Y10000, MobSpawnType.COMMAND);
+            var z = net.minecraft.world.entity.EntityType.ARMOR_STAND.create(lv);
+            z.moveTo(x0 - 11.5, y0, z0 + 40.5); lv.addFreshEntity(z);
+            w.getNavigation().moveTo(x0 - 11.5, y0, z0 + 40.5, 1.4);
+            fellWalker = w;
+            LinhQuai boss = DaiSamLam.spawnBeast(lv, CreatureKind.VAN_NIEN_THU_VUONG, new BlockPos(x0 + 22, y0, z0 + 25), YeuThuAge.Y1000, MobSpawnType.COMMAND);
+            boss.setNoAi(true);
+            spawnedAt = System.currentTimeMillis();
+        });
+        if (spawnedAt > 0 && shotIdx < FALL_SHOTS.length && System.currentTimeMillis() - spawnedAt >= FALL_SHOTS[shotIdx]) shot("05_fall_" + FALL_SHOTS[shotIdx++] + "ms");
+        if (t > 900 && t < 1100 && t % 10 == 0 && fellWalker != null) server.execute(() -> {
+            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 400;
+            if (fellWalker.getNavigation().isDone()) fellWalker.getNavigation().moveTo(x0 - 11.5, y0, z0 + 40.5, 1.4);
+        });
+        if (t == 1100) server.execute(() -> {
+            int y0 = 230, x0 = reg.cx(), z0 = reg.cz() + 400;
+            LOG.info("YEUTEST fell after logs={} walkerZ={}", countLogs(lv, x0, y0, z0), fellWalker == null ? -1 : fellWalker.getZ() - z0);
+        });
+        if (t == 1105) shot("06_trees_after");
+        if (t == 1130) { LOG.info("YEUTEST done"); mc.stop(); }
     }
+
+    private static LinhQuai fellWalker;
+    private static volatile long spawnedAt;
+    private static int shotIdx;
+    private static final int[] FALL_SHOTS = {200, 500, 800, 1100, 1500, 2200};
+
+    private static int countLogs(net.minecraft.server.level.ServerLevel lv, int x0, int y0, int z0) {
+        int n = 0;
+        for (int x = x0 - 40; x <= x0 + 40; x++) for (int z = z0 - 10; z <= z0 + 50; z++) for (int y = y0; y <= y0 + 10; y++)
+            if (lv.getBlockState(new BlockPos(x, y, z)).is(net.minecraft.tags.BlockTags.LOGS)) n++;
+        return n;
+    }
+
 
     private static void shot(String name) {
         Minecraft mc = Minecraft.getInstance();

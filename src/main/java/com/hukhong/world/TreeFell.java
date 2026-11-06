@@ -46,7 +46,9 @@ public final class TreeFell {
                 for (int z = z0; z <= z1 && felled < maxTrees; z++) {
                     if (++scanned > MAX_SCAN) return felled;
                     m.set(x, y, z);
-                    if (seen.contains(m) || !lv.isLoaded(m) || !log(lv.getBlockState(m))) continue;
+                    if (seen.contains(m) || !lv.isLoaded(m)) continue;
+                    BlockState bs = lv.getBlockState(m);
+                    if (!log(bs) && !wildLeaf(bs)) continue; // chạm thân hoặc tán lá đều làm đổ cả cây
                     List<BlockPos> tree = collect(lv, m.immutable(), seen);
                     if (tree != null) { topple(lv, tree, box.getCenter()); felled++; }
                 }
@@ -63,38 +65,25 @@ public final class TreeFell {
         ArrayDeque<BlockPos> q = new ArrayDeque<>();
         q.add(start);
         seen.add(start);
-        boolean leaves = false;
+        boolean leaves = false, logs = false;
         while (!q.isEmpty() && out.size() < MAX_TREE_BLOCKS) {
             BlockPos p = q.poll();
             BlockState s = lv.getBlockState(p);
             boolean isLog = log(s);
             if (!isLog && !wildLeaf(s)) continue;
-            if (!isLog) leaves = true;
+            if (!isLog) leaves = true; else logs = true;
             out.add(p);
             for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
                 if (dx == 0 && dy == 0 && dz == 0) continue;
                 BlockPos n = p.offset(dx, dy, dz);
-                if (Math.abs(n.getX() - start.getX()) > 10 || Math.abs(n.getZ() - start.getZ()) > 10 || n.getY() < start.getY() - 2) continue;
+                if (Math.abs(n.getX() - start.getX()) > 10 || Math.abs(n.getZ() - start.getZ()) > 10 || n.getY() < start.getY() - 12) continue;
                 if (!isLog && !log(lv.getBlockState(n)) && !wildLeaf(lv.getBlockState(n))) continue;
                 if (seen.add(n)) q.add(n);
             }
         }
-        return leaves ? out : null;
+        return leaves && logs ? out : null;
     }
 
-    /** Đổ cây: vỡ khối kèm bụi gỗ / lá, rơi lại 1/3 số gỗ, tiếng cây đổ. */
-    static void topple(ServerLevel lv, List<BlockPos> tree, Vec3 from) {
-        int i = 0;
-        BlockPos base = tree.get(0);
-        for (BlockPos p : tree) {
-            BlockState s = lv.getBlockState(p);
-            boolean isLog = log(s);
-            if (i++ % 3 == 0 || !isLog)
-                lv.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, s), p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, isLog ? 6 : 2, 0.3, 0.3, 0.3, 0.1);
-            if (isLog && i % 3 == 0) net.minecraft.world.level.block.Block.dropResources(s, lv, p);
-            lv.setBlock(p, Blocks.AIR.defaultBlockState(), 2 | 16);
-        }
-        lv.playSound(null, base, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.BLOCKS, 1.4f, 0.5f);
-        lv.playSound(null, base, SoundEvents.AZALEA_LEAVES_BREAK, SoundSource.BLOCKS, 1.5f, 0.6f);
-    }
+    /** Đổ cây: hoạt ảnh ngả rạp (TreeFallAnim) thay vì biến mất. */
+    static void topple(ServerLevel lv, List<BlockPos> tree, Vec3 from) { TreeFallAnim.start(lv, tree, from); }
 }

@@ -215,7 +215,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
                 getPersistentData().putBoolean("hk_cleared", true);
                 com.hukhong.world.TreeFell.fellRadius(fsl, position(), 10 + getBbWidth(), getBbHeight() + 4, 40);
             } else if (getDeltaMovement().horizontalDistanceSqr() > 1e-4 || horizontalCollision) // thân to đi qua: quật đổ cây trên đường
-                com.hukhong.world.TreeFell.fellIn(fsl, getBoundingBox().inflate(0.6, 0, 0.6).expandTowards(getDeltaMovement().multiply(6, 0, 6)), 3);
+                com.hukhong.world.TreeFell.fellIn(fsl, getBoundingBox().inflate(1.2, 0, 1.2).expandTowards(getDeltaMovement().multiply(8, 0, 8)), 3);
         }
         if (kind == CreatureKind.BANG_HON) freezeAura();
         if (kind == CreatureKind.SA_TRUNG) burrowTick();
