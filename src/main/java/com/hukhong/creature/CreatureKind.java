@@ -33,7 +33,13 @@ public enum CreatureKind {
     // ---- mini boss (thanh máu boss, kỹ năng riêng, hiếm) ----
     HU_LANG_VUONG("hu_lang_vuong", Impl.QUAI, MobCategory.MONSTER, 2.2f, 2.4f, 320, 14, 0.30, false, null, null),
     THACH_CU_NHAN("thach_cu_nhan", Impl.QUAI, MobCategory.MONSTER, 2.4f, 5.2f, 520, 18, 0.20, false, null, null),
-    HUYET_YEU_VUONG("huyet_yeu_vuong", Impl.QUAI, MobCategory.MONSTER, 1.4f, 4.4f, 380, 15, 0.24, false, null, null);
+    HUYET_YEU_VUONG("huyet_yeu_vuong", Impl.QUAI, MobCategory.MONSTER, 1.4f, 4.4f, 380, 15, 0.24, false, null, null),
+    // Yêu Thú rừng (có năm tuổi 10..100.000, xem YeuThuAge)
+    XICH_VAN_HO("xich_van_ho", Impl.QUAI, MobCategory.MONSTER, 1.1f, 1.3f, 34, 7, 0.32, false, null, null),
+    HAC_GIAP_TE("hac_giap_te", Impl.QUAI, MobCategory.MONSTER, 1.6f, 1.7f, 60, 8, 0.24, false, null, null),
+    CUONG_LUC_VIEN("cuong_luc_vien", Impl.QUAI, MobCategory.MONSTER, 1.2f, 2.4f, 50, 9, 0.27, false, null, null),
+    BICH_NHAN_THIEM("bich_nhan_thiem", Impl.QUAI, MobCategory.MONSTER, 1.0f, 0.9f, 28, 5, 0.25, false, null, null),
+    NGAN_LAN_MANG("ngan_lan_mang", Impl.QUAI, MobCategory.MONSTER, 1.2f, 0.8f, 40, 7, 0.26, false, null, null);
 
     public enum Impl { THU, QUAI, NGU }
 
@@ -60,13 +66,18 @@ public enum CreatureKind {
     /** Mini boss: thanh máu boss, kháng đẩy lùi, kỹ năng định kỳ (MiniBossSkills). */
     public boolean mini() { return this == HU_LANG_VUONG || this == THACH_CU_NHAN || this == HUYET_YEU_VUONG; }
 
+    /** Yêu Thú: có năm tuổi, có thể rơi Hồn Cốt, tham gia Yêu Thú Triều. */
+    public boolean beast() { return this == XICH_VAN_HO || this == HAC_GIAP_TE || this == CUONG_LUC_VIEN || this == BICH_NHAN_THIEM || this == NGAN_LAN_MANG; }
+
     public static final List<CreatureKind> ALL = List.of(values());
+    public static final List<CreatureKind> BEASTS = List.of(XICH_VAN_HO, HAC_GIAP_TE, CUONG_LUC_VIEN, BICH_NHAN_THIEM, NGAN_LAN_MANG);
 
     /** Nguyen lieu roi (vat pham mod): moi sinh vat 1 loai (tru thu chien dau con). */
     public static final List<String> MATERIALS = List.of("linh_loc_giac", "hac_tien_vu", "ngoc_tho_mao", "hoa_huynh_quang", "linh_ngu_lan",
             "linh_ho_vi", "thiet_boi_hung_trao", "doc_van_xa_nha", "sa_trung_giap", "bang_hon_tinh", "moc_yeu_loi",
             "doc_thiem_noc", "quan_hon_manh", "hu_lang_nanh", "thach_quy_tam", "am_hon_phu", "hoa_tinh_hach",
-            "lang_vuong_doc_nha", "cu_nhan_thach_tam", "huyet_yeu_tinh_huyet");
+            "lang_vuong_doc_nha", "cu_nhan_thach_tam", "huyet_yeu_tinh_huyet",
+            "xich_van_ho_bi", "hac_giap_te_giac", "cuong_luc_vien_tam", "bich_nhan_thiem_nang", "ngan_lan_mang_lan");
 
     public static CreatureKind byId(String id) {
         for (CreatureKind k : values()) if (k.id.equals(id)) return k;

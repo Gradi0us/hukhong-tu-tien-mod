@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Thu Trieu (Yeu Toc): dot thu cuong (HuThi / HuCot / HuChu "nhap cuong": mat do, don manh hon, chay nhanh hon) tien vao mot thanh.
+ * Yeu Thu Trieu: dot Yeu Thu (Xich Van Ho, Hac Giap Te, ... co nam tuoi; con cuoi = thu linh 10.000 nam) "nhap cuong" (mat do, don manh hon, chay nhanh hon) tien vao mot thanh.
  * Don sach -> thuong Hon Tinh + EXP va gui manh moi Tam Hu Hoa gan nhat. Thanh dang RUIN / chua dung thi bo qua.
  */
 @EventBusSubscriber(modid = HuKhong.MODID)
@@ -114,6 +114,12 @@ public final class ThuTrieuHandler {
         }
     }
 
+    /** Năm tuổi của con thứ i trong đợt: phần lớn 10-1000 năm; con cuối cùng là thủ lĩnh 10.000 năm. */
+    public static com.hukhong.creature.YeuThuAge waveAge(int i, int total, double u) {
+        if (i == total - 1) return com.hukhong.creature.YeuThuAge.Y10000;
+        return com.hukhong.creature.YeuThuAge.pick(new double[]{45, 40, 15, 0, 0}, u);
+    }
+
     private static void spawn(Wave w) {
         // chi sinh khi co nguoi choi gan (chunk dang tai); khong dem la "that bai" khi chua co ai toi, tranh bo cuoc -> "don sach" gia
         boolean near = false;
@@ -127,14 +133,11 @@ public final class ThuTrieuHandler {
         int y = w.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         BlockPos bp = new BlockPos(x, y, z);
         if (!w.level.getFluidState(bp.below()).isEmpty()) return;
-        Mob m = switch (w.level.random.nextInt(3)) {
-            case 0 -> ModEntities.HU_THI.get().create(w.level);
-            case 1 -> ModEntities.HU_COT.get().create(w.level);
-            default -> ModEntities.HU_CHU.get().create(w.level);
-        };
-        if (m == null) return;
+        var kinds = com.hukhong.creature.CreatureKind.BEASTS;
+        if (!(com.hukhong.creature.CreatureRegistry.type(kinds.get(w.level.random.nextInt(kinds.size()))).create(w.level) instanceof com.hukhong.creature.LinhQuai m)) return;
         m.moveTo(x + 0.5, y, z + 0.5, w.level.random.nextFloat() * 360f, 0f);
         m.finalizeSpawn(w.level, w.level.getCurrentDifficultyAt(bp), MobSpawnType.EVENT, null);
+        m.setAge(waveAge(w.total - w.toSpawn, w.total, w.level.random.nextDouble()));
         m.setPersistenceRequired();
         enrage(m);
         w.level.addFreshEntityWithPassengers(m);

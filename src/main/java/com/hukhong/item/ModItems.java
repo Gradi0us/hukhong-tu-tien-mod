@@ -61,6 +61,7 @@ public final class ModItems {
     public static void register(IEventBus bus) {
         // Đăng ký kèm các registry của Bước 6 (không sửa HuKhong.java).
         com.hukhong.block.ModBlocks.BLOCKS.register(bus);
+        com.hukhong.world.yeulam.YeuLamRegistry.register(bus);
         com.hukhong.menu.ModMenus.MENUS.register(bus);
         com.hukhong.cores.CoreAttachments.ATTACHMENTS.register(bus);
         com.hukhong.banmenh.BanMenhAttachments.ATTACHMENTS.register(bus);

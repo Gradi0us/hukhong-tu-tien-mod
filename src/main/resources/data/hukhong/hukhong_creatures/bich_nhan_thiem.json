@@ -1,0 +1,33 @@
+{
+ "role": "hostile",
+ "hp_mul": 1.0,
+ "dmg_mul": 1.0,
+ "exp_weight": 1.2,
+ "hon_tinh": 0.12,
+ "drops": [
+  {
+   "item": "hukhong:bich_nhan_thiem_nang",
+   "chance": 0.6,
+   "min": 1,
+   "max": 2
+  },
+  {
+   "item": "hukhong:hon_tinh",
+   "chance": 0.08,
+   "min": 1,
+   "max": 2
+  }
+ ],
+ "spawn": {
+  "biomes": [
+   "#minecraft:is_forest",
+   "#minecraft:is_jungle",
+   "#minecraft:is_taiga",
+   "minecraft:dark_forest"
+  ],
+  "weight": 8,
+  "min": 1,
+  "max": 2,
+  "time": "any"
+ }
+}

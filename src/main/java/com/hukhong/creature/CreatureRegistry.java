@@ -78,7 +78,7 @@ public final class CreatureRegistry {
         TYPES.register(bus);
         ITEMS.register(bus);
         ATTACHMENTS.register(bus);
-        bus.addListener((RegisterGameTestsEvent e) -> e.register(CreatureGameTests.class));
+        bus.addListener((RegisterGameTestsEvent e) -> { e.register(CreatureGameTests.class); e.register(YeuThuGameTests.class); });
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.SPAWN_EGGS) for (var i : EGGS.values()) e.accept(i.get());
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) for (var i : MATERIALS.values()) e.accept(i.get());
@@ -102,7 +102,8 @@ public final class CreatureRegistry {
                         (ty, l, st, p, r) -> WaterAnimal.checkSurfaceWaterAnimalSpawnRules(ty, l, st, p, r),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
                 case QUAI -> e.register((EntityType<LinhQuai>) t, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                        (ty, l, st, p, r) -> ModEntities.huSpawnRules(ty, l, st, p, r) && (k != CreatureKind.QUAN_HON || l.getLevel().isNight()),
+                        (ty, l, st, p, r) -> k.beast() ? l.getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL && Mob.checkMobSpawnRules(ty, l, st, p, r)
+                                : ModEntities.huSpawnRules(ty, l, st, p, r) && (k != CreatureKind.QUAN_HON || l.getLevel().isNight()),
                         RegisterSpawnPlacementsEvent.Operation.REPLACE);
                 case THU -> e.register((EntityType<LinhThu>) t, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         (ty, l, st, p, r) -> Mob.checkMobSpawnRules(ty, l, st, p, r)
