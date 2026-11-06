@@ -346,7 +346,7 @@ public final class HuKhongRuntimeGameTests {
     }
 
     /** Quang Ảnh Kính: số kính theo tư chất (B = 2, đặt thứ 3 thì kính cũ vỡ), quái đánh 10 đòn thì vỡ, người chơi không phá được, kính bắn lại Q. */
-    @GameTest(template = "empty", timeoutTicks = 60)
+    @GameTest(template = "empty", timeoutTicks = 60, batch = "quang_kinh") // lượt riêng: kính hút quái 8 ô, không được giật quái của test khác
     public static void quangKinhLimitsBreaksAndEchoes(GameTestHelper h) {
         ServerPlayer p = fake(h, 40, Set.of(Path.PHAP));
         com.hukhong.phaptu.PhapTu.setElement(p, com.hukhong.phaptu.PhapElement.QUANG);

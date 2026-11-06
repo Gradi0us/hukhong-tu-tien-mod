@@ -25,7 +25,7 @@ public enum Skill {
     /** Trận Tu: BASE (Khốn/Sát/Hộ Thân) + 3 thế (T + Q/E/R). TRAN_ULT là phím Thế (T). Logic ở com.hukhong.tran. */
     TRAN_1(Path.TRAN, 0, "tran_khon", 4, 14),
     TRAN_2(Path.TRAN, 1, "tran_sat", 25, 400),
-    TRAN_3(Path.TRAN, 2, "tran_ho", 35, 400),
+    TRAN_3(Path.TRAN, 2, "tran_ho", 35, 600), // 2026-11-06: Hộ Thân theo chân 20s, hồi 30s
     TRAN_ULT(Path.TRAN, 3, "tran_stance", 0, 4),
     TRAN_CAGE(Path.TRAN, 0, "tran_cage", 30, 600),
     TRAN_SLOW(Path.TRAN, 1, "tran_slow", 25, 400),

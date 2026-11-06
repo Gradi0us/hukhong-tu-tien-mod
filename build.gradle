@@ -73,6 +73,7 @@ neoForge {
             if (project.hasProperty('kiemqetest')) systemProperty 'hukhong.kiemqetest', '1'
             if (project.hasProperty('daotest')) systemProperty 'hukhong.daotest', '1'
             if (project.hasProperty('quangtest')) systemProperty 'hukhong.quangtest', '1'
+            if (project.hasProperty('trantest')) systemProperty 'hukhong.trantest', '1'
             if (project.hasProperty('autotest')) {
                 programArguments.addAll '--quickPlaySingleplayer', project.property('autotest').toString()
                 systemProperty 'hukhong.autotest', '1'

@@ -456,9 +456,9 @@ public final class SkillEntries {
             case TRAN_2 -> ls.add(note("hukhong.skill.tran_sat.desc", "[Cơ bản] Sát Trận tại điểm ngắm (tầm %s, bán kính %s): %s cột sáng cách nhau %s giây, mỗi cột %s x Phép lực (bán kính %s).",
                     fmt(TranMath.R_RANGE), fmt(TranMath.R_RADIUS), TranMath.R_HITS, fmt(TranMath.R_INTERVAL_TICKS / 20.0),
                     fmt(TranMath.R_TICK_COEF), fmt(TranMath.R_PILLAR_RADIUS)));
-            case TRAN_3 -> ls.add(note("hukhong.skill.tran_ho.desc", "[Cơ bản] Hộ Thân Trận bán kính %s quanh mình trong %s giây: người chơi trong trận nhận -%s%% sát thương.",
-                    fmt(TranMath.WARD_RADIUS), fmt(TranMath.WARD_TICKS / 20.0), fmt(TranMath.WARD_DR * 100)));
-            case TRAN_ULT -> ls.add(note("hukhong.skill.tran_stance.desc", "Phím Thế: bấm T để chọn thế trong 3 giây, rồi Q/E/R để vào thế. Bấm T trong thế để về Cơ bản (chỉ chờ 0,2 giây). Đổi thế miễn phí."));
+            case TRAN_3 -> ls.add(note("hukhong.skill.tran_ho.desc", "[Cơ bản] Hộ Thân Trận bán kính %s luôn đi theo dưới chân bạn trong %s giây (đổi thế vẫn còn): người chơi trong trận nhận -%s%% sát thương, kẻ địch trong trận chịu %s x Phép lực mỗi giây.",
+                    fmt(TranMath.WARD_RADIUS), fmt(TranMath.HOTHAN_TICKS / 20.0), fmt(TranMath.WARD_DR * 100), fmt(TranMath.HOTHAN_DOT_COEF)));
+            case TRAN_ULT -> ls.add(note("hukhong.skill.tran_stance.desc", "Phím Thế: bấm T để chọn thế trong 3 giây, rồi Q/E/R để vào thế. Bấm T trong thế để về Cơ bản (chỉ chờ 0,2 giây). Đổi thế miễn phí; mỗi thế có hồi chiêu riêng, dùng hết chiêu thế này thì đổi sang thế khác dùng tiếp."));
             default -> { }
         }
         if (s.slot < 3) { // kỹ năng cùng phím trong 3 thế
@@ -481,8 +481,8 @@ public final class SkillEntries {
             case TRAN_PILLAR -> note("hukhong.skill.tran_pillar.desc", "[Sát thương] Sát Trận (giữ Q): tụ lực tại điểm ngắm, vòng tròn lớn dần từ bán kính %s đến %s trong %s giây; kẻ địch trong vòng bị làm chậm mạnh. Nhả Q (hoặc giữ thêm 1 giây ở tối đa) để cột sáng khổng lồ đánh xuống: %s đến %s x Phép lực cho mọi địch trong bán kính, rồi Kiệt Sức %s giây.",
                     fmt(TranMath.CHARGE_MIN_R), fmt(TranMath.CHARGE_MAX_R), fmt(TranMath.CHARGE_TICKS / 20.0),
                     fmt(TranMath.CHARGE_MIN_COEF), fmt(TranMath.CHARGE_MAX_COEF), fmt(TranMath.GIANT_EXHAUST_TICKS / 20.0));
-            case TRAN_BLADES -> note("hukhong.skill.tran_blades.desc", "[Sát thương] Vạn Kiếm Trận: %s lưỡi kiếm rơi trong %s giây quanh điểm ngắm (bán kính %s), mỗi lưỡi %s x Phép lực.",
-                    TranMath.BLADE_COUNT, fmt(TranMath.BLADE_COUNT * TranMath.BLADE_INTERVAL_TICKS / 20.0), fmt(TranMath.BLADE_RADIUS), fmt(TranMath.BLADE_COEF));
+            case TRAN_BLADES -> note("hukhong.skill.tran_blades.desc", "[Sát thương] Vạn Kiếm Trận: %s lưỡi kiếm trong %s giây tự tìm và chia đều cho kẻ địch quanh điểm ngắm (bán kính %s), mỗi lưỡi %s x Phép lực; mục tiêu nhận càng nhiều lưỡi càng bị giảm, tối đa -%s%% khi chỉ có 1 mục tiêu.",
+                    TranMath.BLADE_COUNT, fmt(TranMath.BLADE_COUNT * TranMath.BLADE_INTERVAL_TICKS / 20.0), fmt(TranMath.BLADE_SEEK_RADIUS), fmt(TranMath.BLADE_COEF), fmt(TranMath.BLADE_SINGLE_CUT * 100));
             case TRAN_DOOM -> note("hukhong.skill.tran_doom.desc", "[Sát thương] Diệt Thế Trận: tụ lực %s giây rồi nổ bán kính %s quanh điểm ngắm, %s x Phép lực.",
                     fmt(TranMath.DOOM_CHARGE_TICKS / 20.0), fmt(TranMath.DOOM_RADIUS), fmt(TranMath.DOOM_COEF));
             case TRAN_WARD -> note("hukhong.skill.tran_ward.desc", "[Phòng ngự] Hộ Thân Trận: bán kính %s, %s giây; người chơi trong vùng nhận -%s%% sát thương.",

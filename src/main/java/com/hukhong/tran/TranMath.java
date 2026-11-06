@@ -39,6 +39,13 @@ public final class TranMath {
     // BASE R - Hộ Thân Trận / WARD (dùng chung với PHONG_NGU Q)
     public static final double WARD_RADIUS = 5;
     public static final int WARD_TICKS = 160;         // 8 giây
+    /** Hộ Thân Trận (R cơ bản, 2026-11-06): theo chân 20 giây, hồi 30 giây, 0,2 x Phép lực/giây lên địch trong vùng. */
+    public static final int HOTHAN_TICKS = 400;
+    public static final double HOTHAN_DOT_COEF = 0.20;
+    /** Vạn Kiếm Trận: kiếm tự tìm mục tiêu; mục tiêu nhận nhiều kiếm bị giảm tối đa 40% (1 mục tiêu = 0,6). */
+    public static final double BLADE_SINGLE_CUT = 0.40, BLADE_SEEK_RADIUS = 8;
+
+    public static double bladeMult(int onTarget, int total) { return 1 - BLADE_SINGLE_CUT * onTarget / (double) Math.max(1, total); }
     public static final double WARD_DR = 0.30;        // người chơi trong trận nhận -30% sát thương
 
     // Trận Tâm (nội tại): đứng trong trận của mình

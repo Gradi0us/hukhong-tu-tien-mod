@@ -231,4 +231,58 @@ public final class TranGameTests {
             h.succeed();
         });
     }
+
+    /** 2026-11-06: mỗi thế hồi chiêu riêng - dùng Q ở Cơ bản rồi đổi sang Khống Chế thì Q dùng được ngay; quay về thì hồi chiêu cũ còn nguyên. */
+    @GameTest(template = "empty")
+    public static void tranStanceCooldownsIndependent(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        long now = h.getLevel().getGameTime();
+        var st = SkillService.state(p);
+        st.cooldownEnd[0] = now + 500;
+        TranRuntime.onKey(p, 3); // T: chọn thế
+        TranRuntime.onKey(p, 0); // Q: vào Khống Chế
+        if (TranRuntime.stance(p) != TranStance.KHONG_CHE) { h.fail("khong vao duoc the Khong Che"); return; }
+        if (st.cooldownEnd[0] > now) { h.fail("Q the Khong Che bi dinh hoi chieu cua the Co ban"); return; }
+        if (TranRuntime.storedCooldown(p, TranStance.BASE, 0) != now + 500) { h.fail("khong cat hoi chieu the Co ban"); return; }
+        st.cooldownEnd[1] = now + 300; // dùng E ở Khống Chế
+        TranRuntime.onKey(p, 3); // về Cơ bản
+        if (st.cooldownEnd[0] != now + 500 || st.cooldownEnd[1] > now) { h.fail("ve Co ban khong nap lai hoi chieu cu: " + st.cooldownEnd[0] + " / " + st.cooldownEnd[1]); return; }
+        if (TranRuntime.storedCooldown(p, TranStance.KHONG_CHE, 1) != now + 300) { h.fail("khong cat hoi chieu Khong Che"); return; }
+        h.succeed();
+    }
+
+    /** Hộ Thân Trận (R cơ bản): đi theo chân, còn sau khi đổi thế, gây sát thương mỗi giây cho kẻ địch trong vùng. */
+    @GameTest(template = "empty", timeoutTicks = 80)
+    public static void tranHoThanFollowsAndDamages(GameTestHelper h) {
+        ServerPlayer p = player(h);
+        TranSkills.run(com.hukhong.skill.Skill.TRAN_3, p);
+        if (!TranRuntime.hasHoThan(p)) { h.fail("khong dung Ho Than Tran"); return; }
+        Zombie z = zombie(h, p, 2);
+        float hp = z.getHealth();
+        TranRuntime.onKey(p, 3);
+        TranRuntime.onKey(p, 1); // sang Sát Thương
+        Vec3 moved = p.position().add(1.5, 0, 0);
+        p.moveTo(moved.x, moved.y, moved.z);
+        h.runAfterDelay(45, () -> {
+            if (!TranRuntime.hasHoThan(p)) { h.fail("doi the lam mat Ho Than Tran"); return; }
+            if (z.getHealth() >= hp) { h.fail("Ho Than Tran khong gay sat thuong theo thoi gian"); return; }
+            h.succeed();
+        });
+    }
+
+    /** Vạn Kiếm Trận (E Sát Thương): kiếm chia cho nhiều mục tiêu; 1 mục tiêu chịu tối đa 60%. */
+    @GameTest(template = "empty", timeoutTicks = 80)
+    public static void tranBladesSplitTargets(GameTestHelper h) {
+        if (Math.abs(TranMath.bladeMult(12, 12) - 0.6) > 1e-9 || Math.abs(TranMath.bladeMult(6, 12) - 0.8) > 1e-9) { h.fail("he so giam sai"); return; }
+        ServerPlayer p = player(h);
+        p.setXRot(30);
+        Zombie a = zombie(h, p, 4), b = zombie(h, p, 5);
+        b.moveTo(b.getX() + 1.5, b.getY(), b.getZ());
+        float ha = a.getHealth(), hb = b.getHealth();
+        TranSkills.blades(h.getLevel(), p, StatService.spellPower(p));
+        h.runAfterDelay(50, () -> {
+            if (a.getHealth() >= ha || b.getHealth() >= hb) { h.fail("kiem khong chia du 2 muc tieu"); return; }
+            h.succeed();
+        });
+    }
 }

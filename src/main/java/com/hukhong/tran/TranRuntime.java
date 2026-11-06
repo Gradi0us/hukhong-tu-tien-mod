@@ -65,8 +65,10 @@ public final class TranRuntime {
         final UUID owner;
         final ServerPlayer who;
         final ResourceKey<Level> dim;
-        final Vec3 c;
+        Vec3 c;
         final double r;
+        /** Hộ Thân Trận (R thế cơ bản): đi theo chân chủ trận, gây sát thương mỗi giây. */
+        boolean follow;
         final Kind kind;
         long end;
         /** CAGE: quái đang bị nhốt; SUPPRESS: quái đã bị choáng khi vào. */
@@ -86,6 +88,8 @@ public final class TranRuntime {
         int stacks;
         long decayAt;
         long exhaustEnd = -1;
+        /** Hồi chiêu Q/E/R riêng của từng thế (2026-11-06): đổi thế không đụng tới hồi chiêu thế khác. */
+        final long[][] cds = new long[TranStance.values().length][3];
         St(ServerPlayer who) { this.who = who; }
     }
 
@@ -129,7 +133,7 @@ public final class TranRuntime {
         if (slot == 3) {
             if (s.stance != TranStance.BASE) {
                 CHARGES.remove(p.getUUID()); // đổi thế: huỷ tụ lực Sát Trận (không trừ chi phí)
-                s.stance = TranStance.BASE;
+                switchStance(p, s, TranStance.BASE);
                 s.tCdEnd = now + TranMath.T_RETURN_CD_TICKS;
                 s.armedUntil = -1;
                 p.displayClientMessage(Component.translatable("hukhong.tran.return_base"), true);
@@ -143,7 +147,7 @@ public final class TranRuntime {
             return true;
         }
         if (s.stance == TranStance.BASE && s.armedUntil >= now) {
-            s.stance = TranStance.fromSlot(slot);
+            switchStance(p, s, TranStance.fromSlot(slot));
             s.armedUntil = -1;
             p.displayClientMessage(Component.translatable("hukhong.tran.entered", Component.translatable(s.stance.langKey())), true);
             TranVfx.stanceEnter(lvOf(p), p, s.stance.ordinal());
@@ -154,6 +158,18 @@ public final class TranRuntime {
     }
 
     private static ServerLevel lvOf(ServerPlayer p) { return (ServerLevel) p.level(); }
+
+    /** Đổi thế: cất hồi chiêu Q/E/R của thế cũ, nạp hồi chiêu đã lưu của thế mới (mỗi thế hồi chiêu độc lập). */
+    static void switchStance(ServerPlayer p, St s, TranStance to) {
+        long[] cur = SkillService.state(p).cooldownEnd;
+        System.arraycopy(cur, 0, s.cds[s.stance.ordinal()], 0, 3);
+        s.stance = to;
+        System.arraycopy(s.cds[to.ordinal()], 0, cur, 0, 3);
+        SkillService.sync(p);
+    }
+
+    /** Hồi chiêu đã lưu của thế (test). */
+    public static long storedCooldown(ServerPlayer p, TranStance s, int slot) { return st(p).cds[s.ordinal()][slot]; }
 
     // ------------------------------------------------------------------ Sát Trận giữ-để-nạp (Q, thế Sát Thương)
 
@@ -291,6 +307,22 @@ public final class TranRuntime {
 
     static void ward(ServerLevel lv, ServerPlayer p, Vec3 c, double r) { addZone(lv, p, Kind.WARD, c, r, TranMath.WARD_TICKS); }
 
+    /** Hộ Thân Trận (R thế cơ bản): vùng theo chân 20 giây, giữ qua mọi lần đổi thế; dựng lại thì thay vùng cũ. */
+    static Zone hoThan(ServerLevel lv, ServerPlayer p) {
+        ZONES.removeIf(z -> z.follow && z.owner.equals(p.getUUID()));
+        long now = lv.getServer().getTickCount();
+        Zone z = new Zone(p.getUUID(), p, lv.dimension(), p.position(), TranMath.WARD_RADIUS, now + TranMath.HOTHAN_TICKS, Kind.WARD);
+        z.follow = true;
+        ZONES.add(z);
+        return z;
+    }
+
+    /** Còn Hộ Thân Trận theo chân không (test). */
+    public static boolean hasHoThan(ServerPlayer p) {
+        for (Zone z : ZONES) if (z.follow && z.owner.equals(p.getUUID())) return true;
+        return false;
+    }
+
     static void heal(ServerLevel lv, ServerPlayer p, Vec3 c) { addZone(lv, p, Kind.HEAL, c, TranMath.HEAL_RADIUS, TranMath.HEAL_TICKS); }
 
     /** Đòn thường Trận Tu: tia phù văn trễ 3 tick + đánh dấu mục tiêu 5 giây. */
@@ -374,6 +406,15 @@ public final class TranRuntime {
                 continue;
             }
             if (owner == null) continue;
+            if (z.follow) {
+                if (!z.dim.equals(owner.level().dimension())) { it.remove(); continue; }
+                z.c = owner.position();
+                if (now % 20 == 0) tickHoThan(lv, owner, z);
+                if (now % 8 == 0) { // vòng trận theo chân (vẽ lại liên tục vì vùng di chuyển)
+                    com.hukhong.vfx.Fx.groundRing(lv, owner, z.c.add(0, 0.06, 0), (float) z.r, 0xB8A1FF, 10);
+                    com.hukhong.vfx.Fx.rune(lv, owner, z.c.add(0, 0.05, 0), (float) z.r * 0.6f, 0xD8C8FF, 10, 6);
+                }
+            }
             switch (z.kind) {
                 case CAGE -> tickCage(lv, owner, z, now);
                 case SNARE -> { if (now % TranMath.SNARE_TICK_INTERVAL == 0) tickSnare(lv, owner, z); }
@@ -386,6 +427,16 @@ public final class TranRuntime {
             if (now % 20 == 0 && z.kind == Kind.WARD && owner.position().distanceTo(z.c) <= z.r) regen.add(owner);
         }
         for (ServerPlayer p : regen) if (!exhausted(p)) Resources.add(p, TranMath.REGEN_PER_SEC);
+    }
+
+    /** Hộ Thân Trận: mỗi giây gây HOTHAN_DOT_COEF x Phép lực cho kẻ địch trong vùng. */
+    static void tickHoThan(ServerLevel lv, ServerPlayer owner, Zone z) {
+        float dmg = (float) (TranMath.HOTHAN_DOT_COEF * StatService.spellPower(owner));
+        for (LivingEntity v : around(lv, owner, z.c, z.r)) {
+            v.invulnerableTime = 0;
+            DamageRules.hurtBySkill(owner, v, dmg);
+            lv.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANTED_HIT, v.getX(), v.getY() + v.getBbHeight() * 0.5, v.getZ(), 4, 0.2, 0.3, 0.2, 0.05);
+        }
     }
 
     private static void drawZone(ServerLevel lv, Zone z) {

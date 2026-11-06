@@ -101,9 +101,8 @@ public final class TranSkills {
 
     /** R Hộ Thân Trận: vùng r=5 quanh mình 8 giây, người chơi trong vùng nhận -30% sát thương. */
     private static void hoThanTran(ServerLevel lv, ServerPlayer p) {
-        Vec3 c = p.position();
-        TranRuntime.ward(lv, p, c, TranMath.WARD_RADIUS);
-        TranVfx.burst(lv, c.add(0, 0.1, 0), TranMath.WARD_RADIUS);
+        TranRuntime.hoThan(lv, p);
+        TranVfx.burst(lv, p.position().add(0, 0.1, 0), TranMath.WARD_RADIUS);
     }
 
     // ------------------------------------------------------------------ KHỐNG CHẾ
@@ -149,13 +148,32 @@ public final class TranSkills {
     }
 
     /** E Vạn Kiếm Trận: 12 lưỡi kiếm rơi trong 2 giây quanh điểm ngắm (r4), mỗi lưỡi 0,45 x Phép lực. */
-    private static void blades(ServerLevel lv, ServerPlayer p, double sp) {
+    static void blades(ServerLevel lv, ServerPlayer p, double sp) {
         Vec3 c = TranRuntime.aim(lv, p, TranMath.BLADE_RANGE);
         TranVfx.bladeRain(lv, c, TranMath.BLADE_RADIUS);
         float dmg = (float) (TranMath.BLADE_COEF * sp);
-        for (int i = 0; i < TranMath.BLADE_COUNT; i++) {
-            SkillScheduler.later(TranMath.BLADE_INTERVAL_TICKS * (i + 1),
-                    () -> pillarStrike(lv, p, c, dmg, TranMath.BLADE_RADIUS, TranMath.BLADE_HIT_R));
+        // 2026-11-06: kiếm tự tìm mục tiêu quanh điểm ngắm (gần trước), chia đều; mục tiêu nhận nhiều kiếm bị giảm tối đa 40%
+        List<LivingEntity> ts = new java.util.ArrayList<>(TranRuntime.around(lv, p, c, TranMath.BLADE_SEEK_RADIUS));
+        ts.sort(java.util.Comparator.comparingDouble(e -> e.position().distanceToSqr(c)));
+        int n = TranMath.BLADE_COUNT;
+        if (ts.isEmpty()) {
+            for (int i = 0; i < n; i++)
+                SkillScheduler.later(TranMath.BLADE_INTERVAL_TICKS * (i + 1), () -> pillarStrike(lv, p, c, dmg, TranMath.BLADE_RADIUS, TranMath.BLADE_HIT_R));
+            return;
+        }
+        int[] per = new int[ts.size()];
+        for (int i = 0; i < n; i++) per[i % ts.size()]++;
+        for (int i = 0; i < n; i++) {
+            int k = i % ts.size();
+            LivingEntity t = ts.get(k);
+            float d = (float) (dmg * TranMath.bladeMult(per[k], n));
+            SkillScheduler.later(TranMath.BLADE_INTERVAL_TICKS * (i + 1), () -> {
+                if (!p.isAlive() || p.hasDisconnected() || !t.isAlive()) return;
+                Vec3 at = TranRuntime.ground(lv, t.position());
+                TranVfx.pillar(lv, at);
+                t.invulnerableTime = 0;
+                DamageRules.hurtBySkill(p, t, d);
+            });
         }
     }
 
