@@ -55,6 +55,9 @@ public final class VoidSpread extends SavedData {
 
     public int count() { return infected.size(); }
 
+    /** Chỉ cho GameTest: thế giới test được giữ giữa các lần chạy, xóa vùng lan cũ để không chạm trần MAX_SPREAD. */
+    public void clearForTest() { if (!infected.isEmpty()) { infected.clear(); setDirty(); } }
+
     public List<Entry> entries() { return new ArrayList<>(infected.values()); }
 
     public void add(DaiSamLam.Region r, long time) {
@@ -132,7 +135,7 @@ public final class VoidSpread extends SavedData {
                     if (dx == 0 && dz == 0) continue;
                     DaiSamLam.Region n = DaiSamLam.cell(seed, s.gx() + dx, s.gz() + dz);
                     // loại: không có rừng, đã bị xâm thực (tĩnh/lan), đã giải phóng
-                    if (n != null && !DaiSamLam.corruptedLive(ow, n)) cand.add(n);
+                    if (n != null && !DaiSamLam.corruptedLive(ow, n) && !CleansedForests.get(ow).has(n)) cand.add(n);
                 }
             if (cand.isEmpty()) continue;
             DaiSamLam.Region pick = cand.get(rnd.nextInt(cand.size()));

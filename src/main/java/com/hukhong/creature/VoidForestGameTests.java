@@ -108,12 +108,13 @@ public final class VoidForestGameTests {
             for (int dx = -1; dx <= 1 && !found; dx++) for (int dz = -1; dz <= 1 && !found; dz++) {
                 if (dx == 0 && dz == 0) continue;
                 DaiSamLam.Region n = DaiSamLam.cell(seed, gx + dx, gz + dz);
-                if (n != null && !DaiSamLam.corruptedLive(ow, n)) { found = true; sgx = gx; sgz = gz; }
+                if (n != null && !DaiSamLam.corruptedLive(ow, n) && !CleansedForests.get(ow).has(n)) { found = true; sgx = gx; sgz = gz; }
             }
         }
         if (!found) { h.fail("khong co vung xam thuc gan goc"); return; }
+        VoidSpread.get(ow).clearForTest();
         List<DaiSamLam.Region> fresh = VoidSpread.spreadFrom(ow, ow.getGameTime(), 1.0, List.of(new int[]{sgx, sgz}));
-        if (fresh.isEmpty()) { h.fail("khong lan"); return; }
+        if (fresh.isEmpty()) { h.fail("khong lan, count=" + VoidSpread.get(ow).count() + " src=" + sgx + "," + sgz); return; }
         DaiSamLam.Region n = fresh.get(0);
         if (!DaiSamLam.corruptedLive(ow, n)) { h.fail("vung lan khong bi xam thuc"); return; }
         if (!VoidSpread.get(ow).has(n)) { h.fail("vung lan khong duoc luu"); return; }
