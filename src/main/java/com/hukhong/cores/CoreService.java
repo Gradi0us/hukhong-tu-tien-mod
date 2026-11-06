@@ -108,6 +108,7 @@ public final class CoreService {
         if (than && (index > 2 || pend.ids().isEmpty())) return false; // Thần Lõi: không có ô úp
         if (index == 3 && pend.stuckRoll()) {
             set(p, s.withStuck(m));
+            PhaChap.begin(p);
             p.displayClientMessage(Component.translatable("hukhong.altar.stuck"), false);
             ((ServerLevel) p.level()).playSound(null, p.blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.6f, 0.6f);
             PacketDistributor.sendToPlayer(p, new CoreRevealPayload(3, true, CoreRevealPayload.NONE, 0));
@@ -170,6 +171,18 @@ public final class CoreService {
 
     public static boolean hasSetBonus(String system, int count) { return count >= 2 && SET_BONUS.containsKey(system); }
 
+    // ---- 2026-11-06: Lõi lớn mạnh theo thời gian ----
+    /** Uẩn Dưỡng: mỗi cấp lên thêm kể từ khi chọn Lõi, bị động Lõi mạnh thêm 4%, tối đa x3. */
+    public static final double GROWTH_PER_LEVEL = 0.04, GROWTH_CAP = 3.0;
+
+    public static double growth(int playerLevel, int milestone) {
+        int since = Math.max(0, playerLevel - milestoneLevel(milestone));
+        return Math.min(GROWTH_CAP, 1.0 + GROWTH_PER_LEVEL * since);
+    }
+
+    /** Cộng hưởng đồng Hệ: 2 món x1, 4 món x2, 6 món x3,5 giá trị thưởng Hệ. */
+    public static double setMult(int count) { return count >= 6 ? 3.5 : count >= 4 ? 2.0 : count >= 2 ? 1.0 : 0.0; }
+
     public static Map<String, Integer> systemCounts(CoreSlots s, java.util.function.Function<ResourceLocation, CoreDef> lookup) {
         Map<String, Integer> out = new HashMap<>();
         for (CoreSlots.Picked pk : s.picked()) {
@@ -186,6 +199,7 @@ public final class CoreService {
         var access = p.level().registryAccess();
         var defs = CoreRegistry.all(access);
         CoreSlots s = get(p);
+        int level = CultivationService.get(p).level();
 
         Set<ResourceLocation> attrs = new HashSet<>();
         defs.values().forEach(c -> c.passives().forEach(ps -> attrs.add(ps.attribute())));
@@ -204,14 +218,14 @@ public final class CoreService {
                 AttributeInstance inst = instance(p, ps.attribute());
                 if (inst == null) continue;
                 inst.addTransientModifier(new AttributeModifier(modId("core/m" + pk.milestone()),
-                        ps.valueAt(pk.coreTier()), ps.operation()));
+                        ps.valueAt(pk.coreTier()) * growth(level, pk.milestone()), ps.operation()));
             }
         }
         for (var en : systemCounts(s, defs::get).entrySet()) {
             if (!hasSetBonus(en.getKey(), en.getValue())) continue;
             SetBonus b = SET_BONUS.get(en.getKey());
             AttributeInstance inst = instance(p, b.attr());
-            if (inst != null) inst.addTransientModifier(new AttributeModifier(modId("coreset/" + en.getKey()), b.value(), b.op()));
+            if (inst != null) inst.addTransientModifier(new AttributeModifier(modId("coreset/" + en.getKey()), b.value() * setMult(en.getValue()), b.op()));
         }
     }
 

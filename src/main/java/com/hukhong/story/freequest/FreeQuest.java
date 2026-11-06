@@ -49,6 +49,9 @@ public final class FreeQuest {
                 case 4 -> AlchemyRegistry.TU_VUONG_DAN.get();
                 case 5 -> AlchemyRegistry.HOANG_CUC_DAN.get();
                 case 6 -> AlchemyRegistry.DE_HOAN_DAN.get();
+                case 7 -> com.hukhong.resource.ResourceRegistry.HUYEN_TON_DAN.get();
+                case 8 -> com.hukhong.resource.ResourceRegistry.THANH_CO_DAN.get();
+                case 9 -> com.hukhong.resource.ResourceRegistry.THAN_DAN.get();
                 default -> null;
             };
         };

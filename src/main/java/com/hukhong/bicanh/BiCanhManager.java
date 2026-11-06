@@ -61,11 +61,19 @@ public final class BiCanhManager {
         int active = -1;
         boolean won;
         int partyAtStart;
+        /** Đa dạng (2026-11-06): chủ đề, biến số, kiểu phòng; số đợt Thủ Trận còn lại của phòng đang đánh. */
+        final BiCanhVariety.Theme theme;
+        final BiCanhVariety.Modifier mod;
+        final BiCanhVariety.RoomType[] roomTypes;
+        int roundsLeft;
 
         Run(int slot, BiCanhTier tier, long seed, BlockPos origin, long endTick) {
             this.slot = slot; this.tier = tier; this.seed = seed; this.origin = origin; this.endTick = endTick;
             this.rooms = BiCanhLayout.rooms(tier);
             this.state = new int[rooms.size()];
+            this.theme = BiCanhVariety.theme(seed);
+            this.mod = BiCanhVariety.modifier(seed);
+            this.roomTypes = BiCanhVariety.roomTypes(seed, tier.waves);
             this.bar = new ServerBossEvent(Component.translatable("hukhong.bicanh.bar", Component.translatable(tier.nameKey()), "--:--"),
                     BossEvent.BossBarColor.values()[Math.min(tier.ordinal() + 1, 6)], BossEvent.BossBarOverlay.PROGRESS);
         }
@@ -155,6 +163,8 @@ public final class BiCanhManager {
             run.bar.addPlayer(p);
             p.teleportTo(dim, origin.getX() + 3.5, origin.getY(), origin.getZ() + 0.5, -90f, 0f);
             p.sendSystemMessage(Component.translatable("hukhong.bicanh.enter", Component.translatable(tier.nameKey()), tier.minutes));
+            p.sendSystemMessage(Component.translatable("hukhong.bicanh.variety", Component.translatable(run.theme.key()),
+                    Component.translatable(run.mod.key()), Component.translatable(run.mod.key() + ".desc")));
         }
         return null;
     }
@@ -306,14 +316,21 @@ public final class BiCanhManager {
         run.active = idx;
         double scale = BiCanhTier.partyScale(online.size());
         if (r.kind() == Kind.BOSS) {
-            spawn(dim, run, ModEntities.HU_COT.get(), r, BiCanhLayout.ROOM_LEN / 2, 0, 5.0 * scale, BOSS_DMG_MUL, true);
+            spawn(dim, run, bossType(run), r, BiCanhLayout.ROOM_LEN / 2, 0, (run.theme.boss != null ? 2.5 : 5.0) * scale, BOSS_DMG_MUL, true);
             for (ServerPlayer p : online) com.hukhong.audio.BossMusic.start(p, "bicanh_boss");
             for (int i = 0; i < 2 + run.tier.ordinal() / 2; i++) spawnRandom(dim, run, r);
             for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable("hukhong.bicanh.boss_start"));
             floorTitle(dim, online, Component.translatable("hukhong.bicanh.floor.boss"), Component.translatable("hukhong.bicanh.boss"), true);
         } else {
-            int n = (int) Math.round(run.tier.mobsForWave(idx - 1) * scale);
+            BiCanhVariety.RoomType rt = run.roomTypes[idx];
+            if (rt == BiCanhVariety.RoomType.LINH_TUYEN) { linhTuyen(dim, run, r, online); cleared(dim, run, idx, online); return; }
+            int n = BiCanhVariety.mobsFor(rt, (int) Math.round(run.tier.mobsForWave(idx - 1) * scale));
+            run.roundsLeft = rt == BiCanhVariety.RoomType.THU_TRAN ? BiCanhVariety.THU_TRAN_ROUNDS - 1 : 0;
             for (int i = 0; i < n; i++) spawnRandom(dim, run, r);
+            if (rt == BiCanhVariety.RoomType.TINH_ANH)
+                spawn(dim, run, randomType(run, dim.random), r, BiCanhLayout.ROOM_LEN / 2, 4, BiCanhVariety.ELITE_HP * scale, BiCanhVariety.ELITE_DMG, false, true);
+            if (rt != BiCanhVariety.RoomType.SONG)
+                for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable(rt.key()));
             for (ServerPlayer p : online)
                 p.sendSystemMessage(Component.translatable("hukhong.bicanh.wave_start", idx, run.tier.waves, n));
             floorTitle(dim, online, Component.translatable("hukhong.bicanh.floor", idx),
@@ -323,8 +340,7 @@ public final class BiCanhManager {
 
     private static void spawnRandom(ServerLevel dim, Run run, Room r) {
         var rnd = dim.random;
-        double w = rnd.nextDouble();
-        EntityType<? extends Mob> type = w < 0.60 ? ModEntities.HU_THI.get() : w < 0.85 ? ModEntities.HU_COT.get() : ModEntities.HU_CHU.get();
+        EntityType<? extends Mob> type = randomType(run, rnd);
         int L = BiCanhLayout.ROOM_LEN, hz = BiCanhLayout.HALF_Z;
         int lx = L / 2, lz = hz - 3; // du phong: gan tuong
         for (int i = 0; i < 24; i++) {
@@ -336,18 +352,65 @@ public final class BiCanhManager {
         spawn(dim, run, type, r, lx, lz, 1.0, 1.0, false);
     }
 
+    /** Quái thường theo chủ đề lượt. */
+    @SuppressWarnings("unchecked")
+    private static EntityType<? extends Mob> randomType(Run run, net.minecraft.util.RandomSource rnd) {
+        var ks = run.theme.kinds;
+        if (ks.isEmpty()) {
+            double w = rnd.nextDouble();
+            return w < 0.60 ? ModEntities.HU_THI.get() : w < 0.85 ? ModEntities.HU_COT.get() : ModEntities.HU_CHU.get();
+        }
+        return (EntityType<? extends Mob>) com.hukhong.creature.CreatureRegistry.type(ks.get(rnd.nextInt(ks.size())));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static EntityType<? extends Mob> bossType(Run run) {
+        if (run.theme == BiCanhVariety.Theme.YEU_LAM) return randomType(run, net.minecraft.util.RandomSource.create(run.seed));
+        if (run.theme.boss == null) return ModEntities.HU_COT.get();
+        return (EntityType<? extends Mob>) com.hukhong.creature.CreatureRegistry.type(run.theme.boss);
+    }
+
+    /** Linh Tuyền: hồi đầy máu, giải hiệu ứng xấu, buff 90 giây. */
+    private static void linhTuyen(ServerLevel dim, Run run, Room r, List<ServerPlayer> online) {
+        BlockPos c = BiCanhArena.roomCenter(run.origin, r);
+        dim.sendParticles(ParticleTypes.HAPPY_VILLAGER, c.getX() + 0.5, c.getY() + 1, c.getZ() + 0.5, 60, 3, 1, 3, 0.1);
+        dim.sendParticles(ParticleTypes.SPLASH, c.getX() + 0.5, c.getY() + 1, c.getZ() + 0.5, 120, 3, 0.5, 3, 0.2);
+        for (ServerPlayer p : online) {
+            p.setHealth(p.getMaxHealth());
+            p.removeAllEffects();
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 1800, 0));
+            p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DAMAGE_BOOST, 1800, 0));
+            p.sendSystemMessage(Component.translatable(BiCanhVariety.RoomType.LINH_TUYEN.key()));
+        }
+    }
+
     /** He so sat thuong boss Bi Canh (truoc 1.8 - qua manh voi cap thap). BossBuff con nhan them 1.3. */
     public static final double BOSS_DMG_MUL = 1.8;
 
     private static void spawn(ServerLevel dim, Run run, EntityType<? extends Mob> type, Room r, int lx, int lz,
-                              double hpMul, double dmgMul, boolean boss) {
+                              double hpMul, double dmgMul, boolean boss) { spawn(dim, run, type, r, lx, lz, hpMul, dmgMul, boss, false); }
+
+    private static void spawn(ServerLevel dim, Run run, EntityType<? extends Mob> type, Room r, int lx, int lz,
+                              double hpMul, double dmgMul, boolean boss, boolean elite) {
         Mob m = type.create(dim);
         if (m == null) return;
         BlockPos o = run.origin;
         m.moveTo(o.getX() + r.x0() + lx + 0.5, o.getY() + (boss ? 1 : 0), o.getZ() + lz + 0.5, dim.random.nextFloat() * 360f, 0f);
         m.finalizeSpawn(dim, dim.getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.EVENT, null);
         int lv = run.tier.mobLevel; // cap quai = cap cua bac Bi Canh (hien thi va chi so khop nhau)
-        HuHoa.applyStats(m, lv, hpMul, dmgMul);
+        if (m instanceof com.hukhong.creature.LinhQuai q && q.kind() != null && q.kind().beast())
+            q.setAge(BiCanhVariety.beastAge(run.tier, boss, new Random(dim.random.nextLong())));
+        HuHoa.applyStats(m, lv, hpMul * run.mod.hp, dmgMul * run.mod.dmg);
+        var spd = m.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+        if (run.mod.speed > 0 && spd != null)
+            spd.addOrUpdateTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                    ResourceLocation.fromNamespaceAndPath("hukhong", "bicanh_mod_speed"),
+                    run.mod.speed, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+        if (elite) {
+            m.setCustomName(com.hukhong.entity.BossLevel.tag(Component.translatable("hukhong.bicanh.elite", m.getType().getDescription()), lv));
+            m.setCustomNameVisible(true);
+            m.setGlowingTag(true);
+        }
         m.setPersistenceRequired();
         if (boss) {
             com.hukhong.audio.BossMusic.watch(m, "bicanh_boss");
@@ -361,8 +424,25 @@ public final class BiCanhManager {
 
     private static void cleared(ServerLevel dim, Run run, int idx, List<ServerPlayer> online) {
         Room r = run.rooms.get(idx);
+        if (r.kind() == Kind.WAVE && run.roundsLeft > 0) { // Thủ Trận: đợt tiếp theo
+            run.roundsLeft--;
+            int n = BiCanhVariety.mobsFor(BiCanhVariety.RoomType.THU_TRAN,
+                    (int) Math.round(run.tier.mobsForWave(idx - 1) * BiCanhTier.partyScale(online.size())));
+            for (int i = 0; i < n; i++) spawnRandom(dim, run, r);
+            int round = BiCanhVariety.THU_TRAN_ROUNDS - run.roundsLeft;
+            for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable("hukhong.bicanh.round", round, BiCanhVariety.THU_TRAN_ROUNDS, n));
+            return;
+        }
         run.state[idx] = 2;
         run.active = -1;
+        if (r.kind() == Kind.WAVE && run.roomTypes[idx] == BiCanhVariety.RoomType.TINH_ANH) {
+            BlockPos cp = BiCanhArena.roomCenter(run.origin, r).offset(0, 0, 3);
+            dim.setBlock(cp, Blocks.CHEST.defaultBlockState(), 3);
+            if (dim.getBlockEntity(cp) instanceof ChestBlockEntity ce) {
+                List<ItemStack> loot = BiCanhLoot.stacks(run.tier, new Random(dim.random.nextLong()));
+                for (int k = 0; k < loot.size() && k < ce.getContainerSize(); k++) ce.setItem(k, loot.get(k));
+            }
+        }
         if (r.kind() == Kind.WAVE) {
             run.doorAnims.add(new long[]{idx, dim.getServer().getTickCount()});
             burst(dim, run, r);
@@ -389,6 +469,7 @@ public final class BiCanhManager {
             if (dim.getBlockEntity(cp) instanceof ChestBlockEntity ce) {
                 List<ItemStack> loot = BiCanhLoot.stacks(run.tier, rnd);
                 loot = new java.util.ArrayList<>(loot);
+                for (int b = 0; b < run.mod.bonusLoot; b++) loot.addAll(BiCanhLoot.stacks(run.tier, rnd)); // Biến Số: thêm thưởng
                 loot.addAll(com.hukhong.currency.Wallet.stacks(com.hukhong.currency.TuTinh.bicanhChest(run.tier.ordinal(), rnd)));
                 for (int k = 0; k < loot.size() && k < ce.getContainerSize(); k++) ce.setItem(k, loot.get(k));
             }

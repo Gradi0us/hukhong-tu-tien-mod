@@ -337,10 +337,15 @@ public class ProfileScreen extends Screen {
             g.drawString(font, name, cx + 40, y + 3, CoreCardRenderer.textColor(tier));
             Component tn = Component.translatable(tier.langKey());
             g.drawString(font, tn, cx + cw - font.width(tn) - 4, y + 3, CoreCardRenderer.textColor(tier));
+            double gr = CoreService.growth(com.hukhong.client.ClientCache.cultivation().level(), pk.milestone());
+            String gs = String.format(java.util.Locale.ROOT, "x%.2f", gr);
+            g.drawString(font, gs, cx + cw - font.width(tn) - font.width(gs) - 10, y + 3, gr >= CoreService.GROWTH_CAP ? 0xFFFFD700 : 0xFF8FE08F);
             if (hov) {
                 tooltip.add(name.copy().withColor(CoreCardRenderer.textColor(tier) & 0xFFFFFF));
                 tooltip.add(tn);
                 for (Component c : CoreCardRenderer.describe(pk.core(), tier)) tooltip.add(c.copy().withColor(0x8FE08F));
+                tooltip.add(Component.translatable("hukhong.core.growth", gs, (int) Math.round(CoreService.GROWTH_PER_LEVEL * 100),
+                        String.format(java.util.Locale.ROOT, "x%.0f", CoreService.GROWTH_CAP)).withColor(0xFFD27F));
             }
             y += ROW;
         }
@@ -433,7 +438,7 @@ public class ProfileScreen extends Screen {
             g.drawString(font, Component.translatable("hukhong.system." + en.getKey()), cx + 4, y + 3,
                     active ? GREEN : 0xFFBBBBBB);
             g.drawString(font, en.getValue() + " " + t("hukhong.profile.pieces", "món").getString(), cx + 110, y + 3, 0xFFDDDDDD);
-            Component st = active ? t("hukhong.profile.set_on", "Thưởng 2 món: ĐẠT")
+            Component st = active ? Component.translatable("hukhong.profile.set_mult", String.format(java.util.Locale.ROOT, "x%.1f", CoreService.setMult(en.getValue())))
                     : t("hukhong.profile.set_off", "Thưởng 2 món: chưa đạt");
             g.drawString(font, st, cx + cw - font.width(st) - 4, y + 3, active ? GREEN : GREY);
             y += ROW;

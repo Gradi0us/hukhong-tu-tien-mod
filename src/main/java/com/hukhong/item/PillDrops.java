@@ -17,7 +17,8 @@ public final class PillDrops {
     public static void onDrops(LivingDropsEvent e) {
         var v = e.getEntity();
         if (v.level().isClientSide) return;
-        if (v.getType() != EntityType.ZOMBIE && v.getType() != EntityType.SKELETON) return;
+        // 2026-11-06: zombie/skeleton bị SpawnRules chặn nên trước đây không bao giờ rơi; nay mọi quái thù địch (Hư Hóa, Yêu Thú...) đều rơi
+        if (!(v instanceof net.minecraft.world.entity.monster.Enemy)) return;
         if (!RewardGate.canReward(v)) return;
         roll(e, KHAI_MACH_CHANCE, new ItemStack(ModItems.KHAI_MACH_DAN.get()));
         roll(e, NGUNG_NGUYEN_CHANCE, new ItemStack(ModItems.NGUNG_NGUYEN_DAN.get()));
