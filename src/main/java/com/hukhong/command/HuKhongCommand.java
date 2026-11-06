@@ -57,6 +57,13 @@ public final class HuKhongCommand {
                     msg(c.getSource(), ok ? "milestone unlocked" : "not locked");
                     return 1;
                 }))
+                .then(Commands.literal("kiep_pass").executes(c -> { // dev: bỏ qua Thiên Kiếp của mốc hiện tại
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    int m = com.hukhong.cores.CoreService.milestoneOf(CultivationService.get(p));
+                    p.getPersistentData().putInt(com.hukhong.breakthrough.ThienKiep.PASS_KEY, m);
+                    msg(c.getSource(), "thien kiep passed for milestone " + m);
+                    return 1;
+                }))
                 .then(Commands.literal("give_altar").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     var st = new net.minecraft.world.item.ItemStack(com.hukhong.item.ModItems.AN_HON_DAI.get());

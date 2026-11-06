@@ -61,8 +61,13 @@ public final class DaiSamLam {
 
     public static boolean corruptedAt(long seed, double x, double z) { return corrupted(seed, at(seed, x, z)); }
 
-    /** Còn bị xâm thực (chưa được người chơi giải phóng qua Lịch Luyện). */
-    public static boolean corruptedLive(ServerLevel sl, Region r) { return corrupted(sl.getSeed(), r) && !CleansedForests.get(sl.getServer().overworld()).has(r); }
+    /** Còn bị xâm thực (tĩnh hoặc lan tới, chưa được giải phóng qua Lịch Luyện). */
+    public static boolean corruptedLive(ServerLevel sl, Region r) {
+        if (r == null) return false;
+        ServerLevel ow = sl.getServer().overworld();
+        if (CleansedForests.get(ow).has(r)) return false;
+        return corrupted(sl.getSeed(), r) || VoidSpread.get(ow).has(r); // tĩnh hoặc đã bị Hư Không lan tới
+    }
 
     public static boolean corruptedLiveAt(ServerLevel sl, double x, double z) { return corruptedLive(sl, at(sl.getSeed(), x, z)); }
 

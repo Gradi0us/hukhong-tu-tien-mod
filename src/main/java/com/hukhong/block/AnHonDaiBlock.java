@@ -31,6 +31,12 @@ public class AnHonDaiBlock extends Block {
             sp.displayClientMessage(Component.translatable("hukhong.altar.stuck_blocked"), true);
             return InteractionResult.SUCCESS;
         }
+        // Thiên Kiếp trước khi chọn Lõi: chưa qua mốc này -> bắt đầu kiếp thay vì mở UI.
+        if (m < 9 && !com.hukhong.breakthrough.ThienKiep.isPassed(sp, m)) { // từ cấp 90 đã có Khảo Hạch (TrialService), không độ kiếp 2 lần
+            if (com.hukhong.breakthrough.ThienKiep.begin(sp, m)) return InteractionResult.CONSUME;
+            sp.displayClientMessage(Component.translatable("hukhong.kiep.busy"), true);
+            return InteractionResult.SUCCESS;
+        }
         CoreSlots.Pending pend = CoreService.ensurePending(sp); // roll + lưu TRƯỚC khi mở UI
         if (pend == null) {
             sp.displayClientMessage(Component.translatable("hukhong.altar.no_cores"), true);

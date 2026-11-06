@@ -18,7 +18,7 @@ public class CleansedForests extends SavedData {
         return ow.getDataStorage().computeIfAbsent(new SavedData.Factory<>(CleansedForests::new, CleansedForests::load, null), NAME);
     }
 
-    private static long key(DaiSamLam.Region r) { return ((long) r.cx() << 32) ^ (r.cz() & 0xFFFFFFFFL); }
+    static long key(DaiSamLam.Region r) { return ((long) r.cx() << 32) ^ (r.cz() & 0xFFFFFFFFL); }
 
     public boolean has(DaiSamLam.Region r) { return r != null && done.contains(key(r)); }
 

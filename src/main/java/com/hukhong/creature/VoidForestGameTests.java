@@ -10,10 +10,13 @@ import com.hukhong.core.Path;
 import com.hukhong.phaptu.PhapElement;
 import com.hukhong.phaptu.PhapTu;
 import com.hukhong.world.TreeFell;
+import com.hukhong.world.yeulam.CleansedForests;
 import com.hukhong.world.yeulam.DaiSamLam;
+import com.hukhong.world.yeulam.VoidSpread;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.block.Blocks;
@@ -22,6 +25,7 @@ import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -88,6 +92,35 @@ public final class VoidForestGameTests {
         q.setData(ModAttachments.CULTIVATION, new CultivationData(1, 0, 100, 100, Set.of(), Map.of(), false, "", roll, false));
         CharCreateService.confirm(q, 1 << Path.PHAP.ordinal()); // chưa chọn nguyên tố: bị từ chối
         if (!q.getData(ModAttachments.CULTIVATION).paths().isEmpty()) { h.fail("chap nhan Phap khong co nguyen to"); return; }
+        h.succeed();
+    }
+
+    /** Hư Không lan: vùng tĩnh bị xâm thực lan sang ô láng giềng; giải phóng vùng lan thì hết xâm thực. */
+    @GameTest(template = "empty")
+    public static void voidSpreadsToNeighbour(GameTestHelper h) {
+        ServerLevel ow = h.getLevel().getServer().overworld();
+        long seed = ow.getSeed();
+        int sgx = 0, sgz = 0;
+        boolean found = false;
+        for (int gx = -3; gx <= 3 && !found; gx++) for (int gz = -3; gz <= 3 && !found; gz++) {
+            DaiSamLam.Region r = DaiSamLam.cell(seed, gx, gz);
+            if (r == null || !DaiSamLam.corruptedLive(ow, r)) continue;
+            for (int dx = -1; dx <= 1 && !found; dx++) for (int dz = -1; dz <= 1 && !found; dz++) {
+                if (dx == 0 && dz == 0) continue;
+                DaiSamLam.Region n = DaiSamLam.cell(seed, gx + dx, gz + dz);
+                if (n != null && !DaiSamLam.corruptedLive(ow, n)) { found = true; sgx = gx; sgz = gz; }
+            }
+        }
+        if (!found) { h.fail("khong co vung xam thuc gan goc"); return; }
+        List<DaiSamLam.Region> fresh = VoidSpread.spreadFrom(ow, ow.getGameTime(), 1.0, List.of(new int[]{sgx, sgz}));
+        if (fresh.isEmpty()) { h.fail("khong lan"); return; }
+        DaiSamLam.Region n = fresh.get(0);
+        if (!DaiSamLam.corruptedLive(ow, n)) { h.fail("vung lan khong bi xam thuc"); return; }
+        if (!VoidSpread.get(ow).has(n)) { h.fail("vung lan khong duoc luu"); return; }
+        CleansedForests.get(ow).add(n);
+        VoidSpread.get(ow).remove(n);
+        if (DaiSamLam.corruptedLive(ow, n)) { h.fail("van xam thuc sau khi giai phong"); return; }
+        for (DaiSamLam.Region f : fresh) VoidSpread.get(ow).remove(f);
         h.succeed();
     }
 }

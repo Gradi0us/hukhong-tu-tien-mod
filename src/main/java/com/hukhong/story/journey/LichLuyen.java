@@ -13,6 +13,7 @@ import com.hukhong.story.npc.DialogueService;
 import com.hukhong.story.npc.QuestData;
 import com.hukhong.story.objective.Objectives;
 import com.hukhong.world.yeulam.CleansedForests;
+import com.hukhong.world.yeulam.VoidSpread;
 import com.hukhong.world.yeulam.DaiSamLam;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -314,6 +315,7 @@ public final class LichLuyen {
         ServerLevel ow = p.server.overworld();
         DaiSamLam.Region r = DaiSamLam.at(ow.getSeed(), c.x(), c.z());
         CleansedForests.get(ow).add(r);
+        VoidSpread.get(ow).remove(r);
         if (p.level() == ow) {
             for (LinhQuai m : ow.getEntitiesOfClass(LinhQuai.class, p.getBoundingBox().inflate(96), LinhQuai::corrupted)) {
                 m.setCorrupted(false);
