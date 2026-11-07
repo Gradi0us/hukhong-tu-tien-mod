@@ -22,6 +22,10 @@ SIL, SIL_D, SIL_L = hexc("a9a9c4"), hexc("6c6c88"), hexc("d4d4e8")
 VIO, VIO_D, VIO_L = hexc("a24cff"), hexc("55279a"), hexc("d6a8ff")
 PALE, PALE_S = hexc("eee8f3"), hexc("c9bfd8")
 HAIR, HAIR_S, HAIR_D = hexc("ece8f4"), hexc("c4bcd8"), hexc("8f86aa")
+# đầu/tóc (v2): da hồng-tím ấm khác hẳn tóc trắng lạnh; tóc 5 tông để tạo khối
+SKIN, SKIN_S, SKIN_D = hexc("eedde6"), hexc("d9c3d2"), hexc("b9a0b8")
+HR_HI, HR, HR_M, HR_S, HR_D = hexc("fbfaff"), hexc("e7e5f3"), hexc("d0cce3"), hexc("aca5c8"), hexc("7d759f")
+CH_HI, CH, CH_M, CH_S = hexc("4a3a80"), hexc("2a2150"), hexc("1d1638"), hexc("0d0a1a")   # tóc bị nhiễm (đen tím)
 
 
 def neg_side(face, x, w, frac):
@@ -32,6 +36,13 @@ def neg_side(face, x, w, frac):
     if face == ("west" if not FLIP else "east"): return True
     if face in ("up", "down"): return (x < w * frac) if left_is_neg else (x >= w * (1 - frac))
     return False
+
+
+def pos_side(face, x, w, frac):
+    """pixel nằm ở phía model +x (trái nhân vật = phải người xem) — nơi tóc bị nhiễm đen tím."""
+    if face in ("north", "up", "down"): return (x >= w * (1 - frac)) if not FLIP else (x < w * frac)
+    if face == "south": return (x < w * frac) if not FLIP else (x >= w * (1 - frac))
+    return face == ("east" if not FLIP else "west")
 
 
 class Veins:
@@ -130,19 +141,85 @@ def silver(seed=2, gem=None, art=None, pal=None):
     return p
 
 
-def hair(seed=3, dark_side=0.0, fringe=0, dark_patch=None):
+def lock(seed, tip="v", T=None, dark=None, band=None):
+    """Một LỌN tóc khối: đầu nhọn (alpha), chuyển sáng->tối từ gốc xuống ngọn, dải bóng sáng (anime),
+    viền tối ở mép để tách khỏi lọn bên cạnh. dark(face,x,y,w,h)->bool: vùng tóc bị nhiễm đen tím."""
     r = random.Random(seed)
+    LIGHT, DARK = (HR_HI, HR, HR_M, HR_S, HR_D), (CH_HI, CH, CH_M, CH_S, CH_S)
+
+    def depth(x, w, tm):
+        if tip == "flat" or tm <= 0: return 0
+        if tip == "v":
+            c = (w - 1) / 2
+            return round(tm * abs(x - c) / max(.5, c))
+        if tip == "l": return round(tm * x / max(1, w - 1))           # mép trái (cột 0) dài nhất
+        if tip == "r": return round(tm * (w - 1 - x) / max(1, w - 1))
+        return (x * 5 + (x // 2) * 3 + seed) % (tm + 1)                # jag
+
     def p(face, x, y, w, h):
-        if fringe and face not in ("up", "down"):
-            cut = (x * 5 + (x // 3) * 7) % (fringe + 3)
-            if y >= h - cut: return (0, 0, 0, 0), False
-        strand = (x + (y // 6)) % 4
-        c = HAIR if strand else HAIR_S
-        if (x * 7 + y) % 19 == 0: c = HAIR_D
-        if dark_patch and dark_patch(face, x, y, w, h):
-            c = BLK if (x + y) % 3 else VIO_D
+        hi, base, mid, sh, deep = DARK if dark and dark(face, x, y, w, h) else LIGHT
+        if face == "up":
+            return shade(hi if (x * 3 + y + seed) % 5 == 0 else base, 1.05), False
+        if face == "down":
+            return shade(sh, .8), False
+        tm = T if T is not None else max(1, min(4, h // 3))
+        yb = h - 1 - depth(x, w, tm)
+        if y > yb: return (0, 0, 0, 0), False
+        t = y / max(1, h - 1)
+        c = base if t < .5 else (mid if t < .78 else sh)
+        if w >= 5 and (x + seed) % 3 == 0 and 0 < x < w - 1: c = mix(c, sh, .5)        # sợi tóc
+        b = (band if band is not None else max(1, h // 6)) + ((x + seed) % 3 == 1)
+        if y in (b, b + 1) and 0 < x < w - 1 and w >= 2: c = hi                          # dải bóng sáng
+        if x in (0, w - 1): c = mix(c, sh, .55)                                          # viền mép lọn
+        if y >= yb - (0 if h < 6 else 1): c = mix(c, deep, .5 if y < yb else .8)         # ngọn tối dần
+        if dark and dark(face, x, y, w, h) and (x * 7 + y * 3 + seed) % 19 == 0:
+            return shade(VIO if (x + y) % 2 else VIO_L, 1), True                         # vết nứt tím trong tóc nhiễm
         return shade(c, FACE_SHADE[face] * (1 + (r.random() - .5) * .05)), False
     return p
+
+
+# khuôn mặt chi tiết gấp đôi: tấm 14x12 khối -> 28x24 điểm ảnh (hàng 0 = trên cùng, cột 0 = bên trái người xem)
+FACE_PAL = {"D": SKIN_D, "s": SKIN_S, "S": SKIN, "L": hexc("f7ecf2"), "b": hexc("ebd0dc"), "j": hexc("cdb2c6"),
+            "e": hexc("a99cbf"), "n": hexc("d3b9ca"), "m": hexc("a77f9d"), "M": hexc("e4c7d6"),
+            "K": hexc("1d1730"), "k": hexc("4b3b6b"), "W": hexc("f4f1fb"), "w": hexc("cec6e0"),
+            "P": hexc("3f1c86"), "I": hexc("7a3fd6"), "V": hexc("a06aec"), "G": hexc("c9a2ff"), "H": hexc("ffffff")}
+FACE_GLOW = set("IVGH")
+EYE_L = ["Kk......",       # mắt bên trái người xem (khoé ngoài ở trái), dán tại cột 4, hàng 9
+         "KKKKKKKK",
+         ".KKPPPPK",
+         ".wWIHIIW",
+         "..WVIGVw",
+         "...kVVk."]
+
+
+def face_art():
+    W, H = 28, 24
+    g = [["S"] * W for _ in range(H)]
+    for y in range(H):
+        for x in range(W):
+            e = min(x, W - 1 - x)
+            if y <= 1: c = "D"                                   # bóng sâu dưới mái tóc
+            elif y <= 4: c = "D" if e <= 2 else "s"
+            elif y <= 7: c = "s" if e <= 1 else "S"
+            elif y <= 9: c = "s"                                 # bóng mái đổ lên mí mắt
+            elif y <= 21: c = "s" if e <= 1 else "S"
+            elif y == 22: c = "j" if e <= 3 else "S"
+            else: c = "j" if e <= 6 else "s"                     # cằm
+            g[y][x] = c
+    for x in list(range(5, 11)) + list(range(17, 23)): g[7][x] = "e"           # chân mày mảnh
+    for x in list(range(6, 10)) + list(range(18, 22)): g[15][x] = "L"          # gò má sáng
+    for y in (16, 17):
+        for x in list(range(4, 9)) + list(range(19, 24)): g[y][x] = "b"        # má hồng
+    g[17][13] = "n"; g[18][13] = "n"; g[18][14] = "n"                          # sống mũi / đầu mũi
+    for x in range(12, 16): g[20][x] = "m"                                     # miệng
+    g[21][13] = g[21][14] = "M"
+    for dy, row in enumerate(EYE_L):
+        for dx, ch in enumerate(row):
+            if ch == ".": continue
+            g[9 + dy][4 + dx] = ch
+            g[9 + dy][W - 1 - (4 + dx)] = ch                     # mắt phải = đối xứng
+    if FLIP: g = [row[::-1] for row in g]
+    return ["".join(r_) for r_ in g]
 
 
 def build():
@@ -254,41 +331,48 @@ def build():
 
     # ------------------------------------------------------------------ tóc trắng dài (hood)
     m.bone("hood", "body", (0, 92, 0))
-    cube("hood", (-9, 46, 7.5), (18, 48, 3), hair(70, fringe=7))                                  # tóc sau tới thắt lưng
-    cube("hood", (-8, 40, 9.5), (6, 20, 1), hair(71, fringe=5)); cube("hood", (2, 42, 9.5), (6, 18, 1), hair(72, fringe=5))
-    cube("hood", (-12, 62, -5), (3, 30, 5), hair(73, fringe=5))                                   # lọn tóc trước ngực
-    cube("hood", (9, 58, -5), (3, 34, 5), hair(74, fringe=6))
+    cube("hood", (-9, 86, 6.5), (18, 10, 4), lock(69, tip="flat"))                                  # khối tóc nối gáy
+    cube("hood", (-10, 50, 7.5), (20, 40, 2), lock(70, tip="jag", T=6, band=3))                     # mảng tóc sau tới thắt lưng
+    for i, (x0, y0, hgt, z0) in enumerate(((-11, 44, 46, 9.5), (-6.5, 38, 52, 9.6), (-1.5, 42, 48, 9.7), (3, 36, 54, 9.6), (7.5, 46, 44, 9.5))):
+        cube("hood", (x0, y0, z0), (4 if i in (0, 4) else 5, hgt, 1), lock(71 + i, tip="v", T=5, band=4 + i))   # lọn tóc sau so le
+    cube("hood", (-7.5, 64, -9.4), (3, 26, 2), lock(76, tip="v", T=4, band=3))                       # lọn dài trước ngực (trái người xem)
+    cube("hood", (4.5, 72, -9.0), (3, 18, 2), lock(77, tip="v", T=3, band=2))
 
-    # ------------------------------------------------------------------ đầu
+    # ------------------------------------------------------------------ đầu: sọ + tấm mặt chi tiết x2 + tóc khối nhiều lớp
     m.bone("head", "body", (0, 92, 0))
-    face = ["HHHHHHHHHHHHDDDD",
-            "HHHHHHHHHHHDDDDD",
-            "HHhHHHHHhHHHDDDD",
-            "HHHHHhHHHHHHHDDH",
-            "HHHSHHHHHHSHHHHH",
-            "HHSSShHHhSSSHhHH",
-            "HSSSSSHHSSSSSSHH",
-            "HSKKKSSSSSKKKSHH",
-            "HSEEWSSSSSWEESSH",
-            "HSeEESSSSSEEeSSH",
-            "HSSSSSSSSSSSSSSH",
-            "HSSSSSSsSSSSSSSH",
-            "HHSSSSSSSSSSSSHH",
-            "HHSSSSSmmSSSSSHH",
-            "HHHSSSSSSSSSSHHH",
-            "HHHHSSSSSSSSHHHH"]
-    if FLIP: face = [row[::-1] for row in face]
-    FP = {"H": HAIR, "h": HAIR_S, "D": BLK, "S": PALE, "s": PALE_S, "K": hexc("2a1a44"), "E": VIO, "e": VIO_D, "W": VIO_L, "m": hexc("b49cc4")}
-    def headp(face_, x, y, w, h):
-        if face_ == "north":
-            ch = face[y][x]
-            return shade(FP[ch], 1), ch in "EW"
-        return hair(80, dark_patch=lambda f, x, y, w, h: (f == ("east" if not FLIP else "west") and y < 7 and x < 9) or (f == "up" and x > 10 and y < 6))(face_, x, y, w, h)
-    cube("head", (-8, 92, -8), (16, 16, 16), headp)
-    cube("head", (-9, 102, -9), (18, 6, 18), hair(81, dark_patch=lambda f, x, y, w, h: f in ("north", "up") and ((x > 12) != FLIP) and y < 5))   # mái tóc phồng
-    cube("head", (-9.5, 84, -8), (2, 20, 14), hair(82, fringe=4)); cube("head", (7.5, 84, -8), (2, 20, 14), hair(83, fringe=4))   # tóc hai bên má
-    bang = lambda f, x, y, w, h: ((0, 0, 0, 0), False) if f == "north" and (y >= 2 + (x * 3) % 5) else hair(84)(f, x, y, w, h)
-    cube("head", (-8.5, 99, -9), (17, 7, 1), bang)                                                  # tóc mái lơ thơ trước trán
+    fa = face_art()
+    sk = lock(80, tip="flat", dark=lambda f, x, y, w, h: pos_side(f, x, w, .3) and y < 9)
+    cube("head", (-8, 92, -8), (16, 16, 16),
+         lambda f, x, y, w, h: ((0, 0, 0, 0), False) if f == "north" and 1 <= x <= 14 and 4 <= y <= 15 else sk(f, x, y, w, h))
+    cube("head", (-7, 92, -8), (14, 12, 0), lambda f, x, y, w, h: (shade(FACE_PAL[fa[y][x]], 1), fa[y][x] in FACE_GLOW), hires=2)
+    # mũ tóc phồng (phía trên-phải người xem bị nhiễm đen tím)
+    cap_dark = lambda f, x, y, w, h: (f == "up" and pos_side(f, x, w, .4)) or (f == "north" and pos_side(f, x, w, .36) and y < 4) \
+        or (f in ("east", "west") and pos_side(f, x, w, 1) and y < h - 2) or (f == "south" and pos_side(f, x, w, .3))
+    cube("head", (-9, 101, -9.5), (18, 9, 19), lock(81, tip="jag", T=3, dark=cap_dark, band=1))
+    # mái: 5 lọn so le độ sâu, lọn giữa dài nhất rủ xuống giữa hai mắt
+    for i, (x0, w, yb, top, z0, tp) in enumerate(((-6.5, 3, 99.5, 107.5, -10.3, "l"), (-4, 3, 100, 108, -10.7, "v"),
+                                                  (-1, 2, 97, 108, -11.0, "v"), (1, 3, 100, 108, -10.7, "v"),
+                                                  (3.5, 3, 99.5, 107.5, -10.3, "r"))):
+        cube("head", (x0, yb, z0), (w, top - yb, 2), lock(85 + i, tip=tp, T=3 if w > 2 else 2, band=2))
+    # lọn mai trước (che mép mặt, rủ quá cằm) + lọn mai sau dày che tai
+    for sx in (-1, 1):
+        xf = -9.5 if sx < 0 else 6.5
+        cube("head", (xf, 85, -10.4), (3, 21, 3), lock(110 + sx, tip="l" if sx < 0 else "r", T=4, band=3),
+             rot=[0, 0, 4 * sx], pivot=[xf + 1.5, 106, -9])
+        xb = -10.5 if sx < 0 else 7.5
+        cube("head", (xb, 82, -7.5), (3, 24, 7), lock(114 + sx, tip="jag", T=5, band=4,
+             dark=(lambda f, x, y, w, h: y < 9) if sx > 0 else None))
+    # chỏm tóc xù trên đỉnh (tạo khối), bên phải người xem đen tím
+    for i, (o, sz, rot, dkn) in enumerate((((-9, 107, -8), (7, 4, 10), [0, 0, 16], False),
+                                            ((-3, 108.5, -7), (6, 4, 11), [8, 0, 4], False),
+                                            ((2, 107.5, -7), (7, 4, 10), [0, 0, -18], True),
+                                            ((-7, 107.5, 1), (14, 4, 8), [-8, 0, 0], False),
+                                            ((5.5, 100, -6), (5, 8, 10), [0, 0, -10], True),
+                                            ((-0.5, 110.5, -2), (2, 4, 2), [0, 0, 20], False),
+                                            ((3, 110, 0), (2, 3, 2), [0, 0, -25], True))):
+        if FLIP: o = (-o[0] - sz[0], o[1], o[2]); rot = [rot[0], rot[1], -rot[2]]
+        cube("head", o, sz, lock(100 + i, tip="jag", T=2, dark=(lambda *a: True) if dkn else None, band=0),
+             rot=rot, pivot=[o[0] + sz[0] / 2, o[1], o[2] + sz[2] / 2])
 
     # vầng trăng khuyết lớn sau đầu: dày ở hai bên/đáy, mảnh nhọn ở đầu mút, hở phía trên-phải
     CX, CY, CZ, R = 0, 114, 11, 22

@@ -76,10 +76,12 @@ class Model:
         s.names.add(name)
         s.bones.append(dict(name=name, parent=parent, pivot=list(pivot), rot=rot))
 
-    def cube(s, bone, o, sz, paint, rot=None, pivot=None, inflate=0):
+    def cube(s, bone, o, sz, paint, rot=None, pivot=None, inflate=0, hires=0):
+        """hires=f (>1): chỉ dựng MẶT TRƯỚC (north) với mật độ texel gấp f (per-face UV) — dùng cho khuôn mặt."""
         w, h, d = [max(1, int(round(v))) for v in sz]
+        if hires: d = max(0, int(round(sz[2])))
         assert bone in s.names, bone
-        s.cubes.append(dict(bone=bone, o=list(o), sz=(w, h, d), paint=paint, rot=rot, pivot=pivot, inflate=inflate, idx=len(s.cubes)))
+        s.cubes.append(dict(bone=bone, o=list(o), sz=(w, h, d), paint=paint, rot=rot, pivot=pivot, inflate=inflate, idx=len(s.cubes), hires=hires))
 
     def build(s):
         items = sorted(s.cubes, key=lambda c: (-(c["sz"][1] + c["sz"][2]), -(c["sz"][0] + c["sz"][2])))
@@ -87,6 +89,7 @@ class Model:
         x = y = sh = 0
         for c in items:
             w, h, d = c["sz"]; bw, bh = 2 * (w + d), h + d
+            if c.get("hires"): bw, bh = w * c["hires"], h * c["hires"]
             if x + bw > tw: x, y, sh = 0, y + sh, 0
             c["uv"] = (x, y); x += bw; sh = max(sh, bh)
             assert y + sh <= th, f"{s.id}: texture {tw}x{th} overflow"
@@ -96,6 +99,7 @@ class Model:
             w, h, d = c["sz"]; u, v = c["uv"]
             faces = {"up": (u + d, v, w, d), "down": (u + d + w, v, w, d), "east": (u, v + d, d, h),
                      "north": (u + d, v + d, w, h), "west": (u + d + w, v + d, d, h), "south": (u + 2 * d + w, v + d, w, h)}
+            if c.get("hires"): faces = {"north": (u, v, w * c["hires"], h * c["hires"])}
             for f, (fx, fy, fw, fh) in faces.items():
                 for yy in range(fh):
                     for xx in range(fw):
@@ -115,6 +119,8 @@ class Model:
                 if c["bone"] != b["name"]: continue
                 w, h, d = c["sz"]
                 j = {"origin": [round(v, 3) for v in c["o"]], "size": [w, h, d], "uv": list(c["uv"])}
+                if c.get("hires"):
+                    j["uv"] = {"north": {"uv": list(c["uv"]), "uv_size": [w * c["hires"], h * c["hires"]]}}
                 if c["inflate"]: j["inflate"] = c["inflate"]
                 if c["rot"]:
                     j["pivot"] = c["pivot"] or [round(c["o"][0] + w / 2, 3), round(c["o"][1] + h / 2, 3), round(c["o"][2] + d / 2, 3)]

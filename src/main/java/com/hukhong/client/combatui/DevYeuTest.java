@@ -245,9 +245,16 @@ public final class DevYeuTest {
             if (u == 175) shot("96_da_khuyet_34");
             if (u == 180) server.execute(() -> sp.connection.teleport(x0 + 16.5, y0 + 1.8, z0 + 7.8, 180, -6));
             if (u == 188) shot("94_da_khuyet_back");
-            if (u == 190) server.execute(() -> sp.connection.teleport(x0 - 2.5, y0 + 2, z0 + 14.5, 180, 6));
-            if (u == 210) shot("95_npcs_back");
-            if (u == 220) { LOG.info("YEUTEST done"); mc().stop(); }
+            // cận mặt Dạ Khuyết (mắt camera ~ ngang mặt: y0+3.15)
+            if (u == 190) server.execute(() -> sp.connection.teleport(x0 + 16.5, y0 + 1.5, z0 + 1.9, 0, 0));
+            if (u == 202) shot("97_dk_face");
+            if (u == 204) server.execute(() -> sp.connection.teleport(x0 + 15.5, y0 + 1.5, z0 + 2.2, -38, 0));
+            if (u == 216) shot("98_dk_face_34l");
+            if (u == 218) server.execute(() -> sp.connection.teleport(x0 + 17.5, y0 + 1.5, z0 + 2.2, 38, 0));
+            if (u == 230) shot("99_dk_face_34r");
+            if (u == 232) server.execute(() -> sp.connection.teleport(x0 - 2.5, y0 + 2, z0 + 14.5, 180, 6));
+            if (u == 250) shot("95_npcs_back");
+            if (u == 260) { LOG.info("YEUTEST done"); mc().stop(); }
             return;
         }
         if (PETS_ONLY) {
