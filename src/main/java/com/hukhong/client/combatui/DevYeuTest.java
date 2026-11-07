@@ -214,6 +214,51 @@ public final class DevYeuTest {
     static void scenes2(net.minecraft.server.MinecraftServer server, ServerPlayer sp, net.minecraft.server.level.ServerLevel lv, int x0, int y0, int z0) {
         int u = t - 3000;
         if (DEMO) { demo(server, sp, lv, x0, y0, z0, u); return; }
+        if (PETS_ONLY) {
+            if (u == 0) server.execute(() -> {
+                lv.setDayTime(6000);
+                for (int dx = -30; dx <= 30; dx++) for (int dz = -30; dz <= 30; dz++) {
+                    lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+                    for (int dy = 0; dy < 20; dy++) lv.setBlock(new BlockPos(x0 + dx, y0 + dy, z0 + dz), Blocks.AIR.defaultBlockState(), 2);
+                }
+                sp.setGameMode(GameType.SPECTATOR);
+                var K = com.hukhong.creature.CreatureKind.class;
+                com.hukhong.creature.CreatureKind[][] rows = {
+                        {com.hukhong.creature.CreatureKind.THIET_BOI_HUNG_CON, com.hukhong.creature.CreatureKind.THIET_BOI_HUNG_CON, com.hukhong.creature.CreatureKind.THIET_BOI_HUNG},
+                        {com.hukhong.creature.CreatureKind.LINH_HO, com.hukhong.creature.CreatureKind.LINH_HO, com.hukhong.creature.CreatureKind.LINH_HO},
+                        {com.hukhong.creature.CreatureKind.NGOC_THO, com.hukhong.creature.CreatureKind.NGOC_THO, com.hukhong.creature.CreatureKind.NGOC_THO}};
+                int[] grow = {0, 60, 100};
+                for (int r = 0; r < 3; r++) for (int c = 0; c < 3; c++) {
+                    var e = com.hukhong.creature.CreatureRegistry.type(rows[r][c]).create(lv);
+                    if (!(e instanceof com.hukhong.creature.LinhThu lt)) continue;
+                    lt.moveTo(x0 - 9 + c * 9 + 0.5, y0, z0 + r * 14 + 0.5, 90, 0);
+                    lt.tame(sp);
+                    lt.setGrowth(grow[c]);
+                    com.hukhong.creature.pet.PetGrowth.applyScale(lt);
+                    lt.setOrderedToSit(true);
+                    lt.setNoAi(true); lt.setYBodyRot(90); lt.setYHeadRot(90);
+                    lv.addFreshEntity(lt);
+                }
+            });
+            for (int r = 0; r < 3; r++) {
+                int rr = r;
+                if (u == 40 + r * 40) server.execute(() -> sp.connection.teleport(x0 + 0.5, y0 + 3.5, z0 + rr * 14 - 9.5, 0, 14));
+                if (u == 60 + r * 40) shot("86_pets_row" + r + "_front");
+            }
+            for (int r = 0; r < 3; r++) {
+                int rr = r;
+                if (u == 160 + r * 40) server.execute(() -> sp.connection.teleport(x0 + 18.5, y0 + 4, z0 + rr * 14 + 0.5, 90, 12));
+                if (u == 180 + r * 40) shot("87_pets_row" + r + "_side");
+            }
+            for (int r = 0; r < 3; r++) for (int c = 0; c < 3; c++) {
+                int rr = r, cc = c, at = 300 + (r * 3 + c) * 30;
+                double sc = c == 2 ? 11 : c == 1 ? 6 : 3.5;
+                if (u == at) server.execute(() -> sp.connection.teleport(x0 - 9 + cc * 9 + 0.5 - sc * 0.45, y0 + sc * 0.4, z0 + rr * 14 + 0.5 - sc * 0.9, -27, 20));
+                if (u == at + 20) shot("88_pet_r" + r + "_g" + c);
+            }
+            if (u == 300 + 9 * 30 + 10) { LOG.info("YEUTEST done"); mc().stop(); }
+            return;
+        }
         if (RIFT_ONLY) {
             if (u == 0) server.execute(() -> { lv.setDayTime(18000); sp.setGameMode(GameType.CREATIVE); sp.getAbilities().flying = true; sp.onUpdateAbilities(); sp.connection.teleport(x0 + 0.5, y0, z0 + 0.5, 0, 0); });
             if (u == 40) server.execute(() -> com.hukhong.story.nemesis.NemesisService.start(sp, com.hukhong.story.flow.FlowSteps.get("c9_nemesis")));
@@ -328,7 +373,7 @@ public final class DevYeuTest {
         if (demoPetAt > 0) pets(server, sp, lv, x0, y0, z0, u - demoPetAt);
     }
 
-    static final boolean RIFT_ONLY = false;
+    static final boolean RIFT_ONLY = false, PETS_ONLY = false;
     static int demoIdx, demoFightT, demoPetAt = -1;
     static boolean demoFightStarted;
     static final java.util.List<com.hukhong.creature.LinhThu> DEMO_PETS = new java.util.ArrayList<>();
@@ -339,7 +384,7 @@ public final class DevYeuTest {
             lv.setDayTime(6000);
             sp.setGameMode(GameType.CREATIVE);
             sp.getAbilities().flying = false; sp.onUpdateAbilities();
-            sp.connection.teleport(x0 + 0.5, y0 + 1, z0 - 16.5, 0, 12);
+            sp.connection.teleport(x0 + 0.5, y0 + 1.5, z0 - 9.5, 0, 14);
             com.hukhong.creature.CreatureKind[] ks = {com.hukhong.creature.CreatureKind.NGOC_THO, com.hukhong.creature.CreatureKind.THIET_BOI_HUNG_CON, com.hukhong.creature.CreatureKind.LINH_HO};
             com.hukhong.creature.pet.PetData none = com.hukhong.creature.pet.PetData.EMPTY;
             for (int i = 0; i < ks.length; i++) {
@@ -364,7 +409,7 @@ public final class DevYeuTest {
             for (var e : lv.getEntitiesOfClass(com.hukhong.creature.LinhThu.class, sp.getBoundingBox().inflate(40)))
                 if (e.isTame() && !DEMO_PETS.contains(e)) { e.setOrderedToSit(true); DEMO_PETS.add(e); }
         });
-        if (v == 760) server.execute(() -> sp.connection.teleport(x0 + 0.5, y0 + 3, z0 - 22.5, 0, 14));
+        if (v == 760) server.execute(() -> sp.connection.teleport(x0 + 0.5, y0 + 4, z0 - 20.5, 0, 12));
     }
 
     static net.minecraft.client.Minecraft mc() { return net.minecraft.client.Minecraft.getInstance(); }

@@ -40,6 +40,8 @@ public final class PetGrowth {
     /** Bề ngang dạng trưởng thành (khối). */
     static final double ADULT_WIDTH = 4.0;
     static final Map<CreatureKind, CreatureKind> ADULT = Map.of(CreatureKind.THIET_BOI_HUNG_CON, CreatureKind.THIET_BOI_HUNG);
+    /** Hệ số cỡ trưởng thành riêng từng loài (model trưởng thành dài ~4 khối, cao ~3). */
+    static final Map<CreatureKind, Double> ADULT_SCALE = Map.of(CreatureKind.NGOC_THO, 3.0, CreatureKind.LINH_HO, 2.4, CreatureKind.THIET_BOI_HUNG, 1.7);
     static final ResourceLocation MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "pet_growth");
 
     /** Đang là ấu thể (đã thuần phục, chưa trưởng thành). */
@@ -61,13 +63,13 @@ public final class PetGrowth {
         a.removeModifier(MOD);
         if (!t.isTame()) return;
         double w = Math.max(0.3, t.getType().getDimensions().width());
-        double adult = ADULT_WIDTH / w;  // trưởng thành: ngang ~4 khối
+        double adult = ADULT_SCALE.getOrDefault(t.kind(), ADULT_WIDTH / w); // trưởng thành: dài ~4 khối theo model
         int g = Math.min(MAX, t.growth());
         double f;
         if (ADULT.containsKey(t.kind())) f = g < 40 ? 1.0 + 0.35 * g / 40.0 : 1.35 + 0.45 * (g - 40) / 60.0; // con: lớn tới ~1.8 rồi đổi model gấu lớn
         else if (g >= MAX) f = adult;
-        else if (g < 40) f = 1.0 + 0.4 * g / 40.0;                                     // ấu thể
-        else f = 1.6 + (adult * 0.55 - 1.6) * (g - 40) / 60.0;                          // thiếu niên: tới ~55% cỡ trưởng thành
+        else if (g < 40) f = 1.0 + 0.3 * g / 40.0; // ấu thể
+        else f = 1.3 + (Math.max(1.5, adult * 0.6) - 1.3) * (g - 40) / 60.0; // thiếu niên: tới ~60% cỡ trưởng thành
         a.addPermanentModifier(new AttributeModifier(MOD, f - 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
     }
 

@@ -15,17 +15,21 @@ def ngoc_tho_g1():
     """Thiếu niên: thân dài hơn, chân cao, tai dài có chóp ngọc, chùm đuôi ngọc."""
     m = Model("ngoc_tho_g1", 64, (2, 2), 0.5)
     JD = skin((200, 236, 216)); WH = skin((248, 250, 248)); PK = skin((255, 170, 200)); GM = crystal((60, 200, 150), (140, 255, 210))
+    GOLD = plate((150, 160, 80), (210, 220, 130)); GL = glow((140, 255, 210))
     m.bone("body", None, (0, 5, 0))
+    m.cube("body", (-2.2, 6, -4.2), (4.4, 3.5, 1.5), WH)              # bờm ngực
     m.cube("body", (-2, 4.5, -3.5), (4, 4, 7), JD)
     m.cube("body", (-1.5, 4.2, -3), (3, 1, 6), WH)
     m.cube("body", (-1, 6, 3.5), (2, 2, 2), GM)
     m.bone("head", "body", (0, 8, -3.5))
     m.cube("head", (-1.5, 7.5, -6.5), (3, 3, 3), JD, eyes=[(0, 1, 1, 1, (255, 90, 150)), (2, 1, 1, 1, (255, 90, 150))])
-    for x in (-1.5, .5):
-        m.cube("head", (x, 10.5, -5), (1, 6, 1), JD)
-        m.cube("head", (x + .2, 10.5, -5.3), (.6, 4, .4), PK)
-        m.cube("head", (x, 16.5, -5), (1, 1, 1), GM)
-    m.cube("head", (-.5, 10, -6.8), (1, 1, 1), GM)
+    for x in (-1.6, .4):
+        m.cube("head", (x, 10.5, -5), (1.2, 7, 1.6), WH)
+        m.cube("head", (x + .2, 11, -5.2), (.8, 6, .3), PK)
+    m.cube("head", (-1.8, 10.2, -5.3), (3.6, .8, 1.6), GOLD)          # vòng ngọc trên trán/tai
+    m.cube("head", (-.6, 9.8, -6.9), (1.2, 1.2, .6), GM)
+    m.cube("head", (1.3, 8.5, -4.8), (.5, 1.5, .5), GOLD); m.cube("head", (1.25, 7.6, -4.85), (.6, .9, .6), GM)  # hoa tai
+    m.cube("body", (-1.5, 6, 5), (3, 3, 2), GL); m.cube("body", (-1, 8.5, 5.5), (2, 2, 1.5), GL)
     q = quad_legs(m, "body", 4.5, (-1.5, 1.5), (-2.5, 2.5), 1, 1, JD, None, wb=2, db=2)
     return m, cfg(quad=q, legs=False)
 
@@ -37,13 +41,18 @@ def ngoc_tho_g2():
     JD = skin((190, 232, 210)); WH = skin((250, 252, 250)); PK = skin((255, 176, 206)); GM = crystal((60, 200, 150), (150, 255, 215))
     MO = crystal((170, 200, 255), (220, 235, 255)); GL = glow((150, 255, 210))
     m.bone("body", None, (0, 6, 0))
-    m.cube("body", (-2.5, 6, -4.5), (5, 5, 9), JD, rune=True)
+    m.cube("body", (-2.5, 6, -4.5), (5, 5, 9), JD)
     m.cube("body", (-2, 5.6, -4), (4, 1, 8), WH)
     m.cube("body", (-2.2, 7, -5.5), (4.4, 4, 2), WH)               # bờm ngực
     m.cube("body", (-1.5, 9.5, -4.6), (3, 2, 1), WH)
+    m.cube("body", (-2.8, 5.5, -6), (5.6, 6, 2.5), WH)               # bờm ngực lớn
     m.bone("tail", "body", (0, 9, 4.5))
-    m.cube("tail", (-1.5, 8, 4.5), (3, 3, 3), WH)
-    m.cube("tail", (-1, 8.5, 7.5), (2, 2, 2), GL)
+    import math as _m
+    for k in range(9):                                              # đuôi linh quang xoáy (chuỗi khối)
+        a = k * 0.75
+        x, y, z = _m.sin(a) * (1 + k * .35), 9 + k * .9, 5 + k * 1.1 - (k > 5) * (k - 5) * 1.4
+        sz = 2.6 - k * .18
+        m.cube("tail", (x - sz / 2, y - sz / 2, z - sz / 2), (sz, sz, sz), GL if k % 2 else GM)
     m.bone("head", "body", (0, 10.5, -5))
     m.cube("head", (-2, 10, -9), (4, 4, 4), JD, eyes=[(0, 1, 1, 1, (255, 80, 150)), (3, 1, 1, 1, (255, 80, 150))])
     m.cube("head", (-1, 10, -10), (2, 2, 1), WH)
@@ -54,9 +63,11 @@ def ngoc_tho_g2():
         m.cube(nm, (x + .2, 14, -7.3), (.6, 7, .4), PK)
         for y in (16, 19, 22):
             m.cube(nm, (x - .25, y, -7.25), (1.5, .6, 2), GM)
+        if i == 1:                                                  # hoa tai ngọc
+            m.cube(nm, (x + 1, 13, -6.8), (.5, 2, .5), GM); m.cube(nm, (x + .9, 11.8, -6.9), (.7, 1.2, .7), GL)
     m.cube("head", (-1.5, 14, -9.3), (3, 1, 1), MO)                # trăng khuyết
     m.cube("head", (-2, 15, -9.3), (1, 1, 1), MO); m.cube("head", (1, 15, -9.3), (1, 1, 1), MO)
-    q = quad_legs(m, "body", 6, (-1.8, 1.8), (-3.5, 3.5), 1.2, 1.2, JD, WH, wb=2, db=2.5)
+    q = quad_legs(m, "body", 6, (-1.8, 1.8), (-3.5, 3.5), 1.6, 1.6, WH, WH, wb=2.4, db=3)
     return m, cfg(quad=q, legs=False, sway=[("tail", 1, 10, 1, 0), ("ear_0", 0, 6, 1, 0), ("ear_1", 0, 6, 1, 1)])
 
 
@@ -69,6 +80,8 @@ def fox(id, tails, adult):
     m.bone("body", None, (0, L + 2, 0))
     m.cube("body", (-2.5, L, -5.5), (5, 5, 11), SV, rune=adult)
     m.cube("body", (-2, L - .5, -4.5), (4, 1, 9), WH)
+    for x in (-2.6, 2.1):                                           # vân linh quang hai bên sườn
+        m.cube("body", (x, L + 2, -3), (.5, 1, 4), GL); m.cube("body", (x, L + 3, 1), (.5, 1, 3), GL)
     if adult:
         m.cube("body", (-3, L + 1, -6.5), (6, 5, 3), WH)            # bờm cổ
         m.cube("body", (-2, L + 5, -5), (4, 1, 4), GL)              # vân sáng lưng
@@ -111,16 +124,20 @@ def bear_stage(id, k, tw, adult):
     s = lambda v: v * k
     I = lambda v: max(1, int(round(v)))
     m.bone("body", None, (0, s(14), 0))
-    m.cube("body", (-s(6.5), s(14), -s(10)), (s(13), s(13), s(20)), FR, rune=adult)
+    m.cube("body", (-s(6.5), s(14), -s(10)), (s(13), s(13), s(20)), FR)
     m.cube("body", (-s(5.5), s(12.5), -s(9)), (s(11), s(2), s(18)), LT)
-    plates = (-8, -2, 4, 10) if adult else (-4, 3)
-    for i, z in enumerate(plates):
-        m.cube("body", (-s(5), s(26.5), s(z)), (s(10), max(1, s(2.5)), s(4.5)), PL, rune=adult and i % 2 == 0)
+    # yên giáp phù văn trên lưng + dây đai bụng
+    m.cube("body", (-s(5.5), s(26.5), -s(1)), (s(11), max(1, s(3)), s(10)), PL)
+    m.cube("body", (-s(6.8), s(18), s(3)), (s(13.6), s(9), max(1, s(1.2))), DK)
+    m.cube("body", (-s(6.2), s(12.6), -s(10.5)), (s(12.4), s(14), s(5)), DK)          # bờm đen quanh cổ/vai
     if adult:
-        for x in (-1, 1):                                           # giáp vai
-            m.cube("body", (s(7 * x - 3), s(20), -s(9)), (s(6), s(7), s(8)), PL, rune=True)
-        for z in (-6, -1, 4, 9):                                    # bờm gai
-            m.cube("body", (-s(1), s(29), s(z)), (s(2), s(3), s(2)), DK)
+        for x in (-1, 1):                                           # giáp vai lớn phủ xuống
+            m.cube("body", (s(7.5 * x - 3.5), s(14), -s(9)), (s(7), s(14), s(9)), PL)
+            m.cube("body", (s(7.5 * x - 3), s(27), -s(8.5)), (s(6), s(2), s(8)), PL)
+        for i, (z, h) in enumerate(((-13, 6), (-10, 8), (-7, 9), (-4, 7), (-1, 5))):  # bờm gai dựng
+            for x in (-3, 0, 3):
+                m.cube("body", (s(x - 1.2), s(27), s(z)), (s(2.4), s(h - abs(x) * .6), s(2.4)), DK, rot=[-25, 0, x * 6], pivot=[s(x), s(27), s(z)])
+        m.cube("body", (-s(.6), s(29.6), -s(1)), (s(1.2), max(1, s(.6)), s(10)), GL)    # vân cam trên yên
         m.cube("body", (-s(2.5), s(18), -s(10.6)), (s(5), s(5), max(1, s(1))), GL)
         m.cube("body", (-s(.5), s(27.5), -s(9)), (s(1), max(1, s(.5)), s(19)), GL)  # vân sáng dọc lưng
     m.bone("head", "body", (0, s(22), -s(10)))
@@ -132,8 +149,8 @@ def bear_stage(id, k, tw, adult):
     m.cube("head", (-s(4), s(24.5), -s(12.5)), (s(2), s(2), max(1, s(1))), FR); m.cube("head", (s(2), s(24.5), -s(12.5)), (s(2), s(2), max(1, s(1))), FR)
     if adult:
         for x in (-1, 1):                                           # ngà
-            m.cube("head", (s(2.2 * x - .5), s(16.5), -s(18.2)), (s(1), s(3), s(1)), WH)
-        m.cube("head", (-s(3.5), s(25), -s(15)), (s(7), s(1.5), s(3)), PL, rune=True)  # mũ giáp trán
+            m.cube("head", (s(3.2 * x - .6), s(15), -s(18)), (s(1.2), s(4), s(1.2)), WH, rot=[-35, 0, x * -20], pivot=[s(3.2 * x), s(17), -s(17.5)])
+        m.cube("head", (-s(3.5), s(25), -s(15)), (s(7), s(1.5), s(3)), PL)  # mũ giáp trán
     hip = 14
     q = quad_legs(m, "body", s(hip), (-s(4.8), s(4.8)), (-s(7), s(7)), s(4.8), s(4.8), FR, PL if adult else None)
     return m, cfg(quad=q, legs=False, skills=dict(attack="strike", skill="roar"))
