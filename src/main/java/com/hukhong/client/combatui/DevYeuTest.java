@@ -214,6 +214,40 @@ public final class DevYeuTest {
     static void scenes2(net.minecraft.server.MinecraftServer server, ServerPlayer sp, net.minecraft.server.level.ServerLevel lv, int x0, int y0, int z0) {
         int u = t - 3000;
         if (DEMO) { demo(server, sp, lv, x0, y0, z0, u); return; }
+        if (NPCS_ONLY) {
+            String[] ids = {"mo_dao", "hua_co", "su_phu", "hang_chieu", "tong_chu_thanh_van", "hoang_toc_sot", "kiem_si", "lao_gia_bi_an", "hai_tuong", "dau_gia_su", "chu_cho_den", "thuong_nhan"};
+            if (u == 0) server.execute(() -> {
+                lv.setDayTime(6000);
+                for (int dx = -30; dx <= 30; dx++) for (int dz = -30; dz <= 30; dz++) {
+                    lv.setBlock(new BlockPos(x0 + dx, y0 - 1, z0 + dz), Blocks.GRASS_BLOCK.defaultBlockState(), 2);
+                    for (int dy = 0; dy < 20; dy++) lv.setBlock(new BlockPos(x0 + dx, y0 + dy, z0 + dz), Blocks.AIR.defaultBlockState(), 2);
+                }
+                sp.setGameMode(GameType.SPECTATOR);
+                for (int i = 0; i < ids.length; i++) {
+                    var n = com.hukhong.story.npc.StoryNpcRegistry.STORY_NPC.get().create(lv);
+                    if (n == null) continue;
+                    n.moveTo(x0 - 11 + (i % 6) * 4 + 0.5, y0, z0 + (i / 6) * 6 + 0.5, 180, 0);
+                    n.setNpcId(ids[i]); n.setNoAi(true); n.setYBodyRot(180); n.setYHeadRot(180);
+                    lv.addFreshEntity(n);
+                }
+                var dk = com.hukhong.endgame.EndgameRegistry.DA_KHUYET.get().create(lv);
+                if (dk != null) { dk.markAvatar(); dk.moveTo(x0 + 16.5, y0, z0 + 3.5, 180, 0); dk.setNoAi(true); dk.setYBodyRot(180); dk.setYHeadRot(180); lv.addFreshEntity(dk); }
+            });
+            if (u == 40) server.execute(() -> sp.connection.teleport(x0 - 2.5, y0 + 2, z0 - 7.5, 0, 6));
+            if (u == 60) shot("90_npcs_row");
+            if (u == 70) server.execute(() -> sp.connection.teleport(x0 - 8.5, y0 + 1.6, z0 - 3.5, 0, 4));
+            if (u == 90) shot("91_npcs_close_a");
+            if (u == 100) server.execute(() -> sp.connection.teleport(x0 + 3.5, y0 + 1.6, z0 - 3.5, 0, 4));
+            if (u == 120) shot("92_npcs_close_b");
+            if (u == 130) server.execute(() -> sp.connection.teleport(x0 + 16.5, y0 + 3.4, z0 + 0.3, 0, 8));
+            if (u == 150) shot("93_da_khuyet_front");
+            if (u == 160) server.execute(() -> sp.connection.teleport(x0 + 16.5, y0 + 3, z0 + 11.5, 180, 8));
+            if (u == 180) shot("94_da_khuyet_back");
+            if (u == 190) server.execute(() -> sp.connection.teleport(x0 - 2.5, y0 + 2, z0 + 14.5, 180, 6));
+            if (u == 210) shot("95_npcs_back");
+            if (u == 220) { LOG.info("YEUTEST done"); mc().stop(); }
+            return;
+        }
         if (PETS_ONLY) {
             if (u == 0) server.execute(() -> {
                 lv.setDayTime(6000);
@@ -373,7 +407,7 @@ public final class DevYeuTest {
         if (demoPetAt > 0) pets(server, sp, lv, x0, y0, z0, u - demoPetAt);
     }
 
-    static final boolean RIFT_ONLY = false, PETS_ONLY = false;
+    static final boolean RIFT_ONLY = false, PETS_ONLY = false, NPCS_ONLY = false;
     static int demoIdx, demoFightT, demoPetAt = -1;
     static boolean demoFightStarted;
     static final java.util.List<com.hukhong.creature.LinhThu> DEMO_PETS = new java.util.ArrayList<>();

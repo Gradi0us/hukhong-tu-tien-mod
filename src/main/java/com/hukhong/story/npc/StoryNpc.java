@@ -23,7 +23,36 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 /** NPC tuyến chính (mô hình dân làng): đứng trong thành, bấm phải để thoại. Chỉ hoạt động ở Tuyến truyện. */
-public class StoryNpc extends PathfinderMob {
+public class StoryNpc extends PathfinderMob implements software.bernie.geckolib.animatable.GeoEntity {
+    private final software.bernie.geckolib.animatable.instance.AnimatableInstanceCache geoCache = software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+
+    /** Model riêng theo nhân vật (tools/gen_c16_npcs.py); chưa có thì dùng npc_default. */
+    public static String modelKey(String npcId) {
+        return switch (npcId == null ? "" : npcId) {
+            case "mo_dao" -> "npc_mo_dao";
+            case "hua_co" -> "npc_hua_co";
+            case "su_phu" -> "npc_su_phu";
+            case "hang_chieu", "hang_chieu_r" -> "npc_hang_chieu";
+            case "tong_chu_thanh_van" -> "npc_tong_chu_thanh_van";
+            case "hoang_toc_sot" -> "npc_hoang_toc_sot";
+            case "kiem_si" -> "npc_kiem_si";
+            case "lao_gia_bi_an" -> "npc_lao_gia_bi_an";
+            case "hai_tuong" -> "npc_hai_tuong";
+            case "dau_gia_su" -> "npc_dau_gia_su";
+            case "chu_cho_den" -> "npc_chu_cho_den";
+            default -> "npc_default";
+        };
+    }
+
+    @Override public void registerControllers(software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar c) {
+        c.add(new software.bernie.geckolib.animation.AnimationController<>(this, "move", 5, st -> {
+            String k = "animation." + modelKey(npcId()) + ".";
+            return st.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(k + (st.isMoving() ? "walk" : "idle")));
+        }));
+    }
+
+    @Override public software.bernie.geckolib.animatable.instance.AnimatableInstanceCache getAnimatableInstanceCache() { return geoCache; }
+
     private static final EntityDataAccessor<String> NPC = SynchedEntityData.defineId(StoryNpc.class, EntityDataSerializers.STRING);
 
     public StoryNpc(EntityType<? extends StoryNpc> t, Level l) {
