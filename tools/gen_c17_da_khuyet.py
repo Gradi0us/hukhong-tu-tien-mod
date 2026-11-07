@@ -180,16 +180,16 @@ def lock(seed, tip="v", T=None, dark=None, band=None):
 
 # khuôn mặt chi tiết gấp đôi: tấm 14x12 khối -> 28x24 điểm ảnh (hàng 0 = trên cùng, cột 0 = bên trái người xem)
 FACE_PAL = {"D": SKIN_D, "s": SKIN_S, "S": SKIN, "L": hexc("f7ecf2"), "b": hexc("ebd0dc"), "j": hexc("cdb2c6"),
-            "e": hexc("a99cbf"), "n": hexc("d3b9ca"), "m": hexc("a77f9d"), "M": hexc("e4c7d6"),
+            "e": hexc("5a4c78"), "n": hexc("d3b9ca"), "m": hexc("8f7090"), "M": hexc("e4c7d6"),
             "K": hexc("1d1730"), "k": hexc("4b3b6b"), "W": hexc("f4f1fb"), "w": hexc("cec6e0"),
             "P": hexc("3f1c86"), "I": hexc("7a3fd6"), "V": hexc("a06aec"), "G": hexc("c9a2ff"), "H": hexc("ffffff")}
 FACE_GLOW = set("IVGH")
-EYE_L = ["Kk......",       # mắt bên trái người xem (khoé ngoài ở trái), dán tại cột 4, hàng 9
-         "KKKKKKKK",
-         ".KKPPPPK",
-         ".wWIHIIW",
-         "..WVIGVw",
-         "...kVVk."]
+EYE_L = ["........",       # mắt hẹp sắc, mí trên đè xuống khoé trong (lạnh lùng)
+         "KKKK....",
+         "kKKKKKKK",
+         ".KPPPPKK",
+         ".wIHIVKk",
+         "..kkkkk."]
 
 
 def face_art():
@@ -206,13 +206,11 @@ def face_art():
             elif y == 22: c = "j" if e <= 3 else "S"
             else: c = "j" if e <= 6 else "s"                     # cằm
             g[y][x] = c
-    for x in list(range(5, 11)) + list(range(17, 23)): g[7][x] = "e"           # chân mày mảnh
+    for i, x in enumerate(range(4, 11)): g[6 + (i >= 3) + (i >= 6)][x] = "e"; g[6 + (i >= 3) + (i >= 6)][W - 1 - x] = "e"   # mày xếch, cụp vào giữa
     for x in list(range(6, 10)) + list(range(18, 22)): g[15][x] = "L"          # gò má sáng
-    for y in (16, 17):
-        for x in list(range(4, 9)) + list(range(19, 24)): g[y][x] = "b"        # má hồng
+    for x in list(range(4, 8)) + list(range(20, 24)): g[17][x] = "j"         # bóng gò má (không má hồng)
     g[17][13] = "n"; g[18][13] = "n"; g[18][14] = "n"                          # sống mũi / đầu mũi
     for x in range(12, 16): g[20][x] = "m"                                     # miệng
-    g[21][13] = g[21][14] = "M"
     for dy, row in enumerate(EYE_L):
         for dx, ch in enumerate(row):
             if ch == ".": continue
