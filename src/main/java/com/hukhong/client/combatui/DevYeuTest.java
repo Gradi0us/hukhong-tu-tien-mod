@@ -239,10 +239,12 @@ public final class DevYeuTest {
             if (u == 90) shot("91_npcs_close_a");
             if (u == 100) server.execute(() -> sp.connection.teleport(x0 + 3.5, y0 + 1.6, z0 - 3.5, 0, 4));
             if (u == 120) shot("92_npcs_close_b");
-            if (u == 130) server.execute(() -> sp.connection.teleport(x0 + 16.5, y0 + 3.4, z0 + 0.3, 0, 8));
+            if (u == 130) server.execute(() -> sp.connection.teleport(x0 + 16.5, y0 + 1.7, z0 - 0.6, 0, -6));
             if (u == 150) shot("93_da_khuyet_front");
-            if (u == 160) server.execute(() -> sp.connection.teleport(x0 + 16.5, y0 + 3, z0 + 11.5, 180, 8));
-            if (u == 180) shot("94_da_khuyet_back");
+            if (u == 155) server.execute(() -> sp.connection.teleport(x0 + 13.6, y0 + 1.7, z0 + 0.4, -43, -6));
+            if (u == 175) shot("96_da_khuyet_34");
+            if (u == 180) server.execute(() -> sp.connection.teleport(x0 + 16.5, y0 + 1.8, z0 + 7.8, 180, -6));
+            if (u == 188) shot("94_da_khuyet_back");
             if (u == 190) server.execute(() -> sp.connection.teleport(x0 - 2.5, y0 + 2, z0 + 14.5, 180, 6));
             if (u == 210) shot("95_npcs_back");
             if (u == 220) { LOG.info("YEUTEST done"); mc().stop(); }

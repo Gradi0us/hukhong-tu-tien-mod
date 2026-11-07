@@ -436,5 +436,5 @@ def chu_cho_den():
 
 
 if __name__ == "__main__":
-    for fn in (mo_dao, hua_co, su_phu, hang_chieu, tong_chu, default_npc, da_khuyet, hoang_toc, kiem_si, lao_gia, hai_tuong, dau_gia_su, chu_cho_den):
+    for fn in (mo_dao, hua_co, su_phu, hang_chieu, tong_chu, default_npc, hoang_toc, kiem_si, lao_gia, hai_tuong, dau_gia_su, chu_cho_den):
         fn()
