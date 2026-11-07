@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Kịch bản các lần xuất hiện của Phản Thần Dạ Khuyết: đối thoại dài nhiều người (Dạ Khuyết / Bạn / Mộ Đạo truyền âm),
+ * Kịch bản các lần xuất hiện của Phản Thần Dạ Khuyết: đối thoại dài nhiều người (Dạ Khuyết / Bạn / Mộ Dao truyền âm),
  * phụ đề trong cutscene (SubLine, key lang có sẵn tên người nói), máy quay lượn chậm suốt cảnh, hiệu ứng nhịp theo lời.
  * Độ dài cảnh = tổng thời lượng lời thoại (mỗi câu ~2.5 s + thời gian đọc).
  */
@@ -27,7 +27,7 @@ final class NemesisScenes {
 
     // ------------------------------------------------------------------ người nói + lời
     enum Spk {
-        DK("Dạ Khuyết", ChatFormatting.DARK_PURPLE), ME("Bạn", ChatFormatting.AQUA), MD("Mộ Đạo (truyền âm)", ChatFormatting.GOLD);
+        DK("Dạ Khuyết", ChatFormatting.DARK_PURPLE), ME("Bạn", ChatFormatting.AQUA), MD("Mộ Dao (truyền âm)", ChatFormatting.GOLD);
         final String name; final ChatFormatting color;
         Spk(String n, ChatFormatting c) { name = n; color = c; }
     }
@@ -77,7 +77,7 @@ final class NemesisScenes {
                 L("v4", Spk.DK, "Còn ngươi... vừa mở mắt tu hành đã dám bước vào đất Hư Không.", "And you... barely awakened, yet you walk the Void's land."),
                 L("v5", Spk.ME, "Hư Thi tràn khắp nơi. Là ngươi gây ra?", "The Hollow Dead are everywhere. Your doing?"),
                 L("v6", Spk.DK, "Ta chỉ mở cửa. Những gì bước qua có ý chí của riêng chúng.", "I only opened a door. What came through has its own will."),
-                L("v7", Spk.DK, "Lão Mộ Đạo hẳn chưa kể, vì sao lão ở lại Lưu Ly Cảng suốt ba trăm năm.", "Old Mo Dao never told you why he stayed in Luu Ly for three hundred years."),
+                L("v7", Spk.DK, "Lão Mộ Dao hẳn chưa kể, vì sao lão ở lại Lưu Ly Cảng suốt ba trăm năm.", "Old Mo Dao never told you why he stayed in Luu Ly for three hundred years."),
                 L("v8", Spk.ME, "Lão ấy không liên quan gì đến ngươi.", "He has nothing to do with you."),
                 L("v9", Spk.DK, "Mọi thứ dưới ánh trăng này đều liên quan đến ta.", "Everything beneath this moon has to do with me."),
                 L("v10", Spk.DK, "Tu luyện đi. Mạnh lên. Ta cần một kẻ đủ sức đứng trước cánh cửa ấy.", "Cultivate. Grow strong. I need someone fit to stand before that door."),
@@ -156,7 +156,7 @@ final class NemesisScenes {
         Timeline tl = new Timeline(1, NemesisService::startFight);
         int end = talk(tl, subs, p, 24,
                 L("f1", Spk.MD, "Tiểu tử, lùi lại! Đó là Ảnh của hắn, không phải bóng ma tầm thường!", "Child, step back! That is his Shade, no common ghost!"),
-                L("f2", Spk.DK, "Mộ Đạo... ba trăm năm rồi, giọng ngươi vẫn run như thế.", "Mo Dao... three hundred years, and your voice still trembles."),
+                L("f2", Spk.DK, "Mộ Dao... ba trăm năm rồi, giọng ngươi vẫn run như thế.", "Mo Dao... three hundred years, and your voice still trembles."),
                 L("f3", Spk.ME, "Ta không lùi.", "I won't step back."),
                 L("f4", Spk.DK, "Tốt. Để ta xem ngươi được bao nhiêu.", "Good. Let me see what you are worth."),
                 L("f5", Spk.DK, "Ta chỉ là một cái bóng... nhưng bóng cũng biết cắn.", "I am only a shadow... but shadows bite too."));
@@ -177,7 +177,7 @@ final class NemesisScenes {
         return T;
     }
 
-    // ================================================================== c6: FIGHT - rút lui (≤35% máu): lộ quá khứ với Mộ Đạo
+    // ================================================================== c6: FIGHT - rút lui (≤35% máu): lộ quá khứ với Mộ Dao
     static Timeline retreat(Session s) {
         ServerPlayer p = s.p;
         ServerLevel lv = p.serverLevel();
@@ -185,7 +185,7 @@ final class NemesisScenes {
         Timeline tl = new Timeline(1, NemesisService::finish);
         int end = talk(tl, subs, p, 6,
                 L("r1", Spk.DK, "...Chưa phải lúc.", "...Not yet."),
-                L("r2", Spk.DK, "Ngươi mạnh hơn ta tưởng. Mộ Đạo dạy dỗ khá lắm.", "Stronger than I thought. Mo Dao taught you well."),
+                L("r2", Spk.DK, "Ngươi mạnh hơn ta tưởng. Mộ Dao dạy dỗ khá lắm.", "Stronger than I thought. Mo Dao taught you well."),
                 L("r3", Spk.ME, "Lão ấy biết ngươi?", "He knows you?"),
                 L("r4", Spk.DK, "Biết? Chính lão là kẻ đã chém đứt nửa thân ta dưới chân Thiên Môn.", "Knows? He is the one who cut away half my body beneath the Heaven Gate."),
                 L("r5", Spk.MD, "...Đừng nghe hắn.", "...Do not listen to him."),
