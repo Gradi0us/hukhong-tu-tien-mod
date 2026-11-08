@@ -1,0 +1,10 @@
+{
+  "name": "core.hukhong.than_tran",
+  "system": "than",
+  "path": "tran",
+  "min_tier": "kim",
+  "passives": [
+    {"attribute": "hukhong:spell_power", "operation": "add_multiplied_base", "values": [0.1]},
+    {"attribute": "hukhong:defense", "operation": "add_multiplied_base", "values": [0.15]}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "core.hukhong.than_phap",
+  "system": "than",
+  "path": "phap",
+  "min_tier": "kim",
+  "passives": [
+    {"attribute": "hukhong:spell_power", "operation": "add_multiplied_base", "values": [0.15]},
+    {"attribute": "hukhong:crit_damage", "operation": "add_value", "values": [0.2]}
+  ]
+}

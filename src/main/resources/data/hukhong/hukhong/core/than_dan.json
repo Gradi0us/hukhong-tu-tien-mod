@@ -1,0 +1,11 @@
+{
+  "name": "core.hukhong.than_dan",
+  "system": "than",
+  "path": "dan",
+  "min_tier": "kim",
+  "passives": [
+    {"attribute": "hukhong:spell_power", "operation": "add_multiplied_base", "values": [0.1]},
+    {"attribute": "hukhong:resource_regen", "operation": "add_multiplied_base", "values": [0.4]},
+    {"attribute": "hukhong:lifesteal", "operation": "add_value", "values": [0.1]}
+  ]
+}
