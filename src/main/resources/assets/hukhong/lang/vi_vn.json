@@ -3198,5 +3198,10 @@
   "hukhong.dai_sam_lam.zone.2.title": "Vùng Hạch Tâm",
   "hukhong.dai_sam_lam.zone.0.sub": "Yêu Thú 10 - 100 năm",
   "hukhong.dai_sam_lam.zone.1.sub": "Hồn Thú 1.000 - 10.000 năm",
-  "hukhong.dai_sam_lam.zone.2.sub": "Hồn Thú vạn năm - thập vạn năm"
+  "hukhong.dai_sam_lam.zone.2.sub": "Hồn Thú vạn năm - thập vạn năm",
+  "item.hukhong.nhan_tru_vat": "Nhẫn Trữ Vật",
+  "item.hukhong.nhan_tru_vat.desc": "Nhấn B hoặc chuột phải để mở kho riêng. Đồ trong kho không rơi khi chết.",
+  "hukhong.tru_vat.title": "Kho Trữ Vật",
+  "hukhong.tru_vat.no_ring": "Cần mang Nhẫn Trữ Vật trong người.",
+  "key.hukhong.tru_vat": "Mở Nhẫn Trữ Vật"
 }

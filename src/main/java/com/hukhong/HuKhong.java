@@ -35,6 +35,7 @@ public class HuKhong {
         com.hukhong.creature.CreatureRegistry.register(modBus);
         com.hukhong.phapkhi.PhapKhiRegistry.register(modBus);
         com.hukhong.memory.MemoryRegistry.register(modBus);
+        com.hukhong.storage.TruVatRegistry.register(modBus);
         modBus.addListener(SyncPayload::register);
         modBus.addListener((net.neoforged.neoforge.event.RegisterGameTestsEvent e) -> { e.register(com.hukhong.gametest.HuKhongGameTests.class); e.register(com.hukhong.gametest.ObjectiveGameTests.class); });
         NeoForge.EVENT_BUS.register(com.hukhong.item.PillDrops.class);

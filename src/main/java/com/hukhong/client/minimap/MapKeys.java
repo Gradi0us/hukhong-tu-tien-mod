@@ -16,7 +16,7 @@ public final class MapKeys {
     private static final String CAT = "key.categories.hukhong";
     public static final KeyMapping SIZE = new KeyMapping("key.hukhong.map_size", InputConstants.KEY_M, CAT);
     public static final KeyMapping FULL = new KeyMapping("key.hukhong.map_full", InputConstants.KEY_N, CAT);
-    public static final KeyMapping PING = new KeyMapping("key.hukhong.map_ping", InputConstants.KEY_B, CAT);
+    public static final KeyMapping PING = new KeyMapping("key.hukhong.map_ping", InputConstants.KEY_H, CAT);
 
     @SubscribeEvent
     public static void onRegister(RegisterKeyMappingsEvent e) {
