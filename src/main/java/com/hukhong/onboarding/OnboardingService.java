@@ -80,7 +80,12 @@ public final class OnboardingService {
         d.register(Commands.literal("hukguide")
                 .then(Commands.literal("off").executes(c -> set(c.getSource(), true, false)))
                 .then(Commands.literal("on").executes(c -> set(c.getSource(), false, false)))
-                .then(Commands.literal("reset").executes(c -> set(c.getSource(), false, true))));
+                .then(Commands.literal("reset").executes(c -> set(c.getSource(), false, true)))
+                .then(Commands.literal("book").executes(c -> {
+                    ServerPlayer p = c.getSource().getPlayerOrException();
+                    GuideBook.give(p, com.hukhong.core.CultivationService.get(p).paths());
+                    return 1;
+                })));
     }
 
     private static int set(CommandSourceStack s, boolean disabled, boolean reset) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
