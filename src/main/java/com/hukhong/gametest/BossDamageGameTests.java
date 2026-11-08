@@ -86,7 +86,7 @@ public final class BossDamageGameTests {
     public static void playerDamagesNguyenThuyTichDiet(GameTestHelper h) {
         NguyenThuyTichDiet b = put(h, EndgameRegistry.BOSS.get().create(h.getLevel()));
         b.begin(h.getLevel());
-        hitCheck(h, b, 120, "NTD");
+        hitCheck(h, b, com.hukhong.endgame.EndgameKit.INTRO_TICKS + 40, "NTD");
     }
 
     @GameTest(template = "empty", timeoutTicks = 400, batch = "bossdmg")

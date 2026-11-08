@@ -79,7 +79,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final ServerBossEvent bar = new ServerBossEvent(BossLevel.tag(Component.translatable("entity.hukhong.nguyen_thuy_tich_diet"), EndgameKit.BOSS_LEVEL),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_20);
-    private int skillCd = 100, windup, pending = -1, last = -1, invulTicks, intro, appliedPlayers = 1;
+    private int skillCd = 100, windup, pending = -1, last = -1, invulTicks, intro, appliedPlayers = 1, dkDelay = -1;
     private boolean daKhuyetSpawned;
     private Vec3 pendingAt = Vec3.ZERO, pendingDir = new Vec3(0, 0, 1);
 
@@ -165,6 +165,13 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
             p.connection.send(new ClientboundSetTitleTextPacket(Component.translatable("entity.hukhong.nguyen_thuy_tich_diet")));
             p.connection.send(new ClientboundSetSubtitleTextPacket(Component.translatable("hukhong.endgame.boss.line.1")));
         }
+        // cutscene xuất hiện: camera từ xa lia vào Vòng Tròn Hở
+        int T = EndgameKit.INTRO_TICKS;
+        double k = Math.max(2.0, getBbHeight() * 0.5);
+        com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, this, T, com.hukhong.boss.phase.BossPhaseDirector.introCam(T, k), java.util.List.of(
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(8, 45, "entity.hukhong.nguyen_thuy_tich_diet"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(45, 85, "hukhong.endgame.boss.intro.1"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(85, T - 4, "hukhong.endgame.boss.line.1")));
     }
 
     // ------------------------------------------------------------ server AI
@@ -177,6 +184,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
 
         int ph = EndgameKit.phase(getHealth() / getMaxHealth());
         if (ph > phase()) enterPhase(sl, ph);
+        if (dkDelay > 0 && --dkDelay == 0) { dkDelay = -1; if (!daKhuyetSpawned) spawnDaKhuyet(sl); }
         if (invulTicks > 0) {
             invulTicks--;
             sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 3, getZ(), 6, 1.5, 3, 1.5, 0.05);
@@ -370,6 +378,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
         applyPhaseEffects(ph);
         bar.setName(barName());
         invulTicks = EndgameKit.PHASE_INVUL_TICKS;
+        phaseCutscene(sl, ph);
         pending = -1;
         windup = 0;
         skillCd = EndgameKit.PHASE_INVUL_TICKS + 20;
@@ -382,14 +391,28 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
             p.displayClientMessage(Component.translatable("hukhong.endgame.boss.phase", ph), true);
             if (ph == 4) p.displayClientMessage(Component.translatable("hukhong.endgame.boss.line.4"), false);
         }
-        if (ph >= EndgameKit.DA_KHUYET_PHASE && !daKhuyetSpawned) spawnDaKhuyet(sl);
+        if (ph >= EndgameKit.DA_KHUYET_PHASE && !daKhuyetSpawned && dkDelay < 0) dkDelay = EndgameKit.PHASE_INVUL_TICKS + 6; // đợi cutscene pha xong
+    }
+
+    /** Cutscene đổi pha: cận mặt -> vòng quanh -> lùi xa, 2 dòng thoại hukhong.endgame.boss.phase.&lt;pha&gt;.1/2. */
+    private void phaseCutscene(ServerLevel sl, int ph) {
+        int T = EndgameKit.PHASE_INVUL_TICKS;
+        float s = (float) Math.max(2.0, getBbHeight() * 0.5);
+        var cam = java.util.List.of(
+                new com.hukhong.boss.phase.CamPath.Key(0, 0, 0.5f * s, 1.6f * s, 0, 0, 45, 0.9f * s),
+                new com.hukhong.boss.phase.CamPath.Key(T / 3, 1.8f * s, 0.3f * s, 1.4f * s, 0, -5, 55, 0.8f * s),
+                new com.hukhong.boss.phase.CamPath.Key(T * 2 / 3, -1.6f * s, 1.2f * s, -1.0f * s, 0, 4, 62, 0.7f * s),
+                new com.hukhong.boss.phase.CamPath.Key(T, 0, 1.3f * s, 3.6f * s, 0, 0, 74, 0.6f * s));
+        com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, this, T, cam, java.util.List.of(
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(6, T / 2, "hukhong.endgame.boss.phase." + ph + ".1"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(T / 2, T - 4, "hukhong.endgame.boss.phase." + ph + ".2")));
     }
 
     private void spawnDaKhuyet(ServerLevel sl) {
         daKhuyetSpawned = true;
         DaKhuyet d = EndgameRegistry.DA_KHUYET.get().create(sl);
         if (d == null) return;
-        d.moveTo(getX() + 9, getY(), getZ() + 3, 0f, 0f);
+        d.moveTo(getX() + 9, getY(), getZ() + 3, 90f, 0f);
         d.finalizeSpawn(sl, sl.getCurrentDifficultyAt(d.blockPosition()), MobSpawnType.EVENT, null);
         d.begin(sl, this);
         sl.addFreshEntity(d);

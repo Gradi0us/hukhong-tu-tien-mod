@@ -243,7 +243,7 @@ public final class CutsceneClient {
             float a = Math.min(Math.min(1f, (t - s.from()) / 6f), Math.min(1f, (s.to() - t) / 6f));
             int alpha = (int) (255 * Mth.clamp(a, 0f, 1f));
             if (alpha < 8) continue;
-            List<FormattedCharSequence> lines = font.split(Component.translatable(s.key()), (int) (w * 0.6f));
+            List<FormattedCharSequence> lines = font.split(Component.translatable(subKey(s.key())), (int) (w * 0.6f));
             int lh = font.lineHeight + 2, bh = lines.size() * lh + 8;
             int y = h - bar - bh - 6;
             int bw = 0;
@@ -255,5 +255,11 @@ public final class CutsceneClient {
                 ty += lh;
             }
         }
+    }
+
+    /** Câu giới thiệu riêng của boss chưa có trong lang -> dùng câu chung. */
+    private static String subKey(String k) {
+        if (k.startsWith("hukhong.boss.intro.") && !net.minecraft.client.resources.language.I18n.exists(k)) return "hukhong.boss.intro.generic";
+        return k;
     }
 }

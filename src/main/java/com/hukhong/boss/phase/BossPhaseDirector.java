@@ -47,6 +47,11 @@ public final class BossPhaseDirector {
     private int moveCd = 100, lastMove = -1;
     private PhaseMoves.Run run;
     private boolean loaded;
+    /** Cutscene giới thiệu khi boss xuất hiện / được triệu hồi (một lần mỗi boss, đánh dấu bằng tag để không lặp khi tải lại). */
+    private int intro;
+    public static final String INTRO_TAG = "hk_boss_intro_done";
+    public static final int INTRO_TICKS = 110;
+    public static final double INTRO_RANGE = 40;
 
     public BossPhaseDirector(PhasedBoss pb) {
         this.pb = pb;
@@ -56,9 +61,9 @@ public final class BossPhaseDirector {
     // ------------------------------------------------------------------ trạng thái
     public boolean transitioning() { return trans > 0; }
     /** Bất tử trong lúc chuyển pha (trừ sát thương BYPASSES_INVULNERABILITY: void, /kill). */
-    public boolean invulnerable() { return trans > 0; }
+    public boolean invulnerable() { return trans > 0 || intro > 0; }
     /** AI bị khoá (chuyển pha hoặc đang gồng chiêu phase) — dùng cho isImmobile(). */
-    public boolean frozen() { return trans > 0 || run != null; }
+    public boolean frozen() { return trans > 0 || intro > 0 || run != null; }
     public int targetPhase() { return targetPhase; }
     public PhaseMoves.Run currentRun() { return run; }
     public int transitionTicksLeft() { return trans; }
@@ -69,11 +74,69 @@ public final class BossPhaseDirector {
     public void tick(ServerLevel sl) {
         if (!boss.isAlive()) return;
         if (!loaded) { loaded = true; if (pb.currentPhase() > 1) onLoad(sl); }
+        if (intro > 0) { tickIntro(sl); return; }
+        if (!boss.getTags().contains(INTRO_TAG) && playerNear(sl, INTRO_RANGE)) { startIntro(sl); return; }
         if (trans > 0) { tickTransition(sl); return; }
         float frac = boss.getHealth() / boss.getMaxHealth();
         int cur = pb.currentPhase(), want = cfg().phaseFor(frac);
         if (want > cur) { begin(sl, cur + 1); return; }
         tickMoves(sl);
+    }
+
+    private boolean playerNear(ServerLevel sl, double r) {
+        for (ServerPlayer p : sl.players()) if (!p.isSpectator() && p.distanceToSqr(boss) <= r * r) return true;
+        return false;
+    }
+
+    /** Cutscene giới thiệu: camera lia từ xa vào mặt boss, tên boss + một câu thoại; boss bất tử + đứng yên trong lúc đó. */
+    public void startIntro(ServerLevel sl) {
+        boss.addTag(INTRO_TAG);
+        intro = INTRO_TICKS;
+        pb.cancelSkill();
+        boss.getNavigation().stop();
+        boss.playSound(SoundEvents.WARDEN_EMERGE, 3f, 0.7f);
+        double s = Math.max(1.0, cfg().size());
+        sendCutscene(sl, boss, INTRO_TICKS, introCam(INTRO_TICKS, s), introSubs(boss.getType().getDescriptionId(), pb.phaseId(), INTRO_TICKS));
+    }
+
+    private void tickIntro(ServerLevel sl) {
+        boss.getNavigation().stop();
+        int el = INTRO_TICKS - intro;
+        if (el % 4 == 0) sl.sendParticles(PhaseMoves.particle(cfg().aura()), boss.getX(), boss.getY() + boss.getBbHeight() * 0.5, boss.getZ(),
+                4, boss.getBbWidth(), boss.getBbHeight() * 0.5, boss.getBbWidth(), 0.03);
+        if (el == INTRO_TICKS / 2) {
+            Fx.groundRing(sl, null, boss.position(), (float) cfg().size() * 2f, cfg().aura().rgb, 30);
+            boss.playSound(SoundEvents.ENDER_DRAGON_GROWL, 3f, 0.8f);
+        }
+        if (--intro <= 0) { intro = 0; moveCd = 40; }
+    }
+
+    /** Camera giới thiệu: xa, thấp nhìn lên -> vòng nửa vòng -> cận mặt. s = cỡ boss (block). */
+    public static List<CamPath.Key> introCam(int T, double s) {
+        return List.of(
+                new CamPath.Key(0, (float) (3.5 * s), (float) (0.4 * s), (float) (7.5 * s), 0, 0, 75, (float) (0.7 * s)),
+                new CamPath.Key((int) (T * 0.40), (float) (-2.5 * s), (float) (0.2 * s), (float) (4.5 * s), 0, -6, 62, (float) (0.8 * s)),
+                new CamPath.Key((int) (T * 0.75), (float) (-0.6 * s), (float) (0.7 * s), (float) (2.2 * s), 0, 0, 50, (float) (0.85 * s)),
+                new CamPath.Key(T, 0, (float) (0.9 * s), (float) (3.2 * s), 0, 0, 66, (float) (0.75 * s)));
+    }
+
+    /** Phụ đề giới thiệu: tên boss, rồi câu thoại hukhong.boss.intro.&lt;id&gt; (client tự thay bằng câu chung nếu chưa có). */
+    public static List<BossPhaseConfig.SubLine> introSubs(String nameKey, String id, int T) {
+        return List.of(new BossPhaseConfig.SubLine(8, T / 2, nameKey),
+                new BossPhaseConfig.SubLine(T / 2, T - 6, "hukhong.boss.intro." + id));
+    }
+
+    /** Gửi cutscene (neo theo thực thể, hoặc tĩnh nếu anchor == null) cho mọi người trong CUTSCENE_RANGE quanh tâm. */
+    public static void sendCutscene(ServerLevel sl, net.minecraft.world.entity.Entity anchor, int ticks, List<CamPath.Key> cam, List<BossPhaseConfig.SubLine> subs) {
+        sendCutscene(sl, anchor, anchor.position(), anchor instanceof Mob m ? m.yBodyRot : anchor.getYRot(), ticks, cam, subs);
+    }
+
+    public static void sendCutscene(ServerLevel sl, net.minecraft.world.entity.Entity anchor, Vec3 at, float yaw, int ticks, List<CamPath.Key> cam, List<BossPhaseConfig.SubLine> subs) {
+        CutscenePayload pl = new CutscenePayload(anchor == null ? -1 : anchor.getId(), at.x, at.y, at.z, yaw, ticks, cam, subs);
+        for (ServerPlayer p : sl.players()) {
+            if (p.distanceToSqr(at) > CUTSCENE_RANGE * CUTSCENE_RANGE) continue;
+            try { PacketDistributor.sendToPlayer(p, pl); } catch (RuntimeException ignored) { }
+        }
     }
 
     /** Bắt đầu chuyển sang pha {@code ph} ngay (GameTest, lệnh debug, hoặc HP chạm ngưỡng). */

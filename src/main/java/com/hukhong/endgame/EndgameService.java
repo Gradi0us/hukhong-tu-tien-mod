@@ -136,16 +136,71 @@ public final class EndgameService {
 
     /** Boss chết: dọn tay sai + Dạ Khuyết, đặt cờ chờ chọn và mở màn chọn cho người chơi quanh đó. */
     public static void onBossDefeated(ServerLevel sl, NguyenThuyTichDiet boss) {
-        for (DaKhuyet d : sl.getEntitiesOfClass(DaKhuyet.class, boss.getBoundingBox().inflate(120))) d.discard();
+        DaKhuyet ally = null;
+        for (DaKhuyet d : sl.getEntitiesOfClass(DaKhuyet.class, boss.getBoundingBox().inflate(120))) {
+            if (ally == null && d.ally() && d.isAlive()) { ally = d; d.standDown(); } else d.discard();
+        }
         for (Monster m : sl.getEntitiesOfClass(Monster.class, boss.getBoundingBox().inflate(120), e -> e instanceof HuMob)) m.discard();
+        // cutscene kết: camera quanh chỗ boss ngã (+ Dạ Khuyết nếu còn), rồi mới mở màn chọn
+        int T = OUTRO_TICKS;
+        var at = boss.position();
+        float sc = (float) Math.max(2.5, boss.getBbHeight() * 0.5);
+        var cam = java.util.List.of(
+                new com.hukhong.boss.phase.CamPath.Key(0, 0, 0.6f * sc, 2.6f * sc, 0, 0, 60, 0.6f * sc),
+                new com.hukhong.boss.phase.CamPath.Key(T / 3, 2.4f * sc, 1.4f * sc, 1.6f * sc, 0, 0, 65, 0.4f * sc),
+                new com.hukhong.boss.phase.CamPath.Key(T * 2 / 3, -2.2f * sc, 0.8f * sc, 2.4f * sc, 0, 0, 58, 0.5f * sc),
+                new com.hukhong.boss.phase.CamPath.Key(T, 0, 2.6f * sc, 5.0f * sc, 0, 8, 75, 0.3f * sc));
+        var subs = new java.util.ArrayList<com.hukhong.boss.phase.BossPhaseConfig.SubLine>();
+        subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(6, 50, "hukhong.endgame.boss.slain"));
+        if (ally != null) {
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 95, "hukhong.endgame.outro.dk.1"));
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(95, 140, "hukhong.endgame.outro.dk.2"));
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(140, T - 4, "hukhong.endgame.outro.dk.3"));
+        } else {
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 110, "hukhong.endgame.dakhuyet.flee"));
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(110, T - 4, "hukhong.endgame.outro.dk.3"));
+        }
+        com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, null, at, boss.yBodyRot, T, cam, subs);
+        if (ally != null) OUTRO_DK.put(ally.getUUID(), T + 20);
         for (ServerPlayer p : sl.players()) {
             if (p.distanceToSqr(boss) > 200 * 200) continue;
             p.displayClientMessage(Component.translatable("hukhong.endgame.boss.slain"), false);
-            p.displayClientMessage(Component.translatable("hukhong.endgame.dakhuyet.flee"), false);
             QuestData q = DialogueService.quest(p);
             if (hasEnding(q)) continue;
             DialogueService.setQuest(p, q.withFlag(F_PENDING));
-            promptChoice(p);
+            p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, T + 40, 4, false, false));
+            PENDING_PROMPT.put(p.getUUID(), T + 4); // màn chọn hiện ngay sau cutscene
+        }
+    }
+
+    /** Thời lượng cutscene kết trước màn chọn (tick). */
+    public static final int OUTRO_TICKS = 190;
+    /** Người chơi chờ mở màn chọn: uuid -> tick còn lại. */
+    static final java.util.Map<java.util.UUID, Integer> PENDING_PROMPT = new java.util.HashMap<>();
+    /** Dạ Khuyết đồng minh chờ rời đi sau cutscene: uuid -> tick còn lại. */
+    static final java.util.Map<java.util.UUID, Integer> OUTRO_DK = new java.util.HashMap<>();
+
+    private static void outroTick(MinecraftServer s) {
+        var it = PENDING_PROMPT.entrySet().iterator();
+        while (it.hasNext()) {
+            var en = it.next();
+            int left = en.getValue() - 1;
+            if (left > 0) { en.setValue(left); continue; }
+            it.remove();
+            ServerPlayer p = s.getPlayerList().getPlayer(en.getKey());
+            if (p != null && !hasEnding(DialogueService.quest(p))) promptChoice(p);
+        }
+        var it2 = OUTRO_DK.entrySet().iterator();
+        while (it2.hasNext()) {
+            var en = it2.next();
+            int left = en.getValue() - 1;
+            if (left > 0) { en.setValue(left); continue; }
+            it2.remove();
+            ServerLevel dim = s.getLevel(EndgameRegistry.DIM);
+            if (dim != null && dim.getEntity(en.getKey()) instanceof DaKhuyet d) {
+                dim.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, d.getX(), d.getY() + 1.5, d.getZ(), 60, 0.8, 1.5, 0.8, 0.08);
+                d.discard();
+            }
         }
     }
 
@@ -243,6 +298,7 @@ public final class EndgameService {
         MinecraftServer s = e.getServer();
         long t = s.getTickCount();
         if (!CUTSCENE.isEmpty()) cutsceneTick(s);
+        if (!PENDING_PROMPT.isEmpty() || !OUTRO_DK.isEmpty()) outroTick(s);
         ServerLevel ow = s.getLevel(Level.OVERWORLD);
         if (ow != null && t % 100 == 0 && !ow.players().isEmpty()) gatewayTick(ow);
         if (t % 10 == 0) {

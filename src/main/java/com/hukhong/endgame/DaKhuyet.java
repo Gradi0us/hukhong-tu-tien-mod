@@ -72,12 +72,14 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("DkPhase", phase());
+        tag.putBoolean("DkAlly", ally);
     }
 
     @Override public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (getTags().contains("hk_nemesis_avatar")) entityData.set(AVATAR, true);
         if (tag.contains("DkPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("DkPhase"))));
+        ally = tag.getBoolean("DkAlly");
     }
 
     public int phase() { return entityData.get(PHASE); }
@@ -105,6 +107,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
 
     @Override public boolean hurt(DamageSource src, float amt) {
+        if (ally && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false; // đồng minh cốt truyện: không chết
         if (director != null && director.invulnerable() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
         return super.hurt(src, amt);
     }
@@ -127,7 +130,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
     @Override public boolean isImmobile() { return super.isImmobile() || windup > 0 || (director != null && director.frozen()); }
-    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); if (!avatar()) bar.addPlayer(p); }
+    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); if (!avatar() && !ally) bar.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
 
@@ -139,18 +142,103 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     /** Xuất hiện: thoại + title cho người chơi quanh đó. */
     public void begin(ServerLevel sl, NguyenThuyTichDiet boss) {
         setHealth(getMaxHealth());
+        ally = true;
+        allyIntro = ALLY_INTRO_TICKS;
+        bar.removeAllPlayers();
         for (ServerPlayer p : sl.players()) {
             if (p.distanceToSqr(this) > 100 * 100) continue;
-            p.displayClientMessage(Component.translatable("hukhong.endgame.dakhuyet.appear.1"), false);
-            p.displayClientMessage(Component.translatable("hukhong.endgame.dakhuyet.appear.2"), false);
+            p.displayClientMessage(Component.translatable("hukhong.endgame.dakhuyet.ally.1"), false);
+            p.displayClientMessage(Component.translatable("hukhong.endgame.dakhuyet.ally.3"), false);
         }
         sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 40, 1, 1.5, 1, 0.05);
+        playSound(SoundEvents.AMETHYST_BLOCK_RESONATE, 3f, 0.6f);
+        // cutscene: Dạ Khuyết hiện ra, quay lưng với Hư Không
+        int T = ALLY_INTRO_TICKS;
+        com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, this, T, com.hukhong.boss.phase.BossPhaseDirector.introCam(T, 1.4), java.util.List.of(
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(6, 40, "entity.hukhong.da_khuyet"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(40, 80, "hukhong.endgame.dakhuyet.ally.1"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(80, 120, "hukhong.endgame.dakhuyet.ally.2"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(120, T - 4, "hukhong.endgame.dakhuyet.ally.3")));
     }
+
+    // ------------------------------------------------------------ phe người chơi (trận cuối, pha 3)
+    /** Đồng minh: không bị người chơi nhắm/đánh, không thanh boss, không chết; đánh Nguyên Thủy Tịch Diệt + Hư mob, hồi máu/che chắn người chơi. */
+    private boolean ally;
+    private int allyIntro, allyCd = 60;
+    public static final int ALLY_INTRO_TICKS = 160;
+    public boolean ally() { return ally; }
+
+    @Override public boolean canAttack(LivingEntity t) {
+        if (ally && t instanceof Player) return false;
+        return super.canAttack(t);
+    }
+
+    private LivingEntity allyTarget(ServerLevel sl) {
+        LivingEntity best = null;
+        double bd = Double.MAX_VALUE;
+        for (NguyenThuyTichDiet b : sl.getEntitiesOfClass(NguyenThuyTichDiet.class, getBoundingBox().inflate(80), e -> e.isAlive())) {
+            double d = distanceToSqr(b);
+            if (d < bd) { bd = d; best = b; }
+        }
+        if (best != null) return best;
+        for (net.minecraft.world.entity.monster.Monster m : sl.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class, getBoundingBox().inflate(24),
+                e -> e.isAlive() && e instanceof com.hukhong.entity.HuMob)) {
+            double d = distanceToSqr(m);
+            if (d < bd) { bd = d; best = m; }
+        }
+        return best;
+    }
+
+    private void allyStep(ServerLevel sl) {
+        if (allyIntro > 0) {
+            allyIntro--;
+            getNavigation().stop();
+            if (allyIntro % 5 == 0) sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 6, 0.8, 1.2, 0.8, 0.02);
+            return;
+        }
+        LivingEntity t = allyTarget(sl);
+        if (getTarget() != t) setTarget(t);
+        if (allyCd-- > 0) return;
+        allyCd = 70 + random.nextInt(30);
+        int pick = random.nextInt(3);
+        if (pick == 0 && t != null) { // Nguyệt Nhận: chém trăng khuyết vào boss
+            float dmg = (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * 3.0);
+            t.hurt(damageSources().mobAttack(this), dmg);
+            net.minecraft.world.phys.Vec3 a = position().add(0, 1.6, 0), b = t.position().add(0, t.getBbHeight() * 0.5, 0);
+            for (int i = 0; i <= 16; i++) {
+                net.minecraft.world.phys.Vec3 q = a.lerp(b, i / 16.0);
+                sl.sendParticles(ParticleTypes.END_ROD, q.x, q.y, q.z, 3, 0.1, 0.1, 0.1, 0.01);
+            }
+            sl.sendParticles(ParticleTypes.SONIC_BOOM, b.x, b.y, b.z, 1, 0, 0, 0, 0);
+            triggerAnim("skill", "skill_a");
+            playSound(SoundEvents.TRIDENT_RIPTIDE_3.value(), 2f, 0.8f);
+        } else if (pick == 1) { // Nguyệt Quang: hồi máu + giải hiệu ứng xấu cho người chơi quanh đó
+            for (ServerPlayer p : sl.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(32), q -> !q.isSpectator())) {
+                p.heal(p.getMaxHealth() * 0.15f);
+                p.removeEffect(MobEffects.BLINDNESS); p.removeEffect(MobEffects.WEAKNESS); p.removeEffect(MobEffects.POISON);
+                p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 1));
+                sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, p.getX(), p.getY() + 1, p.getZ(), 12, 0.5, 0.8, 0.5, 0.05);
+            }
+            triggerAnim("skill", "skill_b");
+            playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 1.2f);
+        } else { // Khuyết Nguyệt Thuẫn: lá chắn cho người chơi
+            for (ServerPlayer p : sl.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(32), q -> !q.isSpectator())) {
+                p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 200, 3));
+                p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120, 1));
+                sl.sendParticles(ParticleTypes.ENCHANT, p.getX(), p.getY() + 1, p.getZ(), 30, 0.6, 1, 0.6, 0.3);
+            }
+            triggerAnim("skill", "skill_b");
+            playSound(SoundEvents.BEACON_POWER_SELECT, 2f, 0.8f);
+        }
+    }
+
+    /** Sau khi boss ngã: dừng đánh, đứng yên cho cutscene kết. */
+    public void standDown() { allyIntro = Integer.MAX_VALUE; setTarget(null); }
 
     /** isImmobile() (windup > 0) làm LivingEntity.aiStep bỏ qua customServerAiStep => windup phải giảm ở tick(). */
     @Override public void tick() {
         super.tick();
-        if (level() instanceof ServerLevel sl0 && isAlive() && !avatar()) director.tick(sl0);
+        if (level() instanceof ServerLevel sl0 && isAlive() && !avatar() && !ally) director.tick(sl0);
         if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
     }
 
@@ -167,6 +255,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override protected void customServerAiStep() {
         super.customServerAiStep();
         ServerLevel sl = (ServerLevel) level();
+        if (ally) { allyStep(sl); return; }
         bar.setProgress(getHealth() / getMaxHealth());
         if (pending >= 0) { stepWindup(sl); return; }
         if (skillCd > 0) { skillCd--; return; }

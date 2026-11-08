@@ -42,7 +42,7 @@ public final class EndgameKit {
     public static final double[] PHASE_DMG = {1.0, 1.15, 1.3, 1.5};
     public static final double[] PHASE_SPEED = {1.0, 1.05, 1.1, 1.2};
     public static final double[] PHASE_CD = {1.0, 0.85, 0.7, 0.55};
-    public static final int BASE_CD = 90, PHASE_INVUL_TICKS = 50, INTRO_TICKS = 80;
+    public static final int BASE_CD = 90, PHASE_INVUL_TICKS = 90, INTRO_TICKS = 130;
     public static final int DA_KHUYET_PHASE = 3;
 
     /** Pha theo tỉ lệ máu: 1 (&gt;75%), 2 (&gt;50%), 3 (&gt;25%), 4 (còn lại). */
