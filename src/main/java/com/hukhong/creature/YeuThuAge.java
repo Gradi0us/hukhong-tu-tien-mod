@@ -28,17 +28,35 @@ public enum YeuThuAge {
 
     public static YeuThuAge of(int ord) { return values()[Math.max(0, Math.min(values().length - 1, ord))]; }
 
-    /** Trọng số theo độ sâu trong Đại Sâm Lâm (0 = ngoài rừng / mép, 1 = lõi). */
+    /** Vùng rừng theo độ sâu: 0 = rìa ngoài, 1 = vùng giữa, 2 = vùng hạch tâm. */
+    public static final double MID_DEPTH = 0.4, CORE_DEPTH = 0.75;
+    public static int zone(double depth) { return depth >= CORE_DEPTH ? 2 : depth >= MID_DEPTH ? 1 : 0; }
+
+    /** Trọng số bậc theo vùng (2026-11-08): rìa ngoài 10-100 năm (hiếm 1.000), vùng giữa 1.000-10.000 năm,
+     *  hạch tâm hồn thú mạnh (vạn năm, thập vạn năm). Ngoài rừng = như rìa ngoài. */
     public static double[] weights(double depth) {
-        double d = Math.max(0, Math.min(1, depth));
-        if (d <= 0) return new double[]{60, 30, 9, 1, 0};
-        return new double[]{
-                Math.max(0, 40 - 40 * d),
-                Math.max(5, 35 - 25 * d),
-                20 + 15 * d,
-                4 + 26 * d,
-                d >= 0.7 ? 1 + 9 * (d - 0.7) / 0.3 : 0};
+        return switch (zone(Math.max(0, Math.min(1, depth)))) {
+            case 0 -> new double[]{70, 29, 1, 0, 0};
+            case 1 -> new double[]{0, 15, 55, 30, 0};
+            default -> new double[]{0, 0, 10, 55, 35};
+        };
     }
+
+    /** Năm lẻ trong bậc (vd 10 -> 10..99, 100 -> 100..999), nghiêng về đầu thấp; bậc 100.000 tới 999.999. */
+    public int rollYears(double u) {
+        double e = Math.pow(Math.max(0, Math.min(0.999999, u)), 1.8);
+        return (int) Math.min(years * 10L - 1, Math.round(years * Math.pow(10, e)));
+    }
+
+    /** Bậc ứng với số năm cụ thể. */
+    public static YeuThuAge forYears(int y) {
+        YeuThuAge r = Y10;
+        for (YeuThuAge a : values()) if (y >= a.years) r = a;
+        return r;
+    }
+
+    /** Tỉ lệ sinh Hồn Thú Dị Chủng (shiny) theo vùng. */
+    public static double shinyChance(double depth) { return new double[]{0.006, 0.010, 0.015}[zone(Math.max(0, Math.min(1, depth)))]; }
 
     public static YeuThuAge roll(double depth, RandomSource r) { return pick(weights(depth), r.nextDouble()); }
 

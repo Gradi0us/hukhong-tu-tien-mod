@@ -15,16 +15,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-/** Ấn Hồn Đài: chuột phải khi bị khóa mốc 10/20/... → chọn Lõi. */
+/** Ấn Hồn Đài: chuột phải khi bị khóa mốc 10/20/... → chọn Lõi; lúc khác (hoặc ngồi + chuột phải) → mở Đe cường hoá vũ khí. */
 public class AnHonDaiBlock extends Block {
     public AnHonDaiBlock(Properties props) { super(props); }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide || !(player instanceof ServerPlayer sp)) return InteractionResult.SUCCESS;
-        if (!CultivationService.isMilestoneLocked(sp)) {
-            sp.displayClientMessage(Component.translatable("hukhong.altar.not_locked"), true);
-            return InteractionResult.SUCCESS;
+        if (sp.isShiftKeyDown() || !CultivationService.isMilestoneLocked(sp)) {
+            openAnvil(sp, pos);
+            return InteractionResult.CONSUME;
         }
         int m = CoreService.milestoneOf(CultivationService.get(sp));
         if (CoreService.get(sp).stuckAt() == m) {
@@ -45,5 +45,13 @@ public class AnHonDaiBlock extends Block {
         sp.openMenu(new SimpleMenuProvider((id, inv, pl) -> new CoreAltarMenu(id, inv, pos, m, pend.tier(), pend.ids()),
                 Component.translatable("hukhong.altar.title")), buf -> CoreAltarMenu.write(buf, pos, m, pend.tier(), pend.ids()));
         return InteractionResult.CONSUME;
+    }
+
+    /** Đe tích hợp: dùng giao diện đe gốc (sửa, ghép phù phép, đặt tên) nhưng không bao giờ mòn vỡ. */
+    public static void openAnvil(ServerPlayer sp, BlockPos pos) {
+        sp.openMenu(new SimpleMenuProvider((id, inv, pl) -> new net.minecraft.world.inventory.AnvilMenu(id, inv,
+                net.minecraft.world.inventory.ContainerLevelAccess.create(sp.level(), pos)) {
+            @Override protected boolean isValidBlock(BlockState s) { return s.getBlock() instanceof AnHonDaiBlock; }
+        }, Component.translatable("hukhong.altar.anvil")));
     }
 }

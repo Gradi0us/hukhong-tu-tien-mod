@@ -10,16 +10,15 @@ public final class HonCotMath {
     public static final int BOSS_PITY = 4; // sau 4 lần boss không rơi -> lần 5 chắc chắn rơi
 
     private static final double[] TIER_MULT = {0.70, 1.00, 1.40};
-    private static final int[] TIER_REQ_LEVEL = {40, 60, 80};
 
     public static int clampTier(int t) { return Math.max(TIER_TU, Math.min(TIER_HONG, t)); }
 
     public static double tierMult(int tier) { return TIER_MULT[clampTier(tier)]; }
 
     /** Cấp tu luyện tối thiểu để mang phẩm này (canon: trần mở ở 40 / 60 / 80). */
-    public static int requiredLevel(int tier) { return TIER_REQ_LEVEL[clampTier(tier)]; }
+    public static int requiredLevel(int tier) { return 0; } // 2026-11-08: Hồn Cốt mặc được ở mọi cấp
 
-    public static boolean canEquip(int playerLevel, int tier) { return playerLevel >= requiredLevel(tier); }
+    public static boolean canEquip(int playerLevel, int tier) { return true; }
 
     /** roll 0..100 -> hệ số 0.90..1.10. */
     public static double rollMult(int roll) { return 0.90 + 0.20 * Math.max(0, Math.min(100, roll)) / 100.0; }

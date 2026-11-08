@@ -67,7 +67,6 @@ public class HonCotItem extends Item {
         tip.add(Component.translatable("hukhong.honcot.tip.quality", roll).withStyle(ChatFormatting.AQUA));
         for (Bone.Stat st : bone.stats) tip.add(statLine(st, tier, roll));
         tip.add(Component.translatable(bone.fxKey()).withStyle(ChatFormatting.GREEN));
-        tip.add(Component.translatable("hukhong.honcot.tip.req", HonCotMath.requiredLevel(tier)).withStyle(ChatFormatting.DARK_GRAY));
     }
 
     /** "+8.5% Bạo Kích" — dùng chung cho tooltip và màn Hồn Cốt. */

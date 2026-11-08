@@ -39,9 +39,11 @@ public class CoThuFeature extends Feature<NoneFeatureConfiguration> {
         BlockState log = (dark ? Blocks.DARK_OAK_LOG : r.nextBoolean() ? Blocks.SPRUCE_LOG : Blocks.JUNGLE_LOG).defaultBlockState();
         BlockState leaf = (dark ? Blocks.DARK_OAK_LEAVES : r.nextBoolean() ? Blocks.SPRUCE_LEAVES : Blocks.JUNGLE_LEAVES)
                 .defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
-        int h = 18 + r.nextInt(8) + (int) (14 * depth);
-        boolean thick = depth > 0.55;
-        int t0 = thick ? -1 : 0, t1 = 1;
+        // 2026-11-08: cây to dần theo vùng — rìa ngoài 16-22, vùng giữa 26-34 (thân 3x3), hạch tâm 38-50 (thân 4x4)
+        int zone = com.hukhong.creature.YeuThuAge.zone(depth);
+        int h = zone == 0 ? 16 + r.nextInt(7) : zone == 1 ? 26 + r.nextInt(9) : 38 + r.nextInt(13);
+        boolean thick = zone >= 1;
+        int t0 = thick ? -1 : 0, t1 = zone == 2 ? 2 : 1;
         // nền rêu / podzol
         for (int dx = -5; dx <= 5; dx++) for (int dz = -5; dz <= 5; dz++) {
             if (dx * dx + dz * dz > 25 || r.nextInt(3) == 0) continue;
@@ -56,7 +58,7 @@ public class CoThuFeature extends Feature<NoneFeatureConfiguration> {
         }
         // rễ lan 4 hướng
         for (Direction d : Direction.Plane.HORIZONTAL) {
-            int len = 3 + r.nextInt(3);
+            int len = 3 + r.nextInt(3) + zone * 2;
             BlockState side = log.setValue(RotatedPillarBlock.AXIS, d.getAxis());
             for (int i = 2; i < 2 + len; i++) {
                 int y = i < 3 ? 1 : 0;
@@ -66,11 +68,11 @@ public class CoThuFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
         // cành + tán nhiều tầng
-        int layers = 3 + (int) (2 * depth);
+        int layers = 3 + zone * 2;
         for (int k = 0; k < layers; k++) {
             int cy = h - 2 - k * 5;
             if (cy < 8) break;
-            int rad = Math.min(7, 4 + k + (thick ? 1 : 0));
+            int rad = Math.min(5 + zone * 2, 4 + k + zone);
             canopy(l, o.offset(0, cy, 0), rad, leaf, r);
             if (k > 0) for (Direction d : Direction.Plane.HORIZONTAL) {
                 if (r.nextInt(3) == 0) continue;
@@ -78,7 +80,7 @@ public class CoThuFeature extends Feature<NoneFeatureConfiguration> {
                 for (int i = 1; i <= rad - 1; i++) set(l, o.offset(d.getStepX() * i, cy - 1 + i / 3, d.getStepZ() * i), side);
             }
         }
-        canopy(l, o.offset(0, h + 1, 0), 3, leaf, r);
+        canopy(l, o.offset(0, h + 1, 0), 3 + zone, leaf, r);
         // dây leo
         for (int i = 0; i < 18; i++) {
             Direction d = Direction.Plane.HORIZONTAL.getRandomDirection(r);

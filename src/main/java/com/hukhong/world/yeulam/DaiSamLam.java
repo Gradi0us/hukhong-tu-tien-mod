@@ -100,6 +100,9 @@ public final class DaiSamLam {
     public static final List<CreatureKind> BEASTS = CreatureKind.COMMON_BEASTS;
 
     private static final Map<UUID, Boolean> INSIDE = new HashMap<>();
+    /** Vùng hiện tại của người chơi (-1 ngoài rừng, 0 rìa ngoài, 1 vùng giữa, 2 hạch tâm) để cảnh báo khi đổi vùng. */
+    private static final Map<UUID, Integer> ZONE = new HashMap<>();
+    private static final int[] ZONE_COLOR = {0x9FD89F, 0xE0B040, 0xFF4A3A};
 
     @SubscribeEvent
     public static void onTick(PlayerTickEvent.Post e) {
@@ -113,6 +116,15 @@ public final class DaiSamLam {
         if (was != null && was != in)
             p.displayClientMessage(Component.translatable(in ? (bad ? "hukhong.dai_sam_lam.enter_hu" : "hukhong.dai_sam_lam.enter") : "hukhong.dai_sam_lam.leave")
                     .withColor(in ? (bad ? 0xB060FF : 0x7FD27F) : 0xB0B0B0), true);
+        int zn = in ? YeuThuAge.zone(r.depth(p.getX(), p.getZ())) : -1;
+        Integer wz = ZONE.put(p.getUUID(), zn);
+        if (wz != null && wz != zn && zn >= 0) { // cảnh báo đổi vùng
+            p.sendSystemMessage(Component.translatable("hukhong.dai_sam_lam.zone." + zn).withColor(ZONE_COLOR[zn]));
+            p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket(5, 40, 15));
+            p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(Component.translatable("hukhong.dai_sam_lam.zone." + zn + ".sub").withColor(0xC8C8C8)));
+            p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(Component.translatable("hukhong.dai_sam_lam.zone." + zn + ".title").withColor(ZONE_COLOR[zn])));
+            if (zn == 2) sl.playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.WARDEN_HEARTBEAT, net.minecraft.sounds.SoundSource.AMBIENT, 1f, 0.8f);
+        }
         if (in && bad) // không khí Hư Không: bụi tím đen trôi quanh người chơi
             sl.sendParticles(p, net.minecraft.core.particles.ParticleTypes.REVERSE_PORTAL, false, p.getX(), p.getY() + 2, p.getZ(), 30, 8, 3, 8, 0.02);
         if (in && p.tickCount % SPAWN_PERIOD == 0) spawnNear(sl, p, r);
@@ -133,9 +145,28 @@ public final class DaiSamLam {
         boolean bad = corruptedLive(sl, r);
         CreatureKind k = bad && rnd.nextDouble() < CORRUPT_PLANT_BIAS ? CreatureKind.PLANTS.get(rnd.nextInt(CreatureKind.PLANTS.size()))
                 : BEASTS.get(rnd.nextInt(BEASTS.size()));
-        LinhQuai m = spawnBeast(sl, k, bp, YeuThuAge.roll(r.depth(x, z), rnd), MobSpawnType.EVENT);
+        double dep = r.depth(x, z);
+        LinhQuai m = spawnBeast(sl, k, bp, YeuThuAge.roll(dep, rnd), MobSpawnType.EVENT);
         if (m != null && bad && k.plant() && !m.corrupted() && rnd.nextDouble() < CORRUPT_CHANCE) m.setCorrupted(true);
+        if (m != null && !k.plant() && !k.mini() && rnd.nextDouble() < YeuThuAge.shinyChance(dep)) makeShiny(sl, m, p);
         return m;
+    }
+
+    /** Biến thành Hồn Thú Dị Chủng; dưới 100.000 năm thì gọi 2-4 hộ vệ già hơn một bậc đứng quanh. */
+    public static void makeShiny(ServerLevel sl, LinhQuai m, ServerPlayer near) {
+        m.setShiny(true);
+        if (near != null) near.displayClientMessage(Component.translatable("hukhong.yeu_thu.shiny_sense").withColor(0xFFD84A), true);
+        YeuThuAge a = m.age();
+        if (a == null || a == YeuThuAge.Y100000) return;
+        YeuThuAge ga = YeuThuAge.of(a.ordinal() + 1);
+        int n = 2 + sl.random.nextInt(3);
+        for (int i = 0; i < n; i++) {
+            double ang = i * Math.PI * 2 / n;
+            int gx = (int) Math.floor(m.getX() + Math.cos(ang) * 4), gz = (int) Math.floor(m.getZ() + Math.sin(ang) * 4);
+            BlockPos gp = new BlockPos(gx, sl.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, gx, gz), gz);
+            LinhQuai g = spawnBeast(sl, BEASTS.get(sl.random.nextInt(BEASTS.size())), gp, ga, MobSpawnType.EVENT);
+            if (g != null) g.setWard(m.getUUID());
+        }
     }
 
     public static LinhQuai spawnBeast(ServerLevel sl, CreatureKind k, BlockPos bp, YeuThuAge age, MobSpawnType type) {

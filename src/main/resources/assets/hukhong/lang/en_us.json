@@ -3184,5 +3184,19 @@
   "hukhong.nemesis.d.e12": "§bYou§r: I will not become you.",
   "hukhong.nemesis.c.e12": "I will not become you.",
   "hukhong.nemesis.d.e13": "§5Da Khuyet§r: They all say that. On the last day, I will receive you myself.",
-  "hukhong.nemesis.c.e13": "They all say that. On the last day, I will receive you myself."
+  "hukhong.nemesis.c.e13": "They all say that. On the last day, I will receive you myself.",
+  "hukhong.yeu_thu.years": "%s yrs",
+  "hukhong.yeu_thu.shiny_prefix": "✦ Rare ",
+  "hukhong.yeu_thu.shiny_sense": "✦ You sense a Rare Soul Beast nearby!",
+  "hukhong.yeu_thu.shiny_drop": "✦ The Rare %s-year Soul Beast (%s) left a high-quality Soul Bone!",
+  "hukhong.altar.anvil": "Soul Altar — Forging Anvil",
+  "hukhong.dai_sam_lam.zone.0": "⚠ Forest Outskirts: beasts of 10-100 years, rarely a millennium one.",
+  "hukhong.dai_sam_lam.zone.1": "⚠ Middle Forest: 1,000-10,000 year Soul Beasts are common. Be careful!",
+  "hukhong.dai_sam_lam.zone.2": "☠ Forest Core: 10,000 and 100,000 year Soul Beasts dwell here. Extremely dangerous!",
+  "hukhong.dai_sam_lam.zone.0.title": "Outskirts",
+  "hukhong.dai_sam_lam.zone.1.title": "Middle Forest",
+  "hukhong.dai_sam_lam.zone.2.title": "Forest Core",
+  "hukhong.dai_sam_lam.zone.0.sub": "Beasts 10 - 100 years",
+  "hukhong.dai_sam_lam.zone.1.sub": "Soul Beasts 1,000 - 10,000 years",
+  "hukhong.dai_sam_lam.zone.2.sub": "Soul Beasts 10,000 - 100,000+ years"
 }

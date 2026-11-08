@@ -45,7 +45,7 @@ public final class YeuThuGameTests {
         if (old.getHealth() < old.getMaxHealth() - 0.01) { h.fail("chua hoi day mau"); return; }
         old.setAge(YeuThuAge.Y100); // đổi bậc: ghi đè, không cộng dồn
         if (Math.abs(ageMod(old, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) - (YeuThuAge.Y100.hpMul - 1)) > 1e-6) { h.fail("doi bac bi cong don"); return; }
-        if (!old.getDisplayName().getString().contains("100")) { h.fail("ten thieu nam tuoi: " + old.getDisplayName().getString()); return; }
+        if (!old.getDisplayName().getString().contains(String.valueOf(old.years())) || old.years() < 100 || old.years() > 999) { h.fail("ten thieu nam tuoi: " + old.getDisplayName().getString()); return; }
         h.succeed();
     }
 

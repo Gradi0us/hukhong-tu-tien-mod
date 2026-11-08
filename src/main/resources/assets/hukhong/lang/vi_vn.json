@@ -3184,5 +3184,19 @@
   "hukhong.nemesis.d.e12": "§bBạn§r: Ta sẽ không giống ngươi.",
   "hukhong.nemesis.c.e12": "Ta sẽ không giống ngươi.",
   "hukhong.nemesis.d.e13": "§5Dạ Khuyết§r: Ai cũng nói vậy. Đến ngày cuối, ta sẽ đích thân đón ngươi.",
-  "hukhong.nemesis.c.e13": "Ai cũng nói vậy. Đến ngày cuối, ta sẽ đích thân đón ngươi."
+  "hukhong.nemesis.c.e13": "Ai cũng nói vậy. Đến ngày cuối, ta sẽ đích thân đón ngươi.",
+  "hukhong.yeu_thu.years": "%s năm",
+  "hukhong.yeu_thu.shiny_prefix": "✦ Dị Chủng ",
+  "hukhong.yeu_thu.shiny_sense": "✦ Cảm nhận được khí tức Hồn Thú Dị Chủng gần đây!",
+  "hukhong.yeu_thu.shiny_drop": "✦ Hồn Thú Dị Chủng %s năm (%s) để lại Hồn Cốt phẩm chất cao!",
+  "hukhong.altar.anvil": "Ấn Hồn Đài — Đe Cường Hoá",
+  "hukhong.dai_sam_lam.zone.0": "⚠ Bạn đang ở Rìa Ngoài rừng: Yêu Thú 10-100 năm, hiếm khi gặp ngàn năm.",
+  "hukhong.dai_sam_lam.zone.1": "⚠ Bạn đã vào Vùng Giữa: Hồn Thú ngàn năm, vạn năm xuất hiện nhiều. Cẩn thận!",
+  "hukhong.dai_sam_lam.zone.2": "☠ Bạn đã vào Vùng Hạch Tâm: Hồn Thú vạn năm, thập vạn năm cư ngụ. Cực kỳ nguy hiểm!",
+  "hukhong.dai_sam_lam.zone.0.title": "Rìa Ngoài",
+  "hukhong.dai_sam_lam.zone.1.title": "Vùng Giữa",
+  "hukhong.dai_sam_lam.zone.2.title": "Vùng Hạch Tâm",
+  "hukhong.dai_sam_lam.zone.0.sub": "Yêu Thú 10 - 100 năm",
+  "hukhong.dai_sam_lam.zone.1.sub": "Hồn Thú 1.000 - 10.000 năm",
+  "hukhong.dai_sam_lam.zone.2.sub": "Hồn Thú vạn năm - thập vạn năm"
 }

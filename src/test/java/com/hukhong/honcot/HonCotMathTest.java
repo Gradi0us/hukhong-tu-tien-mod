@@ -10,9 +10,8 @@ class HonCotMathTest {
         assertEquals(0.70, HonCotMath.tierMult(0), 1e-9);
         assertEquals(1.40, HonCotMath.tierMult(2), 1e-9);
         assertEquals(1.40, HonCotMath.tierMult(99), 1e-9); // kẹp
-        assertEquals(40, HonCotMath.requiredLevel(0));
-        assertTrue(HonCotMath.canEquip(60, 1));
-        assertFalse(HonCotMath.canEquip(79, 2));
+        assertTrue(HonCotMath.canEquip(1, 2)); // mặc được ở mọi cấp
+        assertTrue(HonCotMath.canEquip(0, 0));
     }
 
     @Test

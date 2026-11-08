@@ -54,6 +54,12 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
     private static final EntityDataAccessor<Integer> AGE = SynchedEntityData.defineId(LinhQuai.class, EntityDataSerializers.INT);
     /** Hư Không xâm thực (2026-11-06): quái cây biến dị, mạnh hơn, model + texture riêng (id_hu). */
     private static final EntityDataAccessor<Boolean> CORRUPT = SynchedEntityData.defineId(LinhQuai.class, EntityDataSerializers.BOOLEAN);
+    /** Năm tuổi cụ thể (vd 123 năm), 0 = dùng mốc của bậc. */
+    private static final EntityDataAccessor<Integer> YEARS = SynchedEntityData.defineId(LinhQuai.class, EntityDataSerializers.INT);
+    /** Hồn Thú Dị Chủng (shiny): chắc chắn rơi Hồn Cốt phẩm cao, năm thấp thì có hộ vệ. */
+    private static final EntityDataAccessor<Boolean> SHINY = SynchedEntityData.defineId(LinhQuai.class, EntityDataSerializers.BOOLEAN);
+    /** Hộ vệ: UUID con Dị Chủng mà con này bảo vệ. */
+    private java.util.UUID ward;
     public static final net.minecraft.resources.ResourceLocation CORRUPT_MOD = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("hukhong", "hu_xam_thuc");
     public static final double CORRUPT_HP = 1.6, CORRUPT_DMG = 1.4, CORRUPT_ARMOR = 4, CORRUPT_SPEED = 0.10;
     public static final net.minecraft.resources.ResourceLocation AGE_MOD = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("hukhong", "yeu_thu_age");
@@ -87,7 +93,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
 
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
-        b.define(LEVEL, 1).define(BURROWED, false).define(AGE, -1).define(CORRUPT, false);
+        b.define(LEVEL, 1).define(BURROWED, false).define(AGE, -1).define(CORRUPT, false).define(YEARS, 0).define(SHINY, false);
     }
 
     @Override protected void registerGoals() {
@@ -158,6 +164,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
     /** Đặt năm tuổi: đổi máu / công / giáp / kích thước theo bậc (ghi đè bậc cũ), hồi đầy máu. */
     public void setAge(YeuThuAge a) {
         entityData.set(AGE, a.ordinal());
+        entityData.set(YEARS, a.rollYears(getRandom().nextDouble()));
         var hpInst = getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
         if (hpInst != null) hpInst.removeModifier(AGE_MOD);
         double wanted = getMaxHealth() * a.hpMul;
@@ -173,6 +180,17 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         refreshDimensions();
         setHealth(getMaxHealth());
     }
+
+    /** Đặt năm cụ thể (bậc suy ra từ năm). */
+    public void setYears(int y) { setAge(YeuThuAge.forYears(y)); entityData.set(YEARS, Math.max(10, y)); }
+
+    /** Số năm hiển thị (0 nếu không phải Yêu Thú). */
+    public int years() { YeuThuAge a = age(); if (a == null) return 0; int y = entityData.get(YEARS); return y > 0 ? y : a.years; }
+
+    public boolean shiny() { return entityData.get(SHINY); }
+    public void setShiny(boolean v) { entityData.set(SHINY, v); if (v) setPersistenceRequired(); }
+    public java.util.UUID ward() { return ward; }
+    public void setWard(java.util.UUID u) { ward = u; if (u != null) setPersistenceRequired(); }
 
     private void ageMod(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> at, double v,
                         net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation op) {
@@ -195,6 +213,10 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
                     double a = t + i * Math.PI * 2 / (2 + ag.ordinal());
                     level().addParticle(dust, getX() + Math.cos(a) * rr, getY() + 0.1 + getBbHeight() * 0.5 * (i % 2), getZ() + Math.sin(a) * rr, 0, 0, 0);
                 }
+            }
+            if (shiny() && tickCount % 3 == 0) { // Dị Chủng: lấp lánh vàng trắng
+                level().addParticle(ParticleTypes.WAX_OFF, getRandomX(0.9), getY() + getBbHeight() * random.nextDouble(), getRandomZ(0.9), 0, 0.03, 0);
+                if (tickCount % 9 == 0) level().addParticle(ParticleTypes.END_ROD, getRandomX(0.6), getY() + getBbHeight() * 1.05, getRandomZ(0.6), 0, 0.04, 0);
             }
             if (corrupted() && tickCount % 2 == 0) { // khí Hư Không: hạt tím đen rỉ ra + mảnh tinh thể lơ lửng
                 level().addParticle(ParticleTypes.REVERSE_PORTAL, getRandomX(0.8), getY() + getBbHeight() * random.nextDouble(), getRandomZ(0.8), 0, 0.02, 0);
@@ -336,12 +358,20 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
             spawnAtLocation(new net.minecraft.world.item.ItemStack(com.hukhong.item.ModItems.HON_TINH.get(), 1 + getRandom().nextInt(2)));
         CreatureCommon.rollDrops(this, kind);
         YeuThuAge ag = age();
+        if (ag != null && shiny() && com.hukhong.gates.RewardGate.canReward(this)) { // Dị Chủng: chắc chắn rơi, phẩm cao
+            var bones = com.hukhong.honcot.Bone.values();
+            int tier = ag.ordinal() <= YeuThuAge.Y100.ordinal() ? com.hukhong.honcot.HonCotMath.TIER_HAC : com.hukhong.honcot.HonCotMath.TIER_HONG;
+            spawnAtLocation(com.hukhong.honcot.HonCotRegistry.stack(bones[getRandom().nextInt(bones.length)], tier, 85 + getRandom().nextInt(16)));
+            if (src.getEntity() instanceof net.minecraft.server.level.ServerPlayer sp)
+                sp.sendSystemMessage(Component.translatable("hukhong.yeu_thu.shiny_drop", years(), getTypeName()).withColor(0xFFD84A));
+            return;
+        }
         if (ag != null && ag.boneChance > 0 && com.hukhong.gates.RewardGate.canReward(this) && getRandom().nextDouble() < ag.boneChance * (corrupted() ? 2 : 1)) {
             var bones = com.hukhong.honcot.Bone.values();
             spawnAtLocation(com.hukhong.honcot.HonCotRegistry.stack(bones[getRandom().nextInt(bones.length)], ag.boneTier,
                     40 + ag.ordinal() * 10 + getRandom().nextInt(25)));
             if (src.getEntity() instanceof net.minecraft.server.level.ServerPlayer sp)
-                sp.sendSystemMessage(Component.translatable("hukhong.yeu_thu.bone_drop", Component.translatable(ag.langKey()), getTypeName()).withColor(ag.color == 0x2A2A2A ? 0x9A9A9A : ag.color));
+                sp.sendSystemMessage(Component.translatable("hukhong.yeu_thu.bone_drop", Component.translatable("hukhong.yeu_thu.years", years()), getTypeName()).withColor(ag.color == 0x2A2A2A ? 0x9A9A9A : ag.color));
         }
     }
 
@@ -349,7 +379,8 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         YeuThuAge ag = age();
         if (ag == null) return HuHoa.name(huLevel(), getTypeName());
         Component pre = corrupted() ? Component.translatable("hukhong.yeu_thu.corrupt_prefix").withColor(0xA040FF) : Component.empty();
-        return Component.empty().append(pre).append(Component.literal("[").append(Component.translatable(ag.langKey())).append("] ")
+        if (shiny()) pre = Component.empty().append(pre).append(Component.translatable("hukhong.yeu_thu.shiny_prefix").withColor(0xFFD84A));
+        return Component.empty().append(pre).append(Component.literal("[").append(Component.translatable("hukhong.yeu_thu.years", years())).append("] ")
                 .withColor(ag.color == 0x2A2A2A ? 0x6E6E6E : ag.color)).append(HuHoa.name(huLevel(), getTypeName()));
     }
     @Override public boolean shouldShowName() { return !burrowed(); }
@@ -374,6 +405,15 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
     @Override protected void customServerAiStep() {
         super.customServerAiStep();
         if (bossBar != null) bossBar.setProgress(getHealth() / getMaxHealth());
+        if (ward != null && tickCount % 10 == 0 && level() instanceof ServerLevel sl) guard(sl);
+    }
+
+    /** Hộ vệ: bám theo con Dị Chủng, đánh kẻ làm nó bị thương. */
+    private void guard(ServerLevel sl) {
+        if (!(sl.getEntity(ward) instanceof LinhQuai w) || !w.isAlive()) { ward = null; return; }
+        LivingEntity foe = w.getLastHurtByMob();
+        if (foe != null && foe.isAlive() && foe != this && !(foe instanceof LinhQuai q && ward.equals(q.ward()))) setTarget(foe);
+        else if (getTarget() == null && distanceToSqr(w) > 64) getNavigation().moveTo(w, 1.1);
     }
 
     @Override public boolean removeWhenFarAway(double d) { YeuThuAge a = age(); return !kind.mini() && (a == null || a.ordinal() < YeuThuAge.Y10000.ordinal()) && super.removeWhenFarAway(d); }
@@ -386,6 +426,9 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         tag.putInt("YeuThuAge", entityData.get(AGE));
         tag.putFloat("YeuThuTough", toughness);
         tag.putBoolean("HuXamThuc", corrupted());
+        tag.putInt("YeuThuYears", entityData.get(YEARS));
+        tag.putBoolean("DiChung", shiny());
+        if (ward != null) tag.putUUID("HoVe", ward);
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
@@ -395,6 +438,9 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         if (tag.contains("YeuThuAge")) entityData.set(AGE, tag.getInt("YeuThuAge"));
         if (tag.contains("YeuThuTough")) toughness = Math.max(1f, tag.getFloat("YeuThuTough"));
         if (tag.getBoolean("HuXamThuc")) entityData.set(CORRUPT, true);
+        if (tag.contains("YeuThuYears")) entityData.set(YEARS, tag.getInt("YeuThuYears"));
+        if (tag.getBoolean("DiChung")) entityData.set(SHINY, true);
+        if (tag.hasUUID("HoVe")) ward = tag.getUUID("HoVe");
     }
 
     @Override public int huLevel() { return entityData.get(LEVEL); }
