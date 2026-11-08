@@ -118,6 +118,28 @@ public final class HuKhongCommand {
                     if (!com.hukhong.events.VoidRaid.start(p)) { c.getSource().sendFailure(Component.translatable("hukhong.siege.err_raid")); return 0; }
                     return 1;
                 }))
+                .then(Commands.literal("worldboss")
+                        .then(Commands.argument("type", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .suggests((cx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.List.of("sa_hat_vuong", "bang_nhan", "doc_mau"), b))
+                                .then(Commands.argument("level", IntegerArgumentType.integer(1, 200)).executes(c -> {
+                                    var pl = c.getSource().getPlayerOrException();
+                                    String ty = com.mojang.brigadier.arguments.StringArgumentType.getString(c, "type");
+                                    var type = switch (ty) {
+                                        case "bang_nhan" -> com.hukhong.entity.V3Entities.BANG_NHAN.get();
+                                        case "doc_mau" -> com.hukhong.entity.V3Entities.DOC_MAU.get();
+                                        default -> (net.minecraft.world.entity.EntityType<? extends com.hukhong.entity.WorldBoss>) com.hukhong.entity.V3Entities.SA_HAT_VUONG.get();
+                                    };
+                                    var sl = pl.serverLevel();
+                                    com.hukhong.entity.WorldBoss boss = type.create(sl);
+                                    if (boss == null) return 0;
+                                    var at = pl.position().add(pl.getLookAngle().multiply(12, 0, 12));
+                                    boss.moveTo(at.x, pl.getY(), at.z, pl.getYRot() + 180, 0);
+                                    sl.addFreshEntity(boss);
+                                    boss.initBoss(sl, IntegerArgumentType.getInteger(c, "level"));
+                                    boss.setPersistenceRequired();
+                                    msg(c.getSource(), "boss " + ty + " Lv " + boss.huLevel());
+                                    return 1;
+                                }))))
                 .then(Commands.literal("boss").executes(c -> {
                     var pl = c.getSource().getPlayerOrException();
                     com.hukhong.events.CorruptionManager.spawnBoss(pl.serverLevel(), pl.blockPosition().offset(6, 0, 0));

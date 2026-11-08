@@ -32,7 +32,11 @@ import java.util.UUID;
  * Tháp Thổ (Pháp Tu - Thổ): đứng yên, bắn kẻ địch gần nhất và khiêu khích quái (trừ boss cuối).
  * Sát thương = % sát thương của chủ, máu = % máu tối đa của chủ (xem {@link PhapMath}). Không lưu vào thế giới.
  */
-public class PhapTurret extends PathfinderMob {
+public class PhapTurret extends PathfinderMob implements software.bernie.geckolib.animatable.GeoEntity {
+    private final software.bernie.geckolib.animatable.instance.AnimatableInstanceCache geoCache = software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+    @Override public void registerControllers(software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar c) {}
+    @Override public software.bernie.geckolib.animatable.instance.AnimatableInstanceCache getAnimatableInstanceCache() { return geoCache; }
+
     private static final EntityDataAccessor<Integer> ELEM = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> MERGED = SynchedEntityData.defineId(PhapTurret.class, EntityDataSerializers.BOOLEAN);
     /** Tiến độ laser 0..1000 (đồng bộ để client biết độ dày tia / hạt). */
@@ -125,11 +129,11 @@ public class PhapTurret extends PathfinderMob {
 
     public boolean isControlled() { return entityData.get(CONTROL); }
 
-    void setControlled(boolean v) { entityData.set(CONTROL, v); }
+    public void setControlled(boolean v) { entityData.set(CONTROL, v); }
 
     public boolean isSpike() { return entityData.get(SPIKE); }
 
-    void setLife(int ticks) { life = ticks; }
+    public void setLife(int ticks) { life = ticks; }
 
     float shotDamage() { return shotDamage; }
 
@@ -143,7 +147,7 @@ public class PhapTurret extends PathfinderMob {
     }
 
     /** Nâng thành trụ cấp 3: máu hp, sống life tick, trồi lên lại. */
-    void makeTitan(float hp, int life) {
+    public void makeTitan(float hp, int life) {
         entityData.set(MERGED, false);
         entityData.set(TITAN, true);
         entityData.set(RAMP, 0);

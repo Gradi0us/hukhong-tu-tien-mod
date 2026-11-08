@@ -66,6 +66,8 @@ neoForge {
             // Dev-only: ./gradlew runClient -Pautotest=<world folder in run/saves> -> vao the gioi + tu kiem tra HUD chien dau
             // Dev-only: ./gradlew runClient -Ptitantest -> tao the gioi phang MOI + tu kiem tra tru cap 3 Tho (anh: docs/vfx-review/titan)
             if (project.hasProperty('titantest')) systemProperty 'hukhong.titantest', '1'
+            if (project.hasProperty('thotrutest')) systemProperty 'hukhong.thotrutest', '1'
+            if (project.hasProperty('thotrudemo')) { systemProperty 'hukhong.thotrutest', '1'; systemProperty 'hukhong.thotrudemo', '1' }
             if (project.hasProperty('matest')) systemProperty 'hukhong.matest', '1'
             if (project.hasProperty('kiemtest')) systemProperty 'hukhong.kiemtest', '1'
             if (project.hasProperty('secttest')) systemProperty 'hukhong.secttest', '1'
