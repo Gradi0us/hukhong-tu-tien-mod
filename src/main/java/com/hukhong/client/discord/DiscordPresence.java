@@ -62,10 +62,7 @@ public final class DiscordPresence {
             d = "Ở sảnh chính";
         } else {
             CultivationData c = mc.player.getData(ModAttachments.CULTIVATION);
-            Path p = c.paths().stream().sorted().findFirst().orElse(null);
-            String path = p == null ? "Chưa chọn đạo" : pathName(p);
-            d = path + " · " + I18n.get(Realm.langKey(c.level())) + " Lv " + c.level();
-            if (p != null) { sk = "path_" + p.id; st = path; }
+            d = I18n.get(Realm.langKey(c.level())) + " · Lv " + c.level();
             if (bossName != null && System.currentTimeMillis() - bossSeen < 3000) s = "⚔ Đang đánh " + bossName;
             else s = mc.isSingleplayer() ? "Chơi đơn" : "Chơi trên server";
         }
