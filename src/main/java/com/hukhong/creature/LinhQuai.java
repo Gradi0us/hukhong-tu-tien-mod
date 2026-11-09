@@ -379,6 +379,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         YeuThuAge ag = age();
         if (ag == null) return HuHoa.name(huLevel(), getTypeName());
         Component pre = corrupted() ? Component.translatable("hukhong.yeu_thu.corrupt_prefix").withColor(0xA040FF) : Component.empty();
+        if (king) pre = Component.empty().append(pre).append(Component.translatable("hukhong.yeu_thu.king_prefix").withColor(0xFF5A2A));
         if (shiny()) pre = Component.empty().append(pre).append(Component.translatable("hukhong.yeu_thu.shiny_prefix").withColor(0xFFD84A));
         return Component.empty().append(pre).append(Component.literal("[").append(Component.translatable("hukhong.yeu_thu.years", years())).append("] ")
                 .withColor(ag.color == 0x2A2A2A ? 0x6E6E6E : ag.color)).append(HuHoa.name(huLevel(), getTypeName()));
@@ -388,10 +389,28 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
     // ---- mini boss: thanh máu ----
     private net.minecraft.server.level.ServerBossEvent bossBar;
 
+    // ---- Yêu Vương (sự kiện Yêu Vương Xuất Sơn): yêu thú vạn niên làm boss ----
+    private boolean king;
+    public boolean king() { return king; }
+
+    /** Biến thành Yêu Vương: cấp theo sự kiện, tuổi >= 10.000 năm, máu x4, thanh máu boss ghim, không biến mất. */
+    public void makeKing(int lv, int years) {
+        king = true;
+        CreatureDef d = kind.def();
+        HuHoa.applyStats(this, lv, (d == null ? 1.0 : d.hpMul()) * 4.0, (d == null ? 1.0 : d.dmgMul()) * 1.5);
+        setYears(Math.max(10000, years));
+        setPersistenceRequired();
+        if (bossBar != null) bossBar.setName(getDisplayName());
+    }
+
+    public void showKingBar(net.minecraft.server.level.ServerPlayer p) { if (bar() != null) bar().addPlayer(p); }
+    public void hideKingBar(net.minecraft.server.level.ServerPlayer p) { if (bossBar != null) bossBar.removePlayer(p); }
+    public void hideKingBarAll() { if (bossBar != null) bossBar.removeAllPlayers(); }
+
     net.minecraft.server.level.ServerBossEvent bar() {
-        if (bossBar == null && kind.mini()) {
+        if (bossBar == null && (kind.mini() || king)) {
             bossBar = new net.minecraft.server.level.ServerBossEvent(getDisplayName(),
-                    kind == CreatureKind.HUYET_YEU_VUONG ? net.minecraft.world.BossEvent.BossBarColor.RED
+                    kind == CreatureKind.HUYET_YEU_VUONG || king ? net.minecraft.world.BossEvent.BossBarColor.RED
                             : kind == CreatureKind.HU_LANG_VUONG ? net.minecraft.world.BossEvent.BossBarColor.PURPLE : net.minecraft.world.BossEvent.BossBarColor.WHITE,
                     net.minecraft.world.BossEvent.BossBarOverlay.NOTCHED_10);
         }
@@ -416,7 +435,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         else if (getTarget() == null && distanceToSqr(w) > 64) getNavigation().moveTo(w, 1.1);
     }
 
-    @Override public boolean removeWhenFarAway(double d) { YeuThuAge a = age(); return !kind.mini() && (a == null || a.ordinal() < YeuThuAge.Y10000.ordinal()) && super.removeWhenFarAway(d); }
+    @Override public boolean removeWhenFarAway(double d) { YeuThuAge a = age(); return !kind.mini() && !king && (a == null || a.ordinal() < YeuThuAge.Y10000.ordinal()) && super.removeWhenFarAway(d); }
     @Override public boolean isSunBurnTick() { return false; }
 
     @Override public void addAdditionalSaveData(CompoundTag tag) {
@@ -429,6 +448,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         tag.putInt("YeuThuYears", entityData.get(YEARS));
         tag.putBoolean("DiChung", shiny());
         if (ward != null) tag.putUUID("HoVe", ward);
+        tag.putBoolean("YeuVuong", king);
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
@@ -441,6 +461,7 @@ public class LinhQuai extends Monster implements GeoEntity, HuMob {
         if (tag.contains("YeuThuYears")) entityData.set(YEARS, tag.getInt("YeuThuYears"));
         if (tag.getBoolean("DiChung")) entityData.set(SHINY, true);
         if (tag.hasUUID("HoVe")) ward = tag.getUUID("HoVe");
+        king = tag.getBoolean("YeuVuong");
     }
 
     @Override public int huLevel() { return entityData.get(LEVEL); }

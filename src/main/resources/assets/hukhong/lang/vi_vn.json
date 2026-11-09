@@ -3231,5 +3231,7 @@
   "core.hukhong.than_tran": "Thiên Địa Đại Trận",
   "core.hukhong.than_dan": "Cửu Chuyển Đan Thần",
   "hukhong.configuration.discord": "Trạng thái Discord",
-  "hukhong.configuration.discordAppId": "Discord Application ID"
+  "hukhong.configuration.discordAppId": "Discord Application ID",
+  "hukhong.yeu_thu.king_prefix": "[Yêu Vương] ",
+  "hukhong.cal.yeu_vuong.appear": "Mặt đất rung chuyển... %s đã xuất sơn!"
 }

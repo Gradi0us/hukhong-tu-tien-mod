@@ -3231,5 +3231,7 @@
   "core.hukhong.than_tran": "Heaven and Earth Grand Array",
   "core.hukhong.than_dan": "Ninefold Pill God",
   "hukhong.configuration.discord": "Discord presence",
-  "hukhong.configuration.discordAppId": "Discord Application ID"
+  "hukhong.configuration.discordAppId": "Discord Application ID",
+  "hukhong.yeu_thu.king_prefix": "[Demon King] ",
+  "hukhong.cal.yeu_vuong.appear": "The ground trembles... %s has emerged!"
 }
