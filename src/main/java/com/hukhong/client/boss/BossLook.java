@@ -22,7 +22,7 @@ public final class BossLook {
             "hu_vuong", List.of(new Rule("crown", 1, 1)),                                    // vương miện bị bóp nát
             "bang_nhan", List.of(new Rule("pauldron_r", 1, 2), new Rule("pauldron_l", 1, 2)), // giáp vai vỡ ở pha 3
             "chg_2", List.of(new Rule("halo", 2, 3)),                                        // hào quang lộ ra từ pha 2
-            "da_khuyet", List.of(new Rule("halo", 2, 3), new Rule("wing", 3, 3)));           // trăng khuyết dần -> cánh ở pha 3
+            "da_khuyet", List.of(new Rule("halo", 2, 3), new Rule("wing", 2, 3), new Rule("moon_wings", 2, 3))); // hoá thân pha 2: mọc cánh trăng khuyết
 
     public static void apply(String id, BakedGeoModel model, int phase) {
         for (Rule r : COMMON) set(model, r, phase);

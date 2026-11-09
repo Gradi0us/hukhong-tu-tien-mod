@@ -163,13 +163,8 @@ public final class BossPhases {
                         m("huyet_vu", Shape.METEOR, Pal.BLOOD, 3.0, 0.9, 44, Hit.NAUSEA, false)),
                 p3("chg_4", 3.8, 2, fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "su_do",
                         m("huyet_hai", Shape.DONUT, Pal.BLOOD, 19, 2.3, 90, Hit.WEAK, true)));
-        // Da Khuyet: moi pha la mot mat trang khuyet dan; P3 trang mau
-        reg("da_khuyet", Pal.MOON, 3.8,
-                p2("da_khuyet", 3.8, 2, fx(ArenaEffect.PURPLE_SKY), null,
-                        m("khuyet_tram", Shape.LINE, Pal.MOON, 20, 1.2, 28, Hit.BLIND, false),
-                        m("nguyet_lien", Shape.SHOCK, Pal.MOON, 12, 1.0, 40, Hit.SLOW, false)),
-                p3("da_khuyet", 3.8, 3, fx(ArenaEffect.BLOOD_RAIN, ArenaEffect.VOID_PILLARS), "tam_ma",
-                        m("nguyet_thuc", Shape.PULL_BURST, Pal.MOON, 22, 2.6, 100, Hit.BLIND, true)));
+        // Da Khuyet (kieu Malenia, trang/mau): bo chieu RIENG - DaKhuyet tu thi trien qua PhasedBoss.startOwnMove (khong dung er_* chung).
+        daKhuyet();
 
         // 8 Hu Vuong dang (PLAN-v2 12.6): moi dang 1 mau chu de + 2 chieu pha 2 + 1 chieu toi thuong pha 3 (chieu rieng tung dang o HvSkill)
         hv("huyet_ma", Pal.BLOOD, 4.1, fx(ArenaEffect.BLOOD_RAIN), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "tam_ma", 2, 2,
@@ -197,6 +192,38 @@ public final class BossPhases {
         hv("thien_dien", Pal.HOLY, 4.0, fx(ArenaEffect.PURPLE_SKY, ArenaEffect.VOID_PILLARS), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.BLOOD_RAIN), "tam_ma", 3, 3,
                 m("hv_td_tru", Shape.PILLARS, Pal.VOID, 2.4, 1.0, 36, Hit.KNOCK_UP, false), m("hv_td_tram", Shape.LINE, Pal.HOLY, 22, 1.2, 28, Hit.BLIND, false),
                 m("hv_td_diet", Shape.PULL_BURST, Pal.VOID, 22, 2.8, 100, Hit.BLIND, true));
+    }
+
+    /** Da Khuyet: P2 "Nguyet Duc" (moc canh trang khuyet), P3 "Huyet Nguyet Khai Hoa" (no hoa trang mau). Thoai: hukhong.dialog.dakhuyet.*. */
+    private static void daKhuyet() {
+        String id = "da_khuyet";
+        double s = 3.8;
+        int t2 = 120, r2 = 60, t3 = 120, r3 = 70;
+        List<SubLine> s2 = List.of(new SubLine(8, 44, "hukhong.dialog.dakhuyet.p2.1"), new SubLine(44, 84, "hukhong.dialog.dakhuyet.p2.2"),
+                new SubLine(84, 116, "hukhong.dialog.dakhuyet.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, "hukhong.dialog.dakhuyet.p3.1"), new SubLine(44, 84, "hukhong.dialog.dakhuyet.p3.2"),
+                new SubLine(84, 116, "hukhong.dialog.dakhuyet.p3.3"));
+        // P2: quy goi -> canh trang khuyet bung ra (camera thap tu sau lung nhin len canh) -> keo xa
+        double a = s * 1.25;
+        List<CamPath.Key> c2 = List.of(k(0, 0, 0.5, 2.2, 60, 0.6, 0, 0, a), k(40, 1.2, 0.3, -1.6, 55, 0.8, 0, -8, a),
+                k(r2, 0.2, 0.2, -2.4, 70, 0.9, 0, -14, a), k(95, -2.0, 1.2, 2.2, 62, 0.8, 0, 0, a), k(t2, 0, 1.0, 3.8, 72, 0.7, 0, 0, a));
+        // P3: bay len, troi do - camera tu duoi dat nhin len "doa hoa" mau roi vong ra xa
+        double b = s * 1.5;
+        List<CamPath.Key> c3 = List.of(k(0, 0, 0.2, 1.6, 50, 0.9, 0, 0, b), k(35, 1.8, 0.1, 1.2, 64, 1.4, 0, -12, b),
+                k(r3, 0, 0.0, 2.6, 80, 2.0, 0, -18, b), k(100, -2.4, 1.6, 1.8, 70, 1.2, 0, 0, b), k(t3, 0, 1.6, 4.4, 78, 0.8, 0, 0, b));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, t2, r2, c2, s2, List.of(
+                m("dk_thuy_dieu", Shape.COMBO, Pal.MOON, 14, 0.5, 30, Hit.SLOW, false),     // Thuy Dieu Vu (Waterfowl): 3 dot luot chem
+                m("dk_dam_xuyen", Shape.LINE, Pal.MOON, 13, 1.3, 22, Hit.KNOCK_UP, false),  // dam lao toi
+                m("dk_lien_tram", Shape.COMBO, Pal.MOON, 5.5, 0.9, 20, Hit.NONE, false),     // chem lien hoan, nhat cuoi tre
+                m("dk_lao_khong", Shape.LEAP, Pal.MOON, 4.5, 1.4, 34, Hit.KNOCK_UP, false)), // nhay lao tu tren khong
+                fx(ArenaEffect.PURPLE_SKY), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, t3, r3, c3, s3, List.of(
+                m("dk_huyet_hoa", Shape.DONUT, Pal.BLOOD, 16, 2.4, 90, Hit.WEAK, true),        // Huyet Nguyet Khai Hoa (Scarlet Aeonia)
+                m("dk_thuy_dieu_huyet", Shape.COMBO, Pal.BLOOD, 15, 0.55, 26, Hit.WEAK, false), // Thuy Dieu Vu mau: de lai vung mau
+                m("dk_nguyet_luan", Shape.LINE, Pal.MOON, 18, 1.0, 24, Hit.SLOW, false),       // 3 luoi trang khuyet quat
+                m("dk_song_lao", Shape.LEAP, Pal.BLOOD, 4.5, 1.2, 30, Hit.KNOCK_UP, false)),   // lao 2 lan
+                fx(ArenaEffect.BLOOD_RAIN, ArenaEffect.CRACKED_FLOOR), "tam_ma", 0.7f);
+        ALL.put(id, new Config(id, Pal.MOON, s, List.of(p1(), two, three)));
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {

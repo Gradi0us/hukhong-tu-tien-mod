@@ -38,6 +38,18 @@ public interface PhasedBoss {
     /** Sát thương một đòn phase = mult x chỉ số hiện tại của boss. */
     float moveDamage(double mult);
 
+    /**
+     * Boss tự thi triển chiêu phase bằng cơ chế riêng (thay vì {@link PhaseMoves} dùng chung). Trả true nếu đã nhận chiêu:
+     * director không tạo Run, chỉ đặt hồi chiêu; boss phải báo {@link #idleForMove()} = false trong lúc đang thi triển.
+     */
+    default boolean startOwnMove(ServerLevel sl, Move m, net.minecraft.world.entity.LivingEntity target) { return false; }
+
+    /** Camera cutscene giới thiệu riêng (null = mặc định của director). */
+    default List<CamPath.Key> introCamera(int ticks) { return null; }
+
+    /** Phụ đề cutscene giới thiệu riêng (null = tên boss + hukhong.boss.intro.&lt;id&gt;). */
+    default List<BossPhaseConfig.SubLine> introLines(int ticks) { return null; }
+
     default BossPhaseConfig.Config phaseConfig() { return BossPhases.get(phaseId()); }
 
     /** Chiêu phase khả dụng ở pha {@code phase} (cộng dồn): pha 1 = rỗng, pha 2 = +2, pha 3 = +ultimate. */
