@@ -151,14 +151,14 @@ public final class EndgameService {
                 new com.hukhong.boss.phase.CamPath.Key(T * 2 / 3, -2.2f * sc, 0.8f * sc, 2.4f * sc, 0, 0, 58, 0.5f * sc),
                 new com.hukhong.boss.phase.CamPath.Key(T, 0, 2.6f * sc, 5.0f * sc, 0, 8, 75, 0.3f * sc));
         var subs = new java.util.ArrayList<com.hukhong.boss.phase.BossPhaseConfig.SubLine>();
-        subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(6, 50, "hukhong.endgame.boss.slain"));
+        subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(6, 50, "hukhong.dialog.nttd.death.1"));
         if (ally != null) {
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 95, "hukhong.endgame.outro.dk.1"));
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(95, 140, "hukhong.endgame.outro.dk.2"));
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(140, T - 4, "hukhong.endgame.outro.dk.3"));
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 95, "hukhong.dialog.nttd.death.dk.1"));
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(95, 140, "hukhong.dialog.nttd.death.dk.2"));
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(140, T - 4, "hukhong.dialog.nttd.death.end"));
         } else {
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 110, "hukhong.endgame.dakhuyet.flee"));
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(110, T - 4, "hukhong.endgame.outro.dk.3"));
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 110, "hukhong.dialog.nttd.death.flee"));
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(110, T - 4, "hukhong.dialog.nttd.death.end"));
         }
         com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, null, at, boss.yBodyRot, T, cam, subs);
         if (ally != null) OUTRO_DK.put(ally.getUUID(), T + 20);

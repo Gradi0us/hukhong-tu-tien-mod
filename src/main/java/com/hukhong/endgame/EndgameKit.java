@@ -49,7 +49,8 @@ public final class EndgameKit {
     public static int phase(float hpFrac) { return hpFrac > 0.75f ? 1 : hpFrac > 0.5f ? 2 : hpFrac > 0.25f ? 3 : 4; }
     public static int phaseIdx(int phase) { return Math.max(1, Math.min(PHASES, phase)) - 1; }
 
-    public enum Shape { PULL, SLAM, BEAM, ERASE, SUMMON, METEOR }
+    /** SWEEP/WAVES/ORBS/STARS/NOVA: chiêu kiểu Elden Beast của dạng 2 (NOVA = tối thượng, có cutscene). */
+    public enum Shape { PULL, SLAM, BEAM, ERASE, SUMMON, METEOR, SWEEP, WAVES, ORBS, STARS, NOVA }
 
     public record Skill(String id, Shape shape, double radius, double dmgMul, int windup, int minPhase, String anim) {}
 
@@ -57,10 +58,15 @@ public final class EndgameKit {
     public static final Skill[] SKILLS = {
             new Skill("tra_lai", Shape.PULL, 18, 0.6, 40, 1, "skill_b"),
             new Skill("vong_chan", Shape.SLAM, 10, 1.2, 35, 1, "skill_a"),
+            new Skill("quet_quang", Shape.SWEEP, 26, 1.1, 40, 1, "skill_c"),
             new Skill("vong_ho", Shape.BEAM, 34, 1.4, 55, 2, "skill_c"),
+            new Skill("song_quang_luan", Shape.WAVES, 26, 0.9, 40, 2, "skill_a"),
+            new Skill("cau_truy_hon", Shape.ORBS, 30, 0.7, 35, 2, "skill_b"),
             new Skill("xoa_net", Shape.ERASE, 20, 0.7, 45, 3, "skill_b"),
             new Skill("hu_sinh", Shape.SUMMON, 0, 0, 40, 3, "skill_b"),
+            new Skill("mua_tinh_tu", Shape.STARS, 2.4, 0.8, 30, 3, "skill_c"),
             new Skill("tich_diet", Shape.METEOR, 15, 1.0, 60, 4, "skill_c"),
+            new Skill("kim_hoan_diet", Shape.NOVA, 30, 1.3, 84, 4, "phase"),
     };
 
     public static int skillsAvailable(int phase) {

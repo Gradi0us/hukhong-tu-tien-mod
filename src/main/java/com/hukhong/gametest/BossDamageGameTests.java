@@ -138,4 +138,31 @@ public final class BossDamageGameTests {
         b.beginDescent();
         skillCompletes(h, b, "CHG1");
     }
+    /**
+     * NTTD 2 dang: spawn qua luong that (EndgameService.spawnBoss) phai ra DANG 1; danh het mau dang 1 -> khong chet ma bien hinh;
+     * sau cutscene phai o DANG 2, pha 1, day mau (lon hon mau dang 1).
+     */
+    @GameTest(template = "empty", timeoutTicks = 700, batch = "bossdmg")
+    public static void nguyenThuyTichDietReachesForm2(GameTestHelper h) {
+        NguyenThuyTichDiet b = com.hukhong.endgame.EndgameService.spawnBoss(h.getLevel(), h.absolutePos(new net.minecraft.core.BlockPos(2, 1, 2)));
+        if (b == null) { h.fail("spawnBoss null"); return; }
+        if (b.form() != 1) h.fail("spawn khong ra dang 1: form=" + b.form());
+        double f1Max = HuHoa.designHp(b);
+        h.runAfterDelay(com.hukhong.endgame.EndgameKit.INTRO_TICKS + 10, () -> {
+            for (int i = 0; i < 200 && !b.morphing() && b.isAlive(); i++) {
+                b.invulnerableTime = 0;
+                b.hurt(h.getLevel().damageSources().magic(), 1.0e7f);
+            }
+            if (!b.isAlive()) { h.fail("dang 1 chet that thay vi bien hinh"); return; }
+            if (!b.morphing()) { h.fail("khong bat dau bien hinh, hp=" + b.getHealth() + " dbg=" + dbg(b)); return; }
+            h.runAfterDelay(NguyenThuyTichDiet.MORPH_TICKS + 10, () -> {
+                String info = "form=" + b.form() + " phase=" + b.phase() + " hp=" + b.getHealth() + "/" + b.getMaxHealth() + " design=" + HuHoa.designHp(b) + " f1Design=" + f1Max + " alive=" + b.isAlive();
+                boolean ok = b.isAlive() && b.form() == 2 && b.phase() == 1 && !b.morphing()
+                        && HuHoa.designHp(b) > f1Max * 2 && b.getHealth() >= b.getMaxHealth() * 0.99f && b.getBbHeight() > 5f;
+                b.discard();
+                if (!ok) h.fail("khong vao dang 2: " + info);
+                h.succeed();
+            });
+        });
+    }
 }
