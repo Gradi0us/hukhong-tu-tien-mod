@@ -113,7 +113,7 @@ public final class CalendarScheduler {
 
     private static Component place(EventDef d, long start, BlockPos p) {
         int c = d.cityOf(start, CityDef.ALL.size());
-        return c >= 0 ? Component.translatable(CityDef.ALL.get(c).nameKey()) : Component.literal(p.getX() + ", " + p.getZ());
+        return c >= 0 ? Component.translatable(CityDef.ALL.get(c).nameKey()).append(" (" + p.getX() + ", " + p.getZ() + ")") : Component.literal(p.getX() + ", " + p.getZ());
     }
 
     private static void begin(ServerLevel ow, CalendarData data, Occ o) {

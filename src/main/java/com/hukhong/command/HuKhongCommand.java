@@ -118,6 +118,9 @@ public final class HuKhongCommand {
                     if (!com.hukhong.events.VoidRaid.start(p)) { c.getSource().sendFailure(Component.translatable("hukhong.siege.err_raid")); return 0; }
                     return 1;
                 }))
+                .then(Commands.literal("yeuvuong")
+                        .executes(c -> yeuVuong(c.getSource(), -1))
+                        .then(Commands.argument("level", IntegerArgumentType.integer(1, 100)).executes(c -> yeuVuong(c.getSource(), IntegerArgumentType.getInteger(c, "level")))))
                 .then(Commands.literal("worldboss")
                         .then(Commands.argument("type", com.mojang.brigadier.arguments.StringArgumentType.word())
                                 .suggests((cx, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.List.of("sa_hat_vuong", "bang_nhan", "doc_mau"), b))
@@ -302,5 +305,21 @@ public final class HuKhongCommand {
 
     private static void msg(CommandSourceStack s, String text) {
         s.sendSuccess(() -> Component.literal(text), false);
+    }
+
+    /** Bắt đầu sự kiện Yêu Vương Xuất Sơn ngay trước mặt người chơi (thử nghiệm). */
+    private static int yeuVuong(net.minecraft.commands.CommandSourceStack src, int lv) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer p = src.getPlayerOrException();
+        var ow = src.getServer().overworld();
+        if (p.serverLevel() != ow) { src.sendFailure(Component.literal("Chỉ dùng ở thế giới chính")); return 0; }
+        var at = p.position().add(p.getLookAngle().multiply(16, 0, 16));
+        long now = ow.getGameTime();
+        var a = new com.hukhong.world.calendar.CalendarData.Act("yeu_vuong@" + now, "yeu_vuong", now, now + 12000, -1, (int) at.x, (int) at.z);
+        com.hukhong.world.calendar.CalendarData.get(ow).addActive(a);
+        var b = com.hukhong.world.calendar.YeuVuongHandler.spawnNow(ow, a);
+        if (b == null) { src.sendFailure(Component.literal("Không sinh được Yêu Vương ở đây")); return 0; }
+        if (lv > 0) b.makeKing(lv, b.years());
+        src.sendSuccess(() -> Component.literal("Yêu Vương xuất hiện tại " + b.blockPosition().toShortString()), true);
+        return 1;
     }
 }

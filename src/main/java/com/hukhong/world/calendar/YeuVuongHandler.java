@@ -56,6 +56,8 @@ public final class YeuVuongHandler {
     /** Dam bao co boss tai diem su kien (neu chunk dang tick). @return boss hien co / vua sinh, hoac null. */
     static LinhQuai ensure(ServerLevel ow, CalendarData.Act a) { return ensure(ow, a, true); }
 
+    public static LinhQuai spawnNow(ServerLevel ow, CalendarData.Act a) { return ensure(ow, a, false); }
+
     static LinhQuai ensure(ServerLevel ow, CalendarData.Act a, boolean needPlayer) {
         var cur = find(ow, a);
         if (!cur.isEmpty()) return cur.get(0);
