@@ -157,18 +157,8 @@ public final class DiscordPresence {
         private final AutoCloseable handle;
         private final OutputStream out;
         private final InputStream in;
-        private final Thread reader;
 
-        private Ipc(AutoCloseable h, OutputStream o, InputStream i) {
-            handle = h; out = o; in = i;
-            // đọc bỏ phản hồi để pipe không đầy
-            reader = new Thread(() -> {
-                byte[] buf = new byte[4096];
-                try { while (in.read(buf) >= 0) {} } catch (IOException ignored) {}
-            }, "HuKhong-DiscordRPC-read");
-            reader.setDaemon(true);
-            reader.start();
-        }
+        private Ipc(AutoCloseable h, OutputStream o, InputStream i) { handle = h; out = o; in = i; }
 
         static Ipc open() {
             for (int i = 0; i < 10; i++) {
@@ -205,6 +195,11 @@ public final class DiscordPresence {
             out.write(h.array());
             out.write(b);
             out.flush();
+            // đọc luôn phản hồi (pipe Windows đồng bộ: không được đọc song song với ghi)
+            byte[] hd = in.readNBytes(8);
+            if (hd.length < 8) throw new IOException("pipe closed");
+            int len = ByteBuffer.wrap(hd).order(ByteOrder.LITTLE_ENDIAN).getInt(4);
+            in.readNBytes(len);
         }
 
         @Override public void close() throws Exception { handle.close(); }
