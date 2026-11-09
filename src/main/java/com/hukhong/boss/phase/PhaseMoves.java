@@ -35,6 +35,9 @@ public final class PhaseMoves {
         public int left;
         public final List<Vec3> spots = new ArrayList<>();
         public Vec3 center, aim;
+        /** Nhát/lớp đã ra (chiêu nhiều nhịp). */
+        public int stage;
+        public LivingEntity target;
 
         Run(Move move) { this.move = move; this.left = move.windup(); }
     }
@@ -57,6 +60,7 @@ public final class PhaseMoves {
     // ------------------------------------------------------------------ bắt đầu: telegraph
     public static Run begin(ServerLevel sl, Mob boss, Move m, LivingEntity target) {
         Run r = new Run(m);
+        r.target = target;
         r.center = boss.position();
         Vec3 d = target != null ? target.position().subtract(boss.position()).multiply(1, 0, 1) : boss.getViewVector(1f).multiply(1, 0, 1);
         r.aim = d.lengthSqr() < 1e-4 ? new Vec3(0, 0, 1) : d.normalize();
@@ -88,6 +92,23 @@ public final class PhaseMoves {
             case DONUT -> {
                 Fx.telegraphCircle(sl, null, boss.position(), (float) m.radius(), m.windup(), 0xFF2030);
                 Fx.telegraphCircle(sl, null, boss.position(), (float) (m.radius() * 0.4), m.windup(), 0x40FF80);
+            }
+            case COMBO -> Fx.telegraphCone(sl, null, boss.position(), r.aim, (float) m.radius(), 65, m.windup());
+            case LEAP -> {
+                Vec3 s = target != null ? target.position() : boss.position().add(r.aim.scale(8));
+                r.spots.add(s);
+                Fx.telegraphCircle(sl, null, s, (float) m.radius(), m.windup(), 0xFF2030);
+                Fx.rune(sl, null, s.add(0, 0.1, 0), (float) m.radius() * 0.7f, rgb, m.windup(), 6);
+            }
+            case SPIN -> Fx.telegraphCircle(sl, null, boss.position(), (float) m.radius(), m.windup(), rgb);
+            case NOVA -> {
+                for (int i = 1; i <= 3; i++) Fx.telegraphCircle(sl, null, boss.position(), (float) (m.radius() * i / 3.0), m.windup() + (i - 1) * NOVA_GAP, rgb);
+            }
+            case SKY_SWORD -> {
+                Vec3 s = target != null ? target.position() : boss.position().add(r.aim.scale(6));
+                r.spots.add(s);
+                Fx.telegraphCircle(sl, null, s, (float) m.radius(), m.windup(), 0xFF2030);
+                Fx.giantSword(sl, null, s, (float) m.radius() * 0.5f, rgb, m.windup(), m.windup() + 30);
             }
         }
         Component name = Component.translatable("hukhong.boss.move." + m.id());
@@ -125,7 +146,126 @@ public final class PhaseMoves {
                 sl.sendParticles(particle(m.pal()), r.center.x + Math.cos(a) * rr, r.center.y + 0.3, r.center.z + Math.sin(a) * rr, 1, 0.05, 0.1, 0.05, 0.0);
             }
         }
+        if (m.shape() == BossPhaseConfig.Shape.LEAP && r.stage == 0 && !r.spots.isEmpty()) {
+            int el = m.windup() - r.left;
+            if (el == m.windup() / 2) {  // bật lên cao
+                boss.setDeltaMovement(0, 1.4, 0);
+                boss.hurtMarked = true;
+                sl.sendParticles(ParticleTypes.CLOUD, boss.getX(), boss.getY(), boss.getZ(), 30, 1.2, 0.2, 1.2, 0.08);
+                boss.playSound(SoundEvents.RAVAGER_ROAR, 2f, 0.6f);
+            } else if (el > m.windup() / 2 && r.left <= 4) {  // lơ lửng trên điểm rơi
+                Vec3 s = r.spots.get(0);
+                boss.teleportTo(s.x, s.y + 6, s.z);
+                boss.setDeltaMovement(0, -2.5, 0);
+            }
+        }
         if (r.left % 6 == 0) sl.sendParticles(particle(m.pal()), boss.getX(), boss.getY() + boss.getBbHeight() * 0.6, boss.getZ(), 8, 0.8, 0.8, 0.8, 0.03);
+    }
+
+    /** Khoảng tick giữa các nhịp của chiêu nhiều nhịp. */
+    public static final int COMBO_GAP = 12, SPIN_GAP = 14, NOVA_GAP = 12;
+
+    /** Ra đòn. Trả về số tick tới nhịp kế tiếp (chiêu nhiều nhịp), hoặc 0 nếu chiêu đã xong. */
+    public static int fireStage(ServerLevel sl, Mob boss, PhasedBoss pb, Run r) {
+        Move m = r.move;
+        ParticleOptions pt = particle(m.pal());
+        int rgb = m.pal().rgb;
+        int st = r.stage++;
+        switch (m.shape()) {
+            case COMBO -> {
+                if (r.target != null && r.target.isAlive()) {
+                    Vec3 d = r.target.position().subtract(boss.position()).multiply(1, 0, 1);
+                    if (d.lengthSqr() > 1e-3) r.aim = d.normalize();
+                    boss.setDeltaMovement(r.aim.x * 0.9, 0.1, r.aim.z * 0.9);  // lướt tới mỗi nhát
+                    boss.hurtMarked = true;
+                }
+                double rad = m.radius() * (st == 2 ? 1.35 : 1.0);
+                cone(sl, boss, pb, boss.position(), r.aim, rad, st == 2 ? 80 : 65, m, st == 2 ? 1.4 : 0.8);
+                arc(sl, boss, r.aim, rad, st == 1 ? -35 : st == 2 ? 80 : 35, rgb);
+                boss.playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 2.5f, 0.5f + st * 0.15f);
+                if (st < 2) {
+                    Fx.telegraphCone(sl, null, boss.position(), r.aim, (float) (m.radius() * (st == 1 ? 1.35 : 1.0)), st == 1 ? 80 : 65, COMBO_GAP);
+                    return st == 0 ? COMBO_GAP + 8 : COMBO_GAP;  // nhịp 2 trễ hơn để bắt người lăn sớm
+                }
+                return 0;
+            }
+            case LEAP -> {
+                Vec3 s = r.spots.isEmpty() ? boss.position() : r.spots.get(0);
+                boss.teleportTo(s.x, s.y, s.z);
+                hurtIn(sl, boss, pb, s, m.radius(), m);
+                Fx.groundCrack(sl, null, s, (float) m.radius(), rgb, 10, 40);
+                Fx.groundRing(sl, null, s, (float) m.radius() * 1.3f, rgb, 20);
+                Fx.shake(sl, s, 3f, 20, 36f);
+                sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, s.x, s.y + 0.5, s.z, 1, 0, 0, 0, 0);
+                sl.sendParticles(pt, s.x, s.y + 1, s.z, 40, m.radius() * 0.4, 0.8, m.radius() * 0.4, 0.08);
+                boss.playSound(SoundEvents.GENERIC_EXPLODE.value(), 2.5f, 0.6f);
+                return 0;
+            }
+            case SPIN -> {
+                double rad = m.radius();
+                hurtIn(sl, boss, pb, boss.position(), rad, m);
+                for (int k = 0; k < 4; k++) {
+                    double a = k * Math.PI / 2 + st;
+                    arc(sl, boss, new Vec3(Math.cos(a), 0, Math.sin(a)), rad, 0, rgb);
+                }
+                ring(sl, boss.position(), rad, pt);
+                boss.playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 3f, 0.6f + st * 0.2f);
+                if (st < 2) {
+                    if (r.target != null && r.target.isAlive()) {
+                        Vec3 d = r.target.position().subtract(boss.position()).multiply(1, 0, 1);
+                        if (d.lengthSqr() > 4) { Vec3 v = d.normalize().scale(1.3); boss.setDeltaMovement(v.x, 0.25, v.z); boss.hurtMarked = true; }
+                    }
+                    Fx.telegraphCircle(sl, null, boss.position(), (float) rad, SPIN_GAP, rgb);
+                    return SPIN_GAP;
+                }
+                return 0;
+            }
+            case NOVA -> {
+                double outer = m.radius() * (st + 1) / 3.0, inner = Math.max(0, outer - m.radius() / 3.0);
+                for (Player p : sl.getEntitiesOfClass(Player.class, new AABB(r.center, r.center).inflate(outer, 3, outer))) {
+                    if (p.isSpectator() || !p.isAlive() || !p.onGround()) continue;
+                    double d2 = p.position().multiply(1, 0, 1).distanceToSqr(r.center.multiply(1, 0, 1));
+                    if (d2 > outer * outer || d2 < inner * inner) continue;
+                    hit(sl, boss, pb, p, m);
+                }
+                Fx.groundRing(sl, null, r.center, (float) outer, rgb, 14);
+                ring(sl, r.center, outer, pt);
+                Fx.shake(sl, r.center, 1.5f, 10, 30f);
+                boss.playSound(SoundEvents.WARDEN_SONIC_BOOM, 1.5f, 0.7f + st * 0.2f);
+                return st < 2 ? NOVA_GAP : 0;
+            }
+            case SKY_SWORD -> {
+                Vec3 s = r.spots.isEmpty() ? boss.position() : r.spots.get(0);
+                hurtIn(sl, boss, pb, s, m.radius(), m);
+                Fx.groundCrack(sl, null, s, (float) m.radius() * 1.2f, rgb, 14, 60);
+                Fx.rift(sl, null, s, r.aim.scale(m.radius() * 1.5), 2.5f, rgb, 50);
+                Fx.shake(sl, s, 4f, 30, 60f);
+                sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, s.x, s.y + 1, s.z, 2, 1, 0.2, 1, 0);
+                sl.sendParticles(pt, s.x, s.y + 2, s.z, 80, m.radius() * 0.5, 2, m.radius() * 0.5, 0.15);
+                boss.playSound(SoundEvents.LIGHTNING_BOLT_THUNDER, 3f, 0.6f);
+                boss.playSound(SoundEvents.GENERIC_EXPLODE.value(), 3f, 0.5f);
+                return 0;
+            }
+            default -> { fire(sl, boss, pb, r); return 0; }
+        }
+    }
+
+    /** Vệt kiếm khí lưỡi liềm quét từ thân boss theo hướng dir. */
+    private static void arc(ServerLevel sl, Mob boss, Vec3 dir, double rad, double roll, int rgb) {
+        Fx.qi(sl, boss.position().add(0, boss.getBbHeight() * 0.45, 0), dir.scale(rad * 0.8), (float) (rad * 0.6), rgb, roll, 10);
+    }
+
+    /** Trúng người chơi trong hình quạt trước mặt. */
+    private static void cone(ServerLevel sl, Mob boss, PhasedBoss pb, Vec3 c, Vec3 aim, double rad, double halfDeg, Move m, double mul) {
+        double cos = Math.cos(Math.toRadians(halfDeg));
+        for (Player p : sl.getEntitiesOfClass(Player.class, new AABB(c, c).inflate(rad, 3, rad))) {
+            if (p.isSpectator() || !p.isAlive()) continue;
+            Vec3 rel = p.position().subtract(c).multiply(1, 0, 1);
+            double d = rel.length();
+            if (d > rad || (d > 1.2 && rel.normalize().dot(aim) < cos)) continue;
+            p.hurt(boss.damageSources().mobAttack(boss), pb.moveDamage(m.dmg() * mul));
+            applyHit(p, m.hit());
+        }
     }
 
     // ------------------------------------------------------------------ nổ

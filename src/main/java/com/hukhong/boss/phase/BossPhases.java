@@ -80,14 +80,23 @@ public final class BossPhases {
         return new Phase(1, 1f, 1f, 0, 0, List.of(), List.of(), List.of(), EnumSet.noneOf(ArenaEffect.class), null, 1f);
     }
 
+    /** Pha 2: 2 chiêu riêng + chém liên hoàn + nhảy đập (bộ chiêu kiểu Elden Ring dùng chung, màu theo boss). */
     private static Phase p2(String id, double size, int lines, Set<ArenaEffect> arena, String music, Move a, Move b) {
         return new Phase(2, P2_BELOW, 1.25f, P2_TICKS, 45, camReveal(P2_TICKS, 45, size * 1.25), subs(id, 2, lines, P2_TICKS),
-                List.of(a, b), arena, music, 0.85f);
+                List.of(a, b,
+                        m("er_combo", Shape.COMBO, a.pal(), 5.5 + size * 0.4, 0.8, 26, a.hit(), false),
+                        m("er_leap", Shape.LEAP, a.pal(), 4.5, 1.2, 34, Hit.KNOCK_UP, false)),
+                arena, music, 0.85f);
     }
 
+    /** Pha 3: tối thượng riêng + xoay chém + sóng 3 lớp + thiên kiếm giáng (tối thượng, có cutscene). */
     private static Phase p3(String id, double size, int lines, Set<ArenaEffect> arena, String music, Move ult) {
         return new Phase(3, P3_BELOW, 1.5f, P3_TICKS, 55, camCrescendo(P3_TICKS, 55, size * 1.5), subs(id, 3, lines, P3_TICKS),
-                List.of(ult), arena, music, 0.7f);
+                List.of(ult,
+                        m("er_spin", Shape.SPIN, ult.pal(), 6.5, 0.7, 30, ult.hit(), false),
+                        m("er_nova", Shape.NOVA, ult.pal(), 18, 0.9, 36, ult.hit(), false),
+                        m("er_sky_sword", Shape.SKY_SWORD, ult.pal(), 6, 2.4, 84, Hit.KNOCK_UP, true)),
+                arena, music, 0.7f);
     }
 
     private static Set<ArenaEffect> fx(ArenaEffect... e) {

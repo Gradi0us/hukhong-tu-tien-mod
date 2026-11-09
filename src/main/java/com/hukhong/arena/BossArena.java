@@ -70,6 +70,7 @@ public final class BossArena {
         final Set<UUID> engaged = new HashSet<>();
         final Map<Long, BlockState> snapshot = new HashMap<>();
         int closeIn = -1;  // dem nguoc don san sau khi boss chet
+        boolean started;   // da co nguoi kich hoat tran -> moi nguoi trong PULL_RANGE bi keo vao
 
         Arena(ServerLevel level, Mob boss, double cx, double cz, int radius, int floorY) {
             this.level = level; this.boss = boss; this.cx = cx; this.cz = cz; this.radius = radius; this.floorY = floorY;
@@ -78,6 +79,32 @@ public final class BossArena {
 
     private static final List<Arena> ARENAS = new ArrayList<>();
     private static final int CLEAN_DELAY = 20 * 20;
+    /** Khi tran bat dau, moi nguoi choi trong pham vi nay quanh tam bi keo vao vung cam. */
+    public static final double PULL_RANGE = 40;
+
+    /** Kich hoat tran (cutscene mo man / nguoi dau tien buoc vao): keo moi nguoi choi trong PULL_RANGE vao trong vanh. */
+    public static void startFight(Mob boss) {
+        for (Arena a : ARENAS) if (a.boss == boss) pullAll(a);
+    }
+
+    private static void pullAll(Arena a) {
+        a.started = true;
+        double r = a.radius;
+        for (ServerPlayer p : a.level.players()) {
+            if (p.isCreative() || p.isSpectator() || !p.isAlive()) continue;
+            double dx = p.getX() - a.cx, dz = p.getZ() - a.cz, d = Math.hypot(dx, dz);
+            if (d > PULL_RANGE || Math.abs(p.getY() - a.floorY) > 32) continue;
+            a.engaged.add(p.getUUID());
+            if (d > r - 2) {
+                double k = d < 1e-3 ? 0 : (r - 3) / d;
+                double x = a.cx + dx * k, z = a.cz + dz * k;
+                int y = a.level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(x), (int) Math.floor(z));
+                p.teleportTo(x, Math.max(y, a.floorY + 1), z);
+                a.level.sendParticles(ParticleTypes.REVERSE_PORTAL, x, y + 1, z, 30, 0.4, 1, 0.4, 0.1);
+            }
+            p.displayClientMessage(net.minecraft.network.chat.Component.translatable("hukhong.arena.pulled"), true);
+        }
+    }
 
     // ------------------------------------------------------------------ public API
     /**
@@ -192,6 +219,7 @@ public final class BossArena {
             if (p.isCreative() || p.isSpectator() || !p.isAlive()) { a.engaged.remove(p.getUUID()); continue; }
             double dx = p.getX() - a.cx, dz = p.getZ() - a.cz, d = Math.hypot(dx, dz);
             if (d < r - 1 && Math.abs(p.getY() - a.floorY) < 24) {
+                if (!a.started) pullAll(a);  // nguoi dau tien buoc vao -> keo ca nhom
                 a.engaged.add(p.getUUID());
             } else if (d > r && a.engaged.contains(p.getUUID())) {
                 if (d > r + 4) {  // da qua xa (ender pearl, ...): dua ve trong vanh

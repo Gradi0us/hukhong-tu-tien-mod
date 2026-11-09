@@ -92,14 +92,14 @@ public final class HvFormGameTests {
         h.runAfterDelay(150, () -> {
             if (b.phase() != 2 || b.director().transitioning()) h.fail(f + ": phai o pha 2 (pha=" + b.phase() + ")");
             if (Math.abs(b.director().currentScale() - 1.25f) > 0.02f) h.fail(f + ": scale pha 2 = " + b.director().currentScale());
-            if (b.movesForPhase(2).size() != 2) h.fail(f + ": pha 2 phai co 2 chieu phase");
+            if (b.movesForPhase(2).size() != 4) h.fail(f + ": pha 2 phai co 4 chieu phase");
             if (b.form().skills(2).isEmpty()) h.fail(f + ": khong co chieu rieng pha 2");
             b.setHealth(b.getMaxHealth() * 0.25f);
         });
         h.runAfterDelay(320, () -> {
             boolean ok = b.phase() == 3 && !b.director().transitioning() && Math.abs(b.director().currentScale() - 1.5f) < 0.02f;
             int ph = b.phase();
-            boolean ult = b.movesForPhase(3).size() == 3 && b.movesForPhase(3).get(2).ultimate();
+            boolean ult = b.movesForPhase(3).size() == 8 && b.movesForPhase(3).get(4).ultimate();
             b.discard();
             if (!ok) h.fail(f + ": phai o pha 3, scale 1.5 (pha=" + ph + ")");
             if (!ult) h.fail(f + ": pha 3 phai co chieu toi thuong");
@@ -176,9 +176,9 @@ public final class HvFormGameTests {
         for (HvForm f : HvForm.values()) {
             if (!BossPhases.has(f.phaseId())) h.fail("thieu cau hinh pha " + f.phaseId());
             var cfg = BossPhases.get(f.phaseId());
-            if (cfg.movesUpTo(2).size() != 2) h.fail(f + ": pha 2 them 2 chieu");
+            if (cfg.movesUpTo(2).size() != 4) h.fail(f + ": pha 2 them 4 chieu");
             List<com.hukhong.boss.phase.BossPhaseConfig.Move> m3 = cfg.movesUpTo(3);
-            if (m3.size() != 3 || !m3.get(2).ultimate()) h.fail(f + ": pha 3 them 1 chieu toi thuong");
+            if (m3.size() != 8 || !m3.get(4).ultimate()) h.fail(f + ": pha 3 them 1 chieu toi thuong");
             if (f.allSkills().size() < 3 || f.skills(1).size() < 2) h.fail(f + ": 2-3 chieu rieng");
             if (f.multiFace() && f.allSkills().size() != 9) h.fail("Thien Dien: 3 mat x 3 chieu");
             if (!names.add(f.vi)) h.fail("trung ten dang " + f.vi);

@@ -92,6 +92,7 @@ public final class BossPhaseDirector {
     public void startIntro(ServerLevel sl) {
         boss.addTag(INTRO_TAG);
         intro = INTRO_TICKS;
+        com.hukhong.arena.BossArena.startFight(boss);
         pb.cancelSkill();
         boss.getNavigation().stop();
         boss.playSound(SoundEvents.WARDEN_EMERGE, 3f, 0.7f);
@@ -206,7 +207,8 @@ public final class BossPhaseDirector {
         if (run != null) {
             PhaseMoves.tick(sl, boss, run);
             if (--run.left <= 0) {
-                PhaseMoves.fire(sl, boss, pb, run);
+                int next = PhaseMoves.fireStage(sl, boss, pb, run);
+                if (next > 0) { run.left = next; return; }
                 run = null;
                 moveCd = BossBuff.cd(pb.currentPhase() >= 3 ? 150 : 190);
             }
@@ -235,6 +237,21 @@ public final class BossPhaseDirector {
         if (trans > 0) return;
         run = PhaseMoves.begin(sl, boss, m, target);
         pb.playMoveAnim(m.ultimate());
+        if (m.ultimate()) moveCutscene(sl, m);
+    }
+
+    public static final int MOVE_CUT_TICKS = 44;
+
+    /** Cutscene ngắn khi boss tung chiêu tối thượng: camera lia cận boss đang gồng + tên chiêu. */
+    private void moveCutscene(ServerLevel sl, Move m) {
+        double s = Math.max(1.0, cfg().size() * currentScale() * 0.5);
+        int T = MOVE_CUT_TICKS;
+        List<CamPath.Key> cam = List.of(
+                new CamPath.Key(0, (float) (1.8 * s), (float) (0.3 * s), (float) (2.2 * s), 0, -4, 60, (float) (0.7 * s)),
+                new CamPath.Key(T / 2, (float) (-0.8 * s), (float) (0.5 * s), (float) (1.4 * s), 0, 0, 45, (float) (0.8 * s)),
+                new CamPath.Key(T, 0, (float) (1.2 * s), (float) (3.4 * s), 0, 6, 72, (float) (0.6 * s)));
+        sendCutscene(sl, boss, T, cam, List.of(new BossPhaseConfig.SubLine(2, T - 2, "hukhong.boss.move." + m.id())));
+        Fx.shake(sl, boss.position(), 1.5f, T, 40f);
     }
 
     public Move moveById(String id) {

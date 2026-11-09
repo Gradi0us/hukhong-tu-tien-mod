@@ -3233,5 +3233,11 @@
   "hukhong.configuration.discord": "Discord presence",
   "hukhong.configuration.discordAppId": "Discord Application ID",
   "hukhong.yeu_thu.king_prefix": "[Demon King] ",
-  "hukhong.cal.yeu_vuong.appear": "The ground trembles... %s has emerged!"
+  "hukhong.cal.yeu_vuong.appear": "The ground trembles... %s has emerged!",
+  "hukhong.arena.pulled": "You have been pulled into the boss fight — you cannot leave until the boss falls!",
+  "hukhong.boss.move.er_combo": "Triple Chain Slash",
+  "hukhong.boss.move.er_leap": "Heaven-Fall Strike",
+  "hukhong.boss.move.er_spin": "Whirling Gale Dance",
+  "hukhong.boss.move.er_nova": "Threefold Wave",
+  "hukhong.boss.move.er_sky_sword": "Heavenly Sword Descent"
 }

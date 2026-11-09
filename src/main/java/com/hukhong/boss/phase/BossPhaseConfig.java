@@ -31,7 +31,17 @@ public final class BossPhaseConfig {
         /** Tối thượng: hút vào tâm trong lúc gồng, rồi nổ cả vòng; chạy ra ngoài vòng cảnh báo. */
         PULL_BURST,
         /** Tối thượng: vòng nhẫn nguy hiểm, an toàn ở tâm và ngoài rìa. */
-        DONUT
+        DONUT,
+        /** Chém liên hoàn 3 nhát hình quạt, nhịp 2 trễ (kiểu Margit/Godrick); mỗi nhát quay theo mục tiêu. */
+        COMBO,
+        /** Nhảy vọt lên rồi đập xuống chỗ mục tiêu (vòng cảnh báo tại điểm rơi). */
+        LEAP,
+        /** Xoay chém quanh thân 3 vòng, lướt về phía mục tiêu giữa các vòng (kiểu Waterfowl). */
+        SPIN,
+        /** 3 lớp sóng nở dần từ boss; mỗi lớp trúng người đứng đất trong dải - nhảy đúng nhịp để né. */
+        NOVA,
+        /** Tối thượng: thanh kiếm khổng lồ từ trời giáng xuống mục tiêu, nổ lớn + vết nứt. */
+        SKY_SWORD
     }
 
     public enum Hit { NONE, KNOCK_UP, SLOW, BLIND, WEAK, POISON, FREEZE, NAUSEA }

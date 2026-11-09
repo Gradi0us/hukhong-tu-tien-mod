@@ -54,9 +54,9 @@ public final class BossPhaseGameTests {
             if (!BossPhases.has(id)) h.fail("thieu cau hinh pha cho " + id);
             BossPhaseConfig.Config c = BossPhases.get(id);
             if (!c.movesUpTo(1).isEmpty()) h.fail(id + ": pha 1 khong duoc co chieu phase");
-            if (c.movesUpTo(2).size() != 2) h.fail(id + ": pha 2 phai them dung 2 chieu");
+            if (c.movesUpTo(2).size() != 4) h.fail(id + ": pha 2 phai them dung 4 chieu");
             List<Move> p3 = c.movesUpTo(3);
-            if (p3.size() != 3 || !p3.get(2).ultimate() || p3.get(2).windup() < 80) h.fail(id + ": pha 3 phai them 1 chieu toi thuong co vong canh bao");
+            if (p3.size() != 8 || !p3.get(4).ultimate() || p3.get(4).windup() < 80) h.fail(id + ": pha 3 phai co chieu toi thuong co vong canh bao");
         }
         h.succeed();
     }
@@ -120,7 +120,7 @@ public final class BossPhaseGameTests {
         WorldBoss b = spawn(h);
         PhasedBoss pb = b;
         if (!pb.movesForPhase(1).isEmpty()) h.fail("pha 1 khong co chieu phase");
-        if (pb.movesForPhase(2).size() != 2 || pb.movesForPhase(3).size() != 3) h.fail("so chieu theo pha sai");
+        if (pb.movesForPhase(2).size() != 4 || pb.movesForPhase(3).size() != 8) h.fail("so chieu theo pha sai");
         h.onEachTick(() -> { if (b.isAlive()) b.setTarget(p); });
         AtomicInteger p1Runs = new AtomicInteger(), p2Runs = new AtomicInteger();
         h.onEachTick(() -> {

@@ -3233,5 +3233,11 @@
   "hukhong.configuration.discord": "Trạng thái Discord",
   "hukhong.configuration.discordAppId": "Discord Application ID",
   "hukhong.yeu_thu.king_prefix": "[Yêu Vương] ",
-  "hukhong.cal.yeu_vuong.appear": "Mặt đất rung chuyển... %s đã xuất sơn!"
+  "hukhong.cal.yeu_vuong.appear": "Mặt đất rung chuyển... %s đã xuất sơn!",
+  "hukhong.arena.pulled": "Bạn đã bị kéo vào trận chiến với boss — không thể rời vùng cấm cho tới khi boss ngã!",
+  "hukhong.boss.move.er_combo": "Tam Liên Trảm",
+  "hukhong.boss.move.er_leap": "Thiên Giáng Kích",
+  "hukhong.boss.move.er_spin": "Hồi Toàn Phong Vũ",
+  "hukhong.boss.move.er_nova": "Tam Trùng Ba Diệt",
+  "hukhong.boss.move.er_sky_sword": "Thiên Kiếm Giáng Thế"
 }

@@ -34,11 +34,11 @@ class BossPhasesTest {
             Config c = BossPhases.get(id);
             assertEquals(0, c.movesUpTo(1).size(), id);
             List<Move> p2 = c.movesUpTo(2);
-            assertEquals(2, p2.size(), id);
+            assertEquals(4, p2.size(), id);
             for (Move m : p2) assertTrue(!m.ultimate(), id + ":" + m.id());
             List<Move> p3 = c.movesUpTo(3);
-            assertEquals(3, p3.size(), id);
-            Move ult = p3.get(2);
+            assertEquals(8, p3.size(), id);
+            Move ult = p3.get(4);
             assertTrue(ult.ultimate(), id);
             assertTrue(ult.windup() >= 80 && ult.radius() >= 15, id + " ultimate phai co vong canh bao lon + gong lau");
         }
