@@ -34,7 +34,6 @@ public final class ChgService {
         b.initScaling(sl);
         b.beginDescent();
         sl.addFreshEntity(b);
-        ChgSavedData.get(sl).markSpawn(idx, sl.getGameTime());
         for (ServerPlayer p : sl.players())
             if (p.distanceToSqr(b) < 160 * 160)
                 p.displayClientMessage(Component.translatable("hukhong.chg.descend", Component.translatable("entity.hukhong.chg_" + idx)), false);
@@ -99,8 +98,16 @@ public final class ChgService {
                     data.setBuilt(idx, y);
                 }
                 if (d2 > ChgKit.LAIR_TRIGGER_DIST * (double) ChgKit.LAIR_TRIGGER_DIST) continue;
-                if (!ChgKit.lairEligible(plv, idx) || alive(ow, idx)) continue;
+                if (!ChgKit.lairEligible(plv, idx)) continue;
+                // lastSpawn = lần bị hạ gần nhất: chỉ chờ hồi sinh sau khi đã hạ, không chặn khi boss xuất hiện ở chỗ khác
                 if (ow.getGameTime() - data.lastSpawn(idx) < ChgKit.LAIR_RESPAWN_TICKS) continue;
+                final int fi = idx;
+                if (alive(ow, idx)) {
+                    var far = ow.getEntities(net.minecraft.world.level.entity.EntityTypeTest.forClass(ChapHanhGia.class), e -> e.idx() == fi);
+                    boolean atLair = far.stream().anyMatch(e -> e.distanceToSqr(xz[0], e.getY(), xz[1]) < 64 * 64);
+                    if (atLair) continue;
+                    far.forEach(e -> e.discard()); // CHG lạc ở nơi khác -> về hang
+                }
                 descend(ow, new BlockPos(xz[0], data.floorY(idx) + 2, xz[1]), idx);
             }
         }

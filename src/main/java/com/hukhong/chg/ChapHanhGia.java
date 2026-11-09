@@ -452,6 +452,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
     @Override public void die(DamageSource src) {
         super.die(src);
         if (!(level() instanceof ServerLevel sl)) return;
+        ChgSavedData.get(sl.getServer().overworld()).markSpawn(idx, sl.getServer().overworld().getGameTime()); // mốc chờ hồi sinh ở hang
         int bit = ChgKit.defeatedBit(idx);
         for (ServerPlayer p : sl.players()) {
             if (p.distanceToSqr(this) > 128 * 128) continue;

@@ -28,7 +28,7 @@ public class ChgSavedData extends SavedData {
         ChgSavedData d = new ChgSavedData();
         int[] y = tag.getIntArray("floorY");
         for (int i = 0; i < Math.min(y.length, d.floorY.length); i++) d.floorY[i] = y[i];
-        long[] s = tag.getLongArray("lastSpawn"), e = tag.getLongArray("lastEvent");
+        long[] s = tag.getLongArray("lastKill"), e = tag.getLongArray("lastEvent");
         for (int i = 0; i < Math.min(s.length, d.lastSpawn.length); i++) d.lastSpawn[i] = s[i];
         for (int i = 0; i < Math.min(e.length, d.lastEvent.length); i++) d.lastEvent[i] = e[i];
         return d;
@@ -37,7 +37,7 @@ public class ChgSavedData extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider reg) {
         tag.putIntArray("floorY", floorY);
-        tag.putLongArray("lastSpawn", lastSpawn);
+        tag.putLongArray("lastKill", lastSpawn);
         tag.putLongArray("lastEvent", lastEvent);
         return tag;
     }
