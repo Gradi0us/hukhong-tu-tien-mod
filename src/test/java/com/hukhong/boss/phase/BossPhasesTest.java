@@ -60,10 +60,16 @@ class BossPhasesTest {
                 assertEquals(ph.transition(), ph.cam().get(ph.cam().size() - 1).t(), id);
                 for (var s : ph.subs()) {
                     assertTrue(s.from() < s.to() && s.to() <= ph.transition(), id + " phu de trong khung cutscene");
-                    assertTrue(s.key().startsWith("hukhong.boss.sub." + id + "." + p + "."), s.key());
+                    // Da Khuyet dung khoa thoai rieng hukhong.dialog.dakhuyet.p<pha>.*
+                    String pre = id.equals("da_khuyet") ? "hukhong.dialog.dakhuyet.p" + p + "." : "hukhong.boss.sub." + id + "." + p + ".";
+                    assertTrue(s.key().startsWith(pre), s.key());
                 }
             }
         }
+    }
+
+    @Test void da_khuyet_has_own_moves_not_generic() {
+        for (Move m : BossPhases.get("da_khuyet").movesUpTo(3)) assertTrue(m.id().startsWith("dk_"), m.id());
     }
 
     @Test void arena_effects_accumulate() {

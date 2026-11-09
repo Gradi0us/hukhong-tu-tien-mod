@@ -46,7 +46,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final ServerBossEvent bar = new ServerBossEvent(com.hukhong.entity.BossLevel.tag(Component.translatable("entity.hukhong.da_khuyet"), EndgameKit.BOSS_LEVEL),
             BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.PROGRESS);
-    private int skillCd = 80, windup, pending = -1;
+    private int skillCd = 80;
     private final com.hukhong.boss.phase.BossPhaseDirector director = new com.hukhong.boss.phase.BossPhaseDirector(this);
 
     public DaKhuyet(EntityType<? extends Monster> t, Level l) {
@@ -100,10 +100,17 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
     @Override public void applyPhase(ServerLevel sl, int ph) {
         bar.setColor(ph == 1 ? BossEvent.BossBarColor.BLUE : ph == 2 ? BossEvent.BossBarColor.PURPLE : BossEvent.BossBarColor.RED);
+        if (director != null && director.transitioning()) DaKhuyetMoves.transformFx(sl, this, ph); // chỉ lúc lộ diện, không khi nạp save
     }
-    @Override public boolean idleForMove() { return pending < 0; }
-    @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; }
-    @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "skill_b" : "skill_a"); }
+    @Override public boolean startOwnMove(ServerLevel sl, com.hukhong.boss.phase.BossPhaseConfig.Move m, LivingEntity target) {
+        if (ally || !DaKhuyetMoves.handles(m.id())) return false;
+        return startMove(sl, m.id(), target);
+    }
+    @Override public java.util.List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) { return DaKhuyetMoves.introCam(T); }
+    @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) { return DaKhuyetMoves.introSubs(T); }
+    @Override public boolean idleForMove() { return mv == null; }
+    @Override public void cancelSkill() { endMove(); skillCd = 40; }
+    @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "rise" : "skill_a"); }
     @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
 
     @Override public boolean hurt(DamageSource src, float amt) {
@@ -129,7 +136,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override public Component getDisplayName() { if (avatar()) return super.getDisplayName(); return com.hukhong.entity.BossLevel.tag(super.getDisplayName(), EndgameKit.BOSS_LEVEL); }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
-    @Override public boolean isImmobile() { return super.isImmobile() || windup > 0 || (director != null && director.frozen()); }
+    @Override public boolean isImmobile() { return super.isImmobile() || mv != null || (director != null && director.frozen()); }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); if (!avatar() && !ally) bar.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
@@ -142,6 +149,8 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     /** Xuất hiện: thoại + title cho người chơi quanh đó. */
     public void begin(ServerLevel sl, NguyenThuyTichDiet boss) {
         setHealth(getMaxHealth());
+        endMove();
+        pools.clear();
         ally = true;
         allyIntro = ALLY_INTRO_TICKS;
         bar.removeAllPlayers();
@@ -235,21 +244,69 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     /** Sau khi boss ngã: dừng đánh, đứng yên cho cutscene kết. */
     public void standDown() { allyIntro = Integer.MAX_VALUE; setTarget(null); }
 
-    /** isImmobile() (windup > 0) làm LivingEntity.aiStep bỏ qua customServerAiStep => windup phải giảm ở tick(). */
-    @Override public void tick() {
-        super.tick();
-        if (level() instanceof ServerLevel sl0 && isAlive() && !avatar() && !ally) director.tick(sl0);
-        if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
+    // ================================================================ chiến đấu kiểu Malenia (xem DaKhuyetMoves)
+    /** Chiêu đang thi triển (id trong BossPhases "da_khuyet" hoặc dk_dem_khuyet), null = rảnh. */
+    String mv;
+    int mt, stage;
+    net.minecraft.world.phys.Vec3 aim = new net.minecraft.world.phys.Vec3(0, 0, 1), spot, from, to;
+    LivingEntity mTarget;
+    final java.util.Set<java.util.UUID> hitOnce = new java.util.HashSet<>();
+    /** Vũng máu (Huyết Nguyệt Khai Hoa / Thủy Điểu Vũ máu): gây sát thương theo nhịp tới khi cạn. */
+    final java.util.List<DaKhuyetMoves.Pool> pools = new java.util.ArrayList<>();
+    int aeoniaCd = 400;
+    /** Hồi máu = LIFESTEAL x sát thương mỗi khi đòn của Dạ Khuyết trúng (như Malenia). */
+    public static final float LIFESTEAL = 1.5f;
+
+    public String currentMove() { return mv; }
+    public int moveTick() { return mt; }
+    public int poolCount() { return pools.size(); }
+
+    /** Bắt đầu chiêu riêng; false nếu đang bận. */
+    public boolean startMove(ServerLevel sl, String id, LivingEntity target) {
+        if (mv != null || !isAlive()) return false;
+        mv = id; mt = 0; stage = 0; mTarget = target; spot = null; from = null; to = null;
+        hitOnce.clear();
+        getNavigation().stop();
+        DaKhuyetMoves.begin(sl, this);
+        return true;
     }
 
-    private void stepWindup(ServerLevel sl) {
-        getNavigation().stop();
-        if (windup % 4 == 0) sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 6, 3, 1.5, 3, 0.02);
-        if (--windup <= 0) {
-            fire(sl, pending);
-            pending = -1;
-            skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(110) * cdMul());
+    void endMove() {
+        if (mv == null) return;
+        mv = null; mTarget = null;
+        setNoGravity(false);
+    }
+
+    /** Đòn của Dạ Khuyết trúng người chơi: sát thương + hồi máu (lifesteal) + hiệu ứng hút máu. */
+    public boolean strike(LivingEntity p, float dmg) {
+        boolean ok = p.hurt(damageSources().mobAttack(this), dmg);
+        if (ok && !ally) {
+            heal(dmg * LIFESTEAL);
+            if (level() instanceof ServerLevel sl) DaKhuyetMoves.drainFx(sl, this, p);
         }
+        return ok;
+    }
+
+    @Override public boolean doHurtTarget(net.minecraft.world.entity.Entity e) {
+        float before = e instanceof LivingEntity le ? le.getHealth() : 0;
+        boolean ok = super.doHurtTarget(e);
+        if (ok && !ally && e instanceof LivingEntity le) {
+            heal(Math.max(0, before - le.getHealth()) * LIFESTEAL);
+            if (level() instanceof ServerLevel sl) DaKhuyetMoves.drainFx(sl, this, le);
+        }
+        return ok;
+    }
+
+    /** isImmobile() (mv != null) làm LivingEntity.aiStep bỏ qua customServerAiStep => chiêu phải chạy ở tick(). */
+    @Override public void tick() {
+        super.tick();
+        if (!(level() instanceof ServerLevel sl) || !isAlive()) return;
+        if (!avatar() && !ally) director.tick(sl);
+        if (mv != null) {
+            if (ally || director.transitioning()) endMove();
+            else if (!DaKhuyetMoves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(70) * cdMul()); }
+        }
+        if (!pools.isEmpty()) DaKhuyetMoves.tickPools(sl, this);
     }
 
     @Override protected void customServerAiStep() {
@@ -257,54 +314,22 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         ServerLevel sl = (ServerLevel) level();
         if (ally) { allyStep(sl); return; }
         bar.setProgress(getHealth() / getMaxHealth());
-        if (pending >= 0) { stepWindup(sl); return; }
+        if (aeoniaCd > 0) aeoniaCd--;
+        if (mv != null || (director != null && director.frozen())) return;
         if (skillCd > 0) { skillCd--; return; }
         LivingEntity t = getTarget();
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
-        boolean ph2 = phase() >= 2;  // pha 2: them Mua Manh Khuyet
-        pending = ph2 && random.nextInt(3) == 0 ? 2 : random.nextInt(3) == 0 ? 1 : 0;
-        windup = pending == 0 ? 35 : pending == 1 ? 45 : 40;
-        triggerAnim("skill", pending == 1 ? "skill_b" : "skill_a");
-        playSound(SoundEvents.AMETHYST_BLOCK_RESONATE, 2f, 0.5f);
+        String id = DaKhuyetMoves.pick(random, phase(), aeoniaCd <= 0 && !avatar(), distanceTo(t));
+        if (id.equals("dk_huyet_hoa")) aeoniaCd = 900;
+        startMove(sl, id, t);
     }
-
-    private void fire(ServerLevel sl, int skill) {
-        if (skill == 2) {  // Mua Manh Khuyet (pha 2): vong nuoc bot doc + soc nhe
-            net.minecraft.world.phys.Vec3 from = position().add(0, 1.8, 0);
-            for (int i = 0; i < 10; i++) {
-                double a = i * Math.PI * 2 / 10;
-                com.hukhong.entity.PoisonSpit.launchDir(this, from, new net.minecraft.world.phys.Vec3(Math.cos(a), 0.2, Math.sin(a)),
-                        (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.5), 3.0, 1.0f);
-            }
-            sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 50, 3, 1, 3, 0.1);
-            playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.5f, 1.0f);
-            return;
-        }
-        if (skill == 0) {  // Đêm Khuyết
-            double dmg = getAttributeValue(Attributes.ATTACK_DAMAGE) * 0.8;
-            for (Player p : sl.getEntitiesOfClass(Player.class, getBoundingBox().inflate(10, 3, 10))) {
-                if (p.isSpectator() || p.distanceToSqr(this) > 100) continue;
-                p.hurt(damageSources().mobAttack(this), (float) dmg);
-                p.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 80, 0));
-                p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1));
-            }
-            sl.sendParticles(ParticleTypes.SQUID_INK, getX(), getY() + 1, getZ(), 60, 4, 1.5, 4, 0.05);
-            sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 2, getZ(), 30, 4, 1, 4, 0.05);
-        } else {  // Dịch Lời: hồi 3% cho boss chính
-            for (NguyenThuyTichDiet b : sl.getEntitiesOfClass(NguyenThuyTichDiet.class, getBoundingBox().inflate(60))) {
-                b.heal(b.getMaxHealth() * 0.03f);
-                sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, b.getX(), b.getY() + 3, b.getZ(), 30, 1.5, 2, 1.5, 0.1);
-            }
-            sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 1.5, getZ(), 30, 1, 1.5, 1, 0.1);
-        }
-        playSound(SoundEvents.GENERIC_EXPLODE.value(), 1.5f, 1.4f);
-    }
-
     @Override public void die(DamageSource src) {
         super.die(src);
         if (!(level() instanceof ServerLevel sl) || avatar()) return;
         for (ServerPlayer p : sl.players())
             if (p.distanceToSqr(this) < 100 * 100) p.displayClientMessage(Component.translatable("hukhong.endgame.dakhuyet.fall"), false);
+        pools.clear();
+        if (!ally) DaKhuyetMoves.deathScene(sl, this);
     }
 
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recentlyHit) {
@@ -318,7 +343,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         c.add(new AnimationController<>(this, "move", 4, s -> s.setAndContinue(s.isMoving()
                 ? RawAnimation.begin().thenLoop(n + "walk") : RawAnimation.begin().thenLoop(n + "idle"))));
         AnimationController<DaKhuyet> sk = new AnimationController<>(this, "skill", 0, s -> PlayState.STOP);
-        for (String a : new String[]{"attack", "skill_a", "skill_b"})
+        for (String a : new String[]{"attack", "skill_a", "skill_b", "skill_c", "phase", "thrust", "flurry", "rise", "dive"})
             sk.triggerableAnim(a, RawAnimation.begin().then(n + a, Animation.LoopType.PLAY_ONCE));
         c.add(sk);
     }

@@ -97,7 +97,10 @@ public final class BossPhaseDirector {
         boss.getNavigation().stop();
         boss.playSound(SoundEvents.WARDEN_EMERGE, 3f, 0.7f);
         double s = Math.max(1.0, cfg().size());
-        sendCutscene(sl, boss, INTRO_TICKS, introCam(INTRO_TICKS, s), introSubs(boss.getType().getDescriptionId(), pb.phaseId(), INTRO_TICKS));
+        List<CamPath.Key> cam = pb.introCamera(INTRO_TICKS);
+        List<BossPhaseConfig.SubLine> subs = pb.introLines(INTRO_TICKS);
+        sendCutscene(sl, boss, INTRO_TICKS, cam != null ? cam : introCam(INTRO_TICKS, s),
+                subs != null ? subs : introSubs(boss.getType().getDescriptionId(), pb.phaseId(), INTRO_TICKS));
     }
 
     private void tickIntro(ServerLevel sl) {
@@ -235,6 +238,7 @@ public final class BossPhaseDirector {
     /** Thi triển một chiêu phase ngay (cũng dùng cho GameTest). */
     public void start(ServerLevel sl, Move m, LivingEntity target) {
         if (trans > 0) return;
+        if (pb.startOwnMove(sl, m, target)) { moveCd = BossBuff.cd(pb.currentPhase() >= 3 ? 150 : 190); return; }
         run = PhaseMoves.begin(sl, boss, m, target);
         pb.playMoveAnim(m.ultimate());
         if (m.ultimate()) moveCutscene(sl, m);
