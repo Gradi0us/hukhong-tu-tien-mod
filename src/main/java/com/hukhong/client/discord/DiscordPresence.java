@@ -35,7 +35,7 @@ public final class DiscordPresence {
     private DiscordPresence() {}
     private static final Logger LOG = LogUtils.getLogger();
     /** App ID mặc định của mod; config discordAppId (nếu điền) sẽ ghi đè. */
-    public static final String DEFAULT_APP_ID = "";
+    public static final String DEFAULT_APP_ID = "1569341706644488282";
 
     private static final long START = System.currentTimeMillis() / 1000;
     private static volatile String details = "Ở sảnh chính", state = "", smallKey = "", smallText = "";
