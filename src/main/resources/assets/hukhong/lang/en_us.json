@@ -3229,5 +3229,7 @@
   "hukhong.endgame.outro.dk.3": "The Void waits in silence. It is time to choose.",
   "core.hukhong.than_phap": "Myriad Arts Return to Origin",
   "core.hukhong.than_tran": "Heaven and Earth Grand Array",
-  "core.hukhong.than_dan": "Ninefold Pill God"
+  "core.hukhong.than_dan": "Ninefold Pill God",
+  "hukhong.configuration.discord": "Discord presence",
+  "hukhong.configuration.discordAppId": "Discord Application ID"
 }

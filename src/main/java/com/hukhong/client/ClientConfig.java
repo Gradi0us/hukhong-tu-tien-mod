@@ -79,6 +79,12 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue MINIMAP_MOBS = B
             .comment("Minimap: chấm đỏ quái thù địch gần, boss là đầu lâu to")
             .translation("hukhong.configuration.minimapMobs").define("minimapMobs", true);
+    public static final ModConfigSpec.BooleanValue DISCORD = B
+            .comment("Hiện trạng thái chơi (cảnh giới, đạo, boss) lên Discord")
+            .translation("hukhong.configuration.discord").define("discordPresence", true);
+    public static final ModConfigSpec.ConfigValue<String> DISCORD_APP_ID = B
+            .comment("Application ID của ứng dụng Discord (discord.com/developers)")
+            .translation("hukhong.configuration.discordAppId").define("discordAppId", "");
     public static final ModConfigSpec SPEC = B.build();
 
     public static boolean mobBars() { return !SPEC.isLoaded() || MOB_BARS.get(); }

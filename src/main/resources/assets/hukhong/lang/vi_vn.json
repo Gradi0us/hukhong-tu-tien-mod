@@ -3229,5 +3229,7 @@
   "hukhong.endgame.outro.dk.3": "Hư Không im lặng chờ đợi. Đến lúc ngươi chọn.",
   "core.hukhong.than_phap": "Vạn Pháp Quy Nguyên",
   "core.hukhong.than_tran": "Thiên Địa Đại Trận",
-  "core.hukhong.than_dan": "Cửu Chuyển Đan Thần"
+  "core.hukhong.than_dan": "Cửu Chuyển Đan Thần",
+  "hukhong.configuration.discord": "Trạng thái Discord",
+  "hukhong.configuration.discordAppId": "Discord Application ID"
 }
