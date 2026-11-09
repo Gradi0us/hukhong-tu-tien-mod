@@ -61,8 +61,8 @@ public final class DiscordPresence {
         if (mc.player == null) {
             d = "Ở sảnh chính";
         } else {
-            CultivationData c = mc.player.getData(ModAttachments.CULTIVATION);
-            d = I18n.get(Realm.langKey(c.level())) + " · Lv " + c.level();
+            CultivationData c = com.hukhong.client.ClientCache.cultivation(); // dữ liệu đồng bộ từ server (HUD dùng chung)
+            d = I18n.get(Realm.langKey(c.level())); // <10: Thường Dân, từ 10: cảnh giới
             if (bossName != null && System.currentTimeMillis() - bossSeen < 3000) s = "⚔ Đang đánh " + bossName;
             else s = mc.isSingleplayer() ? "Chơi đơn" : "Chơi trên server";
         }
