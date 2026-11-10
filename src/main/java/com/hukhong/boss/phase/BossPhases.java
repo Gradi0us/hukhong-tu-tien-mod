@@ -114,18 +114,6 @@ public final class BossPhases {
         // Hu Vuong (kieu Rykard + Godrick): bo chieu RIENG - HuVuong tu thi trien qua startOwnMove (HuVuongMoves).
         huVuong();
         // Yeu vuong sa mac
-        reg("sa_hat_vuong", Pal.SAND, 5.0,
-                p2("sa_hat_vuong", 5.0, 1, fx(ArenaEffect.CRACKED_FLOOR), null,
-                        m("cat_lun", Shape.PILLARS, Pal.SAND, 2.6, 1.0, 36, Hit.KNOCK_UP, false),
-                        m("duoi_doc", Shape.LINE, Pal.TOXIC, 16, 1.1, 30, Hit.POISON, false)),
-                p3("sa_hat_vuong", 5.0, 2, fx(ArenaEffect.PURPLE_SKY), "bicanh_boss",
-                        m("bao_cat", Shape.DONUT, Pal.SAND, 18, 2.2, 90, Hit.BLIND, true)));
-        reg("hu_vuong", Pal.VOID, 4.0,
-                p2("hu_vuong", 4.0, 2, fx(ArenaEffect.PURPLE_SKY, ArenaEffect.VOID_PILLARS), null,
-                        m("hu_tru", Shape.PILLARS, Pal.VOID, 2.4, 1.0, 40, Hit.KNOCK_UP, false),
-                        m("vo_anh_tram", Shape.LINE, Pal.VOID, 18, 1.1, 30, Hit.SLOW, false)),
-                p3("hu_vuong", 4.0, 3, fx(ArenaEffect.CRACKED_FLOOR), "tam_ma",
-                        m("hu_nuot_troi", Shape.PULL_BURST, Pal.VOID, 20, 2.6, 90, Hit.KNOCK_UP, true)));
         // Sa Hat Vuong (kieu Radahn, cat + trong luc): bo chieu RIENG - SaHatVuong tu thi trien qua startOwnMove (SaHatMoves).
         saHat();
         // Yeu vuong tuyet
