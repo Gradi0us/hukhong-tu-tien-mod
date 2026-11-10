@@ -72,6 +72,11 @@ public final class BossPhaseDirector {
 
     // ------------------------------------------------------------------ tick (server)
     public void tick(ServerLevel sl) {
+        tickDirector(sl);
+        com.hukhong.boss.ai.BossBrain.tickFor(sl, boss, pb); // brain tự nhường khi frozen()/chiêu riêng
+    }
+
+    private void tickDirector(ServerLevel sl) {
         if (!boss.isAlive()) return;
         if (!loaded) { loaded = true; if (pb.currentPhase() > 1) onLoad(sl); }
         if (intro > 0) { tickIntro(sl); return; }
@@ -218,7 +223,7 @@ public final class BossPhaseDirector {
             return;
         }
         if (moveCd > 0) { moveCd--; return; }
-        if (!pb.idleForMove()) return;
+        if (!pb.idleForMove() || com.hukhong.boss.ai.BossBrain.busy(boss)) return; // brain đang giữa chuỗi đòn
         List<Move> list = pb.movesForPhase(pb.currentPhase());
         if (list.isEmpty()) return;
         LivingEntity t = boss.getTarget();

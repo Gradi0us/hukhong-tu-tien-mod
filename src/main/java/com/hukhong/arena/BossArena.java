@@ -122,6 +122,12 @@ public final class BossArena {
         if (theme != null && !overlap && boss.tickCount < 40) build(a, theme, clearAbove);
     }
 
+    /** Vùng sân của boss: {cx, cz, radius}, hoặc null nếu boss không có đấu trường (dùng cho BossMovement giữ boss trong sân). */
+    public static double[] bounds(Mob boss) {
+        for (Arena a : ARENAS) if (a.boss == boss) return new double[]{a.cx, a.cz, a.radius};
+        return null;
+    }
+
     /** Người chơi đang bị nhốt trong một đấu trường boss còn sống (cấm xuyên tường). */
     public static boolean isEngaged(ServerPlayer p) {
         for (Arena a : ARENAS) if (a.engaged.contains(p.getUUID())) return true;

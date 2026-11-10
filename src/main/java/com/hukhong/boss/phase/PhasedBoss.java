@@ -57,4 +57,23 @@ public interface PhasedBoss {
 
     /** Hệ số rút ngắn hồi chiêu của kỹ năng cũ theo pha hiện tại (1, 0.85, 0.7). */
     default double cdMul() { return phaseConfig().phase(currentPhase()).cdMul(); }
+
+    // ------------------------------------------------------------------ Boss Combat Brain (boss/ai, PLAN-v1 §1)
+    /** Hồ sơ chiến đấu; khác null => {@link com.hukhong.boss.ai.BossBrain} điều khiển di chuyển + đòn thường giữa các chiêu lớn. */
+    default com.hukhong.boss.ai.BossProfile brainProfile() { return null; }
+
+    /** Boss đang thi triển chiêu riêng (brain nhường quyền). Mặc định = !idleForMove(). */
+    default boolean ownMoveActive() { return !idleForMove(); }
+
+    /** Brain xin chen một chiêu lớn riêng của boss giữa các chuỗi đòn; trả true nếu đã bắt đầu chiêu. */
+    default boolean brainBigMove(ServerLevel sl, net.minecraft.world.entity.LivingEntity target) { return false; }
+
+    /**
+     * Brain phát animation (strafe_l/r, backstep, sidestep_l/r, backflip, dash, leap, combo_&lt;id&gt;_&lt;n&gt;) trên controller
+     * {@link com.hukhong.boss.ai.BrainAnims#CONTROLLER}; boss đăng ký controller bằng {@link com.hukhong.boss.ai.BrainAnims#controller}
+     * (tên thiếu tự rơi về attack/walk). Boss không có controller đó thì lệnh bị bỏ qua.
+     */
+    default void playBrainAnim(String name) {
+        if (this instanceof software.bernie.geckolib.animatable.GeoEntity g) g.triggerAnim(com.hukhong.boss.ai.BrainAnims.CONTROLLER, name);
+    }
 }

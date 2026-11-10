@@ -67,6 +67,7 @@ public final class SkillService {
         if (slot < 0 || slot > 3 || !p.isAlive() || p.isSpectator()) return;
         SkillState st = state(p);
         if (!st.stance) return; // server chỉ nhận cast khi thế bật
+        if (p.level() instanceof net.minecraft.server.level.ServerLevel bl) com.hukhong.boss.ai.BossBrain.notifySkillCast(bl, p.position(), 12); // boss có brain có thể né
         if (com.hukhong.phaptu.beam.PhapBeamService.busy(p)) return; // đang nạp / sẵn sàng / bắn Tinh Hà Quang Trụ
         if (com.hukhong.phaptu.ThoTitan.interceptCast(p, slot)) return; // đang hợp thể trụ cấp 3: Q/R/T là kỹ năng trụ
         CultivationData d = p.getData(ModAttachments.CULTIVATION);
