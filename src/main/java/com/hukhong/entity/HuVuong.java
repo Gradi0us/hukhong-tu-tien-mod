@@ -61,8 +61,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.boss.phase.PhasedBoss {
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(HuVuong.class, EntityDataSerializers.INT);
-    private static final int WINDUP = 30;
-    private static final int SLAM = 1, SUMMON = 2, PULSE = 3, BARRAGE = 4;
     private static final ResourceLocation HP_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "boss_players_hp");
     private static final ResourceLocation DMG_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "boss_players_dmg");
     private static final ResourceLocation SPD_MOD = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "boss_enrage_speed");
@@ -70,7 +68,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final ServerBossEvent bar = new ServerBossEvent(BossLevel.tag(Component.translatable("entity.hukhong.hu_vuong"), 30),
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_10);
-    private int skillCd = 80, windup, pending, appliedPlayers = 1;
+    private int skillCd = 80, appliedPlayers = 1;
     private final com.hukhong.boss.phase.BossPhaseDirector director = new com.hukhong.boss.phase.BossPhaseDirector(this);
 
     public HuVuong(EntityType<? extends Monster> t, Level l) {
@@ -112,13 +110,21 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
     @Override public com.hukhong.boss.phase.BossPhaseDirector director() { return director; }
     @Override public int currentPhase() { return phase(); }
     @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
-    @Override public void applyPhase(ServerLevel sl, int ph) { applyPhaseEffects(ph); }
-    @Override public boolean idleForMove() { return pending == 0; }
-    @Override public void cancelSkill() { pending = 0; windup = 0; skillCd = 40; }
+    @Override public void applyPhase(ServerLevel sl, int ph) {
+        applyPhaseEffects(ph);
+        if (director != null && director.transitioning()) HuVuongMoves.transformFx(sl, this, ph); // chỉ lúc lộ diện
+    }
+    @Override public boolean startOwnMove(ServerLevel sl, com.hukhong.boss.phase.BossPhaseConfig.Move m, LivingEntity target) {
+        return HuVuongMoves.handles(m.id()) && startMove(sl, m.id(), target);
+    }
+    @Override public java.util.List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) { return HuVuongMoves.introCam(T); }
+    @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) { return HuVuongMoves.introSubs(T); }
+    @Override public boolean idleForMove() { return mv == null; }
+    @Override public void cancelSkill() { endMove(); skillCd = 40; }
     @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "roar" : "slam"); }
     @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
 
-    @Override public boolean isImmobile() { return super.isImmobile() || (director != null && director.frozen()); }
+    @Override public boolean isImmobile() { return super.isImmobile() || mv != null || (director != null && director.frozen()); }
 
     @Override public boolean hurt(DamageSource src, float amt) {
         if (director != null && director.invulnerable() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
@@ -127,7 +133,47 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
 
     @Override public void tick() {
         super.tick();
-        if (level() instanceof ServerLevel sl && isAlive()) director.tick(sl);
+        if (!(level() instanceof ServerLevel sl) || !isAlive()) return;
+        director.tick(sl);
+        if (mv != null) {
+            if (director.transitioning()) endMove();
+            else if (!HuVuongMoves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(phase() == 1 ? 90 : 70) * cdMul()); }
+        }
+        if (!pools.isEmpty()) HuVuongMoves.tickPools(sl, this);
+    }
+
+    // ------------------------------------------------------------ bộ chiêu riêng (HuVuongMoves, kiểu Rykard + Godrick)
+    /** Chiêu đang thi triển (id hvg_*), null = rảnh. */
+    String mv;
+    int mt, ultCd = 600;
+    Vec3 aim = new Vec3(0, 0, 1), spot, from;
+    LivingEntity mTarget;
+    final java.util.Set<java.util.UUID> hitOnce = new java.util.HashSet<>();
+    final java.util.List<Vec3> spots = new java.util.ArrayList<>();
+    final java.util.List<HuVuongMoves.Pool> pools = new java.util.ArrayList<>();
+
+    public String currentMove() { return mv; }
+    public int moveTick() { return mt; }
+
+    public boolean startMove(ServerLevel sl, String id, LivingEntity target) {
+        if (mv != null || !isAlive()) return false;
+        mv = id; mt = 0; mTarget = target; spot = null; from = null;
+        hitOnce.clear(); spots.clear();
+        getNavigation().stop();
+        HuVuongMoves.begin(sl, this);
+        return true;
+    }
+
+    void endMove() {
+        if (mv == null) return;
+        mv = null; mTarget = null;
+        setNoGravity(false);
+    }
+
+    boolean strike(LivingEntity p, float dmg) {
+        boolean ok = p.hurt(damageSources().mobAttack(this), dmg);
+        if (ok) HuSkill.hu(p, 80);
+        return ok;
     }
 
     @Override public boolean isPushable() { return false; }
@@ -178,89 +224,16 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
             sl.sendParticles(phase() == 3 ? ParticleTypes.SOUL_FIRE_FLAME : ModParticles.HU_KHONG.get(),
                     getX(), getY() + getBbHeight() * 0.5, getZ(), 6, 1.2, 1.2, 1.2, 0.02);
 
-        LivingEntity t = getTarget();
-        if (pending != 0) {
-            getNavigation().stop();
-            if (t != null) getLookControl().setLookAt(t, 30, 30);
-            if (windup % 2 == 0)
-                sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 0.2, getZ(), 10, radius(pending) * 0.35, 0.1, radius(pending) * 0.35, 0.0);
-            if (--windup <= 0) {
-                fire(sl, pending);
-                pending = 0;
-                skillCd = com.hukhong.events.BossBuff.cd(phase() == 1 ? 100 : phase() == 2 ? 80 : 60);
-            }
-            return;
-        }
+        if (ultCd > 0) ultCd--;
+        if (mv != null || (director != null && director.frozen())) return;
         if (skillCd > 0) { skillCd--; return; }
+        LivingEntity t = getTarget();
         if (t == null || !t.isAlive() || distanceToSqr(t) > 20 * 20) return;
-        int pick = switch (phase()) {
-            case 1 -> SLAM;
-            case 2 -> switch (random.nextInt(4)) { case 0 -> SUMMON; case 1 -> BARRAGE; default -> SLAM; };
-            default -> switch (random.nextInt(4)) { case 0 -> SUMMON; case 1 -> PULSE; case 2 -> BARRAGE; default -> SLAM; };
-        };
-        if (pick == SUMMON && minionCount(sl) >= 6) pick = SLAM;
-        pending = pick;
-        windup = WINDUP;
-        triggerAnim("skill", pick == SUMMON || pick == BARRAGE ? "summon" : "slam");
-        playSound(SoundEvents.WARDEN_ATTACK_IMPACT, 1.5f, 0.6f);
+        startMove(sl, HuVuongMoves.pick(random, phase(), ultCd <= 0, distanceTo(t), minionCount(sl) < 6), t);
     }
 
-    private int minionCount(ServerLevel sl) {
+    int minionCount(ServerLevel sl) {
         return sl.getEntitiesOfClass(Monster.class, getBoundingBox().inflate(24), e -> e != this && e instanceof HuMob).size();
-    }
-
-    private static double radius(int skill) { return skill == SLAM ? 7 : skill == PULSE ? 14 : 4; }
-
-    private void fire(ServerLevel sl, int skill) {
-        double base = getAttributeValue(Attributes.ATTACK_DAMAGE);
-        if (skill == SUMMON) {
-            for (int i = 0; i < 3; i++) {
-                EntityType<? extends Mob> type = random.nextBoolean() ? ModEntities.HU_THI.get() : ModEntities.HU_COT.get();
-                Mob m = type.create(sl);
-                if (m == null) continue;
-                double a = random.nextDouble() * Math.PI * 2;
-                m.moveTo(getX() + Math.cos(a) * 3, getY(), getZ() + Math.sin(a) * 3, random.nextFloat() * 360f, 0f);
-                m.finalizeSpawn(sl, sl.getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
-                m.setTarget(getTarget());
-                sl.addFreshEntity(m);
-            }
-            sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 1, getZ(), 40, 2, 1, 2, 0.05);
-            playSound(SoundEvents.EVOKER_PREPARE_SUMMON, 1.5f, 0.7f);
-            return;
-        }
-        if (skill == BARRAGE) {  // Mua Nuoc Bot Doc (pha 2+): xoe 5 tia ve phia muc tieu + 4 vien ngau nhien
-            LivingEntity tg = getTarget();
-            Vec3 d = tg != null ? tg.position().subtract(position()).multiply(1, 0, 1) : getViewVector(1f).multiply(1, 0, 1);
-            double a0 = Math.atan2(d.z, d.x);
-            Vec3 from = position().add(0, getBbHeight() * 0.7, 0);
-            for (int i = 0; i < 9; i++) {
-                double a = i < 5 ? a0 + Math.toRadians((i - 2) * 14) : random.nextDouble() * Math.PI * 2;
-                PoisonSpit.launchDir(this, from, new Vec3(Math.cos(a), 0.15, Math.sin(a)), (float) (base * 0.7), 2.8, 1.1f);
-            }
-            playSound(SoundEvents.SLIME_SQUISH, 2f, 0.5f);
-            return;
-        }
-        double r = radius(skill);
-        double dmg = base * (skill == SLAM ? 1.2 : 0.8);
-        for (Player p : sl.getEntitiesOfClass(Player.class, getBoundingBox().inflate(r, 3, r))) {
-            if (p.isSpectator() || p.distanceToSqr(this) > r * r) continue;
-            p.hurt(damageSources().mobAttack(this), (float) dmg);
-            HuSkill.hu(p, 160);
-            Vec3 away = p.position().subtract(position()).multiply(1, 0, 1).normalize();
-            if (skill == SLAM) p.setDeltaMovement(p.getDeltaMovement().add(0, 0.6, 0));
-            else {
-                p.setDeltaMovement(p.getDeltaMovement().add(away.x * 1.2, 0.3, away.z * 1.2));
-                p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
-            }
-            p.hurtMarked = true;
-        }
-        for (int i = 0; i < 48; i++) {
-            double a = i * Math.PI * 2 / 48;
-            sl.sendParticles(skill == SLAM ? ParticleTypes.EXPLOSION : ParticleTypes.SOUL_FIRE_FLAME,
-                    getX() + Math.cos(a) * r, getY() + 0.2, getZ() + Math.sin(a) * r, 1, 0.1, 0.1, 0.1, 0.0);
-        }
-        sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 0.5, getZ(), 40, r * 0.4, 0.3, r * 0.4, 0.05);
-        playSound(SoundEvents.GENERIC_EXPLODE.value(), 2.0f, 0.7f);
     }
 
     private void applyPhaseEffects(int ph) {
@@ -310,6 +283,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
         super.die(src);
         if (level() instanceof ServerLevel sl) {
             CorruptionManager.onBossKilled(sl, blockPosition());
+            HuVuongMoves.deathScene(sl, this);
             for (ServerPlayer p : sl.players())
                 if (p.distanceToSqr(this) < 128 * 128) p.displayClientMessage(Component.translatable("hukhong.boss.slain"), false);
         }

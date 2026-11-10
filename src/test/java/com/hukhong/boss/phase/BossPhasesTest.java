@@ -61,12 +61,18 @@ class BossPhasesTest {
                 for (var s : ph.subs()) {
                     assertTrue(s.from() < s.to() && s.to() <= ph.transition(), id + " phu de trong khung cutscene");
                     // Da Khuyet + CHG I..IV (da lam lai) dung khoa thoai rieng hukhong.dialog.<boss>.p<pha>.*
-                    String pre = id.equals("da_khuyet") ? "hukhong.dialog.dakhuyet.p" + p + "."
+                    String pre = id.equals("hu_vuong") ? "hukhong.dialog.huvuong.p" + p + "." : id.equals("da_khuyet") ? "hukhong.dialog.dakhuyet.p" + p + "."
                             : id.matches("chg_[1234]") ? "hukhong.dialog.chg" + id.charAt(4) + ".p" + p + "." : "hukhong.boss.sub." + id + "." + p + ".";
                     assertTrue(s.key().startsWith(pre), s.key());
                 }
             }
         }
+    }
+
+    @Test void hu_vuong_has_own_moves_not_generic() {
+        List<Move> all = BossPhases.get("hu_vuong").movesUpTo(3);
+        for (Move m : all) assertTrue(m.id().startsWith("hvg_"), m.id());
+        assertEquals(8, all.stream().map(Move::id).distinct().count());
     }
 
     @Test void da_khuyet_has_own_moves_not_generic() {

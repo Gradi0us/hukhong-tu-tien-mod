@@ -111,12 +111,8 @@ public final class BossPhases {
 
     static {
         // Hu Vuong (mau): P2 vuong mien vo + troi tim + tru Hu Khong; P3 san nut + Hu Khong Nuot Troi
-        reg("hu_vuong", Pal.VOID, 4.0,
-                p2("hu_vuong", 4.0, 2, fx(ArenaEffect.PURPLE_SKY, ArenaEffect.VOID_PILLARS), null,
-                        m("hu_tru", Shape.PILLARS, Pal.VOID, 2.4, 1.0, 40, Hit.KNOCK_UP, false),
-                        m("vo_anh_tram", Shape.LINE, Pal.VOID, 18, 1.1, 30, Hit.SLOW, false)),
-                p3("hu_vuong", 4.0, 3, fx(ArenaEffect.CRACKED_FLOOR), "tam_ma",
-                        m("hu_nuot_troi", Shape.PULL_BURST, Pal.VOID, 20, 2.6, 90, Hit.KNOCK_UP, true)));
+        // Hu Vuong (kieu Rykard + Godrick): bo chieu RIENG - HuVuong tu thi trien qua startOwnMove (HuVuongMoves).
+        huVuong();
         // Yeu vuong sa mac
         reg("sa_hat_vuong", Pal.SAND, 5.0,
                 p2("sa_hat_vuong", 5.0, 1, fx(ArenaEffect.CRACKED_FLOOR), null,
@@ -330,5 +326,28 @@ public final class BossPhases {
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {
         String id = "hvf_" + key;
         reg(id, aura, size, p2(id, size, l2, a2, null, a, b), p3(id, size, l3, a3, music3, ult));
+    }
+
+    /** Hu Vuong: P2 "Ghep Thu" (tay ghep moc ra, kieu Godrick), P3 "Thon Thien" (tay rong + ran dung nham, kieu Rykard). Thoai: hukhong.dialog.huvuong.*. */
+    private static void huVuong() {
+        String id = "hu_vuong";
+        double s = 4.0;
+        List<SubLine> s2 = List.of(new SubLine(8, 40, "hukhong.dialog.huvuong.p2.1"), new SubLine(40, 72, "hukhong.dialog.huvuong.p2.2"),
+                new SubLine(72, 96, "hukhong.dialog.huvuong.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, "hukhong.dialog.huvuong.p3.1"), new SubLine(44, 84, "hukhong.dialog.huvuong.p3.2"),
+                new SubLine(84, 116, "hukhong.dialog.huvuong.p3.3"));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, P2_TICKS, 45, camReveal(P2_TICKS, 45, s * 1.25), s2, List.of(
+                m("hvg_xa_ngoan", Shape.LINE, Pal.VOID, 16, 1.1, 22, Hit.SLOW, false),       // Xa Than Nuot Hon: ran can + keo
+                m("hvg_phong_phu", Shape.COMBO, Pal.FROST, 7.5, 1.0, 18, Hit.KNOCK_UP, false), // Phong Phu Dap: riu gio + dam
+                m("hvg_cot_tra", Shape.COMBO, Pal.VOID, 7.5, 0.8, 12, Hit.NONE, false),       // Ghep Thu Loan Vu: 3 nhat quet
+                m("hvg_dung_nham", Shape.LINE, Pal.BLOOD, 20, 0.9, 20, Hit.KNOCK_UP, false)), // Dung Nham Cuon Cuon
+                fx(ArenaEffect.PURPLE_SKY, ArenaEffect.VOID_PILLARS), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, P3_TICKS, 55, camCrescendo(P3_TICKS, 55, s * 1.5), s3, List.of(
+                m("hvg_thon_thien", Shape.PULL_BURST, Pal.VOID, 18, 2.6, 90, Hit.KNOCK_UP, true), // Hu Khong Thon Thien (toi thuong)
+                m("hvg_long_tuc", Shape.LINE, Pal.BLOOD, 12, 0.35, 28, Hit.NONE, false),          // Long Tuc: tay rong phun lua
+                m("hvg_lau_cot", Shape.PILLARS, Pal.VOID, 3.5, 1.2, 24, Hit.KNOCK_UP, false),     // Lau Cot Phun Phat: so hu khong
+                m("hvg_dia_chan", Shape.DONUT, Pal.BLOOD, 11, 0.9, 16, Hit.KNOCK_UP, false)),     // Dia Chan Tam Dap
+                fx(ArenaEffect.CRACKED_FLOOR), "tam_ma", 0.7f);
+        ALL.put(id, new Config(id, Pal.VOID, s, List.of(p1(), two, three)));
     }
 }
