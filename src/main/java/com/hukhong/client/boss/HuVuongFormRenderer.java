@@ -22,7 +22,7 @@ import java.util.Map;
  * Chi doc du lieu dong bo cua thuc the (dang, pha) - khong dung CULTIVATION.
  */
 public class HuVuongFormRenderer extends GeoEntityRenderer<HuVuongForm> {
-    private static final int ACC_MAX = 4;
+    private static final int ACC_MAX = 5;
     private final Map<ResourceLocation, Boolean> exists = new HashMap<>();
 
     public HuVuongFormRenderer(EntityRendererProvider.Context ctx) {
