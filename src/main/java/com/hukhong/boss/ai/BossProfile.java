@@ -43,6 +43,8 @@ public final class BossProfile {
     String counterCombo;
     int bigMoveEvery = 3;         // sau mỗi N chuỗi, thử chiêu lớn riêng của boss
     double difficulty = 1.0;      // hệ số độ khó: nhân sát thương, chia thời gian nghỉ
+    Locomotion locomotion;        // null = đi vòng quanh mục tiêu (mặc định)
+    boolean bigMoveOutOfRange;    // ngoài tầm mọi combo nhưng chưa tới gapCloseMin: xin chiêu lớn thay vì áp sát
 
     private BossProfile() {}
 
@@ -68,6 +70,8 @@ public final class BossProfile {
     public String counterCombo() { return counterCombo; }
     public int bigMoveEvery() { return bigMoveEvery; }
     public double difficulty() { return difficulty; }
+    public Locomotion locomotion() { return locomotion; }
+    public boolean bigMoveOutOfRange() { return bigMoveOutOfRange; }
 
     public static final class Builder {
         private final BossProfile p = new BossProfile();
@@ -82,6 +86,10 @@ public final class BossProfile {
         public Builder counter(int hits, int windowTicks, String comboId) { p.counterHits = hits; p.counterWindow = windowTicks; p.counterCombo = comboId; return this; }
         public Builder bigMoveEvery(int n) { p.bigMoveEvery = Math.max(1, n); return this; }
         public Builder difficulty(double d) { p.difficulty = d; return this; }
+        /** Thay kiểu di chuyển lúc STRAFE (vd. {@link Locomotion#orbitCenter}). */
+        public Builder locomotion(Locomotion l) { p.locomotion = l; return this; }
+        /** Boss tầm xa: khi không combo nào vừa tầm và chưa xa tới gapCloseMin thì gọi brainBigMove thay vì áp sát. */
+        public Builder bigMoveOutOfRange() { p.bigMoveOutOfRange = true; return this; }
         public BossProfile build() {
             if (p.phases[0] == null) throw new IllegalStateException("BossProfile: cần phase(1, ...)");
             return p;

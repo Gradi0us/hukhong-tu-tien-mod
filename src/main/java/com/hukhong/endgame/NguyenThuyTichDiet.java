@@ -55,6 +55,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -72,7 +73,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Nguyên Thủy Tịch Diệt (Bước 25): boss cuối, 4 pha, 6 chiêu độc nhất (kéo, đập, tia Vòng Hở, xóa nét, triệu hồi, thiên thạch).
  * Pha 3: Dạ Khuyết xuất hiện. Có tag world boss (cấm bay). Scale theo số người chơi.
  */
-public class NguyenThuyTichDiet extends Monster implements GeoEntity {
+public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhong.boss.ai.BossBrain.Host {
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(NguyenThuyTichDiet.class, EntityDataSerializers.INT);
     /** 1 = hoá thân (tu sĩ bị chiếm), 2 = Nguyên Thủy Tịch Diệt thật. Client đổi model/texture theo giá trị này. */
     private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(NguyenThuyTichDiet.class, EntityDataSerializers.INT);
@@ -137,7 +138,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
 
     @Override protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false));
+        // không MeleeAttackGoal: BossBrain lo di chuyển + đòn thường (PLAN-v1 §3)
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 24f));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -172,7 +173,10 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
 
     @Override public boolean hurt(DamageSource src, float amt) {
         if ((intro > 0 || invulTicks > 0 || morph > 0 || cine > 0) && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
-        return super.hurt(src, amt);
+        if (form() == 2 && isInvisible() && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false; // đang lặn trong Hư Không
+        boolean r = super.hurt(src, amt);
+        if (r && !level().isClientSide && form() == 1 && src.getEntity() != null) onHurtStreak();
+        return r;
     }
 
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bar.addPlayer(p); }
@@ -199,6 +203,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
         entityData.set(FORM, tag.contains("NtdForm") ? Math.max(1, Math.min(2, tag.getInt("NtdForm"))) : 2);
         f1Ults = tag.getInt("NtdF1Ults");
         setF1Hp(form() == 1);
+        setNoGravity(form() == 2);
         applyPhaseEffects(phase());
         bar.setName(barName());
     }
@@ -255,15 +260,25 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
 
         LivingEntity t = getTarget();
         if (pending >= 0) { stepWindup(sl); return; }
-        if (skillCd > 0) { skillCd--; return; }
+        if (skillCd > -1000) skillCd--;
         if (t == null || !t.isAlive() || distanceToSqr(t) > 40 * 40) return;
-        int n = EndgameKit.skillsAvailable(phase());
-        int pick = random.nextInt(n);
-        if (n > 1 && pick == last) pick = (pick + 1) % n;
+        // chiêu lớn do BossBrain xin qua brainBigMove(); dự phòng nếu lâu không được xin (brain bận / không có mục tiêu hợp lệ)
+        if (skillCd <= -160 && own == O_NONE && !com.hukhong.boss.ai.BossBrain.busy(this)) startF2Skill(sl, t, -1);
+    }
+
+    /** Bắt đầu một chiêu EndgameKit (dạng 2); forced &lt; 0 = chọn ngẫu nhiên theo pha. */
+    private void startF2Skill(ServerLevel sl, LivingEntity t, int forced) {
+        int pick;
+        if (forced >= 0) pick = forced;
+        else {
+            int n = EndgameKit.skillsAvailable(phase());
+            pick = random.nextInt(n);
+            if (n > 1 && pick == last) pick = (pick + 1) % n;
+            if (EndgameKit.SKILLS[pick].shape() == EndgameKit.Shape.SUMMON && minionCount(sl) >= 8) pick = 1;
+        }
         Skill k = EndgameKit.SKILLS[pick];
-        if (k.shape() == EndgameKit.Shape.SUMMON && minionCount(sl) >= 8) pick = 1;
-        k = EndgameKit.SKILLS[pick];
         last = pick;
+        dbgBigMoves.add(k.id());
         pending = pick;
         windup = k.windup();
         pendingAt = t.position();
@@ -288,6 +303,8 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
             if (morph > 0) { bar.setProgress(getHealth() / getMaxHealth()); stepMorph(sl); }
             else if (intro > 0) { bar.setProgress(getHealth() / getMaxHealth()); stepIntro(sl); }
             else if (windup > 0 && pending >= 0) { if (form() == 1) stepF1(sl); else stepWindup(sl); }
+            if (morph == 0 && intro == 0) brainSideTick(sl);
+            com.hukhong.boss.ai.BossBrain.tickFor(sl, this, this); // tự nhường khi frozen()/ownMoveActive(); profile đổi theo DẠNG
         }
     }
 
@@ -369,19 +386,27 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
             sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 1.6, getZ(), 3, 0.5, 0.9, 0.5, 0.02);
         LivingEntity t = getTarget();
         if (pending >= 0) { stepF1(sl); return; }
-        if (skillCd > 0) { skillCd--; return; }
+        if (skillCd > -1000) skillCd--;
         if (t == null || !t.isAlive() || distanceToSqr(t) > 40 * 40) return;
         float hp = getHealth() / getMaxHealth();
-        int a;
-        if ((f1Ults == 0 && hp < 0.5f) || (f1Ults == 1 && hp < 0.2f)) { a = A_ULT; f1Ults++; }
-        else {
-            double d = Math.sqrt(distanceToSqr(t));
-            int r = random.nextInt(100);
-            if (d > 12) a = r < 60 ? A_TELE : A_PILLAR;
-            else if (d < 6) a = r < 40 ? A_SLAM : r < 85 ? A_COMBO : A_PILLAR;
-            else a = r < 35 ? A_TELE : r < 60 ? A_SLAM : r < 85 ? A_PILLAR : A_COMBO;
-            if (a == last) a = (a + 1 + random.nextInt(3)) % 4;
-        }
+        boolean free = own == O_NONE && !com.hukhong.boss.ai.BossBrain.busy(this);
+        if (free && ((f1Ults == 0 && hp < 0.5f) || (f1Ults == 1 && hp < 0.2f))) { f1Ults++; beginF1(sl, t, A_ULT); return; }
+        if (free && skillCd <= -160) startF1Skill(sl, t); // dự phòng khi brain lâu không xin chiêu lớn
+    }
+
+    /** Chiêu riêng dạng 1 (không gồm tối thượng) - brain xin qua brainBigMove(). */
+    private void startF1Skill(ServerLevel sl, LivingEntity t) {
+        double d = Math.sqrt(distanceToSqr(t));
+        int r = random.nextInt(100), a;
+        if (d > 12) a = r < 60 ? A_TELE : A_PILLAR;
+        else if (d < 6) a = r < 40 ? A_SLAM : r < 85 ? A_COMBO : A_PILLAR;
+        else a = r < 35 ? A_TELE : r < 60 ? A_SLAM : r < 85 ? A_PILLAR : A_COMBO;
+        if (a == last) a = (a + 1 + random.nextInt(3)) % 4;
+        beginF1(sl, t, a);
+    }
+
+    private void beginF1(ServerLevel sl, LivingEntity t, int a) {
+        dbgBigMoves.add(A_ANIM[a]);
         last = a;
         pending = a;
         actT = 0;
@@ -570,6 +595,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
     public void startMorph(ServerLevel sl) {
         if (form() != 1 || morph > 0) return;
         morph = MORPH_TICKS;
+        own = O_NONE; queued = O_NONE; bellyT = 0;
         pending = -1;
         windup = 0;
         intro = 0;
@@ -626,6 +652,8 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
     private void reveal(ServerLevel sl) {
         entityData.set(FORM, 2);
         entityData.set(PHASE, 1);
+        setNoGravity(true); // dạng 2 không đi bộ: trôi lơ lửng (Locomotion.hover)
+        setInvisible(false);
         refreshDimensions();
         setF1Hp(false);
         setHealth(getMaxHealth());
@@ -1008,6 +1036,493 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
         com.hukhong.currency.Wallet.grantHonTinhBoss(sl, position(), src, 40 + random.nextInt(16));
     }
 
+    // ------------------------------------------------------------ BOSS BRAIN (PLAN-v1 §3): di chuyển + đòn thường theo DẠNG
+    private static final int O_NONE = 0, O_STRUGGLE = 1, O_ESCAPE = 2, O_BURST = 3, O_THROW = 4,
+            O_CHARGE = 11, O_DIVE = 12, O_CRUSH = 13, O_ANQUANG = 14, O_STARBEAM = 15;
+    private static final int ORBS_IDX = 5; // EndgameKit "cau_truy_hon"
+    private int own, ownT, queued, bellyT, f2Rot;
+    private Vec3 ownDir = new Vec3(0, 0, 1), ownAt = Vec3.ZERO;
+    private boolean gapLeap;
+    private final java.util.ArrayDeque<Integer> hurtAt = new java.util.ArrayDeque<>();
+    private final java.util.Set<java.util.UUID> ownHit = new java.util.HashSet<>();
+    /** Số liệu cho gametest / debug. */
+    public int dbgCracks, dbgBlinks, dbgLeaps, dbgStruggles, dbgTpStrikes, dbgPurple, dbgLaunch, dbgBursts, dbgThrows,
+            dbgDives, dbgEmerges, dbgCharges, dbgCrushes, dbgRings, dbgBeams;
+    public final java.util.List<String> dbgBigMoves = new java.util.ArrayList<>();
+
+    /** Dạng 1 áp sát: xa > 12 nhảy búa (cao ~6 ô), còn lại Thuấn Hư bộ 5-8 ô. */
+    private static final com.hukhong.boss.ai.GapClose F1_GAP = new com.hukhong.boss.ai.GapClose() {
+        public String anim() { return "leap"; }
+        public boolean step(ServerLevel sl, Mob b, com.hukhong.boss.ai.BossMovement mv, LivingEntity t, int i) {
+            return b instanceof NguyenThuyTichDiet n && n.f1Gap(sl, mv, t, i);
+        }
+    };
+    /** Dạng 2: người chơi chạy xa > 20 ô -> lặn Hư Không, trồi lên cạnh người chơi. */
+    private static final com.hukhong.boss.ai.DiveEmerge F2_GAP = new com.hukhong.boss.ai.DiveEmerge(
+            com.hukhong.boss.ai.DiveEmerge.Where.NEAR_TARGET, 12, 10, 8, "dive_under",
+            (sl, b, at) -> { if (b instanceof NguyenThuyTichDiet n) n.emergeBlast(sl, at, true); });
+    /** Dạng 2 nhịp trận: lặn xuống, trồi lên phía bên kia sân. */
+    private static final com.hukhong.boss.ai.DiveEmerge F2_DIVE_ACROSS = new com.hukhong.boss.ai.DiveEmerge(
+            com.hukhong.boss.ai.DiveEmerge.Where.ACROSS_ARENA, 14, 12, 10, "dive_under",
+            (sl, b, at) -> { if (b instanceof NguyenThuyTichDiet n) n.emergeBlast(sl, at, false); });
+
+    /** §3.1 Dạng 1: búa nặng, chậm, cam kết; 3-6 ô, xoay 10°/tick khi vung, né 15%, nghỉ 18-28. */
+    public static final com.hukhong.boss.ai.BossProfile BRAIN_F1 = com.hukhong.boss.ai.BossProfile.builder()
+            .phase(1, new com.hukhong.boss.ai.BossProfile.PhaseVals(3, 6, 0.13, 10f, 0.15, 60, 18, 28))
+            .weight(2.5).accel(7, 5).moveSpeed(0.2)
+            .locomotion(com.hukhong.boss.ai.Locomotion.circleTarget(22f))
+            .gapClose(F1_GAP, 8)
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("tam_giang", java.util.List.of(
+                    new com.hukhong.boss.ai.BossProfile.Hit(14, 4, 8, 3.6, 150, 0.8, 0.6, 0, false, false, false),   // quét ngang
+                    new com.hukhong.boss.ai.BossProfile.Hit(16, 3, 10, 3.4, 60, 1.0, 0.8, 0, false, true, false),    // bổ dọc
+                    new com.hukhong.boss.ai.BossProfile.Hit(10, 3, 22, 3.2, 100, 1.2, 0.4, 0, false, true, true)),   // giật cục: ra sau lưng bổ
+                    0, 4.5, 3, 1, java.util.List.of(), false))
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("keo_bua", java.util.List.of(
+                    new com.hukhong.boss.ai.BossProfile.Hit(8, 10, 2, 2.8, 70, 0.5, 3.0, 0, false, false, false),    // kéo búa 3 ô
+                    new com.hukhong.boss.ai.BossProfile.Hit(10, 3, 20, 3.4, 80, 0.9, 0.5, 0, false, true, false)),   // hất lên
+                    2, 6, 2, 1, java.util.List.of(), false))
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("song_the", java.util.List.of(
+                    new com.hukhong.boss.ai.BossProfile.Hit(22, 4, 6, 3.4, 120, 0.9, 0.6, 0, false, true, false),    // nhát người: chậm
+                    new com.hukhong.boss.ai.BossProfile.Hit(5, 2, 20, 3.6, 120, 1.0, 1.0, 0, false, true, false)),   // nhát Hư Không: nhanh gấp đôi
+                    0, 4.5, 2, 1, java.util.List.of(), false))
+            .bigMoveEvery(2)
+            .build();
+
+    /** §3.2 Dạng 2: trôi vòng quanh tâm sân, 8-16 ô, xoay 6°/tick, không né (dịch chuyển xuyên sân), nghỉ 20-30. */
+    public static final com.hukhong.boss.ai.BossProfile BRAIN_F2 = com.hukhong.boss.ai.BossProfile.builder()
+            .phase(1, new com.hukhong.boss.ai.BossProfile.PhaseVals(8, 16, 0.16, 6f, 0, 999, 20, 30))
+            .weight(3).accel(10, 8).moveSpeed(0.22)
+            .locomotion(com.hukhong.boss.ai.Locomotion.orbitCenter(0.55))
+            .gapClose(F2_GAP, 20).bigMoveOutOfRange()
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("quet_tinh_ha", java.util.List.of(
+                    new com.hukhong.boss.ai.BossProfile.Hit(18, 6, 6, 8, 180, 1.0, 0, 0, false, true, false),
+                    new com.hukhong.boss.ai.BossProfile.Hit(10, 6, 20, 8, 180, 1.0, 0, 0, false, true, false)),
+                    0, 9, 3, 1, java.util.List.of(), false))
+            .bigMoveEvery(1)
+            .build();
+
+    // tên animation brain có thật trong file (theo dạng) + bí danh cho tên brain không có animation riêng
+    private static final java.util.Set<String> F1_ANIMS = java.util.Set.of("strafe_l", "strafe_r", "backstep", "leap", "struggle", "burst", "throw",
+            "combo_tam_giang_1", "combo_tam_giang_2", "combo_tam_giang_3", "combo_keo_bua_1", "combo_keo_bua_2", "combo_song_the_1", "combo_song_the_2");
+    private static final java.util.Map<String, String> F1_ALIAS = java.util.Map.of("sidestep_l", "strafe_l", "sidestep_r", "strafe_r",
+            "backflip", "backstep", "dash", "leap", "blink", "teleport", "escape", "teleport");
+    private static final java.util.Set<String> F2_ANIMS = java.util.Set.of("float", "orbit_l", "orbit_r", "dive_under", "emerge", "charge", "crush",
+            "an_quang", "star_beam", "combo_quet_tinh_ha_1", "combo_quet_tinh_ha_2");
+    private static final java.util.Map<String, String> F2_ALIAS = java.util.Map.of("strafe_l", "orbit_l", "strafe_r", "orbit_r", "dash", "charge",
+            "sidestep_l", "orbit_l", "sidestep_r", "orbit_r", "backstep", "float", "backflip", "float", "leap", "crush");
+
+    private static void brainAnims(AnimationController<NguyenThuyTichDiet> c, String key, String prefix, com.hukhong.boss.ai.BossProfile p,
+                                   java.util.Set<String> have, java.util.Map<String, String> alias, String walk) {
+        java.util.Set<String> names = new java.util.LinkedHashSet<>(com.hukhong.boss.ai.BrainAnims.names(p));
+        names.addAll(have);
+        names.addAll(alias.keySet());
+        for (String nm : names) {
+            String real = have.contains(nm) ? nm : alias.containsKey(nm) ? alias.get(nm) : nm.startsWith("combo_") ? "attack" : walk;
+            c.triggerableAnim(key + nm, RawAnimation.begin().then(prefix + real, Animation.LoopType.PLAY_ONCE));
+        }
+    }
+
+    // ---- BossBrain.Host
+    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return form() == 1 ? BRAIN_F1 : BRAIN_F2; }
+    @Override public int currentPhase() { return form() == 1 ? 1 : phase(); }
+    @Override public boolean frozen() { return intro > 0 || morph > 0 || cine > 0 || invulTicks > 0; }
+    @Override public boolean ownMoveActive() { return pending >= 0 || own != O_NONE; }
+    @Override public float moveDamage(double mult) { return (float) atk(mult); }
+    @Override public void playBrainAnim(String name) { triggerAnim(com.hukhong.boss.ai.BrainAnims.CONTROLLER, (form() == 1 ? "f1_" : "f2_") + name); }
+
+    /** Đang trong cửa sổ đánh tự do (lùi giằng co, dạng 1). */
+    public boolean freeWindow() { return own == O_STRUGGLE; }
+    /** Chiêu riêng brain đang chạy (0 = không). */
+    public int ownMove() { return own; }
+
+    @Override public boolean brainBigMove(ServerLevel sl, LivingEntity t) {
+        if (pending >= 0 || own != O_NONE) return false;
+        if (form() == 1) {
+            if (players(sl, position(), 4).size() >= 2) { startOwn(O_ESCAPE); return true; }  // bị vây: Thuấn Hư thoát ra
+            if (random.nextFloat() < 0.3f) { startOwn(O_STRUGGLE); return true; }
+            if (skillCd <= 0) { startF1Skill(sl, t); return true; }
+            return false;
+        }
+        double d = distanceTo(t);
+        for (int k = 0; k < 5; k++) {   // §3.3 nhịp: Cầu Truy Hồn -> Lao Xuyên -> (Quét Tinh Hà do brain) -> lặn -> Ấn Quang -> chiêu lớn
+            switch (f2Rot++ % 5) {
+                case 0 -> { if (d >= 8) { startF2Skill(sl, t, ORBS_IDX); return true; } }
+                case 1 -> { startOwn(O_CHARGE); return true; }
+                case 2 -> { startOwn(O_DIVE); return true; }
+                case 3 -> { startOwn(O_ANQUANG); return true; }
+                default -> { if (skillCd <= 0) { startF2Skill(sl, t, -1); return true; } }
+            }
+        }
+        return false;
+    }
+
+    @Override public boolean brainOnHeal(ServerLevel sl, Player p) {
+        queued = form() == 1 ? O_THROW : O_STARBEAM;   // dạng 1 ném búa xoay, dạng 2 chùm tia sao
+        return true;
+    }
+
+    @Override public void brainHitEvent(ServerLevel sl, String id, int hit, int stage, LivingEntity t) {
+        com.hukhong.boss.ai.BossBrain b = com.hukhong.boss.ai.BossBrain.get(this);
+        if (b == null || t == null) return;
+        com.hukhong.boss.ai.BossMovement mv = b.movement();
+        switch (id) {
+            case "tam_giang" -> { if (hit == 2 && stage == 0) tpBehind(sl, mv, t); }
+            case "song_the" -> { if (hit == 1 && stage == 0) purpleTell(sl, mv); }
+            case "keo_bua" -> {
+                if (hit == 0 && stage == 1) {
+                    Fx.groundCrack(sl, null, position().add(mv.forward().scale(2)), 3f, VOIDC, 4, 30);
+                    sl.sendParticles(ParticleTypes.CRIT, getX(), getY() + 0.1, getZ(), 12, 0.6, 0.05, 0.6, 0.2);
+                    dbgCracks++;
+                }
+                if (hit == 1 && stage == 1) launch(sl, mv, t);
+            }
+            case "quet_tinh_ha" -> {
+                if (stage == 1) {
+                    Fx.qi(sl, position().add(0, getBbHeight() * 0.4, 0), mv.forward(), 8f, GOLD, hit == 0 ? 90 : -90, 10);
+                    playSound(SoundEvents.BEACON_POWER_SELECT, 2f, hit == 0 ? 0.6f : 0.8f);
+                }
+            }
+            default -> { }
+        }
+    }
+
+    /** Búa Tam Giáng nhát 3: ý chí Hư Không giật cục - dịch chuyển ra sau lưng mục tiêu. */
+    private void tpBehind(ServerLevel sl, com.hukhong.boss.ai.BossMovement mv, LivingEntity t) {
+        Vec3 away = t.position().subtract(position()).multiply(1, 0, 1);
+        away = away.lengthSqr() < 1e-4 ? pendingDir : away.normalize();
+        Vec3 land = clampArena(t.position().add(away.scale(2.4)));
+        if (!sl.noCollision(this, getBoundingBox().move(land.subtract(position())))) return;
+        Fx.rift(sl, null, position().add(0, 1.4, 0), rotY(away, 90), 1.4f, VOIDC, 12);
+        teleportTo(land.x, getY(), land.z);
+        mv.face(t.position(), 360f);
+        Fx.rift(sl, null, land.add(0, 1.4, 0), rotY(away, 90), 1.4f, VOIDC, 14);
+        sl.sendParticles(TELEGRAPH, land.x, land.y + 2, land.z, 20, 0.4, 0.8, 0.4, 0);
+        playSound(SoundEvents.ENDERMAN_TELEPORT, 2f, 0.5f);
+        dbgTpStrikes++;
+    }
+
+    /** Song Thể Kích: vệt sáng tím báo hiệu nhát Hư Không nhanh. */
+    private void purpleTell(ServerLevel sl, com.hukhong.boss.ai.BossMovement mv) {
+        Vec3 f = mv.forward(), r = new Vec3(-f.z, 0, f.x);
+        for (int i = 0; i <= 10; i++) {
+            Vec3 p = position().add(r.scale(-1.2 + i * 0.24)).add(f.scale(1.0 + Math.sin(i / 10.0 * Math.PI))).add(0, 2.2 - i * 0.1, 0);
+            sl.sendParticles(TELEGRAPH, p.x, p.y, p.z, 2, 0.03, 0.03, 0.03, 0);
+        }
+        sl.sendParticles(ParticleTypes.WITCH, getX(), getY() + 2, getZ(), 12, 0.5, 0.6, 0.5, 0.05);
+        playSound(SoundEvents.ILLUSIONER_CAST_SPELL, 1.5f, 1.6f);
+        dbgPurple++;
+    }
+
+    /** Kéo Búa Hất: hất tung (đánh bay) mọi thứ trước mặt. */
+    private void launch(ServerLevel sl, com.hukhong.boss.ai.BossMovement mv, LivingEntity t) {
+        Vec3 c = position().add(mv.forward().scale(2));
+        for (LivingEntity e : sl.getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(3, 2, 3), e -> e != this && (e instanceof Player || e == t))) {
+            if (e instanceof Player p && (p.isSpectator() || p.isCreative())) continue;
+            e.setDeltaMovement(e.getDeltaMovement().x, 1.1, e.getDeltaMovement().z);
+            e.hurtMarked = true;
+        }
+        Fx.groundCrack(sl, null, c, 3f, VOIDC, 5, 30);
+        playSound(SoundEvents.ANVIL_LAND, 1.5f, 0.6f);
+        dbgLaunch++;
+    }
+
+    private Vec3 clampArena(Vec3 v) {
+        double[] a = com.hukhong.arena.BossArena.bounds(this);
+        if (a == null) return v;
+        Vec3 rel = new Vec3(v.x - a[0], 0, v.z - a[1]);
+        double lim = Math.max(2, a[2] - 3);
+        return rel.length() <= lim ? v : new Vec3(a[0], v.y, a[1]).add(rel.normalize().scale(lim));
+    }
+
+    private boolean f1Gap(ServerLevel sl, com.hukhong.boss.ai.BossMovement mv, LivingEntity t, int i) {
+        if (i == 0) {
+            gapLeap = distanceTo(t) > 12;
+            if (!gapLeap) playBrainAnim("blink");
+        }
+        return gapLeap ? leapStep(sl, mv, t, i) : blinkStep(sl, mv, t, i, false);
+    }
+
+    /** Nhảy búa: bật cao ~6 ô, đáp cạnh mục tiêu, đập nứt đất. */
+    private boolean leapStep(ServerLevel sl, com.hukhong.boss.ai.BossMovement mv, LivingEntity t, int i) {
+        if (i == 0) {
+            Vec3 to = t.position().subtract(position()).multiply(1, 0, 1);
+            double h = Math.max(0, to.length() - 2.5);
+            mv.face(t.position(), 360f);
+            ownDir = to.lengthSqr() < 1e-4 ? Vec3.ZERO : to.normalize().scale(h / 27.0);
+            setDeltaMovement(getDeltaMovement().x, 1.05, getDeltaMovement().z);
+            hasImpulse = true;
+            dbgLeaps++;
+            sl.sendParticles(ParticleTypes.CLOUD, getX(), getY() + 0.2, getZ(), 16, 0.8, 0.1, 0.8, 0.05);
+            playSound(SoundEvents.RAVAGER_ROAR, 2f, 0.6f);
+            return true;
+        }
+        mv.drive(ownDir, true);
+        if (i > 4 && onGround() || i > 38) {
+            mv.freeze();
+            Vec3 c = position();
+            for (Player p : players(sl, c, 4.5)) hit(p, atk(1.0), c, true);
+            Fx.groundCrack(sl, null, c, 5f, VOIDC, 6, 30);
+            Fx.shake(sl, c, 2f, 10, 24);
+            sl.sendParticles(ParticleTypes.EXPLOSION, c.x, c.y + 0.2, c.z, 2, 1, 0.2, 1, 0);
+            playSound(SoundEvents.GENERIC_EXPLODE.value(), 2.5f, 0.7f);
+            dbgCracks++;
+            return false;
+        }
+        return true;
+    }
+
+    /** Thuấn Hư bộ: 6 tick tan vào khe, hiện ra cách 5-8 ô (áp sát, hoặc thoát vây khi escape). */
+    private boolean blinkStep(ServerLevel sl, com.hukhong.boss.ai.BossMovement mv, LivingEntity t, int i, boolean escape) {
+        mv.freeze();
+        Vec3 to = t.position().subtract(position()).multiply(1, 0, 1);
+        double d = to.length();
+        Vec3 n = d < 1e-3 ? pendingDir : to.scale(1 / d);
+        if (i == 0) {
+            Fx.rift(sl, null, position().add(0, 1.4, 0), rotY(n, 90), 1.4f, VOIDC, 12);
+            sl.sendParticles(ParticleTypes.PORTAL, getX(), getY() + 1.4, getZ(), 40, 0.5, 1, 0.5, 0.5);
+        }
+        if (i < 6) return true;
+        Vec3 dest = escape ? position().add(rotY(n, 180 + (random.nextDouble() - 0.5) * 80).scale(6.5))
+                : position().add(n.scale(Mth.clamp(d - 2.5, 5, 8)));
+        dest = clampArena(dest);
+        if (sl.noCollision(this, getBoundingBox().move(dest.subtract(position())))) teleportTo(dest.x, getY(), dest.z);
+        mv.face(t.position(), 360f);
+        Fx.rift(sl, null, position().add(0, 1.4, 0), rotY(n, 90), 1.4f, VOIDC, 12);
+        playSound(SoundEvents.ENDERMAN_TELEPORT, 2f, 0.6f);
+        dbgBlinks++;
+        return false;
+    }
+
+    /** Lặn xong trồi lên: sóng nổ. */
+    private void emergeBlast(ServerLevel sl, Vec3 at, boolean nearTarget) {
+        if (nearTarget) dbgDives++;
+        dbgEmerges++;
+        playBrainAnim("emerge");
+        Vec3 g = new Vec3(at.x, com.hukhong.boss.ai.Locomotion.groundY(sl, at.x, at.y, at.z), at.z);
+        for (Player p : players(sl, g, 6)) hit(p, atk(0.9), g, true);
+        Fx.groundRing(sl, null, g, 7f, GOLD, 16);
+        Fx.shake(sl, g, 2f, 10, 30);
+        sl.sendParticles(ParticleTypes.EXPLOSION, g.x, g.y + 0.5, g.z, 3, 1.5, 0.3, 1.5, 0);
+        sl.sendParticles(ParticleTypes.END_ROD, g.x, g.y + 1, g.z, 60, 2, 1.5, 2, 0.2);
+        playSound(SoundEvents.ENDER_DRAGON_GROWL, 2.5f, 0.7f);
+    }
+
+    private void onHurtStreak() {
+        hurtAt.addLast(tickCount);
+        while (!hurtAt.isEmpty() && tickCount - hurtAt.peekFirst() > 40) hurtAt.pollFirst();
+        if (hurtAt.size() >= 3 && own != O_BURST) { hurtAt.clear(); queued = O_BURST; }  // bị đánh liên tục: nổ sóng (không né)
+    }
+
+    private static final String[] OWN_ANIM = new String[16];
+    static {
+        OWN_ANIM[O_STRUGGLE] = "struggle"; OWN_ANIM[O_ESCAPE] = "escape"; OWN_ANIM[O_BURST] = "burst"; OWN_ANIM[O_THROW] = "throw";
+        OWN_ANIM[O_CHARGE] = "charge"; OWN_ANIM[O_DIVE] = "dive_under"; OWN_ANIM[O_CRUSH] = "crush"; OWN_ANIM[O_ANQUANG] = "an_quang";
+        OWN_ANIM[O_STARBEAM] = "star_beam";
+    }
+
+    /** Bắt đầu chiêu di chuyển/phản ứng riêng (public cho gametest). Brain nhường quyền trong lúc chạy. */
+    public void startOwn(int kind) {
+        own = kind; ownT = 0; ownHit.clear();
+        LivingEntity t = getTarget();
+        ownAt = t != null ? t.position() : position();
+        dbgBigMoves.add(OWN_ANIM[kind]);
+        playBrainAnim(OWN_ANIM[kind]);
+    }
+    public static final int OWN_STRUGGLE = O_STRUGGLE, OWN_BURST = O_BURST, OWN_CHARGE = O_CHARGE, OWN_DIVE = O_DIVE, OWN_CRUSH = O_CRUSH, OWN_ANQUANG = O_ANQUANG;
+
+    /** Mỗi tick server (ngoài intro/biến hình): vết nứt bước chân, lơ lửng, dưới bụng, phản ứng xếp hàng, chiêu riêng. */
+    private void brainSideTick(ServerLevel sl) {
+        if (isNoGravity() != (form() == 2)) setNoGravity(form() == 2);
+        com.hukhong.boss.ai.BossBrain b = com.hukhong.boss.ai.BossBrain.get(this);
+        boolean swinging = b != null && b.hitStage() == 1;
+        if (queued != O_NONE && own == O_NONE && pending < 0 && !swinging && invulTicks == 0 && cine == 0) { int q = queued; queued = O_NONE; startOwn(q); }
+        if (own != O_NONE) stepOwn(sl, b);
+        if (form() == 1) {
+            // Bước nặng: kéo búa trên đất, để lại vết nứt sáng
+            if (own == O_NONE && pending < 0 && onGround() && getDeltaMovement().horizontalDistance() > 0.06 && tickCount % 12 == 0) {
+                Vec3 f = getLookAngle().multiply(1, 0, 1);
+                Fx.groundCrack(sl, null, position().add(f.scale(0.8)), 1.5f, VOIDC, 3, 30);
+                dbgCracks++;
+            }
+            return;
+        }
+        if (own != O_CRUSH) com.hukhong.boss.ai.Locomotion.hover(this, 2.5);
+        LivingEntity t = getTarget();
+        if (t != null && own == O_NONE && pending < 0 && Math.hypot(t.getX() - getX(), t.getZ() - getZ()) < getBbWidth() * 0.5 + 1.2 && t.getY() < getY() + 0.5) {
+            if (++bellyT >= 60 && !swinging) { bellyT = 0; startOwn(O_CRUSH); }   // đứng dưới bụng > 3s: bay vọt lên rồi rơi đè
+        } else bellyT = 0;
+    }
+
+    private void stepOwn(ServerLevel sl, com.hukhong.boss.ai.BossBrain b) {
+        LivingEntity t = getTarget();
+        com.hukhong.boss.ai.BossMovement mv = b == null ? null : b.movement();
+        int i = ownT++;
+        boolean done = switch (own) {
+            case O_STRUGGLE -> struggle(sl, t, i);
+            case O_ESCAPE -> mv == null || t == null || !blinkStep(sl, mv, t, i, true);
+            case O_BURST -> burst(sl, t, i);
+            case O_THROW -> throwHammer(sl, t, i);
+            case O_CHARGE -> charge(sl, t, mv, i);
+            case O_DIVE -> mv == null || !F2_DIVE_ACROSS.step(sl, this, mv, t, i);
+            case O_CRUSH -> crush(sl, t, i);
+            case O_ANQUANG -> anQuang(sl, t, i);
+            case O_STARBEAM -> starBeam(sl, t, i);
+            default -> true;
+        };
+        if (done) { if (own == O_DIVE) setInvisible(false); own = O_NONE; }
+    }
+
+    /** Lùi giằng co: ôm đầu lùi 2-3 bước (ý chí người giành lại) -> cửa sổ đánh tự do 1.5s. */
+    private boolean struggle(ServerLevel sl, LivingEntity t, int i) {
+        if (i == 0) { dbgStruggles++; playSound(SoundEvents.WARDEN_HURT, 2f, 0.5f); }
+        Vec3 away = t == null ? pendingDir.scale(-1) : position().subtract(t.position()).multiply(1, 0, 1);
+        away = away.lengthSqr() < 1e-4 ? pendingDir.scale(-1) : away.normalize();
+        Vec3 d = i < 14 ? away.scale(0.19) : Vec3.ZERO;
+        if (i < 14 && t != null) setYRot((float) (Mth.atan2(-away.z, -away.x) * Mth.RAD_TO_DEG) - 90f);
+        setDeltaMovement(d.x, getDeltaMovement().y, d.z);
+        if (i % 4 == 0) sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 2.4, getZ(), 4, 0.3, 0.3, 0.3, 0.02);
+        return i >= 30;
+    }
+
+    /** Nổ sóng Hư Không đẩy lùi (thay vì né khi bị đánh liên tục). */
+    private boolean burst(ServerLevel sl, LivingEntity t, int i) {
+        setDeltaMovement(0, getDeltaMovement().y, 0);
+        if (i == 0) sl.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY() + 1.5, getZ(), 40, 1, 1, 1, 0.2);
+        if (i == 6) {
+            Vec3 c = position();
+            for (LivingEntity e : sl.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(6, 2, 6), e -> e != this && (e instanceof Player || e == t))) {
+                if (e instanceof Player p && (p.isSpectator() || p.isCreative())) continue;
+                Vec3 away = e.position().subtract(c).multiply(1, 0, 1);
+                away = away.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : away.normalize();
+                if (e instanceof Player p) hit(p, atk(0.5), c, false);
+                e.setDeltaMovement(away.x * 1.6, 0.5, away.z * 1.6);
+                e.hurtMarked = true;
+            }
+            Fx.groundRing(sl, null, c, 6f, VOIDC, 12);
+            playSound(SoundEvents.WARDEN_SONIC_BOOM, 2f, 0.8f);
+            dbgBursts++;
+        }
+        return i >= 14;
+    }
+
+    /** Người chơi hồi máu (dạng 1): ném búa xoay về phía người chơi. */
+    private boolean throwHammer(ServerLevel sl, LivingEntity t, int i) {
+        setDeltaMovement(0, getDeltaMovement().y, 0);
+        if (i == 10) {
+            Vec3 from = position().add(0, 2, 0), to = (t != null ? t.position() : ownAt).add(0, 1, 0);
+            java.util.Set<java.util.UUID> done = new java.util.HashSet<>();
+            for (int k = 0; k <= 14; k++) {
+                Vec3 at = from.lerp(to, k < 8 ? k / 8.0 : (14 - k) / 6.0);
+                later(k + 1, () -> {
+                    sl.sendParticles(TELEGRAPH, at.x, at.y, at.z, 6, 0.3, 0.3, 0.3, 0);
+                    sl.sendParticles(ParticleTypes.SWEEP_ATTACK, at.x, at.y, at.z, 1, 0, 0, 0, 0);
+                    for (Player p : players(sl, at, 1.8)) if (done.add(p.getUUID())) hit(p, atk(0.8), at, true);
+                });
+            }
+            playSound(SoundEvents.TRIDENT_THROW.value(), 2f, 0.5f);
+            dbgThrows++;
+        }
+        return i >= 26;
+    }
+
+    /** Lao xuyên: lao thẳng qua sân bằng thân (đòn di chuyển = đòn đánh), để lại vệt sao. */
+    private boolean charge(ServerLevel sl, LivingEntity t, com.hukhong.boss.ai.BossMovement mv, int i) {
+        if (i == 0) {
+            ownDir = faceTo(t != null ? t.position() : ownAt);
+            for (int k = 2; k < 30; k += 2) {
+                Vec3 p = position().add(ownDir.scale(k));
+                sl.sendParticles(GOLD_DUST, p.x, p.y + 0.2, p.z, 2, 0.6, 0, 0.6, 0);
+            }
+            playSound(SoundEvents.ENDER_DRAGON_GROWL, 2.5f, 1.0f);
+        }
+        if (mv != null) mv.face(position().add(ownDir), 360f);
+        setYRot((float) (Mth.atan2(ownDir.z, ownDir.x) * Mth.RAD_TO_DEG) - 90f);
+        if (i < 10) { setDeltaMovement(0, getDeltaMovement().y, 0); return false; }
+        if (i == 10) dbgCharges++;
+        double[] a = com.hukhong.arena.BossArena.bounds(this);
+        if (a != null) {
+            double rx = getX() - a[0], rz = getZ() - a[1];
+            if (Math.hypot(rx, rz) > a[2] - 4 && rx * ownDir.x + rz * ownDir.z > 0) { setDeltaMovement(0, getDeltaMovement().y, 0); return true; }
+        }
+        setDeltaMovement(ownDir.x * 0.85, getDeltaMovement().y, ownDir.z * 0.85);
+        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1, getZ(), 6, 1, 1, 1, 0.02);
+        sl.sendParticles(GOLD_DUST, getX(), getY() + 0.5, getZ(), 4, 1, 0.5, 1, 0);
+        for (Player p : players(sl, position(), getBbWidth() * 0.5 + 1.5))
+            if (ownHit.add(p.getUUID())) hit(p, atk(1.1), position(), true);
+        return i >= 40;
+    }
+
+    /** Bị áp sát dưới thân > 3s: bay vọt lên cao rồi rơi đè. */
+    private boolean crush(ServerLevel sl, LivingEntity t, int i) {
+        Vec3 dm = getDeltaMovement();
+        if (i == 0) playSound(SoundEvents.ENDER_DRAGON_FLAP, 3f, 0.5f);
+        if (i < 14) { setDeltaMovement(dm.x * 0.5, 0.6, dm.z * 0.5); return false; }
+        if (i < 26) {
+            Vec3 to = t == null ? Vec3.ZERO : t.position().subtract(position()).multiply(1, 0, 1);
+            if (to.length() > 0.3) to = to.normalize().scale(Math.min(0.3, to.length()));
+            setDeltaMovement(to.x, 0, to.z);
+            Vec3 g = new Vec3(getX(), com.hukhong.boss.ai.Locomotion.groundY(sl, getX(), getY(), getZ()), getZ());
+            if (i == 14) Fx.telegraphCircle(sl, null, g, 5.5f, 16, GOLD);
+            return false;
+        }
+        setDeltaMovement(0, -1.6, 0);
+        if (onGround() || i > 50) {
+            Vec3 c = position();
+            for (Player p : players(sl, c, 5.5)) hit(p, atk(1.4), c, true);
+            if (t != null && !(t instanceof Player) && t.distanceTo(this) < 6) { t.setDeltaMovement(0, 0.8, 0); t.hurtMarked = true; }
+            Fx.groundCrack(sl, null, c, 6f, GOLD, 8, 40);
+            Fx.shake(sl, c, 3f, 14, 40);
+            sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, c.x, c.y + 0.5, c.z, 1, 0, 0, 0, 0);
+            playSound(SoundEvents.GENERIC_EXPLODE.value(), 3f, 0.5f);
+            dbgCrushes++;
+            return true;
+        }
+        return false;
+    }
+
+    /** Ấn Quang: 3 vòng sáng nổ dưới chân người chơi theo nhịp 1-2-...trễ. */
+    private boolean anQuang(ServerLevel sl, LivingEntity t, int i) {
+        setDeltaMovement(getDeltaMovement().scale(0.5));
+        if (i == 0) {
+            for (int delay : new int[]{8, 20, 44}) {
+                later(delay, () -> {
+                    LivingEntity tt = getTarget();
+                    Vec3 at = tt != null ? tt.position() : ownAt;
+                    Fx.telegraphCircle(sl, null, at, 3f, 14, GOLD);
+                    later(14, () -> {
+                        for (Player p : players(sl, at, 3)) hit(p, atk(0.8), at, false);
+                        Fx.groundRing(sl, null, at, 3.4f, GOLD, 12);
+                        sl.sendParticles(ParticleTypes.END_ROD, at.x, at.y + 0.5, at.z, 30, 0.8, 1.5, 0.8, 0.1);
+                        sl.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_CLUSTER_BREAK, net.minecraft.sounds.SoundSource.HOSTILE, 2f, 0.7f);
+                        dbgRings++;
+                    });
+                });
+            }
+        }
+        return i >= 16;
+    }
+
+    /** Người chơi hồi máu (dạng 2): chùm tia sao. */
+    private boolean starBeam(ServerLevel sl, LivingEntity t, int i) {
+        if (i == 8) {
+            Vec3 to = t != null ? t.position() : ownAt, from = position().add(0, getBbHeight() * 0.8, 0);
+            for (int k = 0; k < 5; k++)
+                Fx.ribbon(sl, null, from, to.add(random.nextGaussian() * 1.2, 0.2, random.nextGaussian() * 1.2), 0, 6, 0, 0.4f, GOLD);
+            for (Player p : players(sl, to, 2.5)) hit(p, atk(1.0), to, false);
+            playSound(SoundEvents.BEACON_POWER_SELECT, 3f, 1.4f);
+            dbgBeams++;
+        }
+        return i >= 20;
+    }
+
+    /** Gametest/lệnh: bỏ qua cutscene biến hình, vào thẳng dạng 2. */
+    public void debugForceForm2(ServerLevel sl) {
+        if (form() != 1) return;
+        reveal(sl);
+        morph = 0;
+        skillCd = 40;
+    }
+
     // ------------------------------------------------------------ client + GeckoLib
     @Override public void aiStep() {
         super.aiStep();
@@ -1019,8 +1534,8 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
     @Override public void registerControllers(AnimatableManager.ControllerRegistrar c) {
         String n = "animation.nguyen_thuy_tich_diet.", n1 = "animation.nttd_form1.";
         c.add(new AnimationController<>(this, "move", 4, s -> {
-            String p = s.getAnimatable().form() == 1 ? n1 : n;
-            return s.setAndContinue(s.isMoving() ? RawAnimation.begin().thenLoop(p + "walk") : RawAnimation.begin().thenLoop(p + "idle"));
+            if (s.getAnimatable().form() == 2) return s.setAndContinue(RawAnimation.begin().thenLoop(n + "float"));
+            return s.setAndContinue(s.isMoving() ? RawAnimation.begin().thenLoop(n1 + "walk") : RawAnimation.begin().thenLoop(n1 + "idle"));
         }));
         AnimationController<NguyenThuyTichDiet> sk = new AnimationController<>(this, "skill", 0, s -> PlayState.STOP);
         for (String a : new String[]{"attack", "skill_a", "skill_b", "skill_c", "phase"})
@@ -1028,6 +1543,11 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity {
         for (String a : new String[]{"attack", "slam", "combo", "teleport", "pillars", "ult", "transform"})
             sk.triggerableAnim("f1_" + a, RawAnimation.begin().then(n1 + a, Animation.LoopType.PLAY_ONCE));
         c.add(sk);
+        // BossBrain: "f1_<tên>" / "f2_<tên>" (playBrainAnim thêm tiền tố theo dạng); tên thiếu rơi về animation gần nhất
+        AnimationController<NguyenThuyTichDiet> br = new AnimationController<>(this, com.hukhong.boss.ai.BrainAnims.CONTROLLER, 4, s -> PlayState.STOP);
+        brainAnims(br, "f1_", n1, BRAIN_F1, F1_ANIMS, F1_ALIAS, "walk");
+        brainAnims(br, "f2_", n, BRAIN_F2, F2_ANIMS, F2_ALIAS, "float");
+        c.add(br);
     }
 
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }

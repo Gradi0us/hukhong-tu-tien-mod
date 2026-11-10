@@ -52,20 +52,55 @@ public final class BossBrain {
 
     static List<BossBrain> all() { synchronized (BRAINS) { return new ArrayList<>(BRAINS.values()); } }
 
+    /**
+     * Boss điều khiển bởi brain. {@link PhasedBoss} được bọc tự động ({@link #tickFor(ServerLevel, Mob, PhasedBoss)});
+     * boss không dùng khung pha (vd. Nguyên Thủy Tịch Diệt) tự implement và gọi {@link #tickFor(ServerLevel, Mob, Host)} mỗi tick server.
+     */
+    public interface Host {
+        BossProfile brainProfile();
+        int currentPhase();
+        /** Cutscene / chuyển pha / bất tử kịch bản: brain đứng yên. */
+        boolean frozen();
+        boolean ownMoveActive();
+        boolean brainBigMove(ServerLevel sl, LivingEntity target);
+        float moveDamage(double mult);
+        void playBrainAnim(String name);
+        /** Mốc của một nhát combo: stage 0 bắt đầu lấy đà, 1 bắt đầu vung, 2 bắt đầu thu đòn (hook cho đòn đặc biệt). */
+        default void brainHitEvent(ServerLevel sl, String comboId, int hitIdx, int stage, LivingEntity target) {}
+        /** Người chơi hồi máu: trả true nếu boss tự xử lý (bỏ qua punishHeal mặc định). */
+        default boolean brainOnHeal(ServerLevel sl, Player p) { return false; }
+
+        static Host of(PhasedBoss pb) {
+            return new Host() {
+                public BossProfile brainProfile() { return pb.brainProfile(); }
+                public int currentPhase() { return pb.currentPhase(); }
+                public boolean frozen() { return pb.director().frozen(); }
+                public boolean ownMoveActive() { return pb.ownMoveActive(); }
+                public boolean brainBigMove(ServerLevel sl, LivingEntity t) { return pb.brainBigMove(sl, t); }
+                public float moveDamage(double mult) { return pb.moveDamage(mult); }
+                public void playBrainAnim(String name) { pb.playBrainAnim(name); }
+            };
+        }
+    }
+
     /** Điểm vào từ director. */
     public static void tickFor(ServerLevel sl, Mob boss, PhasedBoss pb) {
         BossBrain b = BRAINS.get(boss);
-        if (b == null) {
-            BossProfile p = pb.brainProfile();
-            if (p == null) return;
-            BRAINS.put(boss, b = new BossBrain(boss, pb, p));
-        }
+        tickFor(sl, boss, b != null ? b.pb : Host.of(pb));
+    }
+
+    /** Điểm vào chung; profile đổi (vd. đổi dạng) => brain mới với profile mới, null => gỡ brain. */
+    public static void tickFor(ServerLevel sl, Mob boss, Host host) {
+        BossBrain b = BRAINS.get(boss);
+        BossProfile p = host.brainProfile();
+        if (p == null) { if (b != null) BRAINS.remove(boss); return; }
+        if (b == null || b.prof != p) BRAINS.put(boss, b = new BossBrain(boss, host, p));
         b.tick(sl);
     }
 
     // ------------------------------------------------------------------ trạng thái
     private final Mob mob;
-    private final PhasedBoss pb;
+    private final Host pb;
     private final BossProfile prof;
     private final BossMovement mv;
     private State state = State.OBSERVE;
@@ -90,7 +125,7 @@ public final class BossBrain {
     public int evadeRolls, evades, strafeFlips, combosCompleted, branchesTaken, hitStops, reacts;
     public String lastBranch;
 
-    BossBrain(Mob mob, PhasedBoss pb, BossProfile prof) {
+    BossBrain(Mob mob, Host pb, BossProfile prof) {
         this.mob = mob; this.pb = pb; this.prof = prof;
         this.mv = new BossMovement(mob, prof);
     }
@@ -104,7 +139,7 @@ public final class BossBrain {
     public boolean busy() { return state == State.BASIC_COMBO || state == State.EVADE || state == State.GAP_CLOSE || state == State.REACT || hitStop > 0; }
     private PhaseVals pv() { return prof.phase(pb.currentPhase()); }
 
-    private boolean yielding() { return pb.director().frozen() || pb.ownMoveActive(); }
+    private boolean yielding() { return pb.frozen() || pb.ownMoveActive(); }
 
     // ------------------------------------------------------------------ tick
     void tick(ServerLevel sl) {
@@ -142,16 +177,10 @@ public final class BossBrain {
     // ------------------------------------------------------------------ STRAFE
     private void strafe(ServerLevel sl, LivingEntity t) {
         PhaseVals v = pv();
-        mv.face(t.position(), v.turnRate());
         Vec3 to = flat(t.position().subtract(mob.position()));
         double d = to.length();
-        Vec3 n = d < 1e-3 ? mv.forward() : to.scale(1 / d);
-        Vec3 tan = new Vec3(-n.z, 0, n.x).scale(strafeDir);
-        Vec3 want;
-        if (d < v.prefMin()) want = n.scale(-prof.moveSpeed()).add(tan.scale(v.strafeSpeed() * 0.4));       // quá gần: lùi ra
-        else if (d > v.prefMax()) want = n.scale(prof.moveSpeed()).add(tan.scale(v.strafeSpeed() * 0.3));   // quá xa: tiến vào
-        else want = tan.scale(v.strafeSpeed()).add(n.scale((d - (v.prefMin() + v.prefMax()) / 2) * 0.06));
-        mv.drive(want, false);
+        if (prof.locomotion() != null) prof.locomotion().step(sl, mob, mv, t, v, strafeDir);
+        else strafeMove(t, v, to, d);
         if (mv.blocked || --flipIn <= 0) {
             strafeDir = -strafeDir;
             strafeFlips++;
@@ -162,8 +191,20 @@ public final class BossBrain {
         if (combosDone >= prof.bigMoveEvery() && pb.brainBigMove(sl, t)) { combosDone = 0; rest = restTicks(); return; }
         Combo c = pickCombo(d);
         if (c != null) startCombo(c, t);
+        else if (prof.bigMoveOutOfRange() && d < prof.gapCloseMin()) { if (pb.brainBigMove(sl, t)) { combosDone = 0; rest = restTicks(); } else rest = 8; }
         else if (d >= prof.gapCloseMin() || d > maxRange()) startGap(null);
         else rest = 8;
+    }
+
+    private void strafeMove(LivingEntity t, PhaseVals v, Vec3 to, double d) {
+        mv.face(t.position(), v.turnRate());
+        Vec3 n = d < 1e-3 ? mv.forward() : to.scale(1 / d);
+        Vec3 tan = new Vec3(-n.z, 0, n.x).scale(strafeDir);
+        Vec3 want;
+        if (d < v.prefMin()) want = n.scale(-prof.moveSpeed()).add(tan.scale(v.strafeSpeed() * 0.4));       // quá gần: lùi ra
+        else if (d > v.prefMax()) want = n.scale(prof.moveSpeed()).add(tan.scale(v.strafeSpeed() * 0.3));   // quá xa: tiến vào
+        else want = tan.scale(v.strafeSpeed()).add(n.scale((d - (v.prefMin() + v.prefMax()) / 2) * 0.06));
+        mv.drive(want, false);
     }
 
     private double maxRange() { double m = 0; for (Combo c : prof.combos()) if (!c.branchOnly()) m = Math.max(m, c.rangeMax()); return m; }
@@ -216,16 +257,17 @@ public final class BossBrain {
         Hit h = combo.hits().get(hitIdx);
         int windup = h.windup() + (h.delayed() ? prof.delayExtra() : 0);
         if (stage == 0) {                          // M3 lấy đà: bám mục tiêu
-            if (stageT == 0) pb.playBrainAnim("combo_" + combo.id() + "_" + (hitIdx + 1));
+            if (stageT == 0) { pb.playBrainAnim("combo_" + combo.id() + "_" + (hitIdx + 1)); pb.brainHitEvent(sl, combo.id(), hitIdx, 0, t); }
             mv.face(t.position(), pv().turnRate());
             double d = mob.distanceTo(t);
             mv.drive(d > h.reach() * 0.8 ? mv.forward().scale(prof.moveSpeed() * 0.6) : Vec3.ZERO, false);
             if (stageT == (h.delayed() ? 0 : Math.max(0, windup - 6))) glint(sl, h.unblockable());
             if (++stageT >= windup) { stage = 1; stageT = 0; }
         } else if (stage == 1) {                   // M3 vung: khóa hướng, M4 lao theo nhát chém
+            if (stageT == 0) pb.brainHitEvent(sl, combo.id(), hitIdx, 1, t);
             mv.drive(mv.forward().scale(h.lunge() / Math.max(1, h.active())), true);
             strike(sl, h);
-            if (++stageT >= h.active()) { stage = 2; stageT = 0; }
+            if (++stageT >= h.active()) { stage = 2; stageT = 0; pb.brainHitEvent(sl, combo.id(), hitIdx, 2, t); }
         } else {                                   // M3 thu đòn: đứng yên (cửa sổ phản công), lùi nhẹ nếu có recoil
             if (h.recoil() > 0) mv.drive(mv.forward().scale(-h.recoil() / Math.max(1, h.recovery())), true); else mv.stop();
             if (++stageT >= h.recovery()) nextHit(t);
@@ -347,6 +389,7 @@ public final class BossBrain {
     // ------------------------------------------------------------------ REACT (trừng phạt hồi máu / phản đòn)
     /** Người chơi hồi máu/uống thuốc. */
     public void onHeal(Player p) {
+        if (p == mob.getTarget() && !yielding() && mob.level() instanceof ServerLevel sl && pb.brainOnHeal(sl, p)) { reacts++; return; }
         if (!prof.punishHeal() || p != mob.getTarget() || yielding() || state == State.REACT || state == State.BASIC_COMBO && stage == 1) return;
         reacts++;
         combo = null;
