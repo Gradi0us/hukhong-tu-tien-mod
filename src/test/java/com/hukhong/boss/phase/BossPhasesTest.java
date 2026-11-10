@@ -62,7 +62,7 @@ class BossPhasesTest {
                     assertTrue(s.from() < s.to() && s.to() <= ph.transition(), id + " phu de trong khung cutscene");
                     // Da Khuyet + CHG I..IV (da lam lai) dung khoa thoai rieng hukhong.dialog.<boss>.p<pha>.*
                     String pre = id.equals("da_khuyet") ? "hukhong.dialog.dakhuyet.p" + p + "."
-                            : id.matches("chg_[123]") ? "hukhong.dialog.chg" + id.charAt(4) + ".p" + p + "." : "hukhong.boss.sub." + id + "." + p + ".";
+                            : id.matches("chg_[1234]") ? "hukhong.dialog.chg" + id.charAt(4) + ".p" + p + "." : "hukhong.boss.sub." + id + "." + p + ".";
                     assertTrue(s.key().startsWith(pre), s.key());
                 }
             }
@@ -87,6 +87,12 @@ class BossPhasesTest {
 
     @Test void chg3_has_own_moves_not_generic() {
         for (Move m : BossPhases.get("chg_3").movesUpTo(3)) assertTrue(m.id().startsWith("c3_"), m.id());
+    }
+
+    @Test void chg4_has_own_moves_not_generic() {
+        List<Move> all = BossPhases.get("chg_4").movesUpTo(3);
+        for (Move m : all) assertTrue(m.id().startsWith("c4_"), m.id());
+        assertEquals("c4_nihil", all.get(4).id());
     }
 
     @Test void arena_effects_accumulate() {

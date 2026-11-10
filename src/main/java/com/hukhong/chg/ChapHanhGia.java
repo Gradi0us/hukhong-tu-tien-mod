@@ -143,46 +143,52 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
         if (idx == 1 && director != null && director.transitioning()) ChgOneMoves.transformFx(sl, this, ph); // chỉ lúc lộ diện
         if (mal != null && director != null && director.transitioning()) mal.transformFx(sl, ph);
         if (idx == 3 && director != null && director.transitioning()) Chg3Moves.transformFx(sl, this, ph);
+        if (idx == 4 && director != null && director.transitioning()) Chg4Moves.transformFx(sl, this, ph);
     }
     @Override public boolean idleForMove() { return pending < 0 && !descending() && mv == null && (mal == null || !mal.busy()); }
     @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; endMove(); if (mal != null) mal.end(); }
     @Override public boolean startOwnMove(ServerLevel sl, com.hukhong.boss.phase.BossPhaseConfig.Move m, LivingEntity target) {
         if (idx == 1) return ChgOneMoves.handles(m.id()) && startMove(sl, m.id(), target);
         if (idx == 3) return Chg3Moves.handles(m.id()) && startMove(sl, m.id(), target);
+        if (idx == 4) return Chg4Moves.handles(m.id()) && startMove(sl, m.id(), target);
         return mal != null && ChgMaliketh.handles(m.id()) && mal.start(sl, m.id(), target);
     }
     @Override public java.util.List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) {
-        return idx == 1 ? ChgOneMoves.introCam(T) : idx == 3 ? Chg3Moves.introCam(T) : mal != null ? ChgMaliketh.introCam(T) : null;
+        return idx == 1 ? ChgOneMoves.introCam(T) : idx == 3 ? Chg3Moves.introCam(T) : idx == 4 ? Chg4Moves.introCam(T) : mal != null ? ChgMaliketh.introCam(T) : null;
     }
     @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) {
-        return idx == 1 ? ChgOneMoves.introSubs(T) : idx == 3 ? Chg3Moves.introSubs(T) : mal != null ? ChgMaliketh.introSubs(T) : null;
+        return idx == 1 ? ChgOneMoves.introSubs(T) : idx == 3 ? Chg3Moves.introSubs(T) : idx == 4 ? Chg4Moves.introSubs(T) : mal != null ? ChgMaliketh.introSubs(T) : null;
     }
     /** Chiêu riêng đang thi triển (chỉ CHG II), null = rảnh/không có. */
     public String currentOwnMove() { return mal != null ? mal.currentMove() : null; }
     public boolean startOwn(ServerLevel sl, String id, LivingEntity t) { return mal != null && mal.start(sl, id, t); }
 
-    // ------------------------------------------------------------ CHG I (ChgOneMoves, kiểu Godfrey) + CHG III (Chg3Moves, kiểu Morgott): trạng thái chiêu riêng dùng chung
-    /** Chiêu riêng đang thi triển (CHG I/III), null = rảnh. */
+    // ---------------- CHG I (ChgOneMoves, Godfrey) + CHG III (Chg3Moves, Morgott) + CHG IV (Chg4Moves, Mohg): trạng thái chiêu riêng dùng chung
+    /** Chiêu riêng đang thi triển (CHG I/III/IV), null = rảnh. */
     String mv;
-    int mt, ultCd = 400;
+    int mt, ultCd = 400, nihilCd = 600;
     Vec3 aim = new Vec3(0, 0, 1), spot, from, to;
     LivingEntity mTarget, grabbed;
     final java.util.Set<java.util.UUID> hitOnce = new java.util.HashSet<>();
     final java.util.List<Vec3> marks = new java.util.ArrayList<>();
     final java.util.List<Chg3Moves.Strike> queue = new java.util.ArrayList<>();
     final java.util.List<Chg3Moves.Pool> pools = new java.util.ArrayList<>();
+    final java.util.List<java.util.UUID> marked = new java.util.ArrayList<>();
+    final java.util.List<Vec3> spots = new java.util.ArrayList<>();
+    final java.util.List<Chg4Moves.Pool> pools4 = new java.util.ArrayList<>();
 
     public String currentMove() { return mv; }
     public int moveTick() { return mt; }
-    public int poolCount() { return pools.size(); }
+    public int poolCount() { return idx == 4 ? pools4.size() : pools.size(); }
+    public int markedCount() { return marked.size(); }
 
-    /** Bắt đầu chiêu riêng (CHG I / CHG III); false nếu đang bận / không phải CHG I/III. */
+    /** Bắt đầu chiêu riêng (CHG I / III / IV); false nếu đang bận / không có bộ chiêu riêng. */
     public boolean startMove(ServerLevel sl, String id, LivingEntity target) {
-        if ((idx != 1 && idx != 3) || mv != null || !isAlive() || descending()) return false;
+        if ((idx != 1 && idx != 3 && idx != 4) || mv != null || !isAlive() || descending()) return false;
         mv = id; mt = 0; mTarget = target; spot = null; from = null; to = null; grabbed = null;
         hitOnce.clear(); marks.clear(); queue.clear();
         getNavigation().stop();
-        if (idx == 1) ChgOneMoves.begin(sl, this); else Chg3Moves.begin(sl, this);
+        if (idx == 1) ChgOneMoves.begin(sl, this); else if (idx == 3) Chg3Moves.begin(sl, this); else Chg4Moves.begin(sl, this);
         return true;
     }
 
@@ -193,7 +199,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
     }
 
     /** Đòn chiêu riêng trúng mục tiêu: sát thương + Hư hoá. */
-    boolean strike(LivingEntity e, float dmg) {
+    public boolean strike(LivingEntity e, float dmg) {
         boolean ok = e.hurt(damageSources().mobAttack(this), dmg);
         if (ok) HuSkill.hu(e, idx == 3 ? 80 : 100);
         return ok;
@@ -263,6 +269,13 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
                 if (director.transitioning()) mal.end();
                 else if (mal.tick(sl0)) skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul());
             }
+        }
+        if (idx == 4 && level() instanceof ServerLevel sl4 && isAlive()) {
+            if (mv != null) {
+                if (director.transitioning()) endMove();
+                else if (!Chg4Moves.step(sl4, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul()); }
+            }
+            if (!pools4.isEmpty()) Chg4Moves.tickPools(sl4, this);
         }
         if (level() instanceof ServerLevel sl && descending()) descentTick(sl);
         else if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
@@ -344,6 +357,14 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
             if (skillCd > 0) { skillCd--; return; }
             if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
             startMove(sl, ChgOneMoves.pick(random, phase(), distanceTo(t)), t);
+            return;
+        }
+        if (idx == 4) {
+            if (nihilCd > 0) nihilCd--;
+            if (mv != null || director.frozen()) return;
+            if (skillCd > 0) { skillCd--; return; }
+            if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
+            startMove(sl, Chg4Moves.pick(random, phase(), nihilCd <= 0, distanceTo(t)), t);
             return;
         }
         if (pending >= 0) { stepWindup(sl); return; }
@@ -542,6 +563,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
         super.die(src);
         if (!(level() instanceof ServerLevel sl)) return;
         if (idx == 3) { pools.clear(); Chg3Moves.deathScene(sl, this); }
+        if (idx == 4) { pools4.clear(); Chg4Moves.deathScene(sl, this); }
         ChgSavedData.get(sl.getServer().overworld()).markSpawn(idx, sl.getServer().overworld().getGameTime()); // mốc chờ hồi sinh ở hang
         if (mal != null) { mal.end(); mal.deathScene(sl); }
         int bit = ChgKit.defeatedBit(idx);
