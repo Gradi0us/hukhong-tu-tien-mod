@@ -117,6 +117,11 @@ class BossPhasesTest {
         for (Move m : all) assertTrue(m.id().startsWith("bn_"), m.id());
         assertEquals(8, all.stream().map(Move::id).distinct().count());
         assertEquals("bn_bang_nguyet", all.get(4).id());
+    @Test void sa_hat_has_own_moves_not_generic() {
+        List<Move> all = BossPhases.get("sa_hat_vuong").movesUpTo(3);
+        for (Move m : all) assertTrue(m.id().startsWith("sh_"), m.id());
+        assertEquals(8, all.stream().map(Move::id).distinct().count());
+        assertEquals("sh_tinh_vu", all.get(4).id());
     }
 
     @Test void arena_effects_accumulate() {

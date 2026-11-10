@@ -124,6 +124,8 @@ public final class BossPhaseGameTests {
         h.onEachTick(() -> { if (b.isAlive()) b.setTarget(p); });
         AtomicInteger p1Runs = new AtomicInteger(), p2Runs = new AtomicInteger();
         h.onEachTick(() -> {
+            // Sa Hat Vuong tu thi trien chieu rieng (sh_*) thay vi PhaseMoves chung
+            if (b.phase() >= 2 && b instanceof com.hukhong.entity.SaHatVuong sh && sh.currentMove() != null) p2Runs.incrementAndGet();
             if (b.director().currentRun() == null) return;
             (b.phase() == 1 ? p1Runs : p2Runs).incrementAndGet();
             Move m = b.director().currentRun().move;
@@ -148,8 +150,8 @@ public final class BossPhaseGameTests {
         WorldBoss b = spawn(h);
         b.setCurrentPhase(2);
         b.setTarget(p);
-        Move m = b.director().moveById("cat_lun");
-        if (m == null) h.fail("khong tim thay cat_lun");
+        // chieu chung (khong thuoc bo rieng sh_* cua Sa Hat Vuong) -> director chay PhaseMoves
+        Move m = BossPhases.get("hvf_sa_tran").movesUpTo(2).get(0);
         b.director().start(h.getLevel(), m, p);
         if (b.director().currentRun() == null || !b.isImmobile()) h.fail("dang gong chieu: boss phai bi khoa AI");
         h.runAfterDelay(m.windup() + 10, () -> {

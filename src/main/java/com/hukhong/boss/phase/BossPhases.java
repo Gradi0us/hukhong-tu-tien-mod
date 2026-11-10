@@ -120,6 +120,14 @@ public final class BossPhases {
                         m("duoi_doc", Shape.LINE, Pal.TOXIC, 16, 1.1, 30, Hit.POISON, false)),
                 p3("sa_hat_vuong", 5.0, 2, fx(ArenaEffect.PURPLE_SKY), "bicanh_boss",
                         m("bao_cat", Shape.DONUT, Pal.SAND, 18, 2.2, 90, Hit.BLIND, true)));
+        reg("hu_vuong", Pal.VOID, 4.0,
+                p2("hu_vuong", 4.0, 2, fx(ArenaEffect.PURPLE_SKY, ArenaEffect.VOID_PILLARS), null,
+                        m("hu_tru", Shape.PILLARS, Pal.VOID, 2.4, 1.0, 40, Hit.KNOCK_UP, false),
+                        m("vo_anh_tram", Shape.LINE, Pal.VOID, 18, 1.1, 30, Hit.SLOW, false)),
+                p3("hu_vuong", 4.0, 3, fx(ArenaEffect.CRACKED_FLOOR), "tam_ma",
+                        m("hu_nuot_troi", Shape.PULL_BURST, Pal.VOID, 20, 2.6, 90, Hit.KNOCK_UP, true)));
+        // Sa Hat Vuong (kieu Radahn, cat + trong luc): bo chieu RIENG - SaHatVuong tu thi trien qua startOwnMove (SaHatMoves).
+        saHat();
         // Yeu vuong tuyet
         // Bang Nhan (kieu Astel + Rennala): bo chieu RIENG bn_* - BangNhan tu thi trien qua startOwnMove (BangNhanMoves).
         bangNhan();
@@ -400,6 +408,35 @@ public final class BossPhases {
                 m("bn_thuan_anh", Shape.LEAP, Pal.FROST, 4, 1.0, 20, Hit.FREEZE, false)),    // Thuan Anh Han Bo (blink)
                 fx(ArenaEffect.VOID_PILLARS, ArenaEffect.PURPLE_SKY), "bicanh_boss", 0.7f);
         ALL.put(id, new Config(id, Pal.FROST, s, List.of(p1(), two, three)));
+    }
+
+    /** Sa Hat Vuong "Tinh Sa": P2 trong luc bung, P3 bao cat + toi thuong Tinh Van Giang The. Thoai: hukhong.dialog.sahat.*. */
+    private static void saHat() {
+        String id = "sa_hat_vuong";
+        double s = 5.0;
+        int t2 = 120, r2 = 60, t3 = 120, r3 = 70;
+        List<SubLine> s2 = List.of(new SubLine(8, 44, "hukhong.dialog.sahat.p2.1"), new SubLine(44, 84, "hukhong.dialog.sahat.p2.2"),
+                new SubLine(84, 116, "hukhong.dialog.sahat.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, "hukhong.dialog.sahat.p3.1"), new SubLine(44, 84, "hukhong.dialog.sahat.p3.2"),
+                new SubLine(84, 116, "hukhong.dialog.sahat.p3.3"));
+        double a = s * 1.25, b = s * 1.5;
+        List<CamPath.Key> c2 = List.of(k(0, 0, 0.4, 2.2, 60, 0.6, 0, 0, a), k(40, 1.6, 0.2, 1.2, 56, 0.9, 0, -10, a),
+                k(r2, 0, 0.3, 2.6, 72, 1.1, 0, -14, a), k(95, -2.0, 1.2, 2.0, 62, 0.8, 0, 0, a), k(t2, 0, 1.0, 3.8, 72, 0.7, 0, 0, a));
+        List<CamPath.Key> c3 = List.of(k(0, 0, 0.2, 1.4, 48, 0.9, 0, 0, b), k(35, -2.0, 0.1, 1.0, 62, 1.3, 0, -12, b),
+                k(r3, 0, 0.5, -2.6, 78, 1.2, 0, -8, b), k(100, 2.4, 1.6, 1.8, 70, 1.0, 0, 0, b), k(t3, 0, 1.6, 4.6, 80, 0.8, 0, 0, b));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, t2, r2, c2, s2, List.of(
+                m("sh_song_kiem", Shape.COMBO, Pal.SAND, 7, 0.9, 14, Hit.SLOW, false),        // song kiem lien tram
+                m("sh_tien_vu", Shape.METEOR, Pal.SAND, 2.6, 0.8, 22, Hit.SLOW, false),       // mua ten cat
+                m("sh_dan_luc_keo", Shape.PULL_BURST, Pal.VOID, 12, 1.1, 24, Hit.KNOCK_UP, false), // hut trong luc
+                m("sh_luu_sa", Shape.PILLARS, Pal.SAND, 3.5, 0.9, 20, Hit.SLOW, false)),      // cat lun
+                fx(ArenaEffect.CRACKED_FLOOR), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, t3, r3, c3, s3, List.of(
+                m("sh_tinh_vu", Shape.METEOR, Pal.SAND, 18, 2.4, 96, Hit.KNOCK_UP, true),     // Tinh Van Giang The (toi thuong)
+                m("sh_trong_luc_cau", Shape.PILLARS, Pal.VOID, 2.2, 0.9, 12, Hit.SLOW, false), // cau trong luc bam duoi
+                m("sh_bao_cat", Shape.SPIN, Pal.SAND, 8, 0.8, 30, Hit.BLIND, false),          // bao cat xoay kiem
+                m("sh_thien_mang", Shape.LEAP, Pal.VOID, 5, 1.2, 26, Hit.KNOCK_UP, false)),   // su tu phi duoc
+                fx(ArenaEffect.PURPLE_SKY), "bicanh_boss", 0.7f);
+        ALL.put(id, new Config(id, Pal.SAND, s, List.of(p1(), two, three)));
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {
