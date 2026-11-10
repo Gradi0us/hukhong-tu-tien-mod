@@ -316,7 +316,7 @@ public final class BiCanhManager {
         run.active = idx;
         double scale = BiCanhTier.partyScale(online.size());
         if (r.kind() == Kind.BOSS) {
-            spawn(dim, run, bossType(run), r, BiCanhLayout.ROOM_LEN / 2, 0, (run.theme.boss != null ? 2.5 : 5.0) * scale, BOSS_DMG_MUL, true);
+            spawn(dim, run, BiCanhRegistry.THU_VE.get(), r, BiCanhLayout.ROOM_LEN / 2, 0, scale, 1.0, true); // boss rieng: Bi Canh Thu Ve
             for (ServerPlayer p : online) com.hukhong.audio.BossMusic.start(p, "bicanh_boss");
             for (int i = 0; i < 2 + run.tier.ordinal() / 2; i++) spawnRandom(dim, run, r);
             for (ServerPlayer p : online) p.sendSystemMessage(Component.translatable("hukhong.bicanh.boss_start"));
@@ -363,13 +363,6 @@ public final class BiCanhManager {
         return (EntityType<? extends Mob>) com.hukhong.creature.CreatureRegistry.type(ks.get(rnd.nextInt(ks.size())));
     }
 
-    @SuppressWarnings("unchecked")
-    private static EntityType<? extends Mob> bossType(Run run) {
-        if (run.theme == BiCanhVariety.Theme.YEU_LAM) return randomType(run, net.minecraft.util.RandomSource.create(run.seed));
-        if (run.theme.boss == null) return ModEntities.HU_COT.get();
-        return (EntityType<? extends Mob>) com.hukhong.creature.CreatureRegistry.type(run.theme.boss);
-    }
-
     /** Linh Tuyền: hồi đầy máu, giải hiệu ứng xấu, buff 90 giây. */
     private static void linhTuyen(ServerLevel dim, Run run, Room r, List<ServerPlayer> online) {
         BlockPos c = BiCanhArena.roomCenter(run.origin, r);
@@ -398,6 +391,7 @@ public final class BiCanhManager {
         m.moveTo(o.getX() + r.x0() + lx + 0.5, o.getY() + (boss ? 1 : 0), o.getZ() + lz + 0.5, dim.random.nextFloat() * 360f, 0f);
         m.finalizeSpawn(dim, dim.getCurrentDifficultyAt(m.blockPosition()), MobSpawnType.EVENT, null);
         int lv = run.tier.mobLevel; // cap quai = cap cua bac Bi Canh (hien thi va chi so khop nhau)
+        if (m instanceof BiCanhThuVe tv) tv.setTier(run.tier); // chi so goc theo bac truoc khi nhan cap
         if (m instanceof com.hukhong.creature.LinhQuai q && q.kind() != null && q.kind().beast())
         { q.setAge(BiCanhVariety.beastAge(run.tier, boss, new Random(dim.random.nextLong())));
             q.capHeight(BiCanhLayout.HEIGHT - 2); } // trần Bí Cảnh thấp
@@ -415,7 +409,7 @@ public final class BiCanhManager {
         m.setPersistenceRequired();
         if (boss) {
             com.hukhong.audio.BossMusic.watch(m, "bicanh_boss");
-            m.setCustomName(com.hukhong.entity.BossLevel.tag(Component.translatable("hukhong.bicanh.boss"), lv));
+            m.setCustomName(com.hukhong.entity.BossLevel.tag(m instanceof BiCanhThuVe ? m.getType().getDescription() : Component.translatable("hukhong.bicanh.boss"), lv));
             m.setCustomNameVisible(true);
             m.setGlowingTag(true);
         }

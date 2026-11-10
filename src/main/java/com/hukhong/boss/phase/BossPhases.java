@@ -135,6 +135,8 @@ public final class BossPhases {
         daKhuyet();
         // Su Do Da Khuyet (kieu Margit, gac cong): bo chieu RIENG - SuDo tu thi trien qua startOwnMove (SuDoMoves).
         suDo();
+        // Bi Canh Thu Ve (kieu Tree Sentinel + Crucible Knight): bo chieu RIENG tv_* - BiCanhThuVe tu thi trien (ThuVeMoves).
+        biCanhThuVe();
 
         // 8 Hu Vuong dang (PLAN-v2 12.6): moi dang 1 mau chu de + 2 chieu pha 2 + 1 chieu toi thuong pha 3 (chieu rieng tung dang o HvSkill)
         hv("huyet_ma", Pal.BLOOD, 4.1, fx(ArenaEffect.BLOOD_RAIN), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "tam_ma", 2, 2,
@@ -366,6 +368,35 @@ public final class BossPhases {
                 m("sd_dao_vu", Shape.LINE, Pal.HOLY, 14, 0.6, 24, Hit.SLOW, false),           // Phi Dao Vu
                 m("sd_nhay_truong", Shape.LEAP, Pal.HOLY, 2.8, 1.2, 18, Hit.KNOCK_UP, false)), // Phi Than Truong
                 fx(ArenaEffect.BLOOD_RAIN), "su_do", 0.7f);
+        ALL.put(id, new Config(id, Pal.HOLY, s, List.of(p1(), two, three)));
+    }
+
+    /** Bi Canh Thu Ve: P2 "Hoa Duc" (canh lua bung), P3 "Thien Phat" (hao quang + set); toi thuong Thien Phat Thu Ho. Thoai: hukhong.dialog.bicanh.*. */
+    private static void biCanhThuVe() {
+        String id = "bicanh_thu_ve";
+        double s = 3.0;
+        int t2 = 100, r2 = 50, t3 = 110, r3 = 55;
+        List<SubLine> s2 = List.of(new SubLine(8, 40, "hukhong.dialog.bicanh.p2.1"), new SubLine(40, 72, "hukhong.dialog.bicanh.p2.2"),
+                new SubLine(72, 96, "hukhong.dialog.bicanh.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 40, "hukhong.dialog.bicanh.p3.1"), new SubLine(40, 76, "hukhong.dialog.bicanh.p3.2"),
+                new SubLine(76, 106, "hukhong.dialog.bicanh.p3.3"));
+        double a = s * 1.25, b = s * 1.5;
+        List<CamPath.Key> c2 = List.of(k(0, 0, 0.6, 1.8, 56, 0.75, 0, 0, a), k(30, 1.3, 0.4, 1.3, 52, 0.8, 0, -6, a),
+                k(r2, 0, 0.5, -1.6, 64, 0.7, 0, -4, a), k(80, -1.8, 0.9, 1.8, 62, 0.7, 0, 0, a), k(t2, 0, 1.0, 3.2, 72, 0.6, 0, 0, a));
+        List<CamPath.Key> c3 = List.of(k(0, 0, 0.3, 1.4, 48, 0.9, 0, 0, b), k(30, 1.6, 0.2, 1.0, 60, 1.0, 0, -10, b),
+                k(r3, 0, 0.4, 1.9, 70, 0.9, 0, -6, b), k(90, -2.0, 1.3, 1.6, 68, 0.8, 0, 0, b), k(t3, 0, 1.4, 3.8, 76, 0.6, 0, 0, b));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, t2, r2, c2, s2, List.of(
+                m("tv_combo", Shape.COMBO, Pal.HOLY, 5, 0.8, 10, Hit.NONE, false),          // Kich Tam Lien
+                m("tv_shield_bash", Shape.LINE, Pal.HOLY, 7, 0.9, 10, Hit.SLOW, false),     // Khien Chan + dam kich
+                m("tv_tail", Shape.SPIN, Pal.HOLY, 4.5, 1.0, 14, Hit.NONE, false),          // Giap Vi Quet
+                m("tv_wings", Shape.NOVA, Pal.BLOOD, 10, 1.1, 20, Hit.NONE, false)),        // Hoa Duc Boc Phat
+                fx(ArenaEffect.CRACKED_FLOOR), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, t3, r3, c3, s3, List.of(
+                m("tv_ult", Shape.SHOCK, Pal.HOLY, 16, 2.4, 90, Hit.KNOCK_UP, true),       // Thien Phat Thu Ho (toi thuong)
+                m("tv_charge", Shape.LINE, Pal.HOLY, 12, 1.3, 10, Hit.KNOCK_UP, false),     // Giac Xung
+                m("tv_stomp", Shape.SHOCK, Pal.HOLY, 11, 1.4, 24, Hit.KNOCK_UP, false),     // Cu Tuc Tran Dia
+                m("tv_leap", Shape.LEAP, Pal.BLOOD, 3.2, 1.3, 20, Hit.KNOCK_UP, false)),    // Phi Kich
+                fx(ArenaEffect.PURPLE_SKY), "bicanh_boss", 0.7f);
         ALL.put(id, new Config(id, Pal.HOLY, s, List.of(p1(), two, three)));
     }
 

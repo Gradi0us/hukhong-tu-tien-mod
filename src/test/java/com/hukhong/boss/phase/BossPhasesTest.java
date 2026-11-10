@@ -136,4 +136,24 @@ class BossPhasesTest {
         assertTrue(c.arenaFor(2).contains(BossPhaseConfig.ArenaEffect.PURPLE_SKY));
         assertTrue(c.arenaFor(3).contains(BossPhaseConfig.ArenaEffect.PURPLE_SKY) && c.arenaFor(3).contains(BossPhaseConfig.ArenaEffect.CRACKED_FLOOR));
     }
+
+    @Test void bicanh_thu_ve_has_own_moves_and_dialog() {
+        BossPhaseConfig.Config c = BossPhases.get("bicanh_thu_ve");
+        assertEquals(3, c.count());
+        List<Move> all = c.movesUpTo(3);
+        assertEquals(8, all.stream().map(Move::id).distinct().count());
+        for (Move m : all) assertTrue(m.id().startsWith("tv_"), m.id());
+        assertEquals(4, c.movesUpTo(2).size());
+        Move ult = all.stream().filter(Move::ultimate).findFirst().orElseThrow();
+        assertTrue(ult.windup() >= 80 && ult.radius() >= 15);
+        for (int p = 2; p <= 3; p++) {
+            BossPhaseConfig.Phase ph = c.phase(p);
+            assertEquals(ph.transition(), ph.cam().get(ph.cam().size() - 1).t());
+            for (var s : ph.subs()) {
+                assertTrue(s.key().startsWith("hukhong.dialog.bicanh.p" + p + "."), s.key());
+                assertTrue(s.from() < s.to() && s.to() <= ph.transition());
+            }
+        }
+        for (Move m : all) assertTrue(com.hukhong.bicanh.ThuVeMoves.handles(m.id()), m.id());
+    }
 }

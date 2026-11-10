@@ -35,14 +35,26 @@ public final class BiCanhRegistry {
     public static final DeferredItem<BlockItem> PORTAL_ITEM = ITEMS.registerSimpleBlockItem("bi_canh_cong", PORTAL);
     public static final DeferredItem<BlockItem> EXIT_ITEM = ITEMS.registerSimpleBlockItem("bicanh_exit", EXIT);
 
+    public static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> TYPES =
+            DeferredRegister.create(Registries.ENTITY_TYPE, HuKhong.MODID);
+    /** Boss riêng phòng boss Bí Cảnh. */
+    public static final net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<BiCanhThuVe>> THU_VE =
+            TYPES.register(BiCanhThuVe.ID, () -> net.minecraft.world.entity.EntityType.Builder.of(BiCanhThuVe::new, net.minecraft.world.entity.MobCategory.MONSTER)
+                    .sized(1.3f, 3.1f).clientTrackingRange(10).fireImmune().build(BiCanhThuVe.ID));
+    public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> THU_VE_EGG = ITEMS.register(BiCanhThuVe.ID + "_spawn_egg",
+            () -> new net.minecraft.world.item.SpawnEggItem(THU_VE.get(), 0x8A6A30, 0xFF7A2A, new net.minecraft.world.item.Item.Properties()));
+
     public static void register(IEventBus bus) {
         BLOCKS.register(bus);
         ITEMS.register(bus);
+        TYPES.register(bus);
+        bus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent e) -> e.put(THU_VE.get(), BiCanhThuVe.attrs().build()));
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
                 e.accept(PORTAL_ITEM.get());
                 e.accept(EXIT_ITEM.get());
             }
+            if (e.getTabKey() == CreativeModeTabs.SPAWN_EGGS) e.accept(THU_VE_EGG.get());
         });
     }
 }
