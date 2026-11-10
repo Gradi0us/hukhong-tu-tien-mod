@@ -60,8 +60,9 @@ class BossPhasesTest {
                 assertEquals(ph.transition(), ph.cam().get(ph.cam().size() - 1).t(), id);
                 for (var s : ph.subs()) {
                     assertTrue(s.from() < s.to() && s.to() <= ph.transition(), id + " phu de trong khung cutscene");
-                    // Da Khuyet dung khoa thoai rieng hukhong.dialog.dakhuyet.p<pha>.*
-                    String pre = id.equals("da_khuyet") ? "hukhong.dialog.dakhuyet.p" + p + "." : "hukhong.boss.sub." + id + "." + p + ".";
+                    // Da Khuyet / CHG III dung khoa thoai rieng hukhong.dialog.<boss>.p<pha>.*
+                    String pre = id.equals("da_khuyet") ? "hukhong.dialog.dakhuyet.p" + p + "."
+                            : id.equals("chg_3") ? "hukhong.dialog.chg3.p" + p + "." : "hukhong.boss.sub." + id + "." + p + ".";
                     assertTrue(s.key().startsWith(pre), s.key());
                 }
             }
@@ -70,6 +71,10 @@ class BossPhasesTest {
 
     @Test void da_khuyet_has_own_moves_not_generic() {
         for (Move m : BossPhases.get("da_khuyet").movesUpTo(3)) assertTrue(m.id().startsWith("dk_"), m.id());
+    }
+
+    @Test void chg3_has_own_moves_not_generic() {
+        for (Move m : BossPhases.get("chg_3").movesUpTo(3)) assertTrue(m.id().startsWith("c3_"), m.id());
     }
 
     @Test void arena_effects_accumulate() {

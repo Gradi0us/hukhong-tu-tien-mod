@@ -135,16 +135,62 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
     @Override public com.hukhong.boss.phase.BossPhaseDirector director() { return director; }
     @Override public int currentPhase() { return phase(); }
     @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
-    @Override public void applyPhase(ServerLevel sl, int ph) { applyPhaseEffects(ph); bar.setName(barName()); }
-    @Override public boolean idleForMove() { return pending < 0 && !descending(); }
-    @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; }
+    @Override public void applyPhase(ServerLevel sl, int ph) {
+        applyPhaseEffects(ph); bar.setName(barName());
+        if (idx == 3 && director != null && director.transitioning()) Chg3Moves.transformFx(sl, this, ph);
+    }
+    @Override public boolean idleForMove() { return pending < 0 && !descending() && mv == null; }
+    @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; endMove(); }
+    @Override public boolean startOwnMove(ServerLevel sl, com.hukhong.boss.phase.BossPhaseConfig.Move m, LivingEntity target) {
+        if (idx != 3 || !Chg3Moves.handles(m.id())) return false;
+        return startMove(sl, m.id(), target);
+    }
+    @Override public java.util.List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) { return idx == 3 ? Chg3Moves.introCam(T) : null; }
+    @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) { return idx == 3 ? Chg3Moves.introSubs(T) : null; }
+
+    // ------------------------------------------------------------ CHG III (Lăng Uyên): bộ chiêu riêng kiểu Morgott (xem Chg3Moves)
+    String mv;
+    int mt, ultCd = 400;
+    Vec3 aim = new Vec3(0, 0, 1), spot, from, to;
+    LivingEntity mTarget;
+    final java.util.Set<java.util.UUID> hitOnce = new java.util.HashSet<>();
+    final java.util.List<Vec3> marks = new java.util.ArrayList<>();
+    final java.util.List<Chg3Moves.Strike> queue = new java.util.ArrayList<>();
+    final java.util.List<Chg3Moves.Pool> pools = new java.util.ArrayList<>();
+
+    public String currentMove() { return mv; }
+    public int moveTick() { return mt; }
+    public int poolCount() { return pools.size(); }
+
+    /** Bắt đầu chiêu riêng (chỉ CHG III); false nếu đang bận. */
+    public boolean startMove(ServerLevel sl, String id, LivingEntity target) {
+        if (idx != 3 || mv != null || !isAlive() || descending()) return false;
+        mv = id; mt = 0; mTarget = target; spot = null; from = null; to = null;
+        hitOnce.clear(); marks.clear(); queue.clear();
+        getNavigation().stop();
+        Chg3Moves.begin(sl, this);
+        return true;
+    }
+
+    void endMove() {
+        if (mv == null) return;
+        mv = null; mTarget = null; queue.clear();
+        setNoGravity(false);
+    }
+
+    /** Đòn chiêu riêng trúng người chơi: sát thương + Hư hoá. */
+    boolean strike(LivingEntity p, float dmg) {
+        boolean ok = p.hurt(damageSources().mobAttack(this), dmg);
+        if (ok) HuSkill.hu(p, 80);
+        return ok;
+    }
     @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "phase" : "skill_b"); }
     @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
 
     @Override public boolean isPushable() { return false; }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
-    @Override public boolean isImmobile() { return super.isImmobile() || descending() || windup > 0 || (director != null && director.frozen()); }
+    @Override public boolean isImmobile() { return super.isImmobile() || descending() || windup > 0 || mv != null || (director != null && director.frozen()); }
 
     @Override public boolean hurt(DamageSource src, float amt) {
         if ((descending() || (director != null && director.invulnerable())) && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
@@ -196,6 +242,13 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
         if (level() instanceof ServerLevel sl0 && !descending() && isAlive()) director.tick(sl0);
         if (level() instanceof ServerLevel sl && descending()) descentTick(sl);
         else if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
+        if (level() instanceof ServerLevel sl && isAlive() && idx == 3) {
+            if (mv != null) {
+                if (director.transitioning()) endMove();
+                else if (!Chg3Moves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(70) * cdMul()); }
+            }
+            if (!pools.isEmpty()) Chg3Moves.tickPools(sl, this);
+        }
         else if (level().isClientSide && descending()) {
             for (int i = 0; i < 3; i++)
                 level().addParticle(ParticleTypes.END_ROD, getX() + random.nextGaussian() * 0.6, getY() + random.nextDouble() * 12,
@@ -263,8 +316,11 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
 
         LivingEntity t = getTarget();
         if (pending >= 0) { stepWindup(sl); return; }
+        if (idx == 3 && ultCd > 0) ultCd--;
+        if (idx == 3 && (mv != null || director.frozen())) return;
         if (skillCd > 0) { skillCd--; return; }
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
+        if (idx == 3) { startMove(sl, Chg3Moves.pick(random, phase(), ultCd <= 0, distanceTo(t)), t); return; }
         int n = ChgKit.skillsAvailable(def, phase());
         int pick = random.nextInt(n);
         if (n > 1 && pick == last) pick = (pick + 1) % n;
@@ -452,6 +508,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
     @Override public void die(DamageSource src) {
         super.die(src);
         if (!(level() instanceof ServerLevel sl)) return;
+        if (idx == 3) { pools.clear(); Chg3Moves.deathScene(sl, this); }
         ChgSavedData.get(sl.getServer().overworld()).markSpawn(idx, sl.getServer().overworld().getGameTime()); // mốc chờ hồi sinh ở hang
         int bit = ChgKit.defeatedBit(idx);
         for (ServerPlayer p : sl.players()) {

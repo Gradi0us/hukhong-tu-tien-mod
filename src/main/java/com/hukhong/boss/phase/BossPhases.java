@@ -151,12 +151,8 @@ public final class BossPhases {
                         m("quang_vu", Shape.METEOR, Pal.HOLY, 3.0, 0.9, 44, Hit.WEAK, false)),
                 p3("chg_2", 3.8, 2, fx(ArenaEffect.CRACKED_FLOOR), "su_do",
                         m("thien_quang_diet", Shape.DONUT, Pal.HOLY, 18, 2.2, 90, Hit.BLIND, true)));
-        reg("chg_3", Pal.MOON, 3.8,
-                p2("chg_3", 3.8, 1, fx(ArenaEffect.CRACKED_FLOOR), null,
-                        m("kiem_ha", Shape.LINE, Pal.MOON, 20, 1.2, 26, Hit.KNOCK_UP, false),
-                        m("kiem_trao", Shape.PILLARS, Pal.MOON, 2.2, 1.0, 34, Hit.KNOCK_UP, false)),
-                p3("chg_3", 3.8, 2, fx(ArenaEffect.PURPLE_SKY), "su_do",
-                        m("kiem_vuc_diet", Shape.PULL_BURST, Pal.MOON, 20, 2.5, 90, Hit.SLOW, true)));
+        // CHG III Lang Uyen (kieu Morgott, vuc sau): bo chieu RIENG - tu thi trien qua startOwnMove (Chg3Moves).
+        chg3();
         reg("chg_4", Pal.BLOOD, 3.8,
                 p2("chg_4", 3.8, 1, fx(ArenaEffect.BLOOD_RAIN), null,
                         m("huyet_tru", Shape.PILLARS, Pal.BLOOD, 2.4, 1.0, 36, Hit.WEAK, false),
@@ -224,6 +220,37 @@ public final class BossPhases {
                 m("dk_song_lao", Shape.LEAP, Pal.BLOOD, 4.5, 1.2, 30, Hit.KNOCK_UP, false)),   // lao 2 lan
                 fx(ArenaEffect.BLOOD_RAIN, ArenaEffect.CRACKED_FLOOR), "tam_ma", 0.7f);
         ALL.put(id, new Config(id, Pal.MOON, s, List.of(p1(), two, three)));
+    }
+
+    /** CHG III Lang Uyen: P2 "Uyen Mon Khai" (vuc mo sau lung), P3 "Huyet Uyen Trao" (mau nguyen trao). Thoai: hukhong.dialog.chg3.*. */
+    private static void chg3() {
+        String id = "chg_3";
+        double s = 3.8;
+        int t2 = 110, r2 = 50, t3 = 120, r3 = 65;
+        List<SubLine> s2 = List.of(new SubLine(8, 40, "hukhong.dialog.chg3.p2.1"), new SubLine(40, 76, "hukhong.dialog.chg3.p2.2"),
+                new SubLine(76, 106, "hukhong.dialog.chg3.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, "hukhong.dialog.chg3.p3.1"), new SubLine(44, 84, "hukhong.dialog.chg3.p3.2"),
+                new SubLine(84, 116, "hukhong.dialog.chg3.p3.3"));
+        double a = s * 1.25, b = s * 1.5;
+        // P2: can mat -> sau lung nhin vet nut vuc mo ra -> keo xa
+        List<CamPath.Key> c2 = List.of(k(0, 0, 0.6, 2.2, 58, 0.7, 0, 0, a), k(30, -1.4, 0.4, -1.8, 60, 0.8, 0, -6, a),
+                k(r2, 0.3, 0.5, -2.6, 72, 0.9, 0, -10, a), k(85, 2.0, 1.0, 2.0, 62, 0.7, 0, 0, a), k(t2, 0, 1.1, 3.8, 72, 0.6, 0, 0, a));
+        // P3: tu mat dat nhin len, mau nguyen trao thanh gai quanh than -> vong ra xa
+        List<CamPath.Key> c3 = List.of(k(0, 0, 0.1, 1.5, 48, 0.9, 0, 0, b), k(35, 1.8, 0.1, 1.0, 62, 1.2, 0, -14, b),
+                k(r3, 0, 0.0, 2.4, 80, 1.6, 0, -18, b), k(100, -2.4, 1.5, 1.8, 70, 1.0, 0, 0, b), k(t3, 0, 1.6, 4.4, 78, 0.7, 0, 0, b));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, t2, r2, c2, s2, List.of(
+                m("c3_phi_dao", Shape.LINE, Pal.VOID, 20, 0.6, 24, Hit.SLOW, false),         // Uyen Nhan Tri Phat: phi dao tre
+                m("c3_cu_kiem", Shape.COMBO, Pal.VOID, 10, 1.1, 22, Hit.KNOCK_UP, false),     // Uyen Kiem Hien: cu kiem hien giua chuoi
+                m("c3_huyet_tri", Shape.PILLARS, Pal.BLOOD, 2.6, 1.0, 30, Hit.KNOCK_UP, false), // Huyet Tri Uyen Thu: vung trao gai
+                m("c3_uyen_chuy", Shape.LEAP, Pal.VOID, 5, 1.3, 40, Hit.KNOCK_UP, false)),    // Uyen Chuy Giang: cu chuy tre
+                fx(ArenaEffect.PURPLE_SKY), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, t3, r3, c3, s3, List.of(
+                m("c3_van_mau", Shape.PULL_BURST, Pal.VOID, 20, 2.5, 100, Hit.KNOCK_UP, true),  // Van Mau Uyen Giang (toi thuong)
+                m("c3_huyet_kiem", Shape.LINE, Pal.BLOOD, 18, 1.2, 24, Hit.WEAK, false),       // Huyet Kiem Uyen Lang: song kiem mau
+                m("c3_phi_dao_vu", Shape.LINE, Pal.VOID, 22, 0.6, 24, Hit.WEAK, false),        // Uyen Nhan Vu: quat phi dao
+                m("c3_song_chuy", Shape.COMBO, Pal.VOID, 9, 1.2, 50, Hit.KNOCK_UP, false)),    // Song Chuy Uyen Chan
+                fx(ArenaEffect.BLOOD_RAIN, ArenaEffect.CRACKED_FLOOR), "su_do", 0.7f);
+        ALL.put(id, new Config(id, Pal.VOID, s, List.of(p1(), two, three)));
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {
