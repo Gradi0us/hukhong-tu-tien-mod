@@ -135,16 +135,59 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
     @Override public com.hukhong.boss.phase.BossPhaseDirector director() { return director; }
     @Override public int currentPhase() { return phase(); }
     @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
-    @Override public void applyPhase(ServerLevel sl, int ph) { applyPhaseEffects(ph); bar.setName(barName()); }
-    @Override public boolean idleForMove() { return pending < 0 && !descending(); }
-    @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; }
+    @Override public void applyPhase(ServerLevel sl, int ph) {
+        applyPhaseEffects(ph); bar.setName(barName());
+        if (idx == 1 && director != null && director.transitioning()) ChgOneMoves.transformFx(sl, this, ph); // chỉ lúc lộ diện
+    }
+    @Override public boolean idleForMove() { return pending < 0 && !descending() && mv == null; }
+    @Override public void cancelSkill() { pending = -1; windup = 0; skillCd = 40; endMove(); }
+    @Override public boolean startOwnMove(ServerLevel sl, com.hukhong.boss.phase.BossPhaseConfig.Move m, LivingEntity target) {
+        if (idx != 1 || !ChgOneMoves.handles(m.id())) return false;
+        return startMove(sl, m.id(), target);
+    }
+    @Override public java.util.List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) { return idx == 1 ? ChgOneMoves.introCam(T) : null; }
+    @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) { return idx == 1 ? ChgOneMoves.introSubs(T) : null; }
+
+    // ------------------------------------------------------------ CHG I: bộ chiêu riêng kiểu Godfrey/Hoarah Loux (ChgOneMoves)
+    /** Chiêu riêng đang thi triển (chỉ CHG I), null = rảnh. */
+    String mv;
+    int mt;
+    Vec3 aim = new Vec3(0, 0, 1), spot, from, to;
+    LivingEntity mTarget, grabbed;
+    final java.util.Set<java.util.UUID> hitOnce = new java.util.HashSet<>();
+
+    public String currentMove() { return mv; }
+    public int moveTick() { return mt; }
+
+    /** Bắt đầu chiêu riêng của CHG I; false nếu đang bận / không phải CHG I. */
+    public boolean startMove(ServerLevel sl, String id, LivingEntity target) {
+        if (idx != 1 || mv != null || !isAlive() || descending()) return false;
+        mv = id; mt = 0; mTarget = target; spot = null; from = null; to = null; grabbed = null;
+        hitOnce.clear();
+        getNavigation().stop();
+        ChgOneMoves.begin(sl, this);
+        return true;
+    }
+
+    void endMove() {
+        if (mv == null) return;
+        mv = null; mTarget = null; grabbed = null;
+        setNoGravity(false);
+    }
+
+    /** Đòn chiêu riêng trúng mục tiêu. */
+    boolean strike(LivingEntity e, float dmg) {
+        boolean ok = e.hurt(damageSources().mobAttack(this), dmg);
+        if (ok) HuSkill.hu(e, 100);
+        return ok;
+    }
     @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "phase" : "skill_b"); }
     @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
 
     @Override public boolean isPushable() { return false; }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
-    @Override public boolean isImmobile() { return super.isImmobile() || descending() || windup > 0 || (director != null && director.frozen()); }
+    @Override public boolean isImmobile() { return super.isImmobile() || descending() || windup > 0 || mv != null || (director != null && director.frozen()); }
 
     @Override public boolean hurt(DamageSource src, float amt) {
         if ((descending() || (director != null && director.invulnerable())) && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
@@ -193,7 +236,13 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
 
     @Override public void tick() {
         super.tick();
-        if (level() instanceof ServerLevel sl0 && !descending() && isAlive()) director.tick(sl0);
+        if (level() instanceof ServerLevel sl0 && !descending() && isAlive()) {
+            director.tick(sl0);
+            if (mv != null) {  // isImmobile() => customServerAiStep bị bỏ qua, chiêu phải chạy ở đây
+                if (director.transitioning()) endMove();
+                else if (!ChgOneMoves.step(sl0, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul()); }
+            }
+        }
         if (level() instanceof ServerLevel sl && descending()) descentTick(sl);
         else if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
         else if (level().isClientSide && descending()) {
@@ -262,6 +311,13 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
                     getX(), getY() + getBbHeight() * 0.5, getZ(), 6, 1.2, 1.2, 1.2, 0.02);
 
         LivingEntity t = getTarget();
+        if (idx == 1) {  // CHG I: AI chiêu riêng thay cho ChgKit
+            if (mv != null || director.frozen()) return;
+            if (skillCd > 0) { skillCd--; return; }
+            if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
+            startMove(sl, ChgOneMoves.pick(random, phase(), distanceTo(t)), t);
+            return;
+        }
         if (pending >= 0) { stepWindup(sl); return; }
         if (skillCd > 0) { skillCd--; return; }
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
@@ -464,6 +520,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
             p.displayClientMessage(Component.translatable("hukhong.chg.fall." + idx), false);
             p.displayClientMessage(Component.translatable("hukhong.chg.slain", Component.translatable("entity.hukhong.chg_" + idx)), false);
         }
+        if (idx == 1) { endMove(); ChgOneMoves.deathScene(sl, this); }
     }
 
     @Override protected void dropCustomDeathLoot(ServerLevel sl, DamageSource src, boolean recentlyHit) {

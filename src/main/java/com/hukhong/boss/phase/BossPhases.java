@@ -139,12 +139,8 @@ public final class BossPhases {
                 p3("doc_mau", 4.0, 2, fx(ArenaEffect.BLOOD_RAIN), "tam_ma",
                         m("suong_doc", Shape.DONUT, Pal.TOXIC, 20, 2.2, 90, Hit.POISON, true)));
         // 4 Chap Hanh Gia (de tu cua Da Khuyet)
-        reg("chg_1", Pal.SAND, 3.8,
-                p2("chg_1", 3.8, 1, fx(ArenaEffect.CRACKED_FLOOR), null,
-                        m("da_trao", Shape.PILLARS, Pal.SAND, 2.6, 1.0, 36, Hit.KNOCK_UP, false),
-                        m("chan_dong_song", Shape.SHOCK, Pal.SAND, 11, 1.0, 40, Hit.KNOCK_UP, false)),
-                p3("chg_1", 3.8, 2, fx(ArenaEffect.VOID_PILLARS), "su_do",
-                        m("hong_thien", Shape.PULL_BURST, Pal.SAND, 18, 2.4, 90, Hit.KNOCK_UP, true)));
+        // CHG I Thach Hong (kieu Godfrey/Hoarah Loux): bo chieu RIENG - ChapHanhGia tu thi trien qua startOwnMove (ChgOneMoves).
+        chgOne();
         reg("chg_2", Pal.HOLY, 3.8,
                 p2("chg_2", 3.8, 1, fx(ArenaEffect.VOID_PILLARS), null,
                         m("quang_tram", Shape.LINE, Pal.HOLY, 18, 1.0, 30, Hit.BLIND, false),
@@ -224,6 +220,37 @@ public final class BossPhases {
                 m("dk_song_lao", Shape.LEAP, Pal.BLOOD, 4.5, 1.2, 30, Hit.KNOCK_UP, false)),   // lao 2 lan
                 fx(ArenaEffect.BLOOD_RAIN, ArenaEffect.CRACKED_FLOOR), "tam_ma", 0.7f);
         ALL.put(id, new Config(id, Pal.MOON, s, List.of(p1(), two, three)));
+    }
+
+    /** CHG I: P2 "Hong Thu" (trut giap, vat lon kieu Hoarah Loux), P3 "Liet Dia" (dat nut dung nham). Thoai: hukhong.dialog.chg1.*. */
+    private static void chgOne() {
+        String id = "chg_1";
+        double s = 3.8;
+        int t2 = 120, r2 = 60, t3 = 120, r3 = 70;
+        List<SubLine> s2 = List.of(new SubLine(8, 44, "hukhong.dialog.chg1.p2.1"), new SubLine(44, 84, "hukhong.dialog.chg1.p2.2"),
+                new SubLine(84, 116, "hukhong.dialog.chg1.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, "hukhong.dialog.chg1.p3.1"), new SubLine(44, 84, "hukhong.dialog.chg1.p3.2"),
+                new SubLine(84, 116, "hukhong.dialog.chg1.p3.3"));
+        double a = s * 1.25, b = s * 1.5;
+        // P2: cui dau quang riu -> tieng gam (camera thap truoc mat) -> keo ra
+        List<CamPath.Key> c2 = List.of(k(0, 0, 0.5, 2.0, 58, 0.7, 0, 0, a), k(40, 1.6, 0.2, 1.4, 52, 0.8, 0, -6, a),
+                k(r2, 0, 0.3, 1.6, 70, 0.8, 0, -10, a), k(95, -2.2, 1.0, 2.0, 62, 0.7, 0, 0, a), k(t2, 0, 1.0, 3.8, 72, 0.6, 0, 0, a));
+        // P3: dam dat -> nut dung nham, camera tu mat dat vong ra sau lung roi lui xa
+        List<CamPath.Key> c3 = List.of(k(0, 0, 0.2, 1.4, 48, 0.9, 0, 0, b), k(35, 2.0, 0.1, 1.0, 62, 1.0, 0, -8, b),
+                k(r3, 1.6, 1.2, -1.8, 70, 0.8, 0, -4, b), k(100, -2.4, 1.4, 1.6, 70, 0.8, 0, 0, b), k(t3, 0, 1.6, 4.4, 78, 0.6, 0, 0, b));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, t2, r2, c2, s2, List.of(
+                m("chg1_cam_na", Shape.LINE, Pal.SAND, 7, 1.8, 16, Hit.KNOCK_UP, false),     // vo + nhac bong + quat xuong
+                m("chg1_dia_liet", Shape.LINE, Pal.SAND, 16, 1.0, 24, Hit.KNOCK_UP, false),  // 3 khe nut quat
+                m("chg1_hoanh_tao", Shape.COMBO, Pal.SAND, 6.5, 0.9, 14, Hit.NONE, false),   // 2 nhat quet + bo doc
+                m("chg1_phi_phu", Shape.LEAP, Pal.SAND, 4.5, 1.4, 30, Hit.KNOCK_UP, false)),  // nhay bo riu
+                fx(ArenaEffect.CRACKED_FLOOR), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, t3, r3, c3, s3, List.of(
+                m("chg1_chan_thien", Shape.DONUT, Pal.SAND, 18, 2.4, 80, Hit.KNOCK_UP, true), // Chan Thien Liet Dia (Earthshaker)
+                m("chg1_ho_bo", Shape.SHOCK, Pal.SAND, 15, 0.9, 20, Hit.KNOCK_UP, false),     // 3 vong dam lan
+                m("chg1_nem_da", Shape.METEOR, Pal.SAND, 3.5, 1.2, 24, Hit.SLOW, false),      // nem da 2 lan
+                m("chg1_dap_dat", Shape.SHOCK, Pal.SAND, 12, 1.0, 18, Hit.KNOCK_UP, false)),  // dam 2 nhip
+                fx(ArenaEffect.VOID_PILLARS), "su_do", 0.7f);
+        ALL.put(id, new Config(id, Pal.SAND, s, List.of(p1(), two, three)));
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {

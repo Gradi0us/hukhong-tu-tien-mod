@@ -134,9 +134,10 @@ public final class BossDamageGameTests {
 
     @GameTest(template = "empty", timeoutTicks = 700, batch = "bossdmg")
     public static void chgSkillCompletes(GameTestHelper h) {
-        ChapHanhGia b = put(h, ChgRegistry.type(1).create(h.getLevel()));
+        // CHG I dung bo chieu rieng (ChgOneMoves, xem ChgOneGameTests); khung ky nang ChgKit kiem tren CHG II
+        ChapHanhGia b = put(h, ChgRegistry.type(2).create(h.getLevel()));
         b.beginDescent();
-        skillCompletes(h, b, "CHG1");
+        skillCompletes(h, b, "CHG2");
     }
     /**
      * NTTD 2 dang: spawn qua luong that (EndgameService.spawnBoss) phai ra DANG 1; danh het mau dang 1 -> khong chet ma bien hinh;
