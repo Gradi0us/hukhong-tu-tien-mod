@@ -139,20 +139,11 @@ public final class BossPhases {
         biCanhThuVe();
 
         // 8 Hu Vuong dang (PLAN-v2 12.6): moi dang 1 mau chu de + 2 chieu pha 2 + 1 chieu toi thuong pha 3 (chieu rieng tung dang o HvSkill)
-        hv("huyet_ma", Pal.BLOOD, 4.1, fx(ArenaEffect.BLOOD_RAIN), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "tam_ma", 2, 2,
-                m("hv_ma_tru", Shape.PILLARS, Pal.BLOOD, 2.4, 1.0, 36, Hit.WEAK, false), m("hv_ma_vu", Shape.METEOR, Pal.BLOOD, 3.0, 0.9, 44, Hit.NAUSEA, false),
-                m("hv_ma_hai", Shape.DONUT, Pal.BLOOD, 19, 2.3, 90, Hit.WEAK, true));
-        hv("cot_long", Pal.BONE, 4.5, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.VOID_PILLARS), "bicanh_boss", 2, 2,
-                m("hv_long_tru", Shape.PILLARS, Pal.BONE, 2.6, 1.0, 36, Hit.KNOCK_UP, false), m("hv_long_tram", Shape.LINE, Pal.BONE, 20, 1.2, 28, Hit.SLOW, false),
-                m("hv_long_no", Shape.PULL_BURST, Pal.BONE, 20, 2.5, 90, Hit.KNOCK_UP, true));
-        hv("moc_yeu", Pal.WOOD, 4.1, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.BLOOD_RAIN), "tam_ma", 2, 2,
-                m("hv_moc_tru", Shape.PILLARS, Pal.WOOD, 2.4, 1.0, 36, Hit.SLOW, false), m("hv_moc_vu", Shape.METEOR, Pal.WOOD, 3.0, 0.9, 44, Hit.POISON, false),
-                m("hv_moc_lam", Shape.DONUT, Pal.WOOD, 20, 2.2, 90, Hit.POISON, true));
-        hv("bang_phach", Pal.FROST, 4.0, fx(ArenaEffect.PURPLE_SKY), fx(ArenaEffect.CRACKED_FLOOR), "bicanh_boss", 2, 2,
-                m("hv_bang_tru", Shape.PILLARS, Pal.FROST, 2.4, 1.0, 36, Hit.FREEZE, false), m("hv_bang_tram", Shape.LINE, Pal.FROST, 18, 1.1, 30, Hit.SLOW, false),
-                m("hv_bang_diet", Shape.PULL_BURST, Pal.FROST, 19, 2.4, 90, Hit.FREEZE, true));
         // Sa Tran / Doc Chuong / Hai Uyen / Thien Dien: bo chieu RIENG - HuVuongForm tu thi trien qua startOwnMove (HvFormMovesB).
         hvfOwnB();
+        // Huyet Ma / Cot Long / Moc Yeu / Bang Phach: bo chieu RIENG - HuVuongForm tu thi trien qua startOwnMove (HvFormMovesA).
+        hvFormsA();
+        // Thien Dien: 3 mat, phap thay doi theo pha
     }
 
     /** Da Khuyet: P2 "Nguyet Duc" (moc canh trang khuyet), P3 "Huyet Nguyet Khai Hoa" (no hoa trang mau). Thoai: hukhong.dialog.dakhuyet.*. */
@@ -480,6 +471,56 @@ public final class BossPhases {
         Phase two = new Phase(2, P2_BELOW, 1.25f, P2_TICKS, 45, camReveal(P2_TICKS, 45, s * 1.25), s2, List.of(a, b, c, d), a2, null, 0.85f);
         Phase three = new Phase(3, P3_BELOW, 1.5f, P3_TICKS, 55, camCrescendo(P3_TICKS, 55, s * 1.5), s3, List.of(ult, e, f, g), a3, music3, 0.7f);
         ALL.put(id, new Config(id, aura, s, List.of(p1(), two, three)));
+    }
+
+    /** 4 dang Hu Vuong co bo chieu rieng (HvFormMovesA): Huyet Ma ~ Mohg, Cot Long ~ Lichdragon/Placidusax, Moc Yeu ~ Ulcerated Tree Spirit, Bang Phach ~ Borealis. */
+    private static void hvFormsA() {
+        hvOwn("huyet_ma", Pal.BLOOD, 4.1, fx(ArenaEffect.BLOOD_RAIN), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "tam_ma",
+                m("hvhm_xoa_quet", Shape.COMBO, Pal.BLOOD, 7, 0.9, 14, Hit.WEAK, false),          // 2 nhat quet dinh ba
+                m("hvhm_xoa_dam", Shape.LINE, Pal.BLOOD, 14, 1.2, 18, Hit.KNOCK_UP, false),       // dam luot
+                m("hvhm_huyet_diem", Shape.LINE, Pal.BLOOD, 16, 1.0, 24, Hit.KNOCK_UP, false),    // vet huyet diem
+                m("hvhm_huyet_chu", Shape.PILLARS, Pal.BLOOD, 2.6, 0.9, 26, Hit.WEAK, false),     // huyet chu danh dau
+                m("hvhm_thanh_huyet", Shape.DONUT, Pal.BLOOD, 20, 0.8, 100, Hit.WEAK, true),      // Thanh Huyet Te Le (toi thuong)
+                m("hvhm_huyet_luan", Shape.NOVA, Pal.BLOOD, 12, 1.0, 30, Hit.KNOCK_UP, false),    // vong huyet diem
+                m("hvhm_huyet_tuyen", Shape.PILLARS, Pal.BLOOD, 2.8, 1.0, 24, Hit.KNOCK_UP, false), // suoi mau
+                m("hvhm_huyet_vu", Shape.METEOR, Pal.BLOOD, 2.2, 0.8, 22, Hit.WEAK, false));      // mua mau
+        hvOwn("cot_long", Pal.BONE, 4.5, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.VOID_PILLARS), "bicanh_boss",
+                m("hvcl_long_tuc", Shape.LINE, Pal.BONE, 10, 0.3, 16, Hit.WEAK, false),          // hoi tho tu diem
+                m("hvcl_vi_tao", Shape.SPIN, Pal.BONE, 9, 1.1, 18, Hit.KNOCK_UP, false),          // quet duoi
+                m("hvcl_loi_kich", Shape.PILLARS, Pal.BONE, 2.4, 1.0, 16, Hit.SLOW, false),       // set do
+                m("hvcl_tram_dap", Shape.LINE, Pal.BONE, 10, 1.2, 18, Hit.KNOCK_UP, false),       // lao can + dam
+                m("hvcl_thoi_khong", Shape.PULL_BURST, Pal.BONE, 20, 1.0, 100, Hit.KNOCK_UP, true), // Thoi Khong Liet (toi thuong)
+                m("hvcl_thuan_di", Shape.LEAP, Pal.BONE, 3.5, 1.2, 20, Hit.WEAK, false),          // thuan di can
+                m("hvcl_loi_tuc", Shape.LINE, Pal.BONE, 22, 0.9, 18, Hit.SLOW, false),            // tia set
+                m("hvcl_cot_vu", Shape.DONUT, Pal.BONE, 13, 0.9, 20, Hit.KNOCK_UP, false));       // song gai xuong
+        hvOwn("moc_yeu", Pal.WOOD, 4.1, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.BLOOD_RAIN), "tam_ma",
+                m("hvmy_phe_cau", Shape.LINE, Pal.WOOD, 9, 1.0, 12, Hit.POISON, false),           // 2 cu lao can
+                m("hvmy_re_dam", Shape.PILLARS, Pal.WOOD, 1.7, 0.9, 17, Hit.SLOW, false),         // re dam
+                m("hvmy_no_buou", Shape.METEOR, Pal.WOOD, 2.8, 1.1, 40, Hit.KNOCK_UP, false),     // bau mu no
+                m("hvmy_lan_cuon", Shape.LINE, Pal.WOOD, 18, 1.3, 18, Hit.KNOCK_UP, false),       // lan cuon
+                m("hvmy_dai_thu", Shape.DONUT, Pal.WOOD, 18, 1.0, 100, Hit.KNOCK_UP, true),       // Van Moc Huy Diet (toi thuong)
+                m("hvmy_quat_than", Shape.SPIN, Pal.WOOD, 6, 0.9, 16, Hit.POISON, false),         // quat than
+                m("hvmy_hoa_phun", Shape.LINE, Pal.WOOD, 9, 0.3, 14, Hit.POISON, false),          // phun lua thoi
+                m("hvmy_nhay_dap", Shape.LEAP, Pal.WOOD, 5, 1.4, 28, Hit.KNOCK_UP, false));       // nhay dap
+        hvOwn("bang_phach", Pal.FROST, 4.0, fx(ArenaEffect.PURPLE_SKY), fx(ArenaEffect.CRACKED_FLOOR), "bicanh_boss",
+                m("hvbp_han_tuc", Shape.LINE, Pal.FROST, 11, 0.3, 16, Hit.FREEZE, false),         // hoi tho bang
+                m("hvbp_vu_dong", Shape.PILLARS, Pal.FROST, 3.5, 0.25, 20, Hit.FREEZE, false),    // suong dong
+                m("hvbp_canh_phong", Shape.COMBO, Pal.FROST, 10, 0.8, 14, Hit.SLOW, false),       // vo canh gio
+                m("hvbp_phi_tao", Shape.LINE, Pal.FROST, 24, 1.1, 20, Hit.FREEZE, false),         // bay quet
+                m("hvbp_bang_bao", Shape.PULL_BURST, Pal.FROST, 20, 1.1, 110, Hit.FREEZE, true),  // Bang Phach Tuyet Vuc (toi thuong)
+                m("hvbp_bang_chuy", Shape.PILLARS, Pal.FROST, 2.8, 1.0, 24, Hit.FREEZE, false),   // gai bang
+                m("hvbp_suong_mu", Shape.LINE, Pal.FROST, 20, 0.9, 16, Hit.FREEZE, false),        // 3 tia suong
+                m("hvbp_lao_xuong", Shape.LEAP, Pal.FROST, 5, 1.3, 28, Hit.FREEZE, false));       // lao xuong
+    }
+
+    /** Dang Hu Vuong co chieu rieng: pha 2 = 4 chieu dau, pha 3 = toi thuong + 3 chieu; thoai rieng hukhong.dialog.hvf_<dang>.p<pha>.*. */
+    private static void hvOwn(String key, Pal aura, double s, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, Move... mv) {
+        String id = "hvf_" + key, d = "hukhong.dialog." + id + ".";
+        List<SubLine> s2 = List.of(new SubLine(8, 40, d + "p2.1"), new SubLine(40, 72, d + "p2.2"), new SubLine(72, 96, d + "p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, d + "p3.1"), new SubLine(44, 84, d + "p3.2"), new SubLine(84, 116, d + "p3.3"));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, P2_TICKS, 45, camReveal(P2_TICKS, 45, s * 1.25), s2, List.of(mv[0], mv[1], mv[2], mv[3]), a2, null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, P3_TICKS, 55, camCrescendo(P3_TICKS, 55, s * 1.5), s3, List.of(mv[4], mv[5], mv[6], mv[7]), a3, music3, 0.7f);
+        reg(id, aura, s, two, three);
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {

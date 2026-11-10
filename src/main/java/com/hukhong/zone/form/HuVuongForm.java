@@ -108,6 +108,8 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
     private int fired;
     /** Bo chieu rieng Sa Tran / Doc Chuong / Hai Uyen / Thien Dien (HvFormMovesB). */
     final HvFormMovesB.St mvB = new HvFormMovesB.St();
+    /** Bo chieu rieng Huyet Ma / Cot Long / Moc Yeu / Bang Phach (HvFormMovesA). */
+    final HvFormMovesA.State movesA = new HvFormMovesA.State();
 
     public HuVuongForm(EntityType<? extends Monster> t, Level l) {
         super(t, l);
@@ -180,18 +182,31 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
         }
         if (ph > 1) triggerAnim("skill", "phase");
         if (director != null && director.transitioning()) HvFormMovesB.phaseFx(sl, this, ph);
+        if (ph > 1 && director.transitioning() && HvFormMovesA.handles(form())) HvFormMovesA.transformFx(sl, this, ph);
     }
-    @Override public boolean idleForMove() { return cast == null && dashLeft == 0 && !burrowing && !mvB.busy(); }
+    @Override public boolean idleForMove() { return cast == null && dashLeft == 0 && !burrowing && !mvB.busy() && !movesA.busy(); }
     @Override public void cancelSkill() {
         cast = null; dashLeft = 0; skillCd = 40; hazards.clear();
         setBurrowing(false);
         HvFormMovesB.cancel(this);
+        HvFormMovesA.cancel(this);
     }
-    @Override public boolean startOwnMove(ServerLevel sl, com.hukhong.boss.phase.BossPhaseConfig.Move m, LivingEntity target) { return HvFormMovesB.start(sl, this, m.id(), target); }
-    @Override public List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) { return HvFormMovesB.introCam(this, T); }
-    @Override public List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) { return HvFormMovesB.introSubs(this, T); }
+    @Override public boolean startOwnMove(ServerLevel sl, com.hukhong.boss.phase.BossPhaseConfig.Move m, LivingEntity target) {
+        if (HvFormMovesA.handles(form(), m.id())) return HvFormMovesA.start(sl, this, m.id(), target);
+        return HvFormMovesB.start(sl, this, m.id(), target);
+    }
+    @Override public List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) {
+        var a = HvFormMovesA.introCam(this, T); return a != null ? a : HvFormMovesB.introCam(this, T);
+    }
+    @Override public List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) {
+        var a = HvFormMovesA.introSubs(this, T); return a != null ? a : HvFormMovesB.introSubs(this, T);
+    }
     @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "phase" : "cast"); }
     @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
+
+
+    /** Bo chieu rieng (HvFormMovesA) - GameTest. */
+    public HvFormMovesA.State ownMoves() { return movesA; }
 
     float dmg(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
 
@@ -242,7 +257,7 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
 
     @Override public void tick() {
         super.tick();
-        if (level() instanceof ServerLevel sl && isAlive()) director.tick(sl);
+        if (level() instanceof ServerLevel sl && isAlive()) { director.tick(sl); HvFormMovesA.tick(sl, this); }
     }
 
     @Override public boolean isPushable() { return false; }
@@ -281,6 +296,9 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
         super.readAdditionalSaveData(tag);
         if (tag.contains("HvForm")) { formCache = Math.max(0, Math.min(HvForm.COUNT - 1, tag.getInt("HvForm"))); entityData.set(FORM, formCache); refreshDimensions(); }
         if (tag.contains("HvPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("HvPhase"))));
+        // State chieu rieng khong luu NBT: noGravity/invisible do chieu dang chay co the bi luu lai -> boss lo lung/tang hinh vinh vien.
+        setNoGravity(false);
+        setInvisible(false);
         zoneId = tag.getInt("HvZone");
         if (tag.contains("HvLevel")) level30 = tag.getInt("HvLevel");
         zoneTier = tag.getInt("HvTier");
@@ -326,6 +344,7 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
             return;
         }
         if (director.frozen()) return;
+        if (HvFormMovesA.aiStep(sl, this)) return;
         if (cast == null && HvFormMovesB.step(sl, this)) return;
 
         LivingEntity t = getTarget();
@@ -401,6 +420,7 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
     @Override public void die(DamageSource src) {
         super.die(src);
         if (level() instanceof ServerLevel sl) {
+            HvFormMovesA.deathScene(sl, this);
             director.reset();
             HvFormMovesB.death(sl, this);
             setBurrowing(false);

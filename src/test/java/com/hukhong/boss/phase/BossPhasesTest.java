@@ -174,4 +174,21 @@ class BossPhasesTest {
         }
         for (Move m : all) assertTrue(com.hukhong.bicanh.ThuVeMoves.handles(m.id()), m.id());
     }
+
+    @Test void hv_forms_a_have_own_moves_not_generic() {
+        java.util.Map<String, String> pre = java.util.Map.of("hvf_huyet_ma", "hvhm_", "hvf_cot_long", "hvcl_", "hvf_moc_yeu", "hvmy_", "hvf_bang_phach", "hvbp_");
+        java.util.Map<String, String> ult = java.util.Map.of("hvf_huyet_ma", "hvhm_thanh_huyet", "hvf_cot_long", "hvcl_thoi_khong",
+                "hvf_moc_yeu", "hvmy_dai_thu", "hvf_bang_phach", "hvbp_bang_bao");
+        for (var e : pre.entrySet()) {
+            Config c = BossPhases.get(e.getKey());
+            List<Move> all = c.movesUpTo(3);
+            assertEquals(8, all.size(), e.getKey());
+            for (Move m : all) assertTrue(m.id().startsWith(e.getValue()), m.id());
+            assertEquals(8, all.stream().map(Move::id).distinct().count(), e.getKey());
+            assertEquals(ult.get(e.getKey()), all.get(4).id());
+            assertTrue(all.get(4).ultimate() && all.get(4).windup() >= 80 && all.get(4).radius() >= 15, e.getKey());
+            for (int p = 2; p <= 3; p++)
+                for (var sub : c.phase(p).subs()) assertTrue(sub.key().startsWith("hukhong.dialog." + e.getKey() + ".p" + p + "."), sub.key());
+        }
+    }
 }
