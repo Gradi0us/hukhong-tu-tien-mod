@@ -29,6 +29,8 @@ public final class BossMovement {
 
     public float yaw() { ensure(); return yaw; }
     public Vec3 velocity() { return vel; }
+    /** Tốc độ đi tối đa của profile (block/tick). */
+    public double speed() { return prof.moveSpeed(); }
     public Vec3 forward() { ensure(); double r = Math.toRadians(yaw); return new Vec3(-Math.sin(r), 0, Math.cos(r)); }
 
     private void ensure() { if (!init) { init = true; yaw = mob.getYRot(); } }

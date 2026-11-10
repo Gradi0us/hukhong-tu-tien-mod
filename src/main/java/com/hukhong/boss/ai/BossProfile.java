@@ -46,6 +46,8 @@ public final class BossProfile {
     final Evade[][] evadeKinds = new Evade[3][];   // null = mặc định (backstep/sidestep, pha >= 2 thêm backflip)
     Evade counterEvade = Evade.SIDESTEP;           // null = phản đòn tại chỗ, không né
     final java.util.Map<String, Integer> maxPhase = new java.util.HashMap<>();
+    Locomotion locomotion;        // null = đi vòng quanh mục tiêu (mặc định)
+    boolean bigMoveOutOfRange;    // ngoài tầm mọi combo nhưng chưa tới gapCloseMin: xin chiêu lớn thay vì áp sát
 
     private BossProfile() {}
 
@@ -79,6 +81,8 @@ public final class BossProfile {
     public Evade counterEvade() { return counterEvade; }
     /** Pha cuối combo còn được tự chọn (mặc định 3). */
     public int comboMaxPhase(String id) { return maxPhase.getOrDefault(id, 3); }
+    public Locomotion locomotion() { return locomotion; }
+    public boolean bigMoveOutOfRange() { return bigMoveOutOfRange; }
 
     public static final class Builder {
         private final BossProfile p = new BossProfile();
@@ -99,6 +103,10 @@ public final class BossProfile {
         public Builder counterEvade(Evade e) { p.counterEvade = e; return this; }
         /** Combo chỉ tự được chọn tới pha {@code ph} (vẫn dùng được làm nhánh). */
         public Builder comboUntil(String id, int ph) { p.maxPhase.put(id, ph); return this; }
+        /** Thay kiểu di chuyển lúc STRAFE (vd. {@link Locomotion#orbitCenter}). */
+        public Builder locomotion(Locomotion l) { p.locomotion = l; return this; }
+        /** Boss tầm xa: khi không combo nào vừa tầm và chưa xa tới gapCloseMin thì gọi brainBigMove thay vì áp sát. */
+        public Builder bigMoveOutOfRange() { p.bigMoveOutOfRange = true; return this; }
         public BossProfile build() {
             if (p.phases[0] == null) throw new IllegalStateException("BossProfile: cần phase(1, ...)");
             return p;
