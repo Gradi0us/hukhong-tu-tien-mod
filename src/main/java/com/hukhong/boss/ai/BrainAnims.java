@@ -18,7 +18,7 @@ import java.util.Set;
 public final class BrainAnims {
     private BrainAnims() {}
     public static final String CONTROLLER = "brain";
-    public static final List<String> MOVE_NAMES = List.of("strafe_l", "strafe_r", "backstep", "sidestep_l", "sidestep_r", "backflip", "dash", "leap");
+    public static final List<String> MOVE_NAMES = List.of("strafe_l", "strafe_r", "backstep", "sidestep_l", "sidestep_r", "backflip", "dash", "leap", "hover", "blink");
 
     /** Tất cả tên animation brain có thể phát với profile này. */
     public static List<String> names(BossProfile p) {

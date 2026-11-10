@@ -68,6 +68,17 @@ public interface PhasedBoss {
     /** Brain xin chen một chiêu lớn riêng của boss giữa các chuỗi đòn; trả true nếu đã bắt đầu chiêu. */
     default boolean brainBigMove(ServerLevel sl, net.minecraft.world.entity.LivingEntity target) { return false; }
 
+    /** Kiểu áp sát cho lần này (theo pha / ngẫu nhiên); null = {@code BossProfile.gapClose()}. */
+    default com.hukhong.boss.ai.GapClose brainGapClose(ServerLevel sl, net.minecraft.world.entity.LivingEntity target, double dist) { return null; }
+
+    /** Chỉnh thông số pha theo tình huống (vd. nổi điên khi máu thấp); mặc định giữ nguyên. Gọi mỗi tick: đừng cấp phát mới. */
+    default com.hukhong.boss.ai.BossProfile.PhaseVals brainPhaseVals(com.hukhong.boss.ai.BossProfile.PhaseVals base) { return base; }
+
+    /** Một nhát đòn thường của brain trúng mục tiêu (boss có thể thêm hút máu...). Trả kết quả hurt(). */
+    default boolean brainStrike(net.minecraft.world.entity.LivingEntity victim, net.minecraft.world.damagesource.DamageSource src, float dmg) {
+        return victim.hurt(src, dmg);
+    }
+
     /**
      * Brain phát animation (strafe_l/r, backstep, sidestep_l/r, backflip, dash, leap, combo_&lt;id&gt;_&lt;n&gt;) trên controller
      * {@link com.hukhong.boss.ai.BrainAnims#CONTROLLER}; boss đăng ký controller bằng {@link com.hukhong.boss.ai.BrainAnims#controller}
