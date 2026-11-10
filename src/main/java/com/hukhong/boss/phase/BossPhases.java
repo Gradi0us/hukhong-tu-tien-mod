@@ -145,12 +145,8 @@ public final class BossPhases {
                         m("chan_dong_song", Shape.SHOCK, Pal.SAND, 11, 1.0, 40, Hit.KNOCK_UP, false)),
                 p3("chg_1", 3.8, 2, fx(ArenaEffect.VOID_PILLARS), "su_do",
                         m("hong_thien", Shape.PULL_BURST, Pal.SAND, 18, 2.4, 90, Hit.KNOCK_UP, true)));
-        reg("chg_2", Pal.HOLY, 3.8,
-                p2("chg_2", 3.8, 1, fx(ArenaEffect.VOID_PILLARS), null,
-                        m("quang_tram", Shape.LINE, Pal.HOLY, 18, 1.0, 30, Hit.BLIND, false),
-                        m("quang_vu", Shape.METEOR, Pal.HOLY, 3.0, 0.9, 44, Hit.WEAK, false)),
-                p3("chg_2", 3.8, 2, fx(ArenaEffect.CRACKED_FLOOR), "su_do",
-                        m("thien_quang_diet", Shape.DONUT, Pal.HOLY, 18, 2.2, 90, Hit.BLIND, true)));
+        // CHG II Bach Tu Am (kieu Maliketh, chuong tu + Hac Kiem): bo chieu RIENG - ChapHanhGia/ChgMaliketh tu thi trien.
+        chg2();
         reg("chg_3", Pal.MOON, 3.8,
                 p2("chg_3", 3.8, 1, fx(ArenaEffect.CRACKED_FLOOR), null,
                         m("kiem_ha", Shape.LINE, Pal.MOON, 20, 1.2, 26, Hit.KNOCK_UP, false),
@@ -224,6 +220,29 @@ public final class BossPhases {
                 m("dk_song_lao", Shape.LEAP, Pal.BLOOD, 4.5, 1.2, 30, Hit.KNOCK_UP, false)),   // lao 2 lan
                 fx(ArenaEffect.BLOOD_RAIN, ArenaEffect.CRACKED_FLOOR), "tam_ma", 0.7f);
         ALL.put(id, new Config(id, Pal.MOON, s, List.of(p1(), two, three)));
+    }
+
+    /** CHG II: P2 "Hac Kiem xuat vo" (rut kiem bong), P3 "Tu Chung" (chuong tu ngan). Thoai: hukhong.dialog.chg2.*. */
+    private static void chg2() {
+        String id = "chg_2";
+        double s = 3.8;
+        List<SubLine> s2 = List.of(new SubLine(8, 40, "hukhong.dialog.chg2.p2.1"), new SubLine(40, 70, "hukhong.dialog.chg2.p2.2"),
+                new SubLine(70, 96, "hukhong.dialog.chg2.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, "hukhong.dialog.chg2.p3.1"), new SubLine(44, 84, "hukhong.dialog.chg2.p3.2"),
+                new SubLine(84, 116, "hukhong.dialog.chg2.p3.3"));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, P2_TICKS, 45, camReveal(P2_TICKS, 45, s * 1.25), s2, List.of(
+                m("chg2_trao", Shape.COMBO, Pal.HOLY, 5, 0.6, 12, Hit.NONE, false),          // Thu Trao Lien Hoan
+                m("chg2_nem_da", Shape.METEOR, Pal.HOLY, 3.5, 1.0, 26, Hit.SLOW, false),     // Phi Thach
+                m("chg2_hac_kiem", Shape.COMBO, Pal.VOID, 8, 1.3, 22, Hit.NONE, false),      // Hac Kiem Hoanh Tao
+                m("chg2_tu_tram", Shape.LINE, Pal.VOID, 18, 0.9, 12, Hit.NONE, false)),      // Tu Menh Phi Tram
+                fx(ArenaEffect.VOID_PILLARS), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, P3_TICKS, 55, camCrescendo(P3_TICKS, 55, s * 1.5), s3, List.of(
+                m("chg2_hac_vu", Shape.DONUT, Pal.VOID, 16, 1.8, 90, Hit.KNOCK_UP, true),    // Hac Kiem Thien Vu (toi thuong)
+                m("chg2_ha_khong", Shape.LEAP, Pal.VOID, 5, 1.5, 34, Hit.KNOCK_UP, false),   // Hac Ung Giang
+                m("chg2_chuong_tu", Shape.SHOCK, Pal.HOLY, 9, 1.0, 30, Hit.SLOW, false),     // Tu Chung
+                m("chg2_nhay", Shape.LEAP, Pal.HOLY, 4, 1.2, 24, Hit.KNOCK_UP, false)),      // Thu Duoc
+                fx(ArenaEffect.CRACKED_FLOOR), "su_do", 0.7f);
+        ALL.put(id, new Config(id, Pal.HOLY, s, List.of(p1(), two, three)));
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {
