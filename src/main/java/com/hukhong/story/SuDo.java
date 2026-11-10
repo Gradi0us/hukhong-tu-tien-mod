@@ -45,9 +45,11 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Sứ Đồ Dạ Khuyết (Bước 19), mini-boss cấp <= 65. Ba biến thể (EntityType): 0 Dạ Kiếm (lao + cận chiến),
  * 1 Hư Chú Sư (phép Hư Hóa tầm xa), 2 Huyết Tế Tư (hồi máu đồng bọn). Rơi Văn Kiện theo bậc.
  */
-public class SuDo extends Monster implements GeoEntity {
+public class SuDo extends Monster implements GeoEntity, com.hukhong.boss.phase.PhasedBoss {
     public static final String[] IDS = {"su_do_kiem", "su_do_chu", "su_do_te"};
     private static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(SuDo.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(SuDo.class, EntityDataSerializers.INT);
+    private final com.hukhong.boss.phase.BossPhaseDirector director = new com.hukhong.boss.phase.BossPhaseDirector(this);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final ServerBossEvent bar = new ServerBossEvent(Component.translatable("entity.hukhong.su_do"),
@@ -91,6 +93,7 @@ public class SuDo extends Monster implements GeoEntity {
     @Override protected void defineSynchedData(SynchedEntityData.Builder b) {
         super.defineSynchedData(b);
         b.define(LEVEL, 10);
+        b.define(PHASE, 1);
     }
 
     @Override protected void registerGoals() {
@@ -111,18 +114,22 @@ public class SuDo extends Monster implements GeoEntity {
 
     @Override public void onAddedToLevel() {
         super.onAddedToLevel();
+        if (!level().isClientSide && !level().getEntitiesOfClass(SuDo.class, getBoundingBox().inflate(32), e -> e != this).isEmpty())
+            addTag(com.hukhong.boss.phase.BossPhaseDirector.INTRO_TAG); // nhóm Sứ Đồ: chỉ một cutscene giới thiệu
         if (!level().isClientSide) { com.hukhong.audio.BossMusic.watch(this, "su_do"); com.hukhong.arena.BossArena.attach(this, 16, com.hukhong.arena.BossArena.Theme.SU_DO, false, null); }
     }
 
     @Override public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("SuDoLevel", suLevel());
+        tag.putInt("SuDoPhase", currentPhase());
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("SuDoLevel")) { entityData.set(LEVEL, Math.max(1, Math.min(StoryService.MAX_LEVEL, tag.getInt("SuDoLevel")))); applyLevel(); }
         if (getCustomName() != null) bar.setName(getCustomName());
+        if (tag.contains("SuDoPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("SuDoPhase"))));
     }
 
     @Override public void aiStep() {
@@ -135,8 +142,14 @@ public class SuDo extends Monster implements GeoEntity {
         super.customServerAiStep();
         ServerLevel sl = (ServerLevel) level();
         bar.setProgress(getHealth() / getMaxHealth());
+        if (ultCd > 0) ultCd--;
+        if (mv != null || director.frozen()) return;
         if (skillCd > 0) { skillCd--; return; }
         LivingEntity t = getTarget();
+        if (t != null && t.isAlive() && distanceToSqr(t) < 20 * 20 && random.nextInt(3) > 0) { // bộ chiêu Margit (SuDoMoves)
+            String id = SuDoMoves.pick(random, currentPhase(), ultCd <= 0, distanceTo(t));
+            if (startMove(sl, id, t)) return;
+        }
         if (variant == 2) { // Huyết Tế Tư: hồi máu bản thân + đồng bọn
             boolean hurt = false;
             for (SuDo s : sl.getEntitiesOfClass(SuDo.class, getBoundingBox().inflate(12), SuDo::isAlive)) {
@@ -204,6 +217,67 @@ public class SuDo extends Monster implements GeoEntity {
         }
     }
 
+    // ================================================================ PhasedBoss + bộ chiêu riêng kiểu Margit (SuDoMoves)
+    String mv;
+    int mt, ultCd = 300;
+    LivingEntity mTarget;
+    Vec3 aim = new Vec3(0, 0, 1), spot, from, to;
+    final java.util.Set<java.util.UUID> hitOnce = new java.util.HashSet<>();
+
+    public String currentMove() { return mv; }
+    public int moveTick() { return mt; }
+
+    public boolean startMove(ServerLevel sl, String id, LivingEntity target) {
+        if (mv != null || !isAlive() || !SuDoMoves.handles(id)) return false;
+        mv = id; mt = 0; mTarget = target; spot = null; from = null; to = null;
+        hitOnce.clear();
+        getNavigation().stop();
+        SuDoMoves.begin(sl, this);
+        return true;
+    }
+
+    void endMove() {
+        if (mv == null) return;
+        mv = null; mTarget = null;
+        setNoGravity(false);
+    }
+
+    @Override public String phaseId() { return "su_do"; }
+    @Override public com.hukhong.boss.phase.BossPhaseDirector director() { return director; }
+    @Override public int currentPhase() { return entityData.get(PHASE); }
+    @Override public void setCurrentPhase(int p) { entityData.set(PHASE, Math.max(1, Math.min(3, p))); }
+    @Override public void applyPhase(ServerLevel sl, int ph) {
+        bar.setColor(ph == 1 ? BossEvent.BossBarColor.PURPLE : ph == 2 ? BossEvent.BossBarColor.YELLOW : BossEvent.BossBarColor.RED);
+        if (director.transitioning()) SuDoMoves.transformFx(sl, this, ph);
+    }
+    @Override public boolean startOwnMove(ServerLevel sl, com.hukhong.boss.phase.BossPhaseConfig.Move m, LivingEntity target) {
+        return SuDoMoves.handles(m.id()) && startMove(sl, m.id(), target);
+    }
+    @Override public java.util.List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) { return SuDoMoves.introCam(T); }
+    @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) { return SuDoMoves.introSubs(T); }
+    @Override public boolean idleForMove() { return mv == null; }
+    @Override public void cancelSkill() { endMove(); skillCd = 40; }
+    @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "cast" : "attack"); }
+    @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
+
+    @Override public boolean hurt(DamageSource src, float amt) {
+        if (director.invulnerable() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+        return super.hurt(src, amt);
+    }
+
+    @Override public boolean isImmobile() { return super.isImmobile() || mv != null || director.frozen(); }
+
+    /** isImmobile() làm aiStep bỏ customServerAiStep => chiêu chạy ở tick(). */
+    @Override public void tick() {
+        super.tick();
+        if (!(level() instanceof ServerLevel sl) || !isAlive()) return;
+        director.tick(sl);
+        if (mv != null) {
+            if (director.transitioning()) endMove();
+            else if (!SuDoMoves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(50) * cdMul()); }
+        }
+    }
+
     @Override public boolean doHurtTarget(net.minecraft.world.entity.Entity e) {
         boolean r = super.doHurtTarget(e);
         if (r && !level().isClientSide) triggerAnim("skill", "attack");
@@ -212,6 +286,8 @@ public class SuDo extends Monster implements GeoEntity {
 
     @Override public void die(DamageSource src) {
         super.die(src);
+        endMove();
+        if (level() instanceof ServerLevel sl1 && src.getEntity() instanceof Player) SuDoMoves.deathScene(sl1, this);
         if (level() instanceof ServerLevel sl0) com.hukhong.story.world.HuAnh.addNear(sl0, blockPosition(), -2);
         if (level() instanceof ServerLevel && src.getEntity() instanceof ServerPlayer p)
             CultivationService.addExp(p, 8L * suLevel());
