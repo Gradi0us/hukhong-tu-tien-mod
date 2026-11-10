@@ -134,10 +134,20 @@ public final class BossDamageGameTests {
 
     @GameTest(template = "empty", timeoutTicks = 700, batch = "bossdmg")
     public static void chgSkillCompletes(GameTestHelper h) {
-        // CHG I dung bo chieu rieng (ChgOneMoves, xem ChgOneGameTests); khung ky nang ChgKit kiem tren CHG II
+        // Ca 4 CHG deu dung bo chieu rieng (khong con khung ChgKit): kiem chieu rieng cua CHG II (ChgMaliketh) bat dau roi ket thuc
         ChapHanhGia b = put(h, ChgRegistry.type(2).create(h.getLevel()));
         b.beginDescent();
-        skillCompletes(h, b, "CHG2");
+        ServerPlayer p = attacker(h, Path.KIEM);
+        Vec3 v = h.absoluteVec(new Vec3(2, 1, 4));
+        p.setPos(v.x, v.y, v.z);
+        p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000000);
+        p.setHealth(p.getMaxHealth());
+        boolean[] seen = {false};
+        h.onEachTick(() -> {
+            b.setTarget(p);
+            if (b.currentOwnMove() != null) seen[0] = true;
+            else if (seen[0]) { b.discard(); h.succeed(); }
+        });
     }
     /**
      * NTTD 2 dang: spawn qua luong that (EndgameService.spawnBoss) phai ra DANG 1; danh het mau dang 1 -> khong chet ma bien hinh;

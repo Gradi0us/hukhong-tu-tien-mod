@@ -184,7 +184,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
 
     /** Bắt đầu chiêu riêng (CHG I / III / IV); false nếu đang bận / không có bộ chiêu riêng. */
     public boolean startMove(ServerLevel sl, String id, LivingEntity target) {
-        if ((idx != 1 && idx != 3 && idx != 4) || mv != null || !isAlive() || descending()) return false;
+        if (!(idx == 1 ? ChgOneMoves.handles(id) : idx == 3 ? Chg3Moves.handles(id) : idx == 4 && Chg4Moves.handles(id)) || mv != null || !isAlive() || descending()) return false;
         mv = id; mt = 0; mTarget = target; spot = null; from = null; to = null; grabbed = null;
         hitOnce.clear(); marks.clear(); queue.clear();
         getNavigation().stop();
