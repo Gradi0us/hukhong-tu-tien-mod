@@ -71,6 +71,7 @@ public final class BossBrain {
         default boolean brainOnHeal(ServerLevel sl, Player p) { return false; }
 
         default GapClose brainGapClose(ServerLevel sl, net.minecraft.world.entity.LivingEntity target, double dist) { return null; }
+        default BossProfile.PhaseVals brainVals(BossProfile p) { return p.phase(currentPhase()); }
         default BossProfile.PhaseVals brainPhaseVals(BossProfile.PhaseVals base) { return base; }
         default boolean brainStrike(net.minecraft.world.entity.LivingEntity victim, net.minecraft.world.damagesource.DamageSource src, float dmg) { return victim.hurt(src, dmg); }
         default void onBrainStrike(ServerLevel sl, String combo, int hit, net.minecraft.world.entity.LivingEntity target) {}
@@ -87,6 +88,7 @@ public final class BossBrain {
                 public float moveDamage(double mult) { return pb.moveDamage(mult); }
                 public void playBrainAnim(String name) { pb.playBrainAnim(name); }
                 public GapClose brainGapClose(ServerLevel sl, net.minecraft.world.entity.LivingEntity t, double d) { return pb.brainGapClose(sl, t, d); }
+                public BossProfile.PhaseVals brainVals(BossProfile p) { return pb.brainVals(p); }
                 public BossProfile.PhaseVals brainPhaseVals(BossProfile.PhaseVals b) { return pb.brainPhaseVals(b); }
                 public boolean brainStrike(net.minecraft.world.entity.LivingEntity v, net.minecraft.world.damagesource.DamageSource s, float d) { return pb.brainStrike(v, s, d); }
                 public void onBrainStrike(ServerLevel sl, String c, int h, net.minecraft.world.entity.LivingEntity t) { pb.onBrainStrike(sl, c, h, t); }
@@ -150,10 +152,10 @@ public final class BossBrain {
     public int hitStage() { return state == State.BASIC_COMBO ? stage : -1; }
     public String comboId() { return combo == null ? null : combo.id(); }
     public boolean busy() { return state == State.BASIC_COMBO || state == State.EVADE || state == State.GAP_CLOSE || state == State.REACT || hitStop > 0; }
-    private PhaseVals pv() { return pb.brainPhaseVals(prof.phase(pb.currentPhase())); }
+    private PhaseVals pv() { return pb.brainPhaseVals(pb.brainVals(prof)); }
     /** Chỉ số nhát hiện tại (0-based) trong chuỗi; -1 nếu không trong chuỗi. */
     public int hitIndex() { return state == State.BASIC_COMBO ? hitIdx : -1; }
-    /** Kiểu né gần nhất (null nếu chưa né). */
+    /** Kiểu né gần nhất (null nếu chưa né) — boss dùng để nối phản ứng riêng. */
     public Evade lastEvade() { return evadeKind; }
 
     private boolean yielding() { return pb.frozen() || pb.ownMoveActive(); }

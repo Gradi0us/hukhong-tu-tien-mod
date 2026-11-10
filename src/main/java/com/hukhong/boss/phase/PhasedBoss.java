@@ -62,6 +62,9 @@ public interface PhasedBoss {
     /** Hồ sơ chiến đấu; khác null => {@link com.hukhong.boss.ai.BossBrain} điều khiển di chuyển + đòn thường giữa các chiêu lớn. */
     default com.hukhong.boss.ai.BossProfile brainProfile() { return null; }
 
+    /** Thông số di chuyển brain đang dùng (mặc định theo pha). Boss có thể đổi theo tình huống, vd. Độc Mẫu hung hăng khi hết bầy con. */
+    default com.hukhong.boss.ai.BossProfile.PhaseVals brainVals(com.hukhong.boss.ai.BossProfile p) { return p.phase(currentPhase()); }
+
     /** Boss đang thi triển chiêu riêng (brain nhường quyền). Mặc định = !idleForMove(). */
     default boolean ownMoveActive() { return !idleForMove(); }
 

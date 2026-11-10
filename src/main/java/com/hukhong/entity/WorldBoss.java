@@ -115,8 +115,13 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob, com
 
     @Override protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false));
-        goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
+        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false) { // có BossBrain: brain lo di chuyển + đòn thường
+            @Override public boolean canUse() { return brainProfile() == null && super.canUse(); }
+            @Override public boolean canContinueToUse() { return brainProfile() == null && super.canContinueToUse(); }
+        });
+        goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8) {
+            @Override public boolean canUse() { return (brainProfile() == null || getTarget() == null) && super.canUse(); }
+        });
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 16f));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -240,6 +245,7 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob, com
             return;
         }
         if (skillCd > 0) { skillCd--; return; }
+        if (com.hukhong.boss.ai.BossBrain.busy(this)) return; // không chen kỹ năng giữa chuỗi đòn / né / áp sát của brain
         if (t == null || !t.isAlive() || distanceToSqr(t) > 26 * 26) return;
         int n = Math.max(1, skillCount(phase()));
         int pick = random.nextInt(n);
@@ -386,7 +392,12 @@ public abstract class WorldBoss extends Monster implements GeoEntity, HuMob, com
         for (String a : new String[]{"attack", "skill_a", "skill_b", "skill_c", "phase"})
             sk.triggerableAnim(a, RawAnimation.begin().then("animation." + id + "." + a, Animation.LoopType.PLAY_ONCE));
         c.add(sk);
+        if (brainProfile() != null)
+            c.add(com.hukhong.boss.ai.BrainAnims.controller(this, brainProfile(), "animation." + id + ".", brainAnims(), "attack", "walk", 4));
     }
+
+    /** Animation brain (strafe_l, dash, combo_*...) có thật trong file animation của boss; tên thiếu rơi về attack/walk. */
+    protected java.util.Set<String> brainAnims() { return java.util.Set.of(); }
 
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }
 }

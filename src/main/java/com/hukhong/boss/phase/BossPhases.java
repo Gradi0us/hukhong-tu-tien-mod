@@ -332,7 +332,7 @@ public final class BossPhases {
                 m("dm_hoa_hu", Shape.PILLARS, Pal.TOXIC, 3, 1.0, 22, Hit.POISON, false)),
                 fx(ArenaEffect.CRACKED_FLOOR), null, 0.85f);
         Phase three = new Phase(3, P3_BELOW, 1.5f, 120, 70, c3, s3, List.of(
-                m("dm_van_doc_khai", Shape.DONUT, Pal.TOXIC, 20, 2.2, 100, Hit.POISON, true),
+                m("dm_van_doc_khai", Shape.DONUT, Pal.TOXIC, 20, 2.2, 130, Hit.POISON, true),
                 m("dm_huyet_te", Shape.PILLARS, Pal.BLOOD, 3.5, 1.1, 30, Hit.WEAK, false),
                 m("dm_an_chu", Shape.LINE, Pal.TOXIC, 18, 1.0, 14, Hit.WEAK, false),
                 m("dm_trieu_doc", Shape.SHOCK, Pal.TOXIC, 16, 0.9, 14, Hit.SLOW, false)),

@@ -524,4 +524,84 @@ public final class HuVuongMoves {
         sl.sendParticles(ModParticles.HU_KHONG.get(), at.x, at.y + 1.5, at.z, 80, 2, 2, 2, 0.05);
     }
 
+
+    // ================================================================== BossBrain (PLAN-v1 §4: khổng lồ, không đuổi)
+    /**
+     * Gần như đứng yên, xoay chậm (3-4.5°/tick); người chơi đứng xa -> HÚT kéo lại (xa hơn 14 ô thì nhảy rung đất).
+     * Rìu: quét - quét - dậm; pha 2: hai tay đánh luân phiên. Người chơi ra sau lưng -> quét xà thần 360°. Không né.
+     */
+    public static final com.hukhong.boss.ai.BossProfile BRAIN = com.hukhong.boss.ai.BossProfile.builder()
+            .phase(1, new com.hukhong.boss.ai.BossProfile.PhaseVals(2, 4.5, 0.0, 3f, 0, 999, 30, 50))
+            .phase(2, new com.hukhong.boss.ai.BossProfile.PhaseVals(2, 4.5, 0.0, 3.5f, 0, 999, 24, 40))
+            .phase(3, new com.hukhong.boss.ai.BossProfile.PhaseVals(2, 4.5, 0.0, 4.5f, 0, 999, 18, 32))
+            .weight(3).accel(10, 6).moveSpeed(0.05)
+            .gapClose(new PullOrLeap(), 7)
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("riu", List.of(
+                    new com.hukhong.boss.ai.BossProfile.Hit(16, 5, 12, 4.5, 170, 1.0, 0.3, 0, false, false, false),
+                    new com.hukhong.boss.ai.BossProfile.Hit(12, 5, 12, 4.5, 170, 1.0, 0.3, 0, false, false, false),
+                    new com.hukhong.boss.ai.BossProfile.Hit(18, 5, 18, 4.0, 360, 1.3, 0, 0, false, true, false)),
+                    0, 6, 3, 1, List.of(), false))
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("tay", List.of(
+                    new com.hukhong.boss.ai.BossProfile.Hit(10, 4, 8, 4.2, 120, 0.8, 0.4, 0, false, false, false),
+                    new com.hukhong.boss.ai.BossProfile.Hit(10, 4, 8, 4.2, 120, 0.8, 0.4, 0, false, false, false),
+                    new com.hukhong.boss.ai.BossProfile.Hit(10, 4, 8, 4.2, 120, 0.8, 0.4, 0, false, false, false),
+                    new com.hukhong.boss.ai.BossProfile.Hit(10, 4, 16, 4.5, 140, 1.1, 0.6, 0, false, true, false)),
+                    0, 5.5, 3, 2, List.of(), false))
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("duoi", List.of(
+                    new com.hukhong.boss.ai.BossProfile.Hit(14, 8, 16, 5.5, 360, 1.1, 0, 0, false, true, false)),
+                    0, 7, 0, 1, List.of(), true))
+            .bigMoveEvery(99)
+            .build();
+
+    static final java.util.Set<String> BRAIN_ANIMS = java.util.Set.of("dash", "leap", "combo_riu_1", "combo_riu_2", "combo_riu_3",
+            "combo_tay_1", "combo_tay_2", "combo_tay_3", "combo_tay_4", "combo_duoi_1");
+
+    /** Áp sát kiểu khổng lồ: hút người chơi về phía mình (~1 giây); xa hơn 14 ô thì nhảy rung đất. */
+    static final class PullOrLeap implements com.hukhong.boss.ai.GapClose {
+        public String anim() { return "dash"; }
+        public boolean step(ServerLevel sl, net.minecraft.world.entity.Mob b, com.hukhong.boss.ai.BossMovement mv, LivingEntity t, int i) {
+            HuVuong h = (HuVuong) b;
+            if (i == 0) {
+                h.gapLeap = b.distanceTo(t) > 14;
+                if (h.gapLeap) h.playBrainAnim("leap");
+                else { h.pulls++; b.playSound(SoundEvents.WARDEN_SONIC_CHARGE, 2f, 0.5f); }
+            }
+            if (h.gapLeap) {
+                if (com.hukhong.boss.ai.GapClose.LEAP.step(sl, b, mv, t, i)) return true;
+                for (Player p : sl.getEntitiesOfClass(Player.class, b.getBoundingBox().inflate(4, 1, 4), p -> !p.isSpectator()))
+                    if (h.strike(p, h.moveDamage(0.6))) { p.setDeltaMovement(p.getDeltaMovement().add(0, 0.5, 0)); p.hurtMarked = true; }
+                Fx.shake(sl, b.position(), 2f, 12, 24f);
+                return false;
+            }
+            mv.face(t.position(), 4f);
+            mv.stop();
+            Vec3 in = b.position().subtract(t.position()).multiply(1, 0, 1);
+            double d = in.length();
+            if (d < 4.2 || i > 26) return false;
+            if (i >= 6) {   // 6 tick gồng (vòng xoáy) rồi kéo
+                Vec3 v = in.scale(0.32 / d);
+                t.setDeltaMovement(v.x, Math.max(t.getDeltaMovement().y, 0.02), v.z);
+                t.hurtMarked = true;
+                Vec3 a = b.position().add(0, b.getBbHeight() * 0.55, 0), c = t.position().add(0, 1, 0);
+                for (int k = 0; k <= 6; k++) { Vec3 q = a.lerp(c, k / 6.0); sl.sendParticles(ParticleTypes.REVERSE_PORTAL, q.x, q.y, q.z, 1, 0.05, 0.05, 0.05, 0.01); }
+            } else sl.sendParticles(ParticleTypes.PORTAL, b.getX(), b.getY() + b.getBbHeight() * 0.6, b.getZ(), 8, 1, 1, 1, 0.4);
+            return true;
+        }
+    }
+
+    /** Mỗi tick (khi không đang chiêu riêng): người chơi lọt ra sau lưng -> quét xà thần 360°. */
+    static void brainTick(ServerLevel sl, HuVuong h) {
+        if (h.tailCd > 0) h.tailCd--;
+        com.hukhong.boss.ai.BossBrain b = com.hukhong.boss.ai.BossBrain.get(h);
+        LivingEntity t = h.getTarget();
+        if (b == null || t == null || !t.isAlive() || h.tailCd > 0 || b.state() != com.hukhong.boss.ai.BossBrain.State.STRAFE || !b.allowAttacks) return;
+        Vec3 to = t.position().subtract(h.position()).multiply(1, 0, 1);
+        if (to.lengthSqr() > 7.5 * 7.5 || to.lengthSqr() < 1e-3) return;
+        double cos = to.normalize().dot(b.movement().forward());
+        if (cos > -0.35) return; // trong khoảng ±110° phía trước: để chuỗi rìu thường lo
+        h.tailCd = 80;
+        h.tailSweeps++;
+        sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, h.getX(), h.getY() + 0.3, h.getZ(), 30, 2.5, 0.2, 2.5, 0.05);
+        b.startCombo(BRAIN.combo("duoi"), t);
+    }
 }
