@@ -95,8 +95,13 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
 
     @Override protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false));
-        goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
+        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false) { // BossBrain lo đòn thường (HuVuongMoves.BRAIN)
+            @Override public boolean canUse() { return brainProfile() == null && super.canUse(); }
+            @Override public boolean canContinueToUse() { return brainProfile() == null && super.canContinueToUse(); }
+        });
+        goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8) {
+            @Override public boolean canUse() { return (brainProfile() == null || getTarget() == null) && super.canUse(); }
+        });
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 16f));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -120,6 +125,11 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
     @Override public java.util.List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) { return HuVuongMoves.introCam(T); }
     @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) { return HuVuongMoves.introSubs(T); }
     @Override public boolean idleForMove() { return mv == null; }
+    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return HuVuongMoves.BRAIN; }
+    /** Đang nhảy rung đất trong lúc áp sát (thay vì hút) — GapClose của HuVuongMoves đọc/ghi. */
+    boolean gapLeap;
+    int tailCd;
+    public int tailSweeps, pulls;
     @Override public void cancelSkill() { endMove(); skillCd = 40; }
     @Override public void playMoveAnim(boolean ultimate) { triggerAnim("skill", ultimate ? "roar" : "slam"); }
     @Override public float moveDamage(double mult) { return (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * mult); }
@@ -135,6 +145,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
         super.tick();
         if (!(level() instanceof ServerLevel sl) || !isAlive()) return;
         director.tick(sl);
+        if (mv == null && !director.frozen()) HuVuongMoves.brainTick(sl, this);
         if (mv != null) {
             if (director.transitioning()) endMove();
             else if (!HuVuongMoves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(phase() == 1 ? 90 : 70) * cdMul()); }
@@ -227,6 +238,7 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
         if (ultCd > 0) ultCd--;
         if (mv != null || (director != null && director.frozen())) return;
         if (skillCd > 0) { skillCd--; return; }
+        if (com.hukhong.boss.ai.BossBrain.busy(this)) return; // không chen chiêu riêng giữa chuỗi rìu / hút
         LivingEntity t = getTarget();
         if (t == null || !t.isAlive() || distanceToSqr(t) > 20 * 20) return;
         startMove(sl, HuVuongMoves.pick(random, phase(), ultCd <= 0, distanceTo(t), minionCount(sl) < 6), t);
@@ -318,6 +330,8 @@ public class HuVuong extends Monster implements GeoEntity, HuMob, com.hukhong.bo
                 .triggerableAnim("slam", RawAnimation.begin().then("animation.hu_vuong.slam", Animation.LoopType.PLAY_ONCE))
                 .triggerableAnim("summon", RawAnimation.begin().then("animation.hu_vuong.summon", Animation.LoopType.PLAY_ONCE))
                 .triggerableAnim("roar", RawAnimation.begin().then("animation.hu_vuong.roar", Animation.LoopType.PLAY_ONCE)));
+        // brain: không đi vòng / không né -> tên thiếu rơi về idle (khổng lồ gần như đứng yên)
+        c.add(com.hukhong.boss.ai.BrainAnims.controller(this, HuVuongMoves.BRAIN, "animation.hu_vuong.", HuVuongMoves.BRAIN_ANIMS, "attack", "idle", 5));
     }
 
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }

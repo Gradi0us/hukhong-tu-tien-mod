@@ -102,7 +102,9 @@ public final class BossBrain {
     public int hitStage() { return state == State.BASIC_COMBO ? stage : -1; }
     public String comboId() { return combo == null ? null : combo.id(); }
     public boolean busy() { return state == State.BASIC_COMBO || state == State.EVADE || state == State.GAP_CLOSE || state == State.REACT || hitStop > 0; }
-    private PhaseVals pv() { return prof.phase(pb.currentPhase()); }
+    private PhaseVals pv() { return pb.brainVals(prof); }
+    /** Kiểu né gần nhất (null nếu chưa né lần nào) — boss dùng để nối phản ứng riêng (vd. ném dao sau khi nhảy lùi). */
+    public Evade lastEvade() { return evadeKind; }
 
     private boolean yielding() { return pb.director().frozen() || pb.ownMoveActive(); }
 

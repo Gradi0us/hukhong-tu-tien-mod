@@ -281,7 +281,8 @@ public final class DocMauMoves {
     }
 
     // ---- Vạn Độc Khai Hoa: lên cao, vòng 20 + 3 vòng an toàn -> t40 cảnh báo dày -> t100 nở hoa độc khắp đấu trường
-    public static final int ULT_BLOOM = 100, ULT_END = 120;
+    /** Cutscene dài ULT_T (60) tick; nở hoa ở ULT_BLOOM => người chơi có ULT_FREE = 70 tick (3.5 giây) tự do chạy vào vòng an toàn. */
+    public static final int ULT_BLOOM = 130, ULT_END = 150, ULT_FREE = ULT_BLOOM - 60;
     public static final double ULT_RAD = 20, SAFE_RAD = 3.0;
 
     private static boolean ultimate(ServerLevel sl, DocMau d, int t) {
@@ -300,7 +301,7 @@ public final class DocMauMoves {
             d.playSound(SoundEvents.WARDEN_SONIC_CHARGE, 3f, 0.4f);
         }
         if (t < 20) { d.setDeltaMovement(0, 0.15, 0); d.hurtMarked = true; } else d.setDeltaMovement(Vec3.ZERO);
-        if (t == 0 || t == 40 || t == 70) for (Vec3 s : d.safe) {
+        if (t == 0 || t == 60 || t == 100) for (Vec3 s : d.safe) {
             Fx.telegraphCircle(sl, null, s, (float) SAFE_RAD, ULT_BLOOM - t, SAFE);
             Fx.rune(sl, null, s.add(0, 0.1, 0), (float) SAFE_RAD, SAFE, ULT_BLOOM - t, 6);
         }
@@ -312,8 +313,8 @@ public final class DocMauMoves {
             }
             sl.sendParticles(ParticleTypes.SPORE_BLOSSOM_AIR, d.getX(), d.getY() + 2, d.getZ(), 10, 2, 1.5, 2, 0);
         }
-        if (t == 40) {
-            Fx.groundRing(sl, null, c, (float) ULT_RAD, VIOLET, ULT_BLOOM - 40);
+        if (t == 60) {
+            Fx.groundRing(sl, null, c, (float) ULT_RAD, VIOLET, ULT_BLOOM - 60);
             for (int i = 0; i < 10; i++) {
                 double a = i * Math.PI / 5;
                 Fx.ribbonWave(sl, null, d.position().add(0, 2, 0), c.add(Math.cos(a) * ULT_RAD, 0.2, Math.sin(a) * ULT_RAD), 2.0, 0.8, 16, i, 0.35f, i % 2 == 0 ? ROT : VIOLET);

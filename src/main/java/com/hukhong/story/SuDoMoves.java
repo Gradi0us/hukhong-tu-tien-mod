@@ -379,6 +379,18 @@ public final class SuDoMoves {
         }
     }
 
+    /** Phi đao nhanh (BossBrain): một đao thẳng vào mục tiêu — sau khi nhảy lùi, hoặc trừng phạt người chơi hồi máu. */
+    static void quickDagger(ServerLevel sl, SuDo d, LivingEntity t) {
+        Vec3 from = d.position().add(0, 1.4, 0), at = t.position().add(0, 1, 0);
+        Vec3 dir = at.subtract(from).multiply(1, 0, 1);
+        Vec3 to = at.add(dir.lengthSqr() < 1e-4 ? Vec3.ZERO : dir.normalize().scale(3));
+        Fx.swordFly(sl, from, to, 4, 0, 0.5f);
+        Fx.ribbon(sl, null, from, to, 0, 4, 0, 0.12f, GOLD);
+        d.playSound(SoundEvents.TRIDENT_THROW.value(), 1.2f, 1.6f);
+        hitLine(sl, d, from, to, 1.0, mult("sd_phi_dao"), Hit.SLOW);
+        d.daggersThrown++;
+    }
+
     private static void hitLine(ServerLevel sl, SuDo d, Vec3 a, Vec3 b, double w, double mul, Hit h) {
         Vec3 ab = b.subtract(a).multiply(1, 0, 1);
         double L2 = Math.max(1e-4, ab.lengthSqr());

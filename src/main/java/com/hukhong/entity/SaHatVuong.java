@@ -92,6 +92,7 @@ public class SaHatVuong extends WorldBoss {
             getNavigation().stop();
             if (!SaHatMoves.step(sl, this, mt++)) endMove();
         }
+        if (mv == null && !director().frozen()) brainTick(sl);
         if (!orbs.isEmpty()) SaHatMoves.tickOrbs(sl, this);
         if (!sands.isEmpty()) SaHatMoves.tickSands(sl, this);
     }
@@ -101,8 +102,10 @@ public class SaHatVuong extends WorldBoss {
         super.customServerAiStep();
         if (mv != null || director().frozen() || director().transitioning()) return;
         if (ownCd > 0) { ownCd--; return; }
+        if (com.hukhong.boss.ai.BossBrain.busy(this)) return; // không chen giữa song kiếm / lao trọng lực của brain
         LivingEntity t = getTarget();
         if (t == null || !t.isAlive() || distanceToSqr(t) > 30 * 30) return;
+        if (hiddenT > 40 && ultCd >= 0) { hiddenT = 0; startMove((ServerLevel) level(), "sh_trong_luc_cau", t); return; } // trốn sau vật cản -> cầu trọng lực vòng qua
         startMove((ServerLevel) level(), SaHatMoves.pick(random, phase(), ultCd <= 0, distanceTo(t)), t);
     }
 
@@ -110,5 +113,69 @@ public class SaHatVuong extends WorldBoss {
         super.die(src);
         orbs.clear(); sands.clear();
         if (level() instanceof ServerLevel sl) SaHatMoves.deathScene(sl, this);
+    }
+
+    // ================================================================ BossBrain (PLAN-v1 §4: lùi xa bắn, rồi bất ngờ lao)
+    /**
+     * Giữ 10-16 ô (chiêu tầm xa SaHatMoves chạy theo ownCd); né = lùi trượt trên cát để lại vệt bụi; áp sát = LAO TRỌNG LỰC
+     * ~15 ô rồi song kiếm 4 nhát (2 trái 2 phải) hoặc đập chéo. Người chơi trốn sau vật cản > 2 giây -> cầu trọng lực.
+     */
+    public static final com.hukhong.boss.ai.BossProfile BRAIN = com.hukhong.boss.ai.BossProfile.builder()
+            .phase(1, new com.hukhong.boss.ai.BossProfile.PhaseVals(10, 16, 0.16, 10f, 0.3, 40, 60, 90))
+            .phase(2, new com.hukhong.boss.ai.BossProfile.PhaseVals(10, 16, 0.18, 12f, 0.35, 35, 45, 70))
+            .phase(3, new com.hukhong.boss.ai.BossProfile.PhaseVals(9, 15, 0.2, 14f, 0.4, 30, 35, 55))
+            .weight(2.5).accel(6, 4).moveSpeed(0.3)
+            .gapClose(new GravityDash(), 9)
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("song_kiem", java.util.List.of(
+                    com.hukhong.boss.ai.BossProfile.hit(12, 3, 5, 4, 130, 0.7, 0.8),
+                    com.hukhong.boss.ai.BossProfile.hit(9, 3, 5, 4, 130, 0.7, 0.8),
+                    com.hukhong.boss.ai.BossProfile.hit(9, 3, 5, 4, 130, 0.7, 0.8),
+                    new com.hukhong.boss.ai.BossProfile.Hit(9, 3, 12, 4.2, 140, 0.9, 1.0, 0.4, false, true, false)),
+                    0, 5, 3, 1, java.util.List.of(new com.hukhong.boss.ai.BossProfile.Branch(1, com.hukhong.boss.ai.BossProfile.Cond.RETREAT, 3, "dap_cheo")), false))
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("dap_cheo", java.util.List.of(
+                    new com.hukhong.boss.ai.BossProfile.Hit(16, 4, 18, 4.5, 90, 1.4, 1.5, 0.4, false, true, true)),
+                    0, 5, 1.5, 1, java.util.List.of(), false))
+            .bigMoveEvery(99)
+            .build();
+
+    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return BRAIN; }
+    @Override protected java.util.Set<String> brainAnims() {
+        return java.util.Set.of("strafe_l", "strafe_r", "backstep", "sidestep_l", "sidestep_r", "backflip", "dash",
+                "combo_song_kiem_1", "combo_song_kiem_2", "combo_song_kiem_3", "combo_song_kiem_4", "combo_dap_cheo_1");
+    }
+
+    int hiddenT;
+    public int gravityDashes;
+
+    /** Vệt bụi khi lùi trượt + đếm thời gian người chơi khuất tầm nhìn. */
+    private void brainTick(ServerLevel sl) {
+        com.hukhong.boss.ai.BossBrain b = com.hukhong.boss.ai.BossBrain.get(this);
+        LivingEntity t = getTarget();
+        if (b == null || t == null || !t.isAlive()) { hiddenT = 0; return; }
+        hiddenT = hasLineOfSight(t) ? 0 : hiddenT + 1;
+        Vec3 v = b.movement().velocity(), away = position().subtract(t.position()).multiply(1, 0, 1);
+        if (away.lengthSqr() > 1e-3 && v.dot(away.normalize()) > 0.08 && onGround())
+            sl.sendParticles(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.FALLING_DUST,
+                    net.minecraft.world.level.block.Blocks.SAND.defaultBlockState()), getX(), getY() + 0.1, getZ(), 4, getBbWidth() * 0.4, 0.05, getBbWidth() * 0.4, 0);
+    }
+
+    /** Lao trọng lực: 8 tick gồng (vòng tím) rồi phóng ~15 ô thẳng tới mục tiêu, hơi bám hướng. */
+    static final class GravityDash implements com.hukhong.boss.ai.GapClose {
+        public String anim() { return "dash"; }
+        public boolean step(ServerLevel sl, net.minecraft.world.entity.Mob b, com.hukhong.boss.ai.BossMovement mv, LivingEntity t, int i) {
+            if (i < 8) {
+                mv.face(t.position(), 20f);
+                mv.freeze();
+                if (i == 0) { ((SaHatVuong) b).gravityDashes++; b.playSound(net.minecraft.sounds.SoundEvents.WARDEN_SONIC_CHARGE, 1.5f, 1.4f); }
+                sl.sendParticles(net.minecraft.core.particles.ParticleTypes.REVERSE_PORTAL, b.getX(), b.getY() + 1, b.getZ(), 6, 0.8, 0.6, 0.8, 0.05);
+                return true;
+            }
+            double d = b.distanceTo(t);
+            if (d < 3 || i > 8 + 15) { mv.freeze(); return false; }
+            mv.face(t.position(), 6f);
+            mv.drive(mv.forward().scale(Math.min(1.1, d * 0.4)), true);
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.PORTAL, b.getX(), b.getY() + 0.5, b.getZ(), 4, 0.4, 0.3, 0.4, 0.1);
+            return true;
+        }
     }
 }

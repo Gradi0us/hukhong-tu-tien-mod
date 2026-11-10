@@ -149,10 +149,13 @@ public class SuDo extends Monster implements GeoEntity, com.hukhong.boss.phase.P
         bar.setProgress(getHealth() / getMaxHealth());
         if (ultCd > 0) ultCd--;
         if (mv != null || director.frozen()) return;
-        if (brainProfile() != null) return; // Dạ Kiếm: BossBrain chọn đòn thường + xin chiêu riêng qua brainBigMove()
+        // BossBrain lo di chuyển + đòn thường + chiêu Margit (brainBigMove). Dạ Kiếm không còn gì khác; Chú Sư / Tế Tư vẫn niệm
+        // phép riêng (tức thời) nhưng không chen giữa chuỗi đòn / né của brain.
+        boolean brain = brainProfile() != null;
+        if (brain && (variant == 0 || com.hukhong.boss.ai.BossBrain.busy(this) || tauntT > 0)) return;
         if (skillCd > 0) { skillCd--; return; }
         LivingEntity t = getTarget();
-        if (t != null && t.isAlive() && distanceToSqr(t) < 20 * 20 && random.nextInt(3) > 0) { // bộ chiêu Margit (SuDoMoves)
+        if (!brain && t != null && t.isAlive() && distanceToSqr(t) < 20 * 20 && random.nextInt(3) > 0) { // bộ chiêu Margit (SuDoMoves)
             String id = SuDoMoves.pick(random, currentPhase(), ultCd <= 0, distanceTo(t));
             if (startMove(sl, id, t)) return;
         }
@@ -262,22 +265,26 @@ public class SuDo extends Monster implements GeoEntity, com.hukhong.boss.phase.P
     @Override public java.util.List<com.hukhong.boss.phase.CamPath.Key> introCamera(int T) { return SuDoMoves.introCam(T); }
     @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) { return SuDoMoves.introSubs(T); }
     @Override public boolean idleForMove() { return mv == null; }
+    /** Brain nhường quyền khi đang chiêu riêng hoặc đang đứng khiêu khích (khoảng nghỉ lừa nhịp). */
+    @Override public boolean ownMoveActive() { return mv != null || tauntT > 0; }
 
     /**
-     * Hồ sơ BossBrain mẫu (Dạ Kiếm, kiểu Margit vừa phải): đi vòng 3-6 ô, 2 chuỗi gậy + 1 nhánh quét.
-     * Trượng Tam Kích: nhanh - nhanh - nhát 3 trễ cố ý (nặng, hit-stop). Sau nhát 1: người chơi lùi > 2.5 ô -> Đâm Lướt;
+     * Hồ sơ BossBrain (PLAN-v1 §4, kiểu Margit) cho cả 3 biến thể: đi vòng 3-6 ô, thỉnh thoảng đứng khiêu khích; né = lùi / nhảy
+     * lùi + ném dao; áp sát = bước gậy dài; trừng phạt hồi máu = ném dao ngay rồi Đâm Lướt.
+     * Trượng: nhanh - TRỄ - nhanh - TRỄ (nhát cuối triệu búa: nặng, không đỡ được). Sau nhát 1: người chơi lùi > 2.5 ô -> Đâm Lướt;
      * đi ngang > 50° -> Quét Ngang.
      */
     static final com.hukhong.boss.ai.BossProfile BRAIN = com.hukhong.boss.ai.BossProfile.builder()
             .phase(1, new com.hukhong.boss.ai.BossProfile.PhaseVals(3, 6, 0.18, 16f, 0.25, 50, 26, 40))
             .phase(2, new com.hukhong.boss.ai.BossProfile.PhaseVals(3, 6, 0.2, 18f, 0.35, 40, 20, 32))
             .phase(3, new com.hukhong.boss.ai.BossProfile.PhaseVals(2.5, 5.5, 0.22, 20f, 0.4, 35, 14, 26))
-            .weight(1.0).accel(5, 4).moveSpeed(0.26)
+            .weight(1.0).accel(5, 4).moveSpeed(0.26).delayExtra(12)
             .gapClose(com.hukhong.boss.ai.GapClose.DASH, 9)
             .combo(new com.hukhong.boss.ai.BossProfile.Combo("truong", java.util.List.of(
-                    com.hukhong.boss.ai.BossProfile.hit(10, 3, 6, 2.8, 110, 0.9, 0.8),
-                    com.hukhong.boss.ai.BossProfile.hit(8, 3, 6, 2.8, 110, 0.9, 0.8),
-                    new com.hukhong.boss.ai.BossProfile.Hit(10, 4, 14, 3.2, 140, 1.4, 1.2, 0.5, true, true, false)),
+                    com.hukhong.boss.ai.BossProfile.hit(9, 3, 5, 2.8, 110, 0.8, 0.8),
+                    new com.hukhong.boss.ai.BossProfile.Hit(10, 4, 6, 3.0, 120, 1.0, 1.0, 0, true, false, false),
+                    com.hukhong.boss.ai.BossProfile.hit(7, 3, 5, 2.8, 110, 0.8, 0.6),
+                    new com.hukhong.boss.ai.BossProfile.Hit(12, 5, 16, 3.4, 140, 1.5, 1.2, 0.5, true, true, true)),
                     0, 3.8, 3, 1, java.util.List.of(
                             new com.hukhong.boss.ai.BossProfile.Branch(0, com.hukhong.boss.ai.BossProfile.Cond.RETREAT, 2.5, "dam"),
                             new com.hukhong.boss.ai.BossProfile.Branch(0, com.hukhong.boss.ai.BossProfile.Cond.STRAFE, 50, "quet")), false))
@@ -291,7 +298,45 @@ public class SuDo extends Monster implements GeoEntity, com.hukhong.boss.phase.P
             .punishHeal("dam").bigMoveEvery(2)
             .build();
 
-    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return variant == 0 ? BRAIN : null; }
+    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return BRAIN; }
+
+    /** Animation brain có trong cả 3 file su_do_*.animation.json (tools/gen_b5_brain_anims.py). */
+    static final java.util.Set<String> BRAIN_ANIMS = java.util.Set.of("strafe_l", "strafe_r", "backstep", "sidestep_l", "sidestep_r",
+            "backflip", "dash", "combo_truong_1", "combo_truong_2", "combo_truong_3", "combo_truong_4", "combo_dam_1", "combo_dam_2", "combo_quet_1");
+
+    // ---- phản ứng riêng nối vào brain: khiêu khích, ném dao sau nhảy lùi, ném dao trừng phạt hồi máu
+    int tauntT, tauntCd = 160, daggerIn = -1, seenEvades, seenReacts;
+    public int daggersThrown, taunts;
+
+    private void brainReactions(ServerLevel sl) {
+        if (tauntCd > 0) tauntCd--;
+        if (tauntT > 0) { tauntT--; getNavigation().stop(); }
+        com.hukhong.boss.ai.BossBrain b = com.hukhong.boss.ai.BossBrain.get(this);
+        LivingEntity t = getTarget();
+        if (b == null || t == null || !t.isAlive()) { daggerIn = -1; return; }
+        if (b.evades > seenEvades) {
+            seenEvades = b.evades;
+            com.hukhong.boss.ai.BossProfile.Evade k = b.lastEvade();
+            if (k == com.hukhong.boss.ai.BossProfile.Evade.BACKFLIP || k == com.hukhong.boss.ai.BossProfile.Evade.BACKSTEP) daggerIn = 5;
+        }
+        if (daggerIn > 0 && --daggerIn == 0) { daggerIn = -1; SuDoMoves.quickDagger(sl, this, t); }
+        if (b.reacts > seenReacts) { // trừng phạt hồi máu: phi đao ngay, brain nối Đâm Lướt
+            seenReacts = b.reacts;
+            if (b.state() == com.hukhong.boss.ai.BossBrain.State.REACT) SuDoMoves.quickDagger(sl, this, t);
+        }
+        // khoảng nghỉ khiêu khích: chỉ khi đang đi vòng ở tầm trung
+        if (tauntT == 0 && tauntCd == 0 && mv == null && b.state() == com.hukhong.boss.ai.BossBrain.State.STRAFE
+                && distanceToSqr(t) > 9 && random.nextInt(60) == 0) startTaunt(sl);
+    }
+
+    /** Đứng khiêu khích 1.5 giây (brain nhường quyền) — cửa sổ phản công. Public cho gametest. */
+    public void startTaunt(ServerLevel sl) {
+        tauntT = 30; tauntCd = 200 + random.nextInt(120); taunts++;
+        triggerAnim("skill", "taunt");
+        SuDoMoves.tauntLine(sl, this);
+        playSound(SoundEvents.EVOKER_CELEBRATE, 1.2f, 0.8f);
+    }
+    public int tauntTicks() { return tauntT; }
 
     @Override public boolean brainBigMove(ServerLevel sl, LivingEntity t) {
         String id = SuDoMoves.pick(random, currentPhase(), ultCd <= 0, distanceTo(t));
@@ -313,6 +358,7 @@ public class SuDo extends Monster implements GeoEntity, com.hukhong.boss.phase.P
         super.tick();
         if (!(level() instanceof ServerLevel sl) || !isAlive()) return;
         director.tick(sl);
+        if (brainProfile() != null && !director.frozen()) brainReactions(sl);
         if (mv != null) {
             if (director.transitioning()) endMove();
             else if (!SuDoMoves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(50) * cdMul()); }
@@ -354,9 +400,10 @@ public class SuDo extends Monster implements GeoEntity, com.hukhong.boss.phase.P
                 : RawAnimation.begin().thenLoop("animation." + id + ".idle"))));
         c.add(new AnimationController<>(this, "skill", 0, s -> PlayState.STOP)
                 .triggerableAnim("attack", RawAnimation.begin().then("animation." + id + ".attack", Animation.LoopType.PLAY_ONCE))
-                .triggerableAnim("cast", RawAnimation.begin().then("animation." + id + ".cast", Animation.LoopType.PLAY_ONCE)));
-        if (brainProfile() != null) // chưa có animation brain riêng: tất cả rơi về attack/walk, blend 4 tick (M5)
-            c.add(com.hukhong.boss.ai.BrainAnims.controller(this, brainProfile(), "animation." + id + ".", java.util.Set.of(), "attack", "walk", 4));
+                .triggerableAnim("cast", RawAnimation.begin().then("animation." + id + ".cast", Animation.LoopType.PLAY_ONCE))
+                .triggerableAnim("taunt", RawAnimation.begin().then("animation." + id + ".taunt", Animation.LoopType.PLAY_ONCE)));
+        if (brainProfile() != null) // blend 4 tick (M5)
+            c.add(com.hukhong.boss.ai.BrainAnims.controller(this, brainProfile(), "animation." + id + ".", BRAIN_ANIMS, "attack", "walk", 4));
     }
 
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }

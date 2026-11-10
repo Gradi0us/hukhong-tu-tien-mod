@@ -82,6 +82,7 @@ public class DocMau extends WorldBoss {
             if (director().transitioning()) endMove();
             else if (!DocMauMoves.step(sl, this, mt++)) { endMove(); skillCd = 50; }
         }
+        if (mv == null && !director().frozen()) brainTick(sl);
         if (!pools.isEmpty()) DocMauMoves.tickPools(sl, this);
         if (!moths.isEmpty()) DocMauMoves.tickMoths(sl, this);
     }
@@ -143,6 +144,67 @@ public class DocMau extends WorldBoss {
                     PoisonSpit.launchDir(this, position().add(0, getBbHeight() * 0.8, 0), new Vec3(Math.cos(a), 0.5, Math.sin(a)), skillDmg(0.8), 2.5, 1.0f);
                 }
                 playSound(SoundEvents.GENERIC_EXPLODE.value(), 2f, 0.9f);
+            }
+        }
+    }
+
+    // ================================================================ BossBrain (PLAN-v1 §4: đứng sau bầy con)
+    /** Giữ 8-12 ô, nép sau bầy con; bị áp sát -> phun độc rồi lùi; bầy con chết hết -> hung hăng cận chiến (cào 2 nhát + phun gần). */
+    public static final com.hukhong.boss.ai.BossProfile BRAIN = com.hukhong.boss.ai.BossProfile.builder()
+            .phase(1, new com.hukhong.boss.ai.BossProfile.PhaseVals(8, 12, 0.12, 10f, 0.3, 40, 40, 70))
+            .phase(2, new com.hukhong.boss.ai.BossProfile.PhaseVals(8, 12, 0.14, 12f, 0.35, 35, 35, 60))
+            .weight(1.5).accel(5, 4).moveSpeed(0.24)
+            .gapClose(com.hukhong.boss.ai.GapClose.DASH, 6)
+            .combo(new com.hukhong.boss.ai.BossProfile.Combo("cao", java.util.List.of(
+                    com.hukhong.boss.ai.BossProfile.hit(9, 3, 6, 3, 120, 0.8, 0.6),
+                    com.hukhong.boss.ai.BossProfile.hit(9, 3, 6, 3, 120, 0.8, 0.6),
+                    new com.hukhong.boss.ai.BossProfile.Hit(12, 4, 14, 4, 70, 1.0, 0, 0.6, false, true, false)),
+                    0, 4.5, 3, 1, java.util.List.of(), false))
+            .bigMoveEvery(99)
+            .build();
+    /** Hết bầy con: áp sát, đi vòng gần, không né. */
+    static final com.hukhong.boss.ai.BossProfile.PhaseVals AGGRO = new com.hukhong.boss.ai.BossProfile.PhaseVals(1.5, 3, 0.2, 16f, 0, 999, 14, 26);
+
+    boolean hadBrood, aggro;
+    int seenEvades;
+    public int retreatSpits;
+    public boolean aggressive() { return aggro; }
+
+    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return BRAIN; }
+    @Override public com.hukhong.boss.ai.BossProfile.PhaseVals brainVals(com.hukhong.boss.ai.BossProfile p) { return aggro ? AGGRO : p.phase(currentPhase()); }
+    @Override protected java.util.Set<String> brainAnims() {
+        return java.util.Set.of("strafe_l", "strafe_r", "backstep", "sidestep_l", "sidestep_r", "dash", "combo_cao_1", "combo_cao_2", "combo_cao_3");
+    }
+
+    private void brainTick(ServerLevel sl) {
+        com.hukhong.boss.ai.BossBrain b = com.hukhong.boss.ai.BossBrain.get(this);
+        LivingEntity t = getTarget();
+        if (b == null || t == null || !t.isAlive()) return;
+        java.util.List<HuTrung> live = DocMauMoves.liveBrood(sl, this);
+        if (!live.isEmpty()) hadBrood = true;
+        boolean was = aggro;
+        aggro = hadBrood && live.isEmpty();
+        if (aggro && !was) { playSound(SoundEvents.RAVAGER_ROAR, 2f, 1.3f); triggerAnim("skill", "phase"); }
+        double d = distanceTo(t);
+        b.allowAttacks = aggro || d < 5; // còn bầy: chỉ cào khi bị áp sát, không lao vào
+        if (b.evades > seenEvades) { // né = phun độc rồi lùi
+            seenEvades = b.evades;
+            Vec3 dir = t.position().subtract(position()).multiply(1, 0, 1);
+            if (dir.lengthSqr() > 1e-3) {
+                dir = dir.normalize();
+                PoisonSpit.launchDir(this, position().add(0, getBbHeight() * 0.8, 0), new Vec3(dir.x, 0.1, dir.z), skillDmg(0.6), 2.0, 1.1f);
+                playBrainAnim("backstep");
+                retreatSpits++;
+            }
+        }
+        if (!aggro && !live.isEmpty() && b.state() == com.hukhong.boss.ai.BossBrain.State.STRAFE) { // nép sau bầy
+            Vec3 c = Vec3.ZERO;
+            for (HuTrung h : live) c = c.add(h.position());
+            c = c.scale(1.0 / live.size());
+            Vec3 back = c.subtract(t.position()).multiply(1, 0, 1);
+            if (back.lengthSqr() > 1e-3) {
+                Vec3 spot = c.add(back.normalize().scale(3)), go = spot.subtract(position()).multiply(1, 0, 1);
+                if (go.lengthSqr() > 1) setDeltaMovement(getDeltaMovement().add(go.normalize().scale(0.05)));
             }
         }
     }
