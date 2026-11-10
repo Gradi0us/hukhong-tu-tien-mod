@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BossPhasesTest {
-    private static final List<String> IDS = List.of("hu_vuong", "sa_hat_vuong", "bang_nhan", "doc_mau", "chg_1", "chg_2", "chg_3", "chg_4", "da_khuyet");
+    private static final List<String> IDS = List.of("hu_vuong", "sa_hat_vuong", "bang_nhan", "doc_mau", "chg_1", "chg_2", "chg_3", "chg_4", "da_khuyet", "su_do");
 
     @Test void all_nine_bosses_configured() {
         for (String id : IDS) assertTrue(BossPhases.has(id), id);
@@ -61,7 +61,8 @@ class BossPhasesTest {
                 for (var s : ph.subs()) {
                     assertTrue(s.from() < s.to() && s.to() <= ph.transition(), id + " phu de trong khung cutscene");
                     // Da Khuyet + CHG I..IV (da lam lai) dung khoa thoai rieng hukhong.dialog.<boss>.p<pha>.*
-                    String pre = id.equals("da_khuyet") ? "hukhong.dialog.dakhuyet.p" + p + "."
+                    String pre = id.equals("su_do") ? "hukhong.dialog.sudo.p" + p + "."
+                            : id.equals("da_khuyet") ? "hukhong.dialog.dakhuyet.p" + p + "."
                             : id.matches("chg_[1234]") ? "hukhong.dialog.chg" + id.charAt(4) + ".p" + p + "." : "hukhong.boss.sub." + id + "." + p + ".";
                     assertTrue(s.key().startsWith(pre), s.key());
                 }
@@ -93,6 +94,12 @@ class BossPhasesTest {
         List<Move> all = BossPhases.get("chg_4").movesUpTo(3);
         for (Move m : all) assertTrue(m.id().startsWith("c4_"), m.id());
         assertEquals("c4_nihil", all.get(4).id());
+    }
+
+    @Test void su_do_has_own_margit_moves_not_generic() {
+        List<Move> all = BossPhases.get("su_do").movesUpTo(3);
+        for (Move m : all) assertTrue(m.id().startsWith("sd_"), m.id());
+        assertEquals(8, all.stream().map(Move::id).distinct().count());
     }
 
     @Test void arena_effects_accumulate() {
