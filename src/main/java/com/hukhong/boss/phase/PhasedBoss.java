@@ -76,4 +76,16 @@ public interface PhasedBoss {
     default void playBrainAnim(String name) {
         if (this instanceof software.bernie.geckolib.animatable.GeoEntity g) g.triggerAnim(com.hukhong.boss.ai.BrainAnims.CONTROLLER, name);
     }
+
+    /** Brain vừa bắt đầu vung nhát {@code hit} (0-based) của chuỗi {@code combo} — boss thêm hiệu ứng/đòn phụ riêng. */
+    default void onBrainStrike(ServerLevel sl, String combo, int hit, net.minecraft.world.entity.LivingEntity target) {}
+
+    /** Brain vừa bắt đầu né. */
+    default void onBrainEvade(ServerLevel sl, com.hukhong.boss.ai.BossProfile.Evade kind, net.minecraft.world.entity.LivingEntity target) {}
+
+    /**
+     * Phản ứng (trừng phạt hồi máu / phản đòn) trỏ tới id không phải combo trong profile: boss tự xử lý (vd. bắt đầu chiêu riêng).
+     * Trả true nếu đã xử lý.
+     */
+    default boolean brainReact(ServerLevel sl, net.minecraft.world.entity.LivingEntity target, String id) { return false; }
 }

@@ -120,8 +120,13 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
 
     @Override protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false));
-        goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
+        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false) { // BossBrain lo áp sát + đòn thường
+            @Override public boolean canUse() { return brainProfile() == null && super.canUse(); }
+            @Override public boolean canContinueToUse() { return brainProfile() == null && super.canContinueToUse(); }
+        });
+        goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8) {
+            @Override public boolean canUse() { return (brainProfile() == null || getTarget() == null) && super.canUse(); }
+        });
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 16f));
         goalSelector.addGoal(7, new RandomLookAroundGoal(this));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -159,6 +164,44 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
     @Override public java.util.List<com.hukhong.boss.phase.BossPhaseConfig.SubLine> introLines(int T) {
         return idx == 1 ? ChgOneMoves.introSubs(T) : idx == 3 ? Chg3Moves.introSubs(T) : idx == 4 ? Chg4Moves.introSubs(T) : mal != null ? ChgMaliketh.introSubs(T) : null;
     }
+    // ---------------- BossBrain (PLAN-v1 §4, B4): đi vòng / né / áp sát / đòn thường giữa các chiêu riêng
+    /** Hồi chiêu riêng dài hơn khi có brain để chừa chỗ cho chuỗi đòn thường. */
+    static final double BRAIN_CD = 1.6;
+    /** Gametest: tắt chiêu riêng tự chọn (chỉ còn brain). */
+    public boolean ownMovesEnabled = true;
+    public int daggersThrown;
+    private int farCd = 120;
+    private final java.util.List<double[]> swords = new java.util.ArrayList<>(); // x, y, z, tick nổ
+    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return ChgBrain.profile(idx); }
+    @Override public void onBrainStrike(ServerLevel sl, String combo, int hit, LivingEntity t) { ChgBrain.onStrike(sl, this, combo, hit, t); }
+    @Override public void onBrainEvade(ServerLevel sl, com.hukhong.boss.ai.BossProfile.Evade k, LivingEntity t) { ChgBrain.onEvade(sl, this, k, t); }
+    @Override public boolean brainReact(ServerLevel sl, LivingEntity t, String id) {
+        if (!ownMovesEnabled) return false;
+        if (idx == 1 && id.equals("nem_da")) return startMove(sl, "chg1_nem_da", t);
+        if (idx == 2 && id.equals("ha_khong")) return mal != null && mal.start(sl, "chg2_ha_khong", t);
+        return false;
+    }
+    /** CHG III: kiếm triệu hồi rơi xuống điểm {@code at} sau {@code delay} tick. */
+    void queueSword(Vec3 at, int delay) {
+        swords.add(new double[]{at.x, at.y, at.z, tickCount + delay});
+        if (level() instanceof ServerLevel sl) {
+            for (int i = 0; i < 16; i++) { double a = i * Math.PI / 8; sl.sendParticles(TELEGRAPH, at.x + Math.cos(a) * 1.6, at.y + 0.15, at.z + Math.sin(a) * 1.6, 1, 0, 0, 0, 0); }
+            sl.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_BLOCK_RESONATE, getSoundSource(), 1.5f, 0.6f);
+        }
+    }
+    private void tickSwords(ServerLevel sl) {
+        for (java.util.Iterator<double[]> it = swords.iterator(); it.hasNext(); ) {
+            double[] w = it.next();
+            if (tickCount < w[3]) continue;
+            it.remove();
+            Vec3 c = new Vec3(w[0], w[1], w[2]);
+            com.hukhong.vfx.Fx.swordFly(sl, c.add(0, 7, 0), c, 4, 0, 1.2f);
+            sl.sendParticles(ParticleTypes.EXPLOSION, c.x, c.y + 0.3, c.z, 1, 0, 0, 0, 0);
+            for (LivingEntity e : sl.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(c, c).inflate(1.6, 2, 1.6)))
+                if (e != this && (e instanceof Player || e == getTarget()) && e.position().distanceToSqr(c) < 1.6 * 1.6) strike(e, moveDamage(0.7));
+        }
+    }
+
     /** Chiêu riêng đang thi triển (chỉ CHG II), null = rảnh/không có. */
     public String currentOwnMove() { return mal != null ? mal.currentMove() : null; }
     public boolean startOwn(ServerLevel sl, String id, LivingEntity t) { return mal != null && mal.start(sl, id, t); }
@@ -263,26 +306,30 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
             director.tick(sl0);
             if (idx == 1 && mv != null) {  // isImmobile() => customServerAiStep bị bỏ qua, chiêu phải chạy ở đây
                 if (director.transitioning()) endMove();
-                else if (!ChgOneMoves.step(sl0, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul()); }
+                else if (!ChgOneMoves.step(sl0, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul() * BRAIN_CD); }
             }
             if (mal != null) {
                 if (director.transitioning()) mal.end();
-                else if (mal.tick(sl0)) skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul());
+                else if (mal.tick(sl0)) skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul() * BRAIN_CD);
             }
         }
         if (idx == 4 && level() instanceof ServerLevel sl4 && isAlive()) {
             if (mv != null) {
                 if (director.transitioning()) endMove();
-                else if (!Chg4Moves.step(sl4, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul()); }
+                else if (!Chg4Moves.step(sl4, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(60) * cdMul() * BRAIN_CD); }
             }
             if (!pools4.isEmpty()) Chg4Moves.tickPools(sl4, this);
         }
+        if (level() instanceof ServerLevel slb && isAlive() && !swords.isEmpty()) tickSwords(slb);
+        if (idx == 2 && phase() == 1 && !level().isClientSide && onGround() && mv == null && mal != null && !mal.busy() && getTarget() != null
+                && com.hukhong.boss.ai.BossBrain.get(this) != null && com.hukhong.boss.ai.BossBrain.get(this).state() == com.hukhong.boss.ai.BossBrain.State.STRAFE
+                && random.nextInt(18) == 0) setDeltaMovement(getDeltaMovement().x, 0.42, getDeltaMovement().z); // pha 1: nhảy chồm khắp sân
         if (level() instanceof ServerLevel sl && descending()) descentTick(sl);
         else if (level() instanceof ServerLevel sl && isAlive() && windup > 0 && pending >= 0) stepWindup(sl);
         if (level() instanceof ServerLevel sl && isAlive() && idx == 3) {
             if (mv != null) {
                 if (director.transitioning()) endMove();
-                else if (!Chg3Moves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(70) * cdMul()); }
+                else if (!Chg3Moves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(70) * cdMul() * BRAIN_CD); }
             }
             if (!pools.isEmpty()) Chg3Moves.tickPools(sl, this);
         }
@@ -352,9 +399,16 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
                     getX(), getY() + getBbHeight() * 0.5, getZ(), 6, 1.2, 1.2, 1.2, 0.02);
 
         LivingEntity t = getTarget();
+        if (idx == 3 && farCd > 0) farCd--;
+        if (!ownMovesEnabled) return;
+        boolean brainBusy = com.hukhong.boss.ai.BossBrain.busy(this); // brain giữa chuỗi đòn / né / áp sát: không chen chiêu riêng
+        if (idx == 3 && !brainBusy && mv == null && !director.frozen() && farCd <= 0 && t != null && t.isAlive() && distanceTo(t) > 11) {
+            if (startMove(sl, "c3_phi_dao_vu", t)) { farCd = 220; return; }  // người chơi đứng xa -> mưa dao
+        }
         if (idx == 1) {  // CHG I: AI chiêu riêng thay cho ChgKit
             if (mv != null || director.frozen()) return;
             if (skillCd > 0) { skillCd--; return; }
+            if (brainBusy) return;
             if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
             startMove(sl, ChgOneMoves.pick(random, phase(), distanceTo(t)), t);
             return;
@@ -363,6 +417,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
             if (nihilCd > 0) nihilCd--;
             if (mv != null || director.frozen()) return;
             if (skillCd > 0) { skillCd--; return; }
+            if (brainBusy) return;
             if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
             startMove(sl, Chg4Moves.pick(random, phase(), nihilCd <= 0, distanceTo(t)), t);
             return;
@@ -372,6 +427,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
         if (idx == 3 && (mv != null || director.frozen())) return;
         if (mal != null && (mal.busy() || director.frozen())) return;
         if (skillCd > 0) { skillCd--; return; }
+        if (brainBusy) return;
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
         if (idx == 3) { startMove(sl, Chg3Moves.pick(random, phase(), ultCd <= 0, distanceTo(t)), t); return; }
         if (mal != null) { mal.start(sl, mal.pick(random, phase(), distanceTo(t)), t); return; }
@@ -607,6 +663,8 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
         for (String a : new String[]{"attack", "skill_a", "skill_b", "skill_c", "phase"})
             sk.triggerableAnim(a, RawAnimation.begin().then(n + a, Animation.LoopType.PLAY_ONCE));
         c.add(sk);
+        if (brainProfile() != null)
+            c.add(com.hukhong.boss.ai.BrainAnims.controller(this, brainProfile(), n, ChgBrain.anims(idx), "attack", "walk", 4));
     }
 
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }

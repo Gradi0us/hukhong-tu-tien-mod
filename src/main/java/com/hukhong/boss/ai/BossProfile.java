@@ -43,6 +43,9 @@ public final class BossProfile {
     String counterCombo;
     int bigMoveEvery = 3;         // sau mỗi N chuỗi, thử chiêu lớn riêng của boss
     double difficulty = 1.0;      // hệ số độ khó: nhân sát thương, chia thời gian nghỉ
+    final Evade[][] evadeKinds = new Evade[3][];   // null = mặc định (backstep/sidestep, pha >= 2 thêm backflip)
+    Evade counterEvade = Evade.SIDESTEP;           // null = phản đòn tại chỗ, không né
+    final java.util.Map<String, Integer> maxPhase = new java.util.HashMap<>();
 
     private BossProfile() {}
 
@@ -68,6 +71,14 @@ public final class BossProfile {
     public String counterCombo() { return counterCombo; }
     public int bigMoveEvery() { return bigMoveEvery; }
     public double difficulty() { return difficulty; }
+    /** Kiểu né riêng của pha (null = mặc định). */
+    public Evade[] evadeKinds(int ph) {
+        for (int i = Math.max(0, Math.min(2, ph - 1)); i >= 0; i--) if (evadeKinds[i] != null) return evadeKinds[i];
+        return null;
+    }
+    public Evade counterEvade() { return counterEvade; }
+    /** Pha cuối combo còn được tự chọn (mặc định 3). */
+    public int comboMaxPhase(String id) { return maxPhase.getOrDefault(id, 3); }
 
     public static final class Builder {
         private final BossProfile p = new BossProfile();
@@ -82,6 +93,12 @@ public final class BossProfile {
         public Builder counter(int hits, int windowTicks, String comboId) { p.counterHits = hits; p.counterWindow = windowTicks; p.counterCombo = comboId; return this; }
         public Builder bigMoveEvery(int n) { p.bigMoveEvery = Math.max(1, n); return this; }
         public Builder difficulty(double d) { p.difficulty = d; return this; }
+        /** Kiểu né của pha {@code ph} (và các pha sau nếu không khai báo). */
+        public Builder evades(int ph, Evade... kinds) { p.evadeKinds[ph - 1] = kinds; return this; }
+        /** Kiểu né trước phản đòn; null = gồng phản đòn tại chỗ. */
+        public Builder counterEvade(Evade e) { p.counterEvade = e; return this; }
+        /** Combo chỉ tự được chọn tới pha {@code ph} (vẫn dùng được làm nhánh). */
+        public Builder comboUntil(String id, int ph) { p.maxPhase.put(id, ph); return this; }
         public BossProfile build() {
             if (p.phases[0] == null) throw new IllegalStateException("BossProfile: cần phase(1, ...)");
             return p;

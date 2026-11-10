@@ -170,7 +170,7 @@ public final class BossBrain {
 
     private Combo pickCombo(double d) {
         List<MoveSelector.Option> opts = new ArrayList<>();
-        for (Combo c : prof.combos()) if (!c.branchOnly()) opts.add(new MoveSelector.Option(c.id(), c.rangeMin(), c.rangeMax(), c.weight(), c.minPhase()));
+        for (Combo c : prof.combos()) if (!c.branchOnly() && pb.currentPhase() <= prof.comboMaxPhase(c.id())) opts.add(new MoveSelector.Option(c.id(), c.rangeMin(), c.rangeMax(), c.weight(), c.minPhase()));
         MoveSelector.Option o = MoveSelector.pick(opts, d, pb.currentPhase(), history, mob.getRandom().nextDouble());
         return o == null ? null : prof.combo(o.id());
     }
@@ -223,6 +223,7 @@ public final class BossBrain {
             if (stageT == (h.delayed() ? 0 : Math.max(0, windup - 6))) glint(sl, h.unblockable());
             if (++stageT >= windup) { stage = 1; stageT = 0; }
         } else if (stage == 1) {                   // M3 vung: khóa hướng, M4 lao theo nhát chém
+            if (stageT == 0) pb.onBrainStrike(sl, combo.id(), hitIdx, t);
             mv.drive(mv.forward().scale(h.lunge() / Math.max(1, h.active())), true);
             strike(sl, h);
             if (++stageT >= h.active()) { stage = 2; stageT = 0; }
@@ -306,7 +307,9 @@ public final class BossBrain {
         lastThreatTick = mob.tickCount;
         evadeRolls++;
         if (!MoveSelector.evadeRoll(pv().evadeChance(), evadeCd, mob.getRandom().nextDouble())) { evadeCd = 4; return false; }
-        Evade kind = k == Threat.PROJECTILE ? Evade.SIDESTEP
+        Evade[] own = prof.evadeKinds(pb.currentPhase());
+        Evade kind = own != null && own.length > 0 ? (k == Threat.PROJECTILE && java.util.Arrays.asList(own).contains(Evade.SIDESTEP) ? Evade.SIDESTEP : own[mob.getRandom().nextInt(own.length)])
+                : k == Threat.PROJECTILE ? Evade.SIDESTEP
                 : pb.currentPhase() >= 2 && mob.getRandom().nextFloat() < 0.3f ? Evade.BACKFLIP
                 : mob.getRandom().nextBoolean() ? Evade.BACKSTEP : Evade.SIDESTEP;
         startEvade(kind);
@@ -328,6 +331,7 @@ public final class BossBrain {
         evades++;
         combo = null;
         set(State.EVADE);
+        if (t != null && mob.level() instanceof ServerLevel sl) pb.onBrainEvade(sl, kind, t);
         pb.playBrainAnim(switch (kind) { case BACKSTEP -> "backstep"; case BACKFLIP -> "backflip"; case SIDESTEP -> left ? "sidestep_l" : "sidestep_r"; });
         mob.playSound(SoundEvents.PLAYER_ATTACK_NODAMAGE, 0.8f, 0.7f);
     }
@@ -340,6 +344,7 @@ public final class BossBrain {
         if (stateT < len) return;
         evadeCd = pv().evadeCd();
         Combo c = pending == null ? null : prof.combo(pending);
+        if (c == null && pending != null && allowAttacks && pb.brainReact(sl, t, pending)) { toStrafe(false); return; }
         if (c != null && allowAttacks) { pending = null; startCombo(c, t); }
         else { toStrafe(true); rest = Math.min(rest, 10); }
     }
@@ -363,7 +368,8 @@ public final class BossBrain {
         if (hurtTicks.size() >= prof.counterHits() && state != State.REACT && state != State.EVADE && !(state == State.BASIC_COMBO && stage == 1)) {
             hurtTicks.clear();
             reacts++;
-            startEvade(Evade.SIDESTEP);
+            if (prof.counterEvade() == null) { combo = null; pending = prof.counterCombo(); set(State.REACT); return; }
+            startEvade(prof.counterEvade());
             pending = prof.counterCombo();
             if (mob.level() instanceof ServerLevel sl) glint(sl, true);
         }
@@ -375,6 +381,7 @@ public final class BossBrain {
         if (stateT == 1) { glint(sl, true); mob.playSound(SoundEvents.RAVAGER_ROAR, 0.8f, 1.5f); }
         if (stateT < 6) return;
         Combo c = pending == null ? null : prof.combo(pending);
+        if (c == null && pending != null && allowAttacks && pb.brainReact(sl, t, pending)) { toStrafe(false); return; }
         if (c == null) c = pickCombo(mob.distanceTo(t));
         if (c == null || !allowAttacks) { toStrafe(true); return; }
         if (mob.distanceTo(t) <= c.rangeMax()) { pending = null; startCombo(c, t); }
