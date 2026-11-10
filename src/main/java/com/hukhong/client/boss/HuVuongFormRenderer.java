@@ -22,7 +22,7 @@ import java.util.Map;
  * Chi doc du lieu dong bo cua thuc the (dang, pha) - khong dung CULTIVATION.
  */
 public class HuVuongFormRenderer extends GeoEntityRenderer<HuVuongForm> {
-    private static final int ACC_MAX = 4;
+    private static final int ACC_MAX = 5;
     private final Map<ResourceLocation, Boolean> exists = new HashMap<>();
 
     public HuVuongFormRenderer(EntityRendererProvider.Context ctx) {
@@ -61,7 +61,7 @@ public class HuVuongFormRenderer extends GeoEntityRenderer<HuVuongForm> {
         super.preRender(ps, e, model, bs, vc, isReRender, pt, light, overlay, colour);
     }
 
-    /** Thien Dien: bone 1 = mat 2 (pha >= 2), bone 2 = mat 3 (pha 3), 3-4 luon hien (mu mien + vong chu). */
+    /** Thien Dien: bone 1 = mat 2 (pha >= 2), bone 2 = mat 3 (pha 3), 3-4 luon hien (mu mien + vong chu), 5 = song nhan kiem (Godskin). */
     private static boolean faceVisible(int n, int phase) {
         return switch (n) { case 1 -> phase >= 2; case 2 -> phase >= 3; default -> true; };
     }

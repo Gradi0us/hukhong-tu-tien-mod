@@ -83,6 +83,47 @@ public final class HvFormGameTests {
         });
     }
 
+    // ------------------------------------------------------------------ bo chieu rieng (HvFormMovesB): Sa Tran / Doc Chuong / Hai Uyen / Thien Dien
+    private static void runsOwnMovesB(GameTestHelper h, HvForm f) {
+        ServerPlayer p = player(h, "hv-own", new Vec3(2, 1, 8));
+        HuVuongForm b = spawn(h, f, 60, 1);
+        b.setHealth(b.getMaxHealth() * 0.9f);
+        List<String> ids = HvFormMovesB.ids(f);
+        if (ids.size() != 8) { h.fail(f + ": can 8 chieu rieng, co " + ids.size()); return; }
+        // cau hinh pha dung dung bo chieu rieng (khong con chieu chung er_* / hv_*)
+        for (var m : BossPhases.get(f.phaseId()).movesUpTo(3))
+            if (!ids.contains(m.id())) h.fail(f + ": chieu pha " + m.id() + " khong thuoc bo rieng");
+        List<String> started = new ArrayList<>();
+        h.onEachTick(() -> { if (b.isAlive()) { b.setTarget(p); if (!b.mvB.busy()) b.holdSkills(60); b.setHealth(b.getMaxHealth() * 0.9f); } });
+        int gap = 110, t0 = 140;  // cho cutscene gioi thieu (110 tick) xong
+        for (int i = 0; i < ids.size(); i++) {
+            String id = ids.get(i);
+            h.runAfterDelay(t0 + (long) i * gap, () -> {
+                if (b.mvB.busy()) h.fail(f + ": chieu truoc chua xong khi bat dau " + id + " (" + b.mvB.current() + ")");
+                Vec3 home = h.absoluteVec(new Vec3(2, 1, 2));
+                if (!b.mvB.busy()) b.teleportTo(home.x, home.y, home.z);  // giu boss trong vung chunk cua test
+                if (HvFormMovesB.start(h.getLevel(), b, id, p)) started.add(id);
+                else h.fail(f + ": khong bat dau duoc " + id);
+            });
+        }
+        h.runAfterDelay(t0 + (long) ids.size() * gap, () -> {
+            boolean alive = b.isAlive(), busy = b.mvB.busy(), burrow = b.burrowing(), grav = b.isNoGravity();
+            int done = b.mvB.done();
+            boolean fat = b.mvB.fat();
+            b.discard();
+            if (!alive) h.fail(f + " chet bat thuong");
+            if (started.size() != ids.size() || done != ids.size()) h.fail(f + ": xong " + done + "/" + ids.size() + " chieu rieng");
+            if (busy || burrow || grav) h.fail(f + ": ket trang thai (ban=" + busy + ", chui=" + burrow + ", bay=" + grav + ")");
+            if (f == HvForm.THIEN_DIEN && fat) h.fail("Thien Dien phai doi than sau moi chieu (8 lan -> than gay)");
+            h.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 1300, batch = B) public static void saTranOwnMoves(GameTestHelper h) { runsOwnMovesB(h, HvForm.SA_TRAN); }
+    @GameTest(template = "empty", timeoutTicks = 1300, batch = B) public static void docChuongOwnMoves(GameTestHelper h) { runsOwnMovesB(h, HvForm.DOC_CHUONG); }
+    @GameTest(template = "empty", timeoutTicks = 1300, batch = B) public static void haiUyenOwnMoves(GameTestHelper h) { runsOwnMovesB(h, HvForm.HAI_UYEN); }
+    @GameTest(template = "empty", timeoutTicks = 1300, batch = B) public static void thienDienOwnMoves(GameTestHelper h) { runsOwnMovesB(h, HvForm.THIEN_DIEN); }
+
     // ------------------------------------------------------------------ qua du pha
     private static void passesPhases(GameTestHelper h, HvForm f) {
         ServerPlayer p = player(h, "hv-phase", new Vec3(2, 1, 7));

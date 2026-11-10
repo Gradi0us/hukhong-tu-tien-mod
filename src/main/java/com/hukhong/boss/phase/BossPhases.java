@@ -151,19 +151,8 @@ public final class BossPhases {
         hv("bang_phach", Pal.FROST, 4.0, fx(ArenaEffect.PURPLE_SKY), fx(ArenaEffect.CRACKED_FLOOR), "bicanh_boss", 2, 2,
                 m("hv_bang_tru", Shape.PILLARS, Pal.FROST, 2.4, 1.0, 36, Hit.FREEZE, false), m("hv_bang_tram", Shape.LINE, Pal.FROST, 18, 1.1, 30, Hit.SLOW, false),
                 m("hv_bang_diet", Shape.PULL_BURST, Pal.FROST, 19, 2.4, 90, Hit.FREEZE, true));
-        hv("sa_tran", Pal.SAND, 4.6, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.PURPLE_SKY), "bicanh_boss", 2, 2,
-                m("hv_sa_tru", Shape.PILLARS, Pal.SAND, 2.6, 1.0, 36, Hit.KNOCK_UP, false), m("hv_sa_tram", Shape.LINE, Pal.SAND, 18, 1.1, 30, Hit.BLIND, false),
-                m("hv_sa_bao", Shape.DONUT, Pal.SAND, 18, 2.2, 90, Hit.BLIND, true));
-        hv("doc_chuong", Pal.TOXIC, 4.2, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.BLOOD_RAIN), "tam_ma", 2, 2,
-                m("hv_doc_vu", Shape.METEOR, Pal.TOXIC, 3.0, 0.9, 44, Hit.POISON, false), m("hv_doc_tru", Shape.PILLARS, Pal.TOXIC, 2.4, 1.0, 36, Hit.WEAK, false),
-                m("hv_doc_no", Shape.DONUT, Pal.TOXIC, 20, 2.2, 90, Hit.POISON, true));
-        hv("hai_uyen", Pal.SEA, 4.6, fx(ArenaEffect.PURPLE_SKY), fx(ArenaEffect.VOID_PILLARS), "bicanh_boss", 2, 2,
-                m("hv_hai_tru", Shape.PILLARS, Pal.SEA, 2.4, 1.0, 36, Hit.SLOW, false), m("hv_hai_tram", Shape.LINE, Pal.SEA, 20, 1.2, 28, Hit.SLOW, false),
-                m("hv_hai_nuot", Shape.PULL_BURST, Pal.SEA, 20, 2.5, 90, Hit.SLOW, true));
-        // Thien Dien: 3 mat, phap thay doi theo pha
-        hv("thien_dien", Pal.HOLY, 4.0, fx(ArenaEffect.PURPLE_SKY, ArenaEffect.VOID_PILLARS), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.BLOOD_RAIN), "tam_ma", 3, 3,
-                m("hv_td_tru", Shape.PILLARS, Pal.VOID, 2.4, 1.0, 36, Hit.KNOCK_UP, false), m("hv_td_tram", Shape.LINE, Pal.HOLY, 22, 1.2, 28, Hit.BLIND, false),
-                m("hv_td_diet", Shape.PULL_BURST, Pal.VOID, 22, 2.8, 100, Hit.BLIND, true));
+        // Sa Tran / Doc Chuong / Hai Uyen / Thien Dien: bo chieu RIENG - HuVuongForm tu thi trien qua startOwnMove (HvFormMovesB).
+        hvfOwnB();
     }
 
     /** Da Khuyet: P2 "Nguyet Duc" (moc canh trang khuyet), P3 "Huyet Nguyet Khai Hoa" (no hoa trang mau). Thoai: hukhong.dialog.dakhuyet.*. */
@@ -456,6 +445,41 @@ public final class BossPhases {
                 m("sh_thien_mang", Shape.LEAP, Pal.VOID, 5, 1.2, 26, Hit.KNOCK_UP, false)),   // su tu phi duoc
                 fx(ArenaEffect.PURPLE_SKY), "bicanh_boss", 0.7f);
         ALL.put(id, new Config(id, Pal.SAND, s, List.of(p1(), two, three)));
+    }
+
+    /** 4 dang Hu Vuong co bo chieu rieng (HvFormMovesB): Sa Tran (Great Sand Worm), Doc Chuong (Rot Knight), Hai Uyen (wyrm bien), Thien Dien (Godskin Duo).
+     *  Pha 2 = 4 chieu rieng, pha 3 = toi thuong + 3 chieu rieng. Thoai: hukhong.dialog.hvf_&lt;dang&gt;.p2/p3.*. */
+    private static void hvfOwnB() {
+        hvOwn("sa_tran", Pal.SAND, 4.6, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.PURPLE_SKY), "bicanh_boss",
+                m("st_lao_nuot", Shape.LINE, Pal.SAND, 12, 1.3, 16, Hit.NAUSEA, false), m("st_phun_cat", Shape.LINE, Pal.SAND, 12, 1.0, 16, Hit.BLIND, false),
+                m("st_lun_cat", Shape.PULL_BURST, Pal.SAND, 6, 0.8, 20, Hit.SLOW, false), m("st_chui_vot", Shape.PILLARS, Pal.SAND, 4.5, 1.4, 36, Hit.KNOCK_UP, false),
+                m("st_sa_hai_thon", Shape.PULL_BURST, Pal.SAND, 22, 2.2, 80, Hit.KNOCK_UP, true), m("st_cuong_xoay", Shape.NOVA, Pal.SAND, 8, 0.9, 22, Hit.KNOCK_UP, false),
+                m("st_suoi_cat", Shape.PILLARS, Pal.SAND, 2.6, 1.0, 18, Hit.KNOCK_UP, false), m("st_quat_duoi", Shape.SPIN, Pal.SAND, 7.5, 1.0, 16, Hit.KNOCK_UP, false));
+        hvOwn("doc_chuong", Pal.TOXIC, 4.2, fx(ArenaEffect.CRACKED_FLOOR), fx(ArenaEffect.BLOOD_RAIN), "tam_ma",
+                m("dc_an_phuc", Shape.PILLARS, Pal.TOXIC, 3.8, 1.4, 36, Hit.KNOCK_UP, false), m("dc_dam_lien", Shape.COMBO, Pal.TOXIC, 9, 1.0, 10, Hit.WEAK, false),
+                m("dc_mua_giao", Shape.METEOR, Pal.TOXIC, 2.0, 0.9, 22, Hit.POISON, false), m("dc_nem_giao", Shape.LINE, Pal.TOXIC, 16, 0.9, 12, Hit.POISON, false),
+                m("dc_van_thoi", Shape.DONUT, Pal.TOXIC, 20, 2.0, 40, Hit.POISON, true), m("dc_thoi_bao", Shape.LEAP, Pal.TOXIC, 4.5, 1.3, 24, Hit.KNOCK_UP, false),
+                m("dc_mu_thoi", Shape.LINE, Pal.TOXIC, 10, 1.0, 16, Hit.POISON, false), m("dc_doc_tri", Shape.PILLARS, Pal.TOXIC, 2.8, 0.7, 20, Hit.POISON, false));
+        hvOwn("hai_uyen", Pal.SEA, 4.6, fx(ArenaEffect.PURPLE_SKY), fx(ArenaEffect.VOID_PILLARS), "bicanh_boss",
+                m("hy_quat_duoi", Shape.SPIN, Pal.SEA, 7, 1.0, 16, Hit.KNOCK_UP, false), m("hy_thuy_tru", Shape.PILLARS, Pal.SEA, 2.6, 1.0, 18, Hit.KNOCK_UP, false),
+                m("hy_xoay_keo", Shape.PULL_BURST, Pal.SEA, 12, 1.0, 40, Hit.SLOW, false), m("hy_lao_can", Shape.LINE, Pal.SEA, 15, 1.3, 16, Hit.KNOCK_UP, false),
+                m("hy_uyen_hai_dao", Shape.PULL_BURST, Pal.SEA, 24, 2.2, 74, Hit.SLOW, true), m("hy_lan_song", Shape.PILLARS, Pal.SEA, 6, 1.3, 36, Hit.KNOCK_UP, false),
+                m("hy_cuong_trieu", Shape.LINE, Pal.SEA, 20, 1.2, 20, Hit.SLOW, false), m("hy_tho_thuy", Shape.LINE, Pal.SEA, 14, 1.0, 16, Hit.SLOW, false));
+        hvOwn("thien_dien", Pal.HOLY, 4.0, fx(ArenaEffect.PURPLE_SKY, ArenaEffect.VOID_PILLARS), fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.BLOOD_RAIN), "tam_ma",
+                m("td_lan_than", Shape.LINE, Pal.VOID, 16, 1.3, 20, Hit.KNOCK_UP, false), m("td_ap_bung", Shape.LEAP, Pal.VOID, 5.5, 1.4, 24, Hit.KNOCK_UP, false),
+                m("td_hoa_luan", Shape.NOVA, Pal.BLOOD, 16, 1.0, 18, Hit.WEAK, false), m("td_thien_loi", Shape.PILLARS, Pal.HOLY, 2.4, 1.1, 16, Hit.BLIND, false),
+                m("td_than_bi_le", Shape.DONUT, Pal.VOID, 20, 2.4, 30, Hit.WEAK, true), m("td_hac_diem_nghi", Shape.PILLARS, Pal.VOID, 1.8, 1.0, 20, Hit.KNOCK_UP, false),
+                m("td_song_nhan", Shape.COMBO, Pal.HOLY, 6, 0.8, 8, Hit.WEAK, false), m("td_hac_diem_cau", Shape.LINE, Pal.BLOOD, 16, 1.1, 14, Hit.WEAK, false));
+    }
+
+    private static void hvOwn(String key, Pal aura, double s, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3,
+                              Move a, Move b, Move c, Move d, Move ult, Move e, Move f, Move g) {
+        String id = "hvf_" + key, dk = "hukhong.dialog." + id;
+        List<SubLine> s2 = List.of(new SubLine(8, 38, dk + ".p2.1"), new SubLine(38, 68, dk + ".p2.2"), new SubLine(68, 96, dk + ".p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, dk + ".p3.1"), new SubLine(44, 84, dk + ".p3.2"), new SubLine(84, 116, dk + ".p3.3"));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, P2_TICKS, 45, camReveal(P2_TICKS, 45, s * 1.25), s2, List.of(a, b, c, d), a2, null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, P3_TICKS, 55, camCrescendo(P3_TICKS, 55, s * 1.5), s3, List.of(ult, e, f, g), a3, music3, 0.7f);
+        ALL.put(id, new Config(id, aura, s, List.of(p1(), two, three)));
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {

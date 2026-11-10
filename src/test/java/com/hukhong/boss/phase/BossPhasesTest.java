@@ -130,6 +130,24 @@ class BossPhasesTest {
         assertEquals("sh_tinh_vu", all.get(4).id());
     }
 
+    @Test void hvf_sa_doc_hai_thien_have_own_moves_not_generic() {
+        java.util.Map<String, String> pre = java.util.Map.of("hvf_sa_tran", "st_", "hvf_doc_chuong", "dc_", "hvf_hai_uyen", "hy_", "hvf_thien_dien", "td_");
+        java.util.Map<String, String> ult = java.util.Map.of("hvf_sa_tran", "st_sa_hai_thon", "hvf_doc_chuong", "dc_van_thoi",
+                "hvf_hai_uyen", "hy_uyen_hai_dao", "hvf_thien_dien", "td_than_bi_le");
+        for (var e : pre.entrySet()) {
+            Config c = BossPhases.get(e.getKey());
+            List<Move> all = c.movesUpTo(3);
+            assertEquals(8, all.size(), e.getKey());
+            assertEquals(8, all.stream().map(Move::id).distinct().count(), e.getKey() + " chieu khong trung");
+            for (Move m : all) assertTrue(m.id().startsWith(e.getValue()), m.id());
+            assertEquals(ult.get(e.getKey()), all.get(4).id());
+            assertTrue(all.get(4).ultimate());
+            assertEquals(1, all.stream().filter(Move::ultimate).count());
+            for (int p = 2; p <= 3; p++)
+                for (var s : c.phase(p).subs()) assertTrue(s.key().startsWith("hukhong.dialog." + e.getKey() + ".p" + p + "."), s.key());
+        }
+    }
+
     @Test void arena_effects_accumulate() {
         Config c = BossPhases.get("hu_vuong");
         assertTrue(c.arenaFor(1).isEmpty());
