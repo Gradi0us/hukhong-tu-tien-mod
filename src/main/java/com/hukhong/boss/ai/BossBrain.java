@@ -102,7 +102,11 @@ public final class BossBrain {
     public int hitStage() { return state == State.BASIC_COMBO ? stage : -1; }
     public String comboId() { return combo == null ? null : combo.id(); }
     public boolean busy() { return state == State.BASIC_COMBO || state == State.EVADE || state == State.GAP_CLOSE || state == State.REACT || hitStop > 0; }
-    private PhaseVals pv() { return prof.phase(pb.currentPhase()); }
+    private PhaseVals pv() { return pb.brainPhaseVals(prof.phase(pb.currentPhase())); }
+    /** Chỉ số nhát hiện tại (0-based) trong chuỗi; -1 nếu không trong chuỗi. */
+    public int hitIndex() { return state == State.BASIC_COMBO ? hitIdx : -1; }
+    /** Kiểu né gần nhất (null nếu chưa né). */
+    public Evade lastEvade() { return evadeKind; }
 
     private boolean yielding() { return pb.director().frozen() || pb.ownMoveActive(); }
 
@@ -134,8 +138,9 @@ public final class BossBrain {
     private void set(State s) { state = s; stateT = 0; }
 
     private void toStrafe(boolean anim) {
+        endGap();
         set(State.STRAFE);
-        combo = null; gap = null; pending = null;
+        combo = null; pending = null;
         if (anim) pb.playBrainAnim(strafeDir > 0 ? "strafe_r" : "strafe_l");
     }
 
@@ -162,7 +167,7 @@ public final class BossBrain {
         if (combosDone >= prof.bigMoveEvery() && pb.brainBigMove(sl, t)) { combosDone = 0; rest = restTicks(); return; }
         Combo c = pickCombo(d);
         if (c != null) startCombo(c, t);
-        else if (d >= prof.gapCloseMin() || d > maxRange()) startGap(null);
+        else if (d >= prof.gapCloseMin() || d > maxRange()) startGap(sl, t, null);
         else rest = 8;
     }
 
@@ -182,22 +187,29 @@ public final class BossBrain {
     }
 
     // ------------------------------------------------------------------ GAP_CLOSE
-    private void startGap(String thenCombo) {
+    private void startGap(ServerLevel sl, LivingEntity t, String thenCombo) {
         set(State.GAP_CLOSE);
-        gap = prof.gapClose();
+        GapClose g = pb.brainGapClose(sl, t, mob.distanceTo(t));
+        gap = g != null ? g : prof.gapClose();
         pending = thenCombo;
         pb.playBrainAnim(gap.anim());
     }
 
     private void gapClose(ServerLevel sl, LivingEntity t) {
         if (gap.step(sl, mob, mv, t, stateT - 1) && stateT < 40) return;
-        Combo c = pending != null ? prof.combo(pending) : pickCombo(mob.distanceTo(t));
+        String follow = pending != null ? pending : gap.followCombo();
+        endGap();
+        Combo c = follow != null ? prof.combo(follow) : null;
+        if (c == null) c = pickCombo(mob.distanceTo(t));
         if (c != null && allowAttacks) startCombo(c, t); else { toStrafe(true); rest = 6; }
     }
+
+    private void endGap() { if (gap != null) { GapClose g = gap; gap = null; g.end(mob); } }
 
     // ------------------------------------------------------------------ BASIC_COMBO
     /** Bắt đầu chuỗi đòn (public cho gametest / boss gọi trực tiếp). */
     public void startCombo(Combo c, LivingEntity t) {
+        endGap();
         set(State.BASIC_COMBO);
         combo = c; hitIdx = 0; pending = null;
         MoveSelector.push(history, c.id());
@@ -268,7 +280,7 @@ public final class BossBrain {
             if (to.lengthSqr() > 0.25 && Math.toDegrees(Math.acos(Mth.clamp(to.normalize().dot(fwd), -1, 1))) > h.arcDeg() / 2) continue;
             hitSet.add(e.getUUID());
             if (h.unblockable() && e instanceof Player p && p.isBlocking()) p.disableShield();
-            if (e.hurt(mob.damageSources().mobAttack(mob), dmg) && h.heavy()) hitStop(sl, e);
+            if (pb.brainStrike(e, mob.damageSources().mobAttack(mob), dmg) && h.heavy()) hitStop(sl, e);
         }
         if (stageT == 0) mob.playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 1f, (float) Mth.clamp(1.2 - 0.15 * prof.weight(), 0.5, 1.3));
     }
@@ -385,7 +397,7 @@ public final class BossBrain {
         if (c == null) c = pickCombo(mob.distanceTo(t));
         if (c == null || !allowAttacks) { toStrafe(true); return; }
         if (mob.distanceTo(t) <= c.rangeMax()) { pending = null; startCombo(c, t); }
-        else startGap(c.id());
+        else startGap(sl, t, c.id());
     }
 
     // ------------------------------------------------------------------ dò mối đe dọa phía server

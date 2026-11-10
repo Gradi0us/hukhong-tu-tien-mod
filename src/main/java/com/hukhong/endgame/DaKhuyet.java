@@ -126,7 +126,10 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
 
     @Override protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
-        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false));
+        goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false) { // có BossBrain: brain lo di chuyển + đòn thường
+            @Override public boolean canUse() { return brainProfile() == null && super.canUse(); }
+            @Override public boolean canContinueToUse() { return brainProfile() == null && super.canContinueToUse(); }
+        });
         goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 16f));
         targetSelector.addGoal(1, new HurtByTargetGoal(this));
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
@@ -302,6 +305,8 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         super.tick();
         if (!(level() instanceof ServerLevel sl) || !isAlive()) return;
         if (!avatar() && !ally) director.tick(sl);
+        else if (!ally) com.hukhong.boss.ai.BossBrain.tickFor(sl, this, this); // phân thân: không director nhưng vẫn có brain
+        if (!ally) brainFollowUps(sl);
         if (mv != null) {
             if (ally || director.transitioning()) endMove();
             else if (!DaKhuyetMoves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(70) * cdMul()); }
@@ -317,6 +322,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         if (aeoniaCd > 0) aeoniaCd--;
         if (mv != null || (director != null && director.frozen())) return;
         if (skillCd > 0) { skillCd--; return; }
+        if (brainProfile() != null) return; // BossBrain chọn đòn thường + xin chiêu riêng qua brainBigMove()
         LivingEntity t = getTarget();
         if (t == null || !t.isAlive() || distanceToSqr(t) > 24 * 24) return;
         String id = DaKhuyetMoves.pick(random, phase(), aeoniaCd <= 0 && !avatar(), distanceTo(t));
@@ -340,6 +346,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
 
     @Override public void registerControllers(AnimatableManager.ControllerRegistrar c) {
         String n = "animation.da_khuyet.";
+        c.add(com.hukhong.boss.ai.BrainAnims.controller(this, DaKhuyetBrain.PROFILE, n, DaKhuyetBrain.ANIMS, "attack", "walk", 4));
         c.add(new AnimationController<>(this, "move", 4, s -> s.setAndContinue(s.isMoving()
                 ? RawAnimation.begin().thenLoop(n + "walk") : RawAnimation.begin().thenLoop(n + "idle"))));
         AnimationController<DaKhuyet> sk = new AnimationController<>(this, "skill", 0, s -> PlayState.STOP);
@@ -349,4 +356,45 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     }
 
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }
+
+    // ================================================================ BossBrain (PLAN-v1 §2, xem DaKhuyetBrain)
+    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return ally ? null : DaKhuyetBrain.PROFILE; }
+    @Override public com.hukhong.boss.ai.GapClose brainGapClose(ServerLevel sl, LivingEntity t, double dist) { return DaKhuyetBrain.gapClose(phase(), random); }
+    @Override public com.hukhong.boss.ai.BossProfile.PhaseVals brainPhaseVals(com.hukhong.boss.ai.BossProfile.PhaseVals base) {
+        return phase() >= 3 && getHealth() < getMaxHealth() * 0.3f ? DaKhuyetBrain.ENRAGED : base;
+    }
+    @Override public boolean brainStrike(LivingEntity victim, DamageSource src, float dmg) { return strike(victim, dmg); }
+    @Override public boolean brainBigMove(ServerLevel sl, LivingEntity t) {
+        if (mv != null || distanceToSqr(t) > 24 * 24) return false;
+        String id = DaKhuyetMoves.pick(random, phase(), aeoniaCd <= 0 && !avatar(), distanceTo(t));
+        return startMove(sl, id, t);
+    }
+
+    private com.hukhong.boss.ai.BossBrain.State brainPrev;
+    private boolean leapDone;
+    /** Số lần backflip/né xa nối Nguyệt Luân (gametest). */
+    public int evadeCrescents;
+
+    /** Nối chiêu sau brain: backflip / né đạn từ xa -> Nguyệt Luân; Nhảy Chém bật lên lúc lấy đà. */
+    private void brainFollowUps(ServerLevel sl) {
+        com.hukhong.boss.ai.BossBrain b = com.hukhong.boss.ai.BossBrain.get(this);
+        if (b == null) return;
+        com.hukhong.boss.ai.BossBrain.State s = b.state();
+        LivingEntity t = getTarget();
+        if (brainPrev == com.hukhong.boss.ai.BossBrain.State.EVADE && s == com.hukhong.boss.ai.BossBrain.State.STRAFE && mv == null && t != null && b.allowAttacks) {
+            boolean far = distanceTo(t) > 8;
+            if (b.lastEvade() == com.hukhong.boss.ai.BossProfile.Evade.BACKFLIP || far && random.nextFloat() < 0.4f) {
+                if (startMove(sl, "dk_nguyet_luan", t)) evadeCrescents++;
+            }
+        }
+        brainPrev = s;
+        if ("nhay_chem".equals(b.comboId()) && b.hitIndex() == 0 && b.hitStage() == 0) {
+            if (!leapDone && onGround()) {
+                leapDone = true;
+                setDeltaMovement(getDeltaMovement().x, 0.62, getDeltaMovement().z);
+                hasImpulse = true;
+                sl.sendParticles(ParticleTypes.CLOUD, getX(), getY() + 0.1, getZ(), 8, 0.4, 0.05, 0.4, 0.03);
+            }
+        } else if (!"nhay_chem".equals(b.comboId())) leapDone = false;
+    }
 }
