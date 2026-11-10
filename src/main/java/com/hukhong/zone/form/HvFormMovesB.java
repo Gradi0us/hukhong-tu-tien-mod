@@ -24,6 +24,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -42,6 +44,7 @@ import java.util.UUID;
  * Thoai: hukhong.dialog.hvf_&lt;dang&gt;.*; ten chieu: hukhong.boss.move.&lt;id&gt;.
  */
 public final class HvFormMovesB {
+    private static final Logger LOG = LogUtils.getLogger();
     private HvFormMovesB() {}
 
     public static final int SAND = 0xE0B060, SAND_D = 0x8A6A30, ROT = 0xD0402A, TOXIC = 0x7BD04A, SEA = 0x2E8FD8, FOAM = 0xBFEFFF,
@@ -94,6 +97,8 @@ public final class HvFormMovesB {
 
     public static final class St {
         String mv; int t, ultCd = 500, done;
+        /** Game-time luc chieu bat dau (watchdog, doc lap voi t). */
+        long startGt;
         boolean fat;
         Vec3 aim = new Vec3(0, 0, 1), spot, from, to;
         LivingEntity tgt;
@@ -114,7 +119,7 @@ public final class HvFormMovesB {
         St s = b.mvB;
         Mv m = mv(b.form(), id);
         if (m == null || s.mv != null || !b.isAlive()) return false;
-        s.mv = id; s.t = 0; s.tgt = target; s.spot = null; s.from = null; s.to = null;
+        s.mv = id; s.t = 0; s.startGt = sl.getGameTime(); s.tgt = target; s.spot = null; s.from = null; s.to = null;
         s.hit.clear(); s.spots.clear();
         b.getNavigation().stop();
         reaim(b, s);
@@ -127,6 +132,13 @@ public final class HvFormMovesB {
         return true;
     }
 
+    /** Chieu dai nhat vai tram tick; qua 400 tick (move time hoac game-time) la ket. */
+    static final int MAX_MOVE_TICKS = 400;
+
+    static boolean expired(ServerLevel sl, St s) {
+        return s.t > MAX_MOVE_TICKS || sl.getGameTime() - s.startGt > MAX_MOVE_TICKS;
+    }
+
     /** Moi tick server (khi khong dong bang): chay vung nguy hiem + chieu dang thi trien. true = dang ban chieu rieng. */
     public static boolean step(ServerLevel sl, HuVuongForm b) {
         St s = b.mvB;
@@ -135,9 +147,17 @@ public final class HvFormMovesB {
         if (s.mv == null) return false;
         if (b.director().transitioning() || !b.isAlive()) { end(b, s); return false; }
         b.getNavigation().stop();
+        if (expired(sl, s)) {
+            LOG.warn("HvFormMovesB watchdog: move {} exceeded {} ticks, ending", s.mv, MAX_MOVE_TICKS);
+            end(b, s);
+            return false;
+        }
         boolean more;
         try { more = run(sl, b, s, s.t++); }
-        catch (RuntimeException e) { more = false; }
+        catch (RuntimeException e) {
+            LOG.warn("HvFormMovesB move {} threw, ending: {}", s.mv, e.toString(), e);
+            more = false;
+        }
         if (!more) {
             end(b, s);
             s.done++;

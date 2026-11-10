@@ -257,7 +257,7 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
 
     @Override public void tick() {
         super.tick();
-        if (level() instanceof ServerLevel sl && isAlive()) { director.tick(sl); HvFormMovesA.tick(sl, this); }
+        if (level() instanceof ServerLevel sl && isAlive()) { director.tick(sl); HvFormMovesA.tick(sl, this); HvFormMovesB.step(sl, this); }
     }
 
     @Override public boolean isPushable() { return false; }
@@ -345,7 +345,7 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
         }
         if (director.frozen()) return;
         if (HvFormMovesA.aiStep(sl, this)) return;
-        if (cast == null && HvFormMovesB.step(sl, this)) return;
+        if (cast == null && mvB.busy()) return;
 
         LivingEntity t = getTarget();
         if (cast != null) {
