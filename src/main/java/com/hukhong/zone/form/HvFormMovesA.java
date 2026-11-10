@@ -98,6 +98,8 @@ public final class HvFormMovesA {
     public static final class State {
         String mv;
         int mt, ultCd = 500, ownCd = 120, done;
+        /** Game-time luc chieu bat dau: watchdog dua tren dong ho the gioi, doc lap voi mt (mt chi tang khi tick() chay). */
+        long startGt;
         LivingEntity tgt;
         Vec3 aim = new Vec3(0, 0, 1), spot, from, to;
         final Set<UUID> hitOnce = new HashSet<>();
@@ -118,8 +120,9 @@ public final class HvFormMovesA {
     /** Bắt đầu chiêu riêng; false nếu dạng không có chiêu này / đang bận. */
     public static boolean start(ServerLevel sl, HuVuongForm b, String id, LivingEntity target) {
         State s = b.movesA;
+        if (s.mv != null && expired(sl, s)) end(b, false);  // chieu ket -> don sach de khong chan vinh vien
         if (!handles(b.form(), id) || s.mv != null || !b.isAlive() || b.casting()) return false;
-        s.mv = id; s.mt = 0; s.tgt = target; s.spot = null; s.from = null; s.to = null;
+        s.mv = id; s.mt = 0; s.startGt = sl.getGameTime(); s.tgt = target; s.spot = null; s.from = null; s.to = null;
         s.hitOnce.clear(); s.marked.clear(); s.spots.clear();
         b.getNavigation().stop();
         Vec3 dir = target != null ? target.position().subtract(b.position()).multiply(1, 0, 1) : b.getViewVector(1f).multiply(1, 0, 1);
@@ -149,12 +152,20 @@ public final class HvFormMovesA {
         b.movesA.delayed.clear();
     }
 
+    /** Chieu dai nhat ~118 tick; qua 400 tick (game-time) la ket. */
+    static final int MAX_MOVE_TICKS = 400;
+
+    static boolean expired(ServerLevel sl, State s) {
+        return s.mt > MAX_MOVE_TICKS || sl.getGameTime() - s.startGt > MAX_MOVE_TICKS;
+    }
+
     /** Gọi mỗi tick server (kể cả khi boss bất động). */
     public static void tick(ServerLevel sl, HuVuongForm b) {
         State s = b.movesA;
         if (s.ultCd > 0) s.ultCd--;
         if (s.mv != null) {
-            if (b.director().transitioning()) cancel(b);
+            if (expired(sl, s)) { end(b, false); s.ownCd = 60; }
+            else if (b.director().transitioning()) cancel(b);
             else if (!step(sl, b, s.mt++)) { end(b, true); s.ownCd = BossBuff.cd(b.phase() >= 3 ? 50 : 70); }
         }
         tickZones(sl, b);
@@ -164,6 +175,7 @@ public final class HvFormMovesA {
     /** AI riêng: true = boss đang bận chiêu riêng (bỏ qua AI cũ). */
     public static boolean aiStep(ServerLevel sl, HuVuongForm b) {
         State s = b.movesA;
+        if (s.mv != null && expired(sl, s)) { end(b, false); s.ownCd = 60; }
         if (s.mv != null) { b.getNavigation().stop(); return true; }
         if (!handles(b.form()) || b.casting()) return false;
         if (s.ownCd > 0) { s.ownCd--; return false; }

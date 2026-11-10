@@ -287,6 +287,9 @@ public class HuVuongForm extends Monster implements GeoEntity, HuMob, PhasedBoss
         super.readAdditionalSaveData(tag);
         if (tag.contains("HvForm")) { formCache = Math.max(0, Math.min(HvForm.COUNT - 1, tag.getInt("HvForm"))); entityData.set(FORM, formCache); refreshDimensions(); }
         if (tag.contains("HvPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("HvPhase"))));
+        // State chieu rieng khong luu NBT: noGravity/invisible do chieu dang chay co the bi luu lai -> boss lo lung/tang hinh vinh vien.
+        setNoGravity(false);
+        setInvisible(false);
         zoneId = tag.getInt("HvZone");
         if (tag.contains("HvLevel")) level30 = tag.getInt("HvLevel");
         zoneTier = tag.getInt("HvTier");
