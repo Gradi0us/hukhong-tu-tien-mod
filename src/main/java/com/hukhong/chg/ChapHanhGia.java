@@ -286,7 +286,7 @@ public class ChapHanhGia extends Monster implements GeoEntity, com.hukhong.boss.
             }
             if (!pools.isEmpty()) Chg3Moves.tickPools(sl, this);
         }
-        else if (level().isClientSide && descending()) {
+        if (level().isClientSide && descending()) {
             for (int i = 0; i < 3; i++)
                 level().addParticle(ParticleTypes.END_ROD, getX() + random.nextGaussian() * 0.6, getY() + random.nextDouble() * 12,
                         getZ() + random.nextGaussian() * 0.6, 0, -0.4, 0);
