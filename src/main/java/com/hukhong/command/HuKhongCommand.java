@@ -192,6 +192,18 @@ public final class HuKhongCommand {
                             msg(c.getSource(), b == null ? "spawn failed" : "chg " + b.idx() + " descending");
                             return b == null ? 0 : 1;
                         })))
+                .then(Commands.literal("dakhuyet").executes(c -> {
+                    var pl = c.getSource().getPlayerOrException();
+                    var sl = pl.serverLevel();
+                    var d = com.hukhong.endgame.EndgameRegistry.DA_KHUYET.get().create(sl);
+                    if (d == null) return 0;
+                    var at = pl.position().add(pl.getLookAngle().multiply(8, 0, 8));
+                    d.moveTo(at.x, pl.getY(), at.z, pl.getYRot() + 180, 0);
+                    d.finalizeSpawn(sl, sl.getCurrentDifficultyAt(d.blockPosition()), net.minecraft.world.entity.MobSpawnType.COMMAND, null);
+                    sl.addFreshEntity(d);
+                    msg(c.getSource(), "Da Khuyet da xuat hien (dich)");
+                    return 1;
+                }))
                 .then(com.hukhong.city.CityRelayout.node())
                 .then(com.hukhong.bicanh.BiCanhCommand.node())
                 .then(com.hukhong.endgame.EndgameCommand.node())
