@@ -21,7 +21,10 @@ public enum CastAnim {
     OPEN_PALMS(24),     // mở lòng bàn tay (hồi phục)
     FIST_JAB(10),       // Thể Tu tay không: đấm thẳng tay phải
     FIST_CROSS(10),     // đấm thẳng tay trái xoay hông
-    FIST_HOOK(12);      // móc ngang
+    FIST_HOOK(12),      // móc ngang
+    DODGE_ROLL(12),     // Lách Né: lăn tới
+    DODGE_DASH(10),     // Lách Né: lướt ngang
+    BACKSTEP(10);       // Lách Né: lùi lại
 
     public final int ticks;
 

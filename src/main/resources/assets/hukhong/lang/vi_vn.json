@@ -3480,5 +3480,12 @@
   "hukhong.dialog.sahat.ult.3": "Tinh Vẫn — Giáng Thế!",
   "hukhong.dialog.sahat.death.1": "Ha... hạt cát cuối cùng cũng đã rơi.",
   "hukhong.dialog.sahat.death.2": "Vì sao này... rốt cuộc được phép rơi rồi.",
-  "hukhong.dialog.sahat.death.3": "Hậu sinh, đừng để trời đè gãy lưng ngươi."
+  "hukhong.dialog.sahat.death.3": "Hậu sinh, đừng để trời đè gãy lưng ngươi.",
+  "key.hukhong.dodge": "Lách Né",
+  "effect.hukhong.than_phap": "Thân Pháp",
+  "hukhong.dodge.perfect": "✦ Né Hoàn Hảo! — Thân Pháp",
+  "hukhong.dodge.no_stamina": "Không đủ Thể Lực",
+  "hukhong.hud.stamina": "Thể Lực",
+  "hukhong.configuration.staminaHud": "Thanh Thể Lực",
+  "hukhong.configuration.dodgeFx": "Hiệu ứng màn hình Né Hoàn Hảo"
 }

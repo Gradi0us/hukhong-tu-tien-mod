@@ -22,6 +22,19 @@ public final class ModEffects {
     public static final DeferredHolder<MobEffect, MobEffect> TRONG_THUONG = EFFECTS.register("trong_thuong",
             () -> new MobEffect(MobEffectCategory.HARMFUL, 0x8B0000) {});
 
+    /** hukhong:than_phap - buff Né Hoàn Hảo: +20% sát thương, +20% tốc đánh, +10% tốc chạy. */
+    public static final DeferredHolder<MobEffect, MobEffect> THAN_PHAP = EFFECTS.register("than_phap",
+            () -> new MobEffect(MobEffectCategory.BENEFICIAL, 0x9FE8FF) {}
+                    .addAttributeModifier(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE,
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "effect.than_phap.dmg"), 0.2,
+                            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+                    .addAttributeModifier(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED,
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "effect.than_phap.speed"), 0.2,
+                            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE)
+                    .addAttributeModifier(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED,
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "effect.than_phap.move"), 0.1,
+                            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
+
     /** He so hoi tai nguyen: 0.5 neu dang Hu Hoa, nguoc lai 1.0. */
     public static double regenMultiplier(LivingEntity e) {
         return e.hasEffect(HU_HOA) ? 0.5 : 1.0;
