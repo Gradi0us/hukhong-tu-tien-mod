@@ -125,12 +125,8 @@ public final class BossPhases {
                 p3("sa_hat_vuong", 5.0, 2, fx(ArenaEffect.PURPLE_SKY), "bicanh_boss",
                         m("bao_cat", Shape.DONUT, Pal.SAND, 18, 2.2, 90, Hit.BLIND, true)));
         // Yeu vuong tuyet
-        reg("bang_nhan", Pal.FROST, 4.5,
-                p2("bang_nhan", 4.5, 1, fx(ArenaEffect.CRACKED_FLOOR), null,
-                        m("bang_tru", Shape.PILLARS, Pal.FROST, 2.4, 1.0, 36, Hit.FREEZE, false),
-                        m("bang_tram", Shape.LINE, Pal.FROST, 16, 1.1, 30, Hit.SLOW, false)),
-                p3("bang_nhan", 4.5, 2, fx(ArenaEffect.VOID_PILLARS), "bicanh_boss",
-                        m("tuyet_diet", Shape.PULL_BURST, Pal.FROST, 19, 2.4, 90, Hit.FREEZE, true)));
+        // Bang Nhan (kieu Astel + Rennala): bo chieu RIENG bn_* - BangNhan tu thi trien qua startOwnMove (BangNhanMoves).
+        bangNhan();
         // Yeu vuong dam lay
         reg("doc_mau", Pal.TOXIC, 4.0,
                 p2("doc_mau", 4.0, 1, fx(ArenaEffect.CRACKED_FLOOR), null,
@@ -325,6 +321,35 @@ public final class BossPhases {
                 m("c4_tam_lien", Shape.COMBO, Pal.BLOOD, 6, 0.8, 10, Hit.KNOCK_UP, false)),  // dam - quet - nen tre
                 fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "su_do", 0.7f);
         ALL.put(id, new Config(id, Pal.BLOOD, s, List.of(p1(), two, three)));
+    }
+
+    /** Bang Nhan: P2 "Han Nhan Khai" (mat bang mo), P3 "Vu Tru Dong Ket"; toi thuong Bang Nguyet. Thoai: hukhong.dialog.bangnhan.*. */
+    private static void bangNhan() {
+        String id = "bang_nhan";
+        double s = 4.5;
+        int t2 = 120, r2 = 60, t3 = 120, r3 = 70;
+        List<SubLine> s2 = List.of(new SubLine(8, 44, "hukhong.dialog.bangnhan.p2.1"), new SubLine(44, 84, "hukhong.dialog.bangnhan.p2.2"),
+                new SubLine(84, 116, "hukhong.dialog.bangnhan.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, "hukhong.dialog.bangnhan.p3.1"), new SubLine(44, 84, "hukhong.dialog.bangnhan.p3.2"),
+                new SubLine(84, 116, "hukhong.dialog.bangnhan.p3.3"));
+        double a = s * 1.25, b = s * 1.5;
+        List<CamPath.Key> c2 = List.of(k(0, 0, 0.7, 2.0, 55, 0.75, 0, 0, a), k(40, 1.4, 0.4, 1.2, 50, 0.8, 0, -4, a),
+                k(r2, 0, 0.8, 1.4, 40, 0.8, 0, 0, a), k(95, -2.0, 1.2, 2.2, 62, 0.7, 0, 0, a), k(t2, 0, 1.0, 3.8, 72, 0.65, 0, 0, a));
+        List<CamPath.Key> c3 = List.of(k(0, 0, 0.2, 1.6, 50, 0.9, 0, 0, b), k(35, 2.0, 0.2, 1.0, 64, 1.4, 0, -14, b),
+                k(r3, 0, 0.1, 2.8, 80, 2.0, 0, -20, b), k(100, -2.4, 1.6, 1.8, 70, 1.0, 0, 0, b), k(t3, 0, 1.6, 4.4, 78, 0.7, 0, 0, b));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, t2, r2, c2, s2, List.of(
+                m("bn_bang_tia", Shape.LINE, Pal.FROST, 24, 1.1, 22, Hit.SLOW, false),       // Bang Nhan Xa Tuyen (laser)
+                m("bn_bang_tinh", Shape.METEOR, Pal.FROST, 1.8, 0.7, 32, Hit.SLOW, false),   // Bang Tinh Truy Hon (glintstone)
+                m("bn_hap_nhan", Shape.PULL_BURST, Pal.FROST, 14, 1.6, 34, Hit.FREEZE, false), // Bang Nhan Hap Hon (grab-suck)
+                m("bn_sao_bang", Shape.METEOR, Pal.FROST, 3.0, 0.9, 24, Hit.KNOCK_UP, false)), // Han Tinh Luu Van (meteor)
+                fx(ArenaEffect.CRACKED_FLOOR), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, t3, r3, c3, s3, List.of(
+                m("bn_bang_nguyet", Shape.DONUT, Pal.FROST, 18, 2.4, 90, Hit.FREEZE, true),  // Bang Nguyet (toi thuong)
+                m("bn_huyen_anh", Shape.LINE, Pal.FROST, 18, 0.9, 22, Hit.SLOW, false),      // Huyen Anh Bang Than (phan than)
+                m("bn_toan_tuyen", Shape.LINE, Pal.FROST, 18, 0.8, 24, Hit.FREEZE, false),   // Han Nhan Toan Tuyen (tia xoay)
+                m("bn_thuan_anh", Shape.LEAP, Pal.FROST, 4, 1.0, 20, Hit.FREEZE, false)),    // Thuan Anh Han Bo (blink)
+                fx(ArenaEffect.VOID_PILLARS, ArenaEffect.PURPLE_SKY), "bicanh_boss", 0.7f);
+        ALL.put(id, new Config(id, Pal.FROST, s, List.of(p1(), two, three)));
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {
