@@ -149,6 +149,23 @@ public final class CastAnimLibrary {
             case OPEN_PALMS -> x
                     .at(7, OUT, R, -0.9f, 0f, 0.6f).at(7, OUT, L, -0.9f, 0f, -0.6f).at(7, OUT, BODY, -0.08f, 0f, 0f)
                     .at(18, IO, R, -1.0f, 0f, 0.7f).at(18, IO, L, -1.0f, 0f, -0.7f).at(18, IO, BODY, -0.1f, 0f, 0f);
+            case DODGE_ROLL -> x // co người cúi rạp lao tới (không xoay 360° để tư thế nghỉ cuối không quay ngược)
+                    .at(2, OUT, BODY, 0.6f, 0f, 0f).at(2, OUT, R, -2.2f, 0f, 0.3f).at(2, OUT, L, -2.2f, 0f, -0.3f)
+                    .at(2, OUT, RL, -1.4f, 0f, 0f).at(2, OUT, LL, -1.4f, 0f, 0f)
+                    .at(6, Ease.LINEAR, BODY, 1.25f, 0f, 0f).at(6, Ease.LINEAR, R, -2.2f, 0f, 0.3f).at(6, Ease.LINEAR, L, -2.2f, 0f, -0.3f)
+                    .at(6, Ease.LINEAR, RL, -1.4f, 0f, 0f).at(6, Ease.LINEAR, LL, -1.4f, 0f, 0f)
+                    .at(10, OUT, BODY, 0.3f, 0f, 0f).at(10, OUT, R, -0.4f, 0f, 0.2f).at(10, OUT, L, -0.4f, 0f, -0.2f)
+                    .at(10, OUT, RL, -0.3f, 0f, 0f).at(10, OUT, LL, 0.2f, 0f, 0f);
+            case DODGE_DASH -> x // nghiêng người lướt, tay vung ra sau
+                    .at(2, OUT, BODY, 0.35f, 0f, 0.3f).at(2, OUT, R, 0.8f, 0f, 0.6f).at(2, OUT, L, 0.8f, 0f, -0.6f)
+                    .at(2, OUT, RL, -0.5f, 0f, 0.2f).at(2, OUT, LL, 0.4f, 0f, -0.2f)
+                    .at(7, IO, BODY, 0.3f, 0f, 0.25f).at(7, IO, R, 0.8f, 0f, 0.6f).at(7, IO, L, 0.8f, 0f, -0.6f)
+                    .at(7, IO, RL, -0.5f, 0f, 0.2f).at(7, IO, LL, 0.4f, 0f, -0.2f);
+            case BACKSTEP -> x // ngả ra sau, tay thủ trước ngực
+                    .at(2, OUT, BODY, -0.35f, 0f, 0f).at(2, OUT, R, -1.2f, -0.6f, 0f).at(2, OUT, L, -1.2f, 0.6f, 0f)
+                    .at(2, OUT, RL, 0.5f, 0f, 0f).at(2, OUT, LL, -0.3f, 0f, 0f)
+                    .at(7, IO, BODY, -0.25f, 0f, 0f).at(7, IO, R, -1.2f, -0.6f, 0f).at(7, IO, L, -1.2f, 0.6f, 0f)
+                    .at(7, IO, RL, 0.4f, 0f, 0f).at(7, IO, LL, -0.2f, 0f, 0f);
         }
         return x.done();
     }

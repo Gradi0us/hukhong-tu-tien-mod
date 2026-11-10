@@ -3480,5 +3480,12 @@
   "hukhong.dialog.sahat.ult.3": "Starfall — Descent!",
   "hukhong.dialog.sahat.death.1": "Ha... the last grain of sand has fallen.",
   "hukhong.dialog.sahat.death.2": "This star... is finally allowed to fall.",
-  "hukhong.dialog.sahat.death.3": "Young one, do not let the heavens break your back."
+  "hukhong.dialog.sahat.death.3": "Young one, do not let the heavens break your back.",
+  "key.hukhong.dodge": "Dodge (Evade)",
+  "effect.hukhong.than_phap": "Body Technique",
+  "hukhong.dodge.perfect": "✦ Perfect Dodge! — Body Technique",
+  "hukhong.dodge.no_stamina": "Not enough Stamina",
+  "hukhong.hud.stamina": "Stamina",
+  "hukhong.configuration.staminaHud": "Stamina bar",
+  "hukhong.configuration.dodgeFx": "Perfect dodge screen effect"
 }

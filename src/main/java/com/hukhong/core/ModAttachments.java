@@ -21,4 +21,9 @@ public final class ModAttachments {
     public static final Supplier<AttachmentType<AgeData>> AGE = ATTACHMENTS.register("age",
             () -> AttachmentType.builder(() -> AgeData.DEFAULT)
                     .serialize(AgeData.CODEC).copyOnDeath().build());
+
+    /** Thể Lực + Lách Né (không giữ khi chết: hồi sinh đầy). */
+    public static final Supplier<AttachmentType<com.hukhong.dodge.DodgeData>> DODGE = ATTACHMENTS.register("dodge",
+            () -> AttachmentType.builder(() -> com.hukhong.dodge.DodgeData.DEFAULT)
+                    .serialize(com.hukhong.dodge.DodgeData.CODEC).build());
 }

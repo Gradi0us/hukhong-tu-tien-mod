@@ -85,7 +85,16 @@ public final class ClientConfig {
     public static final ModConfigSpec.ConfigValue<String> DISCORD_APP_ID = B
             .comment("Application ID của ứng dụng Discord (discord.com/developers)")
             .translation("hukhong.configuration.discordAppId").define("discordAppId", "");
+    public static final ModConfigSpec.BooleanValue STAMINA_HUD = B
+            .comment("Hiện thanh Thể Lực dưới tâm ngắm (tự ẩn khi đầy)")
+            .translation("hukhong.configuration.staminaHud").define("staminaHud", true);
+    public static final ModConfigSpec.BooleanValue DODGE_FX = B
+            .comment("Hiệu ứng màn hình khi Né Hoàn Hảo (thu FOV + phủ xám/vignette)")
+            .translation("hukhong.configuration.dodgeFx").define("dodgeFx", true);
     public static final ModConfigSpec SPEC = B.build();
+
+    public static boolean staminaHud() { return !SPEC.isLoaded() || STAMINA_HUD.get(); }
+    public static boolean dodgeFx() { return !SPEC.isLoaded() || DODGE_FX.get(); }
 
     public static boolean mobBars() { return !SPEC.isLoaded() || MOB_BARS.get(); }
     public static boolean mobBarsPlayers() { return SPEC.isLoaded() && MOB_BARS_PLAYERS.get(); }
