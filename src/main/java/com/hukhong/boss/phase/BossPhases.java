@@ -157,12 +157,8 @@ public final class BossPhases {
                         m("kiem_trao", Shape.PILLARS, Pal.MOON, 2.2, 1.0, 34, Hit.KNOCK_UP, false)),
                 p3("chg_3", 3.8, 2, fx(ArenaEffect.PURPLE_SKY), "su_do",
                         m("kiem_vuc_diet", Shape.PULL_BURST, Pal.MOON, 20, 2.5, 90, Hit.SLOW, true)));
-        reg("chg_4", Pal.BLOOD, 3.8,
-                p2("chg_4", 3.8, 1, fx(ArenaEffect.BLOOD_RAIN), null,
-                        m("huyet_tru", Shape.PILLARS, Pal.BLOOD, 2.4, 1.0, 36, Hit.WEAK, false),
-                        m("huyet_vu", Shape.METEOR, Pal.BLOOD, 3.0, 0.9, 44, Hit.NAUSEA, false)),
-                p3("chg_4", 3.8, 2, fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "su_do",
-                        m("huyet_hai", Shape.DONUT, Pal.BLOOD, 19, 2.3, 90, Hit.WEAK, true)));
+        // CHG IV (kieu Mohg, mau): bo chieu RIENG - ChapHanhGia(idx 4) tu thi trien qua startOwnMove (Chg4Moves).
+        chg4();
         // Da Khuyet (kieu Malenia, trang/mau): bo chieu RIENG - DaKhuyet tu thi trien qua PhasedBoss.startOwnMove (khong dung er_* chung).
         daKhuyet();
 
@@ -224,6 +220,38 @@ public final class BossPhases {
                 m("dk_song_lao", Shape.LEAP, Pal.BLOOD, 4.5, 1.2, 30, Hit.KNOCK_UP, false)),   // lao 2 lan
                 fx(ArenaEffect.BLOOD_RAIN, ArenaEffect.CRACKED_FLOOR), "tam_ma", 0.7f);
         ALL.put(id, new Config(id, Pal.MOON, s, List.of(p1(), two, three)));
+    }
+
+    /** CHG IV "Co Vo Tan": P2 canh mau bung, P3 huyet diem; toi thuong Hu Vo (Nihil). Thoai: hukhong.dialog.chg4.*. */
+    private static void chg4() {
+        String id = "chg_4";
+        double s = 3.8;
+        int t2 = 120, r2 = 60, t3 = 120, r3 = 70;
+        List<SubLine> s2 = List.of(new SubLine(8, 44, "hukhong.dialog.chg4.p2.1"), new SubLine(44, 84, "hukhong.dialog.chg4.p2.2"),
+                new SubLine(84, 116, "hukhong.dialog.chg4.p2.3"));
+        List<SubLine> s3 = List.of(new SubLine(8, 44, "hukhong.dialog.chg4.p3.1"), new SubLine(44, 84, "hukhong.dialog.chg4.p3.2"),
+                new SubLine(84, 116, "hukhong.dialog.chg4.p3.3"));
+        double a = s * 1.25;
+        // P2: quy mot goi tren dinh ba -> canh mau bung (camera sau lung nhin len) -> keo xa
+        List<CamPath.Key> c2 = List.of(k(0, 0, 0.4, 2.0, 58, 0.6, 0, 0, a), k(40, -1.4, 0.3, -1.8, 56, 0.8, 0, -8, a),
+                k(r2, 0, 0.2, -2.6, 72, 1.0, 0, -14, a), k(95, 2.0, 1.2, 2.0, 62, 0.8, 0, 0, a), k(t2, 0, 1.0, 3.8, 72, 0.7, 0, 0, a));
+        // P3: huyet diem bung quanh than - camera sat dat vong quanh roi lui xa
+        double b = s * 1.5;
+        List<CamPath.Key> c3 = List.of(k(0, 0, 0.2, 1.4, 48, 0.9, 0, 0, b), k(35, 2.0, 0.1, 0.8, 62, 1.2, 0, -10, b),
+                k(r3, 0, 0.3, -2.4, 76, 1.0, 0, -6, b), k(100, -2.4, 1.4, 1.8, 70, 1.0, 0, 0, b), k(t3, 0, 1.6, 4.4, 78, 0.8, 0, 0, b));
+        Phase two = new Phase(2, P2_BELOW, 1.25f, t2, r2, c2, s2, List.of(
+                m("c4_huyet_luan", Shape.NOVA, Pal.BLOOD, 12, 1.0, 30, Hit.KNOCK_UP, false), // vong huyet diem
+                m("c4_lao_canh", Shape.LEAP, Pal.BLOOD, 5, 1.3, 28, Hit.KNOCK_UP, false),    // canh mau + lao tu tren khong
+                m("c4_quet", Shape.COMBO, Pal.BLOOD, 6.5, 0.9, 14, Hit.WEAK, false),         // 2 nhat quet dinh ba
+                m("c4_dam", Shape.LINE, Pal.BLOOD, 14, 1.2, 18, Hit.KNOCK_UP, false)),       // dam luot
+                fx(ArenaEffect.BLOOD_RAIN), null, 0.85f);
+        Phase three = new Phase(3, P3_BELOW, 1.5f, t3, r3, c3, s3, List.of(
+                m("c4_nihil", Shape.DONUT, Pal.BLOOD, 20, 0.8, 100, Hit.WEAK, true),         // Hu Vo (Nihil)
+                m("c4_huyet_tuyen", Shape.PILLARS, Pal.BLOOD, 2.8, 1.0, 24, Hit.KNOCK_UP, false), // suoi mau duoi chan
+                m("c4_huyet_diem", Shape.LINE, Pal.BLOOD, 16, 1.0, 24, Hit.KNOCK_UP, false), // vet huyet diem tren dat
+                m("c4_tam_lien", Shape.COMBO, Pal.BLOOD, 6, 0.8, 10, Hit.KNOCK_UP, false)),  // dam - quet - nen tre
+                fx(ArenaEffect.CRACKED_FLOOR, ArenaEffect.PURPLE_SKY), "su_do", 0.7f);
+        ALL.put(id, new Config(id, Pal.BLOOD, s, List.of(p1(), two, three)));
     }
 
     private static void hv(String key, Pal aura, double size, Set<ArenaEffect> a2, Set<ArenaEffect> a3, String music3, int l2, int l3, Move a, Move b, Move ult) {
