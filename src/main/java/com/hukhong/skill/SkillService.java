@@ -102,6 +102,15 @@ public final class SkillService {
         }
         SkillBook.Resolved r = SkillBook.resolve(bd, page, slot, d.level(), page == Path.PHAP ? com.hukhong.phaptu.ThoService.lockMask(p) : 0); // Thổ khoá E + T
         // phím R: Bản Mệnh / Vạn Cốt Cộng Minh, trừ khi có kỹ năng gán thủ công và chưa mở Bản Mệnh
+        if (slot == 2 && r == null && page == Path.KIEM && !BanMenhSkillEffects.useResonance(p, st)
+                && BanMenhSkillEffects.signature(p, st) == null && p.level() instanceof net.minecraft.server.level.ServerLevel kl0) {
+            // Kiếm Tu chưa mở Bản Mệnh (cấp < 40): R chỉ kích nổ Xé Toạc, hồi 20s, không tốn tài nguyên
+            long now0 = kl0.getGameTime();
+            if (st.cooldownEnd[2] > now0 || com.hukhong.pathrules.MaRules.isLost(p)) return;
+            if (KiemRend.detonate(kl0, p) > 0) { st.cooldownEnd[2] = now0 + 400; st.rTotal = 400; st.lastCombat = now0; }
+            sync(p);
+            return;
+        }
         if (slot == 2 && r == null) {
             SkillBookRuntime.clear(p);
             BanMenhSkill animSig = BanMenhSkillEffects.useResonance(p, st) ? null : BanMenhSkillEffects.signature(p, st);
