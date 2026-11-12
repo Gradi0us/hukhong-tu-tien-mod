@@ -1,6 +1,6 @@
 package com.hukhong.profession;
 
-import com.hukhong.alchemy.AlchemyRegistry;
+import com.hukhong.craft.CraftRegistry;
 import com.hukhong.phapkhi.PhapKhiKind;
 import com.hukhong.phapkhi.PhapKhiRegistry;
 import com.hukhong.phapkhi.PhapKhiTier;
@@ -27,7 +27,16 @@ public final class ProfessionRecipes {
     @FunctionalInterface
     public interface Output { ItemStack make(int level, boolean tierUp); }
 
-    public record Need(Supplier<? extends Item> item, int count) {}
+    /** Nguyen lieu 1 o. alts = mon thay the cung duoc nhan (vd Phu Chi Ha/Thuong thay cho Phu Chi Trung). */
+    public record Need(Supplier<? extends Item> item, int count, List<Supplier<? extends Item>> alts) {
+        public Need(Supplier<? extends Item> item, int count) { this(item, count, List.of()); }
+
+        public boolean accepts(ItemStack s) {
+            if (s.is(item.get())) return true;
+            for (Supplier<? extends Item> a : alts) if (s.is(a.get())) return true;
+            return false;
+        }
+    }
 
     /**
      * minLevel = cap nghe toi thieu de craft (mac dinh 1). tier = bac cong thuc (mac dinh 1): nguoi choi biet
@@ -38,7 +47,7 @@ public final class ProfessionRecipes {
         public Recipe(String id, Profession prof, List<Need> needs, int xp, Output out, int minLevel) { this(id, prof, needs, xp, out, minLevel, 1); }
     }
 
-    /** Phu Van Su: moi loai Phap Khi phu/tran (15 loai) = giay + nguyen to + linh thao. Bac pham = min(4, cap/4). */
+    /** Phu Van Su (Phu An): 15 loai phu = Phu Chi (moi pham) + Linh Mac + nguyen to. Ket qua do minigame ve phu quyet dinh (phu/PhuDraw). */
     public static final List<Recipe> PHU = buildPhu();
 
     /** Placeholder cho Doan Tao Su: Linh Thiet Phoi (4 sat thoi + linh thach ha). Nguyen lieu cho giap sau nay. */
@@ -56,8 +65,9 @@ public final class ProfessionRecipes {
         List<Recipe> list = new ArrayList<>();
         for (PhapKhiKind k : PhapKhiKind.values()) {
             list.add(new Recipe("phu_" + k.id, Profession.PHU_VAN,
-                    List.of(new Need(() -> Items.PAPER, 1), new Need(element(k), 1),
-                            new Need(() -> AlchemyRegistry.LINH_THAO.get(), 1)),
+                    List.of(new Need(() -> CraftRegistry.PHU_CHI_TRUNG.get(), 1,
+                                    List.<Supplier<? extends Item>>of(() -> CraftRegistry.PHU_CHI_HA.get(), () -> CraftRegistry.PHU_CHI_THUONG.get())),
+                            new Need(() -> CraftRegistry.LINH_MAC.get(), 1), new Need(element(k), 1)),
                     10, (lv, up) -> PhapKhiRegistry.stack(k, PhapKhiTier.of(Math.min(4, lv / 4 + (up ? 1 : 0)))),
                     1, k.ordinal() / 3 + 1));
         }
@@ -109,7 +119,7 @@ public final class ProfessionRecipes {
             int hit = -1;
             for (int i = 0; i < in.size() && hit < 0; i++) {
                 ItemStack s = in.get(i);
-                if (!used[i] && !s.isEmpty() && s.is(need.item().get()) && s.getCount() >= need.count()) hit = i;
+                if (!used[i] && !s.isEmpty() && need.accepts(s) && s.getCount() >= need.count()) hit = i;
             }
             if (hit < 0) return null;
             used[hit] = true;

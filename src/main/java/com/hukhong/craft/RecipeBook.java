@@ -37,8 +37,17 @@ public final class RecipeBook {
 
     public static final String DAN = "dan:", PHU = "phu:", KHI = "khi:";
 
-    /** Nguyen lieu: item + so luong. */
-    public record Ing(java.util.function.Supplier<? extends Item> item, int count) {}
+    /** Nguyen lieu: item + so luong. alts = mon thay the cung duoc nhan (xem ProfessionRecipes.Need). */
+    public record Ing(java.util.function.Supplier<? extends Item> item, int count,
+                      List<java.util.function.Supplier<? extends Item>> alts) {
+        public Ing(java.util.function.Supplier<? extends Item> item, int count) { this(item, count, List.of()); }
+
+        public boolean accepts(ItemStack s) {
+            if (s.is(item.get())) return true;
+            for (var a : alts) if (s.is(a.get())) return true;
+            return false;
+        }
+    }
 
     /**
      * Metadata 1 cong thuc. display = stack mau (icon + ten). requiredLevel = cap nghe can de craft / de thay sang.
@@ -67,7 +76,7 @@ public final class RecipeBook {
 
     private static Entry profEntry(String prefix, ProfessionRecipes.Recipe r, Profession prof) {
         List<Ing> ings = new ArrayList<>();
-        for (ProfessionRecipes.Need n : r.needs()) ings.add(new Ing(n.item(), n.count()));
+        for (ProfessionRecipes.Need n : r.needs()) ings.add(new Ing(n.item(), n.count(), n.alts()));
         return new Entry(prefix + r.id(), prof, r.tier(), r.minLevel(), () -> r.out().make(1, false), List.copyOf(ings));
     }
 
@@ -188,14 +197,14 @@ public final class RecipeBook {
         pool.addAll(inv.offhand);
         List<Ing> ings = e.ingredients();
         for (Ing g : ings) {
-            int have = count(pool, g.item().get());
-            for (int s : slots) if (box.getItem(s).is(g.item().get())) have += box.getItem(s).getCount();
+            int have = count(pool, g);
+            for (int s : slots) if (g.accepts(box.getItem(s))) have += box.getItem(s).getCount();
             if (have < g.count()) { say(sp, "hukhong.recipe.missing"); return; }
         }
         // do het mon khong thuoc cong thuc ra tui
         for (int s : slots) {
             ItemStack st = box.getItem(s);
-            if (st.isEmpty() || ings.stream().anyMatch(g -> st.is(g.item().get()))) continue;
+            if (st.isEmpty() || ings.stream().anyMatch(g -> g.accepts(st))) continue;
             box.setItem(s, ItemStack.EMPTY);
             giveBack(sp, st);
         }
@@ -203,9 +212,9 @@ public final class RecipeBook {
         int[] target = new int[ings.size()];
         boolean[] taken = new boolean[slots.length];
         for (int i = 0; i < ings.size(); i++) {
-            Item it = ings.get(i).item().get();
+            Ing g = ings.get(i);
             int pick = -1;
-            for (int j = 0; j < slots.length && pick < 0; j++) if (!taken[j] && box.getItem(slots[j]).is(it)) pick = j;
+            for (int j = 0; j < slots.length && pick < 0; j++) if (!taken[j] && g.accepts(box.getItem(slots[j]))) pick = j;
             for (int j = 0; j < slots.length && pick < 0; j++) if (!taken[j] && box.getItem(slots[j]).isEmpty()) pick = j;
             if (pick < 0) { say(sp, "hukhong.recipe.no_slot"); return; }
             taken[pick] = true;
@@ -213,12 +222,11 @@ public final class RecipeBook {
         }
         for (int i = 0; i < ings.size(); i++) {
             Ing g = ings.get(i);
-            Item it = g.item().get();
             ItemStack cur = box.getItem(target[i]);
-            int need = g.count() - (cur.is(it) ? cur.getCount() : 0);
+            int need = g.count() - (g.accepts(cur) ? cur.getCount() : 0);
             while (need > 0) {
                 ItemStack src = null;
-                for (ItemStack st : pool) if (!st.isEmpty() && st.is(it)) { src = st; break; }
+                for (ItemStack st : pool) if (!st.isEmpty() && g.accepts(st)) { src = st; break; }
                 if (src == null) break; // khong xay ra: da kiem tra o tren
                 ItemStack moved = src.split(need);
                 need -= moved.getCount();
@@ -230,9 +238,9 @@ public final class RecipeBook {
         say(sp, "hukhong.recipe.arranged");
     }
 
-    private static int count(List<ItemStack> pool, Item it) {
+    private static int count(List<ItemStack> pool, Ing g) {
         int c = 0;
-        for (ItemStack st : pool) if (st.is(it)) c += st.getCount();
+        for (ItemStack st : pool) if (g.accepts(st)) c += st.getCount();
         return c;
     }
 

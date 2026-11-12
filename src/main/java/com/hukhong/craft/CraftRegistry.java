@@ -80,6 +80,7 @@ public final class CraftRegistry {
         ITEMS.register(bus);
         ATTACHMENTS.register(bus);
         bus.addListener((RegisterPayloadHandlersEvent e) -> RecipeBookNet.register(e.registrar("1")));
+        bus.addListener((RegisterPayloadHandlersEvent e) -> com.hukhong.profession.phu.PhuDrawNet.register(e.registrar("1")));
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 for (DeferredItem<?> i : new DeferredItem<?>[]{CHU_SA, PHU_CHI_HA, PHU_CHI_TRUNG, PHU_CHI_THUONG,

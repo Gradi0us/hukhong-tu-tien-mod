@@ -1,6 +1,7 @@
 package com.hukhong.profession.station;
 
 import com.hukhong.profession.ProfessionRegistry;
+import com.hukhong.profession.phu.PhuDraw;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,9 +45,20 @@ public class StationMenu extends AbstractContainerMenu {
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
+        if (id == 1 && player instanceof ServerPlayer sp) { quickDraw(sp); return true; }
         if (id != 0 || !stillValid(player)) return false;
         if (box instanceof ProfessionStationBlockEntity be && player instanceof ServerPlayer sp) be.craft(sp);
         return true;
+    }
+
+    /** Phu An: ve phu bang minigame (client gui ket qua qua PhuDrawNet.Submit). */
+    public void phuDraw(ServerPlayer sp, java.util.List<Integer> trace, int durationMs) {
+        if (station == ProfessionStationBlock.Station.PHU_AN && stillValid(sp)) PhuDraw.submit(sp, box, trace, durationMs);
+    }
+
+    /** Ve nhanh (menu button 1, chi Phu An). */
+    public void quickDraw(ServerPlayer sp) {
+        if (station == ProfessionStationBlock.Station.PHU_AN && stillValid(sp)) PhuDraw.quick(sp, box);
     }
 
     /** Nut "Xep nguyen lieu" tu so cong thuc (server). */

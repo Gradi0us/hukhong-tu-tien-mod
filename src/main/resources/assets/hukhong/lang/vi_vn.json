@@ -3785,5 +3785,21 @@
   "hukhong.recipe.book.ingredients": "Nguyên liệu:",
   "hukhong.scroll.wrong_prof": "Cần nghề %s để học quyển phổ này.",
   "hukhong.scroll.known": "Đã biết công thức này.",
-  "hukhong.scroll.learned": "Đã lĩnh hội: %s"
+  "hukhong.scroll.learned": "Đã lĩnh hội: %s",
+  "hukhong.phu.draw": "Vẽ phù",
+  "hukhong.phu.quick": "Vẽ nhanh",
+  "hukhong.phu.quick_low": "Vẽ nhanh cần cấp nghề 12.",
+  "hukhong.phu.quick_need": "Vẽ nhanh cần %s mỗi loại nguyên liệu.",
+  "hukhong.phu.quick_done": "Vẽ nhanh xong: Trung phẩm.",
+  "hukhong.phu.use_draw": "Phù Án: bấm Vẽ phù để vẽ.",
+  "hukhong.phu.bad_trace": "Dữ liệu nét vẽ không hợp lệ.",
+  "hukhong.phu.fail": "Phù hỏng: mất Phù Chỉ và Linh Mặc.",
+  "hukhong.phu.done": "Vẽ phù xong: %s",
+  "hukhong.phu.title": "Vẽ phù: %s",
+  "hukhong.phu.hint": "Giữ chuột trái ở đầu nét rồi kéo theo đường phù văn. Lệch ống quá 1 giây sẽ hỏng.",
+  "hukhong.phu.info": "Bậc %s · Ống ±%s px",
+  "hukhong.phu.time": "Thời gian: %s / %s s",
+  "hukhong.phu.in_tube": "Trong ống",
+  "hukhong.phu.out_tube": "Lệch ống: %s s",
+  "hukhong.phu.cancel": "Hủy"
 }
