@@ -36,11 +36,26 @@ public final class SkillService {
             p.displayClientMessage(Component.translatable("hukhong.msg.no_skill_path"), true);
             return;
         }
-        st.stance = !st.stance;
-        if (!st.stance) { SkillEffects.kiemVucStop(p, st, true); com.hukhong.phaptu.beam.PhapBeamService.cancel(p); com.hukhong.phaptu.ThiemBoService.cancel(p); }
-        else StanceHands.equip(p, Skill.skillPath(d, st.page));
+        if (st.stance) stanceOff(p, st);
+        else { st.stance = true; StanceHotbar.enter(p, Skill.skillPath(d, st.page)); }
         p.displayClientMessage(Component.translatable(st.stance ? "hukhong.stance.on" : "hukhong.stance.off"), true);
         sync(p);
+    }
+
+    /** Tắt thế (chết, ...): dừng kênh, trả thanh nhanh gốc. An toàn khi thế đã tắt. */
+    public static void forceStanceOff(ServerPlayer p) {
+        SkillState st = state(p);
+        if (st.stance) stanceOff(p, st);
+        else StanceHotbar.exit(p);
+        sync(p);
+    }
+
+    private static void stanceOff(ServerPlayer p, SkillState st) {
+        st.stance = false;
+        SkillEffects.kiemVucStop(p, st, true);
+        com.hukhong.phaptu.beam.PhapBeamService.cancel(p);
+        com.hukhong.phaptu.ThiemBoService.cancel(p);
+        StanceHotbar.exit(p);
     }
 
     /** Phím V: đổi trang giữa các đạo đang sở hữu; Phân Tâm = hồi chiêu chung 3s. */
@@ -59,7 +74,7 @@ public final class SkillService {
         for (int i = 0; i < 4; i++) st.cooldownEnd[i] = Math.max(st.cooldownEnd[i], now + SkillPages.SWITCH_COOLDOWN_TICKS);
         p.displayClientMessage(Component.translatable("hukhong.msg.page_switched",
                 Component.translatable(SkillPages.pathLangKey(SkillPages.active(d, st.page)))), true);
-        if (st.stance) StanceHands.equip(p, Skill.skillPath(d, st.page));
+        if (st.stance) { StanceHotbar.exit(p); StanceHotbar.enter(p, Skill.skillPath(d, st.page)); }
         sync(p);
     }
 
