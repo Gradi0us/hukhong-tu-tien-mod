@@ -31,6 +31,9 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
     private NonNullList<ItemStack> items = NonNullList.withSize(SLOTS, ItemStack.EMPTY);
     private boolean brewing, diHoa;
     private int heat, tick, inBand, hot, cold, burnLeft, cooldown, recipeIdx;
+    /** Nguoi bat dau me dan + cap Luyen Dan Su luc bat dau (nghe phu). */
+    private java.util.UUID brewer;
+    private int brewLevel;
 
     public DanLoBlockEntity(BlockPos pos, BlockState state) {
         super(AlchemyRegistry.DAN_LO_BE.get(), pos, state);
@@ -70,11 +73,16 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
 
     private void start(net.minecraft.world.entity.player.Player player) {
         if (brewing) return;
+        int lv = player == null ? 0 : com.hukhong.profession.ProfessionService.level(player, com.hukhong.profession.Profession.LUYEN_DAN);
+        if (lv <= 0) { say(player, "hukhong.profession.need.luyen_dan"); return; }
         if (!items.get(OUT).isEmpty()) { say(player, "hukhong.alchemy.out_full"); return; }
         List<ItemStack> herbs = new ArrayList<>(items.subList(HERB0, HERB0 + 3));
         var r = AlchemyRecipes.match(herbs);
         if (r == null) { say(player, "hukhong.alchemy.no_recipe"); return; }
+        if (r.tier() > lv / 2 + 1) { say(player, "hukhong.profession.tier_locked", Math.max(1, 2 * (r.tier() - 1))); return; }
         if (items.get(FUEL).getBurnTime(RecipeType.SMELTING) <= 0) { say(player, "hukhong.alchemy.no_fuel"); return; }
+        brewer = player.getUUID();
+        brewLevel = lv;
         for (var nd : r.needs()) {
             int left = nd.count();
             for (int i = HERB0; i < HERB0 + 3 && left > 0; i++) {
@@ -90,8 +98,8 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         setChanged();
     }
 
-    private void say(net.minecraft.world.entity.player.Player p, String key) {
-        if (p != null) p.displayClientMessage(Component.translatable(key), true);
+    private void say(net.minecraft.world.entity.player.Player p, String key, Object... args) {
+        if (p != null) p.displayClientMessage(Component.translatable(key, args), true);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, DanLoBlockEntity be) {
@@ -140,9 +148,15 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
             q = AlchemyMath.Quality.of(q.ordinal() + com.hukhong.dan.DanMath.DAN_LO_QUALITY_BONUS);
         }
         var r = AlchemyRecipes.ALL.get(recipeIdx);
-        ItemStack out = new ItemStack(r.result().get(), r.yield());
+        int yield = r.yield();
+        // Luyen Dan Su: cap cang cao, cang co hoi them 1 vien (3%/cap)
+        if (level.getRandom().nextDouble() < brewLevel * com.hukhong.profession.ProfessionMath.PILL_BONUS_PER_LEVEL) yield++;
+        ItemStack out = new ItemStack(r.result().get(), yield);
         out.set(AlchemyRegistry.PILL_QUALITY.get(), q.ordinal());
         items.set(OUT, out);
+        if (brewer != null && level.getServer() != null
+                && level.getServer().getPlayerList().getPlayer(brewer) instanceof net.minecraft.server.level.ServerPlayer bp)
+            com.hukhong.profession.ProfessionService.addCraftXp(bp, com.hukhong.profession.Profession.LUYEN_DAN, 5L * r.tier());
         level.playSound(null, pos, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 1f, 1f);
         notifyNear(level, pos, "hukhong.alchemy.done." + q.name().toLowerCase());
     }
@@ -168,6 +182,8 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         tag.putBoolean("diHoa", diHoa);
         tag.putInt("heat", heat); tag.putInt("tick", tick); tag.putInt("inBand", inBand);
         tag.putInt("burnLeft", burnLeft); tag.putInt("recipe", recipeIdx);
+        if (brewer != null) tag.putUUID("brewer", brewer);
+        tag.putInt("brewLevel", brewLevel);
     }
 
     @Override
@@ -178,5 +194,7 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         heat = tag.getInt("heat"); tick = tag.getInt("tick"); inBand = tag.getInt("inBand");
         burnLeft = tag.getInt("burnLeft");
         recipeIdx = Math.max(0, Math.min(AlchemyRecipes.ALL.size() - 1, tag.getInt("recipe")));
+        brewer = tag.hasUUID("brewer") ? tag.getUUID("brewer") : null;
+        brewLevel = tag.getInt("brewLevel");
     }
 }

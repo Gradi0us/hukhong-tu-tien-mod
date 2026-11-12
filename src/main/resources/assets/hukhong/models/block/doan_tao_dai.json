@@ -1,0 +1,1 @@
+{"parent": "minecraft:block/cube_bottom_top", "textures": {"top": "hukhong:block/doan_tao_dai_top", "side": "hukhong:block/doan_tao_dai_side", "bottom": "hukhong:block/doan_tao_dai_bottom", "particle": "hukhong:block/doan_tao_dai_side"}}

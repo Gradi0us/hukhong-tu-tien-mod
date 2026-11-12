@@ -21,6 +21,7 @@ public final class HuKhongCommand {
     public static void onRegister(RegisterCommandsEvent e) {
         e.getDispatcher().register(Commands.literal("hukhong")
                 .requires(s -> s.hasPermission(2))
+                .then(com.hukhong.profession.ProfessionCommand.node())
                 .then(Commands.literal("dump").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     CultivationData d = CultivationService.get(p);

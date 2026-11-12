@@ -33,9 +33,10 @@ public class ProfileScreen extends Screen {
     private static final int GOLD = 0xFFFFD34F, GREEN = 0xFF55FF55, GREY = 0xFF888888;
     private static final int ROW = 14, TAB_H = 14;
 
-    private static final int TABS = 8, TAB_GAP = 3;
+    private static final int TABS = 9, TAB_GAP = 3;
     private final LichTab lich = new LichTab();
     private final DongDaoTab dongDao = new DongDaoTab();
+    private final NgheTab nghe = new NgheTab();
     private final List<int[]> boneRows = new ArrayList<>(); // {y, slot}
     private int tab = 0;
     private double scroll = 0;
@@ -118,6 +119,7 @@ public class ProfileScreen extends Screen {
             case 5 -> t("hukhong.profile.tab.skills", "Kỹ Năng");
             case 6 -> t("hukhong.profile.tab.cal", "Lịch");
             case 7 -> t("hukhong.profile.tab.dongdao", "Đồng Đạo");
+            case 8 -> t("hukhong.profile.tab.profession", "Nghề");
             default -> t("hukhong.profile.tab.systems", "Hệ");
         };
     }
@@ -166,6 +168,7 @@ public class ProfileScreen extends Screen {
             case 5 -> renderSkills(g);
             case 6 -> lich.render(g, font, cx, cy, cw, (int) scroll, mx, my, tooltip);
             case 7 -> dongDao.render(g, font, cx, cy, cw, (int) scroll, mx, my);
+            case 8 -> nghe.render(g, font, cx, cy, cw, (int) scroll, mx, my);
             default -> renderSystems(g);
         };
         g.disableScissor();
@@ -541,6 +544,7 @@ public class ProfileScreen extends Screen {
         }
         if (tab == 6 && mx >= cx && mx < cx + cw && my >= cy && my < cy + ch && lich.click(mx, my)) return true;
         if (tab == 7 && mx >= cx && mx < cx + cw && my >= cy && my < cy + ch && dongDao.click(mx, my)) return true;
+        if (tab == 8 && mx >= cx && mx < cx + cw && my >= cy && my < cy + ch && nghe.click(mx, my)) return true;
         if (tab == 3 && mx >= cx && mx < cx + cw && my >= cy && my < cy + ch) {
             for (int[] r : boneRows) {
                 if (my >= r[0] && my < r[0] + ROW * 2) {
