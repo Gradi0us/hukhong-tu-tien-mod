@@ -19,12 +19,16 @@ public final class SkillAttachments {
     public static final AttachmentType<com.hukhong.pathrules.MaData> MA = AttachmentType.builder(com.hukhong.pathrules.MaData::new)
             .serialize(com.hukhong.pathrules.MaData.CODEC).copyOnDeath().build();
 
+    public static final AttachmentType<StanceHotbar.Stash> STASH = AttachmentType.builder(StanceHotbar.Stash::new)
+            .serialize(StanceHotbar.Stash.CODEC).build();
+
     @SubscribeEvent
     public static void onRegister(RegisterEvent e) {
         e.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, h -> {
             h.register(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "skill_state"), STATE);
             h.register(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "spawner_mark"), SpawnerMarks.MARK);
             h.register(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "ma_state"), MA);
+            h.register(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "stance_stash"), STASH);
         });
     }
 }
