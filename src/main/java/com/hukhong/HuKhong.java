@@ -35,6 +35,7 @@ public class HuKhong {
         com.hukhong.creature.CreatureRegistry.register(modBus);
         com.hukhong.phapkhi.PhapKhiRegistry.register(modBus);
         com.hukhong.profession.ProfessionRegistry.register(modBus);
+        com.hukhong.phapkhi.hothe.HoTheRegistry.register(modBus);
         com.hukhong.memory.MemoryRegistry.register(modBus);
         com.hukhong.storage.TruVatRegistry.register(modBus);
         modBus.addListener(SyncPayload::register);

@@ -38,6 +38,7 @@ public class ProfessionStationBlockEntity extends RandomizableContainerBlockEnti
         if (r == null) { say(sp, "hukhong.station.no_recipe"); return; }
         int lv = ProfessionService.level(sp, r.prof());
         if (lv <= 0) { say(sp, r.prof().needKey()); return; }
+        if (lv < r.minLevel()) { sp.displayClientMessage(Component.translatable("hukhong.station.level_low", r.minLevel()), true); return; }
         boolean up = r.prof() == Profession.DOAN_TAO
                 && ProfessionService.rollTierBonus(sp, getLevel().getRandom()) > 0;
         ProfessionRecipes.consume(r, in);

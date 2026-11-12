@@ -4,6 +4,7 @@ import com.hukhong.client.anim.CastAnim;
 import com.hukhong.client.anim.CastAnimHook;
 import com.hukhong.core.ModAttachments;
 import com.hukhong.effect.ModEffects;
+import com.hukhong.phapkhi.hothe.HoTheArmorItem;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -53,7 +54,7 @@ public final class DodgeService {
         DodgeData d = data(p);
         if (now < d.cooldownUntil()) return false;
         int lvl = level(p);
-        float max = StaminaMath.max(lvl), cur = d.current(max), cost = StaminaMath.dodgeCost(lvl);
+        float max = StaminaMath.max(lvl), cur = d.current(max), cost = StaminaMath.dodgeCost(lvl) * HoTheArmorItem.dodgeCostMult(p);
         if (!free(p) && cur < cost) {
             p.displayClientMessage(Component.translatable("hukhong.dodge.no_stamina"), true);
             return false;

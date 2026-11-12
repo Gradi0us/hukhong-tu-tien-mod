@@ -29,7 +29,10 @@ public final class ProfessionRecipes {
 
     public record Need(Supplier<? extends Item> item, int count) {}
 
-    public record Recipe(String id, Profession prof, List<Need> needs, int xp, Output out) {}
+    /** minLevel = cap nghe toi thieu de craft (mac dinh 1). */
+    public record Recipe(String id, Profession prof, List<Need> needs, int xp, Output out, int minLevel) {
+        public Recipe(String id, Profession prof, List<Need> needs, int xp, Output out) { this(id, prof, needs, xp, out, 1); }
+    }
 
     /** Phu Van Su: moi loai Phap Khi phu/tran (15 loai) = giay + nguyen to + linh thao. Bac pham = min(4, cap/4). */
     public static final List<Recipe> PHU = buildPhu();

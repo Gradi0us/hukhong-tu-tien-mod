@@ -3736,5 +3736,16 @@
   "hukhong.station.crafted": "Chế tạo thành công.",
   "hukhong.station.match": "Phương: %s",
   "hukhong.station.hint": "Bỏ nguyên liệu vào 3 ô.",
-  "hukhong.station.nomatch": "Chưa khớp phương."
+  "hukhong.station.nomatch": "Chưa khớp phương.",
+  "hukhong.hothe.kind.tinh_tam_quan": "Tịnh Tâm Quan",
+  "hukhong.hothe.kind.ho_tam_giap": "Hộ Tâm Giáp",
+  "hukhong.hothe.kind.kim_cang_ho_thoi": "Kim Cang Hộ Thối",
+  "hukhong.hothe.kind.phi_van_ngoa": "Phi Vân Ngoa",
+  "hukhong.hothe.tip.tinh_tam_quan": "Mũ: rút ngắn thời gian hiệu ứng xấu (10%..40% theo phẩm).",
+  "hukhong.hothe.tip.ho_tam_giap": "Áo: tăng máu tối đa (+4..+40 theo phẩm).",
+  "hukhong.hothe.tip.kim_cang_ho_thoi": "Quần: tăng độ cứng giáp và kháng đẩy lùi.",
+  "hukhong.hothe.tip.phi_van_ngoa": "Giày: tăng tốc chạy (+3%..+15%), giảm thể lực khi lách né.",
+  "hukhong.hothe.only": "Chỉ mặc được pháp khí hộ thể",
+  "hukhong.hothe.tip.only": "Chỉ mặc được pháp khí hộ thể",
+  "hukhong.station.level_low": "Chưa đủ cấp nghề (cần Lv %s)."
 }
