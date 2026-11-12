@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:potion"
+    },
+    {
+      "item": "hukhong:thanh_diep"
+    }
+  ],
+  "result": {
+    "id": "hukhong:toi_dich",
+    "count": 1,
+    "components": {
+      "hukhong:craft_quality": 1
+    }
+  }
+}

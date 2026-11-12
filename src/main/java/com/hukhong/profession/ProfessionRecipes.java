@@ -29,9 +29,13 @@ public final class ProfessionRecipes {
 
     public record Need(Supplier<? extends Item> item, int count) {}
 
-    /** minLevel = cap nghe toi thieu de craft (mac dinh 1). */
-    public record Recipe(String id, Profession prof, List<Need> needs, int xp, Output out, int minLevel) {
-        public Recipe(String id, Profession prof, List<Need> needs, int xp, Output out) { this(id, prof, needs, xp, out, 1); }
+    /**
+     * minLevel = cap nghe toi thieu de craft (mac dinh 1). tier = bac cong thuc (mac dinh 1): nguoi choi biet
+     * tu dong moi cong thuc co tier <= level/4+1 (RecipeBook.autoLearnBasics).
+     */
+    public record Recipe(String id, Profession prof, List<Need> needs, int xp, Output out, int minLevel, int tier) {
+        public Recipe(String id, Profession prof, List<Need> needs, int xp, Output out) { this(id, prof, needs, xp, out, 1, 1); }
+        public Recipe(String id, Profession prof, List<Need> needs, int xp, Output out, int minLevel) { this(id, prof, needs, xp, out, minLevel, 1); }
     }
 
     /** Phu Van Su: moi loai Phap Khi phu/tran (15 loai) = giay + nguyen to + linh thao. Bac pham = min(4, cap/4). */
@@ -54,7 +58,8 @@ public final class ProfessionRecipes {
             list.add(new Recipe("phu_" + k.id, Profession.PHU_VAN,
                     List.of(new Need(() -> Items.PAPER, 1), new Need(element(k), 1),
                             new Need(() -> AlchemyRegistry.LINH_THAO.get(), 1)),
-                    10, (lv, up) -> PhapKhiRegistry.stack(k, PhapKhiTier.of(Math.min(4, lv / 4 + (up ? 1 : 0))))));
+                    10, (lv, up) -> PhapKhiRegistry.stack(k, PhapKhiTier.of(Math.min(4, lv / 4 + (up ? 1 : 0)))),
+                    1, k.ordinal() / 3 + 1));
         }
         return List.copyOf(list);
     }

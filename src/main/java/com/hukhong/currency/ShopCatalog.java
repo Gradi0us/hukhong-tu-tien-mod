@@ -61,6 +61,7 @@ public final class ShopCatalog {
                 add(o, 2, AlchemyRegistry.THANH_DIEP.get(), 2);
                 add(o, 3, AlchemyRegistry.HUYET_THAM.get(), 1);
                 add(o, 3, AlchemyRegistry.HOA_LIEN.get(), 1);
+                add(o, 2, com.hukhong.craft.CraftRegistry.CHU_SA.get(), 3); // Chu Sa (Phu Van)
             }
             case 1 -> {
                 add(o, 3, AlchemyRegistry.CHI_HUYET_DAN.get(), 1);
@@ -104,9 +105,23 @@ public final class ShopCatalog {
                 Random rt = new Random(worldSeed ^ id.hashCode() ^ 0x7B22L);
                 o.add(new Offer(SkillBookRewards.stack(rt, SkillGrade.THIEN, null), 30_000L, 4));
                 phapKhi(o, worldSeed, d, lichDay);
+                scrolls(o, worldSeed, d);
             }
         }
         return o;
+    }
+
+    /** Quyen pho ban o quay: moi nghe 1 quyen bac 2 hoac 3 (co dinh theo seed + thanh). Bac 2 = 1200 Ha, bac 3 = 4000 Ha. */
+    static void scrolls(List<Offer> o, long worldSeed, CityDef d) {
+        String id = d == null ? "" : d.id();
+        for (com.hukhong.profession.Profession pr : new com.hukhong.profession.Profession[]{
+                com.hukhong.profession.Profession.LUYEN_DAN, com.hukhong.profession.Profession.PHU_VAN,
+                com.hukhong.profession.Profession.DOAN_TAO}) {
+            net.minecraft.util.RandomSource r = net.minecraft.util.RandomSource.create(worldSeed ^ id.hashCode() * 31L ^ pr.ordinal() * 0x6A09E667L);
+            int tier = 2 + r.nextInt(2);
+            ItemStack s = com.hukhong.craft.RecipeBook.randomScroll(r, pr, tier, tier, null);
+            if (!s.isEmpty()) o.add(new Offer(s, tier == 2 ? 1200L : 4000L, tier - 1));
+        }
     }
 
     /** Phap Khi: moi pham 1 mon, loai xoay theo (thanh, ngay Lich); Thien pham gia rat cao + Uy Danh bac 4. */

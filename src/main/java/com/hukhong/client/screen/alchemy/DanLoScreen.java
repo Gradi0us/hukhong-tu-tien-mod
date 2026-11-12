@@ -20,6 +20,7 @@ import org.lwjgl.glfw.GLFW;
 public class DanLoScreen extends AbstractContainerScreen<DanLoMenu> {
     private static final ResourceLocation BG = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "textures/gui/dan_lo.png");
     private static final int GX = 87, GY = 15, GW = 10, GH = 48;
+    private com.hukhong.client.screen.profession.RecipeBookPanel book;
 
     public DanLoScreen(DanLoMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -36,6 +37,20 @@ public class DanLoScreen extends AbstractContainerScreen<DanLoMenu> {
                 .bounds(leftPos + 103, topPos + 14, 14, 14).build());
         addRenderableWidget(Button.builder(Component.literal("-"), b -> press(2))
                 .bounds(leftPos + 103, topPos + 50, 14, 14).build());
+        book = new com.hukhong.client.screen.profession.RecipeBookPanel(font, com.hukhong.profession.Profession.LUYEN_DAN,
+                leftPos - com.hukhong.client.screen.profession.RecipeBookPanel.W - 4, topPos);
+    }
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int btn) {
+        if (book != null && book.mouseClicked(mx, my, btn)) return true;
+        return super.mouseClicked(mx, my, btn);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double sx, double sy) {
+        if (book != null && book.mouseScrolled(mx, my, sy)) return true;
+        return super.mouseScrolled(mx, my, sx, sy);
     }
 
     private void press(int id) {
@@ -78,6 +93,7 @@ public class DanLoScreen extends AbstractContainerScreen<DanLoMenu> {
     @Override
     public void render(GuiGraphics g, int mx, int my, float pt) {
         super.render(g, mx, my, pt);
+        if (book != null) book.render(g, font, mx, my);
         renderTooltip(g, mx, my);
     }
 

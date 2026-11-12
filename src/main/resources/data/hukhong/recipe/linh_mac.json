@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "hukhong:chu_sa"
+    },
+    {
+      "item": "minecraft:ink_sac"
+    },
+    {
+      "item": "hukhong:linh_thach_ha"
+    }
+  ],
+  "result": {
+    "id": "hukhong:linh_mac",
+    "count": 1
+  }
+}

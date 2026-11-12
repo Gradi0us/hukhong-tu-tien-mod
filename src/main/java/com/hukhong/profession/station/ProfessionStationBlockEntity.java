@@ -36,16 +36,28 @@ public class ProfessionStationBlockEntity extends RandomizableContainerBlockEnti
         List<ItemStack> in = List.of(items.get(0), items.get(1), items.get(2));
         ProfessionRecipes.Recipe r = ProfessionRecipes.find(station().recipes(), in);
         if (r == null) { say(sp, "hukhong.station.no_recipe"); return; }
+        if (!com.hukhong.craft.RecipeBook.knows(sp, com.hukhong.craft.RecipeBook.prefixOf(r.prof()) + r.id())) {
+            say(sp, "hukhong.recipe.unknown"); return;
+        }
         int lv = ProfessionService.level(sp, r.prof());
         if (lv <= 0) { say(sp, r.prof().needKey()); return; }
         if (lv < r.minLevel()) { sp.displayClientMessage(Component.translatable("hukhong.station.level_low", r.minLevel()), true); return; }
         boolean up = r.prof() == Profession.DOAN_TAO
                 && ProfessionService.rollTierBonus(sp, getLevel().getRandom()) > 0;
         ProfessionRecipes.consume(r, in);
-        items.set(OUT, r.out().make(lv, up));
+        ItemStack made = r.out().make(lv, up);
+        if (!made.has(com.hukhong.craft.CraftRegistry.CRAFT_QUALITY.get()))
+            com.hukhong.craft.CraftQuality.stamp(made, com.hukhong.craft.CraftQuality.TRUNG, sp.getName().getString());
+        items.set(OUT, made);
         setChanged();
         ProfessionService.addCraftXp(sp, r.prof(), r.xp());
         say(sp, "hukhong.station.crafted");
+    }
+
+    /** Nut "Xep nguyen lieu" (server). Chi xep dung cong thuc cua nghe tram nay. */
+    public void arrange(ServerPlayer sp, String recipeId) {
+        Profession prof = station() == ProfessionStationBlock.Station.PHU_AN ? Profession.PHU_VAN : Profession.DOAN_TAO;
+        com.hukhong.craft.RecipeBook.arrange(sp, this, new int[]{IN0, IN0 + 1, IN0 + 2}, recipeId, prof);
     }
 
     private static void say(ServerPlayer p, String key) {

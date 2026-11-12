@@ -27,7 +27,6 @@ import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -146,13 +145,5 @@ public final class AlchemyRegistry {
     private static void add(LivingDropsEvent e, ItemStack s) {
         var v = e.getEntity();
         e.getDrops().add(new ItemEntity(v.level(), v.getX(), v.getY(), v.getZ(), s));
-    }
-
-    @SubscribeEvent
-    public static void onTooltip(ItemTooltipEvent e) {
-        ItemStack s = e.getItemStack();
-        if (!s.has(PILL_QUALITY.get())) return;
-        e.getToolTip().add(Component.translatable("hukhong.alchemy.quality." + qualityOf(s).name().toLowerCase())
-                .withStyle(ChatFormatting.AQUA));
     }
 }

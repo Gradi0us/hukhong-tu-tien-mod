@@ -59,6 +59,11 @@ public class DanLoMenu extends AbstractContainerMenu {
         return true;
     }
 
+    /** Nut "Xep nguyen lieu" tu so cong thuc (server). */
+    public void arrange(net.minecraft.server.level.ServerPlayer sp, String recipeId) {
+        if (stillValid(sp) && box instanceof DanLoBlockEntity be) be.arrange(sp, recipeId);
+    }
+
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         Slot slot = slots.get(index);

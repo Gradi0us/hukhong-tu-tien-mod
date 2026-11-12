@@ -79,6 +79,9 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         List<ItemStack> herbs = new ArrayList<>(items.subList(HERB0, HERB0 + 3));
         var r = AlchemyRecipes.match(herbs);
         if (r == null) { say(player, "hukhong.alchemy.no_recipe"); return; }
+        if (player == null || !com.hukhong.craft.RecipeBook.knows(player, com.hukhong.craft.RecipeBook.DAN + r.id())) {
+            say(player, "hukhong.recipe.unknown"); return;
+        }
         if (r.tier() > lv / 2 + 1) { say(player, "hukhong.profession.tier_locked", Math.max(1, 2 * (r.tier() - 1))); return; }
         if (items.get(FUEL).getBurnTime(RecipeType.SMELTING) <= 0) { say(player, "hukhong.alchemy.no_fuel"); return; }
         brewer = player.getUUID();
@@ -96,6 +99,13 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         brewing = true;
         heat = 40; tick = 0; inBand = 0; hot = 0; cold = 0; burnLeft = 0; cooldown = 0;
         setChanged();
+    }
+
+    /** Xep nguyen lieu tu tui vao 3 o thao duoc (nut "Xep nguyen lieu" trong so cong thuc). Khong lam khi dang luyen. */
+    public void arrange(net.minecraft.server.level.ServerPlayer sp, String recipeId) {
+        if (brewing) { say(sp, "hukhong.recipe.brewing"); return; }
+        com.hukhong.craft.RecipeBook.arrange(sp, this, new int[]{HERB0, HERB0 + 1, HERB0 + 2}, recipeId,
+                com.hukhong.profession.Profession.LUYEN_DAN);
     }
 
     private void say(net.minecraft.world.entity.player.Player p, String key, Object... args) {
@@ -153,6 +163,10 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         if (level.getRandom().nextDouble() < brewLevel * com.hukhong.profession.ProfessionMath.PILL_BONUS_PER_LEVEL) yield++;
         ItemStack out = new ItemStack(r.result().get(), yield);
         out.set(AlchemyRegistry.PILL_QUALITY.get(), q.ordinal());
+        String crafterName = brewer != null && level.getServer() != null
+                && level.getServer().getPlayerList().getPlayer(brewer) instanceof net.minecraft.server.level.ServerPlayer nm
+                ? nm.getName().getString() : null;
+        com.hukhong.craft.CraftQuality.stamp(out, q.ordinal(), crafterName);
         items.set(OUT, out);
         if (brewer != null && level.getServer() != null
                 && level.getServer().getPlayerList().getPlayer(brewer) instanceof net.minecraft.server.level.ServerPlayer bp)

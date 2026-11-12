@@ -49,6 +49,11 @@ public class StationMenu extends AbstractContainerMenu {
         return true;
     }
 
+    /** Nut "Xep nguyen lieu" tu so cong thuc (server). */
+    public void arrange(ServerPlayer sp, String recipeId) {
+        if (stillValid(sp) && box instanceof ProfessionStationBlockEntity be) be.arrange(sp, recipeId);
+    }
+
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         Slot slot = slots.get(index);

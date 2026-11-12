@@ -2,7 +2,9 @@ package com.hukhong.client.screen.profession;
 
 import com.hukhong.HuKhong;
 import com.hukhong.profession.ProfessionRecipes;
+import com.hukhong.profession.Profession;
 import com.hukhong.profession.ProfessionRegistry;
+import com.hukhong.profession.station.ProfessionStationBlock;
 import com.hukhong.profession.station.StationMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -26,12 +28,28 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> {
         imageHeight = 166;
     }
 
+    private RecipeBookPanel book;
+
     @Override
     protected void init() {
         super.init();
         addRenderableWidget(Button.builder(Component.translatable("hukhong.station.craft"),
                         b -> Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, 0))
                 .bounds(leftPos + 30, topPos + 44, 84, 16).build());
+        Profession prof = menu.station == ProfessionStationBlock.Station.PHU_AN ? Profession.PHU_VAN : Profession.DOAN_TAO;
+        book = new RecipeBookPanel(font, prof, leftPos - RecipeBookPanel.W - 4, topPos);
+    }
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int btn) {
+        if (book != null && book.mouseClicked(mx, my, btn)) return true;
+        return super.mouseClicked(mx, my, btn);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mx, double my, double sx, double sy) {
+        if (book != null && book.mouseScrolled(mx, my, sy)) return true;
+        return super.mouseScrolled(mx, my, sx, sy);
     }
 
     @Override
@@ -55,6 +73,7 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> {
         else if (in.stream().allMatch(ItemStack::isEmpty)) status = Component.translatable("hukhong.station.hint");
         else status = Component.translatable("hukhong.station.nomatch");
         g.drawString(font, status, leftPos + 8, topPos + 64, 0xFFCCCCCC, false);
+        if (book != null) book.render(g, font, mx, my);
     }
 
     @EventBusSubscriber(modid = HuKhong.MODID, value = Dist.CLIENT)

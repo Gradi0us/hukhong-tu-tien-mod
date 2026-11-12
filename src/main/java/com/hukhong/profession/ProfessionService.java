@@ -38,6 +38,7 @@ public final class ProfessionService {
             return false;
         }
         put(p, new ProfessionData(prof, 1, 0L));
+        com.hukhong.craft.RecipeBook.autoLearnBasics(p, prof);
         p.displayClientMessage(Component.translatable("hukhong.profession.chosen", Component.translatable(prof.nameKey())), false);
         return true;
     }
@@ -60,6 +61,7 @@ public final class ProfessionService {
             p.displayClientMessage(Component.translatable("hukhong.profession.levelup",
                     Component.translatable(prof.nameKey()), lv), false);
             p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1f, 1f);
+            com.hukhong.craft.RecipeBook.onLevelUp(p, prof, d.level(), lv);
         }
     }
 

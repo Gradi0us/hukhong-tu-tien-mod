@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:paper"
+    },
+    {
+      "item": "hukhong:huyet_tham"
+    }
+  ],
+  "result": {
+    "id": "hukhong:phu_chi_trung",
+    "count": 1,
+    "components": {
+      "hukhong:craft_quality": 1
+    }
+  }
+}
