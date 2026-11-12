@@ -1754,7 +1754,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         AnimationController<NguyenThuyTichDiet> sk = new AnimationController<>(this, "skill", 0, s -> PlayState.STOP);
         for (String a : new String[]{"attack", "skill_a", "skill_b", "skill_c", "phase"})
             sk.triggerableAnim(a, RawAnimation.begin().then(n + a, Animation.LoopType.PLAY_ONCE));
-        for (String a : new String[]{"attack", "slam", "combo", "teleport", "pillars", "ult", "transform"})
+        for (String a : new String[]{"attack", "slam", "combo", "teleport", "pillars", "ult", "transform", "fly_in"})
             sk.triggerableAnim("f1_" + a, RawAnimation.begin().then(n1 + a, Animation.LoopType.PLAY_ONCE));
         c.add(sk);
         // BossBrain: "f1_<tên>" / "f2_<tên>" (playBrainAnim thêm tiền tố theo dạng); tên thiếu rơi về animation gần nhất

@@ -68,7 +68,7 @@ final class EndingOutroTruth implements EndingOutro.Scene {
             }
         }
         if (dk != null && dk.isAlive()) {
-            if (t == 210) { dk.triggerAnim("skill", "look_up"); dk.setXRot(-30); Fx.elem(sl, null, Fx.E_HALOS, dkAt.add(0, 2.2, 0), Vec3.ZERO, 1.4f, MOON, 140); }
+            if (t == 210) { dk.triggerAnim(DaKhuyet.CINE, "look_up"); dk.setXRot(-30); Fx.elem(sl, null, Fx.E_HALOS, dkAt.add(0, 2.2, 0), Vec3.ZERO, 1.4f, MOON, 140); }
             if (t >= 240 && t <= 270) { // quay dần về người chơi
                 Vec3 away = r.o.add(r.fwd.scale(20)), toward = r.o;
                 Vec3 look = away.lerp(toward, (t - 240) / 30.0);

@@ -280,7 +280,7 @@ public final class Lv10Cutscene {
             }
             case 24 -> {
                 sh.setInvisible(false);
-                sh.triggerAnim("skill", "f1_teleport"); // f1_fly_in có trong JSON nhưng chưa đăng ký trigger (NguyenThuyTichDiet, C2)
+                sh.triggerAnim("skill", "f1_fly_in");
                 Vec3 p = r.L(RIFT);
                 sl.sendParticles(ParticleTypes.REVERSE_PORTAL, p.x, p.y + 2, p.z, 60, 1, 2, 1, 0.2);
                 Fx.shake(sl, r.origin, 0.4f, 10, 40f);
