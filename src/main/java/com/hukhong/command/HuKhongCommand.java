@@ -203,7 +203,13 @@ public final class HuKhongCommand {
                     sl.addFreshEntity(d);
                     msg(c.getSource(), "Da Khuyet da xuat hien (dich)");
                     return 1;
-                }))
+                }).then(Commands.literal("trial").executes(c -> {
+                    var pl = c.getSource().getPlayerOrException();
+                    var at = pl.position().add(pl.getLookAngle().multiply(8, 0, 8));
+                    var d = com.hukhong.endgame.DaKhuyet.spawnTrial(pl.serverLevel(), at, pl.getYRot() + 180);
+                    msg(c.getSource(), d == null ? "Da Khuyet khao hach: spawn that bai" : "Da Khuyet khao hach da xuat hien");
+                    return d == null ? 0 : 1;
+                })))
                 .then(com.hukhong.city.CityRelayout.node())
                 .then(com.hukhong.bicanh.BiCanhCommand.node())
                 .then(com.hukhong.endgame.EndgameCommand.node())
