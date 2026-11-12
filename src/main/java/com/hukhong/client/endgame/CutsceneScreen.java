@@ -15,6 +15,8 @@ import org.lwjgl.glfw.GLFW;
 public class CutsceneScreen extends Screen {
     private final int ending;
     private int tick;
+    /** Chỉ được bỏ qua sau nửa thời lượng. */
+    private static final int MIN_SKIP = EndgameKit.CUTSCENE_TICKS / 2;
 
     public CutsceneScreen(int ending) {
         super(Component.translatable("hukhong.endgame.cutscene." + key(ending) + ".title"));
@@ -28,7 +30,7 @@ public class CutsceneScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
-        if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_SPACE || key == GLFW.GLFW_KEY_ENTER) {
+        if ((key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_SPACE || key == GLFW.GLFW_KEY_ENTER) && tick >= MIN_SKIP) {
             toCredits();
             return true;
         }
@@ -67,8 +69,9 @@ public class CutsceneScreen extends Screen {
             if (la > 4) g.drawCenteredString(font, Component.translatable("hukhong.endgame.cutscene." + key(ending) + "." + (line + 1)),
                     cx, height - bar - 36, (la << 24) | 0xFFFFFF);
         }
-        g.drawString(font, Component.translatable("hukhong.endgame.skip"), width - 8 - font.width(Component.translatable("hukhong.endgame.skip")),
-                height - bar - 12, 0x80FFFFFF);
+        Component skip = tick < MIN_SKIP ? Component.translatable("hukhong.cutscene.skip_locked", (MIN_SKIP - tick + 19) / 20)
+                : Component.translatable("hukhong.endgame.skip");
+        g.drawString(font, skip, width - 8 - font.width(skip), height - bar - 12, 0x80FFFFFF);
         // vòng sáng 2D quay quanh tâm màn hình
         for (int i = 0; i < 24; i++) {
             double ang = t * 0.05 + i * Math.PI / 12, r = 40 + (i % 4) * 14 + Math.sin(t * 0.08 + i) * 6;

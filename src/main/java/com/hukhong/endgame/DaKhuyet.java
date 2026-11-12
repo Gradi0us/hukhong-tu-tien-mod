@@ -303,8 +303,12 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     private int allyIntro, allyCd = 60;
     public static final int ALLY_INTRO_TICKS = 160;
     public boolean ally() { return ally; }
+    /** Đồng minh đã xong màn xuất hiện, sẵn sàng chắn chiêu. */
+    public boolean allyReady() { return ally && isAlive() && allyIntro == 0; }
     /** Đồng minh cốt truyện: trụ/pháp thuật của người chơi không được nhắm. */
-    public static boolean isStoryAlly(net.minecraft.world.entity.LivingEntity e) { return e instanceof DaKhuyet d && d.ally; }
+    public static boolean isStoryAlly(net.minecraft.world.entity.LivingEntity e) {
+        return (e instanceof DaKhuyet d && d.ally) || (e != null && e.getTags().contains(NttdAllies.MO_TAG));
+    }
 
     @Override public boolean canAttack(LivingEntity t) {
         if (ally && t instanceof Player) return false;
@@ -336,38 +340,85 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         }
         LivingEntity t = allyTarget(sl);
         if (getTarget() != t) setTarget(t);
+        if (guarding > 0) { guarding--; getNavigation().stop(); return; } // đang giữ kết giới đỡ chiêu tất sát
+        if (t != null && distanceToSqr(t) > 14 * 14 && tickCount % 10 == 0) getNavigation().moveTo(t, 1.1);
         if (allyCd-- > 0) return;
-        allyCd = 70 + random.nextInt(30);
-        int pick = random.nextInt(3);
-        if (pick == 0 && t != null) { // Nguyệt Nhận: chém trăng khuyết vào boss
-            float dmg = (float) (getAttributeValue(Attributes.ATTACK_DAMAGE) * 3.0);
-            t.hurt(damageSources().mobAttack(this), dmg);
-            net.minecraft.world.phys.Vec3 a = position().add(0, 1.6, 0), b = t.position().add(0, t.getBbHeight() * 0.5, 0);
-            for (int i = 0; i <= 16; i++) {
-                net.minecraft.world.phys.Vec3 q = a.lerp(b, i / 16.0);
-                sl.sendParticles(ParticleTypes.END_ROD, q.x, q.y, q.z, 3, 0.1, 0.1, 0.1, 0.01);
-            }
-            sl.sendParticles(ParticleTypes.SONIC_BOOM, b.x, b.y, b.z, 1, 0, 0, 0, 0);
-            triggerAnim("skill", "skill_a");
-            playSound(SoundEvents.TRIDENT_RIPTIDE_3.value(), 2f, 0.8f);
-        } else if (pick == 1) { // Nguyệt Quang: hồi máu + giải hiệu ứng xấu cho người chơi quanh đó
+        allyCd = 45 + random.nextInt(25);
+        allyBeat++;
+        if (allyBeat % 5 == 4) { // Nguyệt Quang: hồi máu + giải hiệu ứng xấu
             for (ServerPlayer p : sl.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(32), q -> !q.isSpectator())) {
-                p.heal(p.getMaxHealth() * 0.15f);
+                p.heal(p.getMaxHealth() * 0.12f);
                 p.removeEffect(MobEffects.BLINDNESS); p.removeEffect(MobEffects.WEAKNESS); p.removeEffect(MobEffects.POISON);
                 p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 1));
                 sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, p.getX(), p.getY() + 1, p.getZ(), 12, 0.5, 0.8, 0.5, 0.05);
             }
+            DaKhuyetMoves.wingsFx(sl, this, DaKhuyetMoves.MOON, 30);
             triggerAnim("skill", "skill_b");
             playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 1.2f);
-        } else { // Khuyết Nguyệt Thuẫn: lá chắn cho người chơi
-            for (ServerPlayer p : sl.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(32), q -> !q.isSpectator())) {
-                p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 200, 3));
-                p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120, 1));
-                sl.sendParticles(ParticleTypes.ENCHANT, p.getX(), p.getY() + 1, p.getZ(), 30, 0.6, 1, 0.6, 0.3);
-            }
-            triggerAnim("skill", "skill_b");
-            playSound(SoundEvents.BEACON_POWER_SELECT, 2f, 0.8f);
+            return;
         }
+        if (t == null) return;
+        allyAttack(sl, t, random.nextInt(3));
+    }
+
+    /** Đếm nhịp chiêu đồng minh; kết giới đang giữ (tick). */
+    private int allyBeat, guarding;
+
+    /**
+     * Đòn đồng minh vào Nguyên Thủy Tịch Diệt / Hư mob, mượn hình ảnh chiêu thật (DaKhuyetMoves): sát thương THẤP cố định
+     * 0.3-0.5% máu tối đa mục tiêu (boss) để không cướp công người chơi. NTTD bỏ qua Dạ Khuyết khi chọn mục tiêu (setTarget).
+     */
+    private void allyAttack(ServerLevel sl, LivingEntity t, int kind) {
+        net.minecraft.world.phys.Vec3 a = position().add(0, 1.4, 0), b = t.position().add(0, t.getBbHeight() * 0.5, 0);
+        net.minecraft.world.phys.Vec3 dir = b.subtract(a).multiply(1, 0, 1);
+        if (dir.lengthSqr() < 1e-4) dir = new net.minecraft.world.phys.Vec3(0, 0, 1);
+        dir = dir.normalize();
+        aim = dir;
+        getLookControl().setLookAt(t, 60, 60);
+        float frac = t instanceof NguyenThuyTichDiet ? 0.003f + random.nextFloat() * 0.002f : 0.08f;
+        float dmg = t.getMaxHealth() * frac;
+        switch (kind) {
+            case 0 -> { // Nguyệt Luân: ba lưỡi trăng khuyết
+                for (int i = -1; i <= 1; i++) {
+                    double ang = Math.toRadians(i * 12), c = Math.cos(ang), sn = Math.sin(ang);
+                    net.minecraft.world.phys.Vec3 d = new net.minecraft.world.phys.Vec3(dir.x * c - dir.z * sn, 0, dir.x * sn + dir.z * c);
+                    com.hukhong.vfx.Fx.qi(sl, a, d.scale(Math.min(18, a.distanceTo(b))), 2.0f, DaKhuyetMoves.MOON, i * 30, 12);
+                }
+                triggerAnim("skill", "skill_b");
+                playSound(SoundEvents.TRIDENT_THROW.value(), 2.5f, 0.6f);
+            }
+            case 1 -> { // Thủy Điểu: lướt tới chém liên hoàn
+                net.minecraft.world.phys.Vec3 to = t.position().subtract(dir.scale(Math.max(3, t.getBbWidth() * 0.6 + 2)));
+                com.hukhong.vfx.Fx.ribbon(sl, null, a, to.add(0, 1.2, 0), 0.6, 6, 0, 0.35f, DaKhuyetMoves.MOON);
+                teleportTo(to.x, Math.max(to.y, getY()), to.z);
+                for (int i = 0; i < 3; i++) com.hukhong.vfx.Fx.qi(sl, to.add(0, 1.3, 0), dir.scale(4), 2.4f, DaKhuyetMoves.MOON, -40 + i * 40, 8);
+                triggerAnim("skill", "skill_a");
+                playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 2.5f, 0.8f);
+            }
+            default -> { // Đâm Xuyên: tia trăng thẳng vào boss
+                com.hukhong.vfx.Fx.ribbonHelix(sl, null, a, b, 0.5, 0, 6, 0, 0.18f, DaKhuyetMoves.MOON);
+                sl.sendParticles(ParticleTypes.SONIC_BOOM, b.x, b.y, b.z, 1, 0, 0, 0, 0);
+                triggerAnim("skill", "skill_a");
+                playSound(SoundEvents.TRIDENT_RIPTIDE_3.value(), 2f, 0.8f);
+            }
+        }
+        t.hurt(damageSources().mobAttack(this), dmg);
+        sl.sendParticles(ParticleTypes.END_ROD, b.x, b.y, b.z, 12, 0.6, 0.6, 0.6, 0.08);
+    }
+
+    /** Chiêu tất sát của boss: lướt tới chắn trước, dựng Khuyết Nguyệt Kết Giới bán kính r trong {@code hold} tick. */
+    public void guardBarrier(ServerLevel sl, net.minecraft.world.phys.Vec3 at, LivingEntity boss, float r, int hold) {
+        com.hukhong.vfx.Fx.ribbon(sl, null, position().add(0, 1.2, 0), at.add(0, 1.2, 0), 0.8, 6, 0, 0.4f, DaKhuyetMoves.MOON);
+        teleportTo(at.x, at.y, at.z);
+        getNavigation().stop();
+        getLookControl().setLookAt(boss, 90, 90);
+        guarding = hold;
+        triggerAnim("skill", "rise");
+        DaKhuyetMoves.wingsFx(sl, this, DaKhuyetMoves.MOON, hold);
+        com.hukhong.vfx.Fx.groundRing(sl, null, at, r, DaKhuyetMoves.MOON, hold);
+        com.hukhong.vfx.Fx.rune(sl, null, at.add(0, 0.1, 0), r * 0.8f, DaKhuyetMoves.MOON, hold, 8);
+        com.hukhong.vfx.Fx.elem(sl, null, com.hukhong.vfx.Fx.E_HALOS, at.add(0, 2, 0), net.minecraft.world.phys.Vec3.ZERO, r * 0.5f, DaKhuyetMoves.MOON, hold);
+        playSound(SoundEvents.BEACON_ACTIVATE, 3f, 0.7f);
     }
 
     /** Sau khi boss ngã: dừng đánh, đứng yên cho cutscene kết. */

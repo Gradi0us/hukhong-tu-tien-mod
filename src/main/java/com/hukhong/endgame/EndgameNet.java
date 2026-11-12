@@ -45,6 +45,13 @@ public final class EndgameNet {
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    /** Client bỏ qua cutscene kết (chỉ hợp lệ sau nửa thời lượng - server kiểm lại). */
+    public record SkipOutro() implements CustomPacketPayload {
+        public static final Type<SkipOutro> TYPE = new Type<>(id("endgame_skip_outro"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, SkipOutro> CODEC = StreamCodec.unit(new SkipOutro());
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     public static void register(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(OpenChoice.TYPE, OpenChoice.CODEC,
@@ -53,6 +60,9 @@ public final class EndgameNet {
                 (p, ctx) -> ctx.enqueueWork(() -> com.hukhong.client.endgame.EndgameClient.playCutscene(p.ending())));
         r.playToServer(ChooseEnding.TYPE, ChooseEnding.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
             if (ctx.player() instanceof ServerPlayer sp) EndgameService.choose(sp, p.ending());
+        }));
+        r.playToServer(SkipOutro.TYPE, SkipOutro.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
+            if (ctx.player() instanceof ServerPlayer sp) EndgameService.skipOutro(sp);
         }));
         r.playToServer(Finish.TYPE, Finish.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
             if (ctx.player() instanceof ServerPlayer sp) EndgameService.finish(sp);

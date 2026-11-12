@@ -142,34 +142,17 @@ public final class EndgameService {
         return b;
     }
 
-    /** Boss chết: dọn tay sai + Dạ Khuyết, đặt cờ chờ chọn và mở màn chọn cho người chơi quanh đó. */
+    /** Boss chết: dọn tay sai, phát cutscene kết nhiều cảnh (NttdEnding), đặt cờ chờ chọn; màn chọn mở sau cutscene (hoặc khi bỏ qua hợp lệ). */
     public static void onBossDefeated(ServerLevel sl, NguyenThuyTichDiet boss) {
-        DaKhuyet ally = null;
+        boolean dkMemory = boss.daKhuyetSacrificed();
         for (DaKhuyet d : sl.getEntitiesOfClass(DaKhuyet.class, boss.getBoundingBox().inflate(120))) {
-            if (ally == null && d.ally() && d.isAlive()) { ally = d; d.standDown(); } else d.discard();
+            if (d.ally() && d.isAlive()) dkMemory = true; // còn sống tới cuối: nhập vào phong ấn trong cutscene
+            sl.sendParticles(ParticleTypes.END_ROD, d.getX(), d.getY() + 1.5, d.getZ(), 40, 0.8, 1.5, 0.8, 0.06);
+            d.discard();
         }
         for (Monster m : sl.getEntitiesOfClass(Monster.class, boss.getBoundingBox().inflate(120), e -> e instanceof HuMob)) m.discard();
-        // cutscene kết: camera quanh chỗ boss ngã (+ Dạ Khuyết nếu còn), rồi mới mở màn chọn
-        int T = OUTRO_TICKS;
-        var at = boss.position();
-        float sc = (float) Math.max(2.5, boss.getBbHeight() * 0.5);
-        var cam = java.util.List.of(
-                new com.hukhong.boss.phase.CamPath.Key(0, 0, 0.6f * sc, 2.6f * sc, 0, 0, 60, 0.6f * sc),
-                new com.hukhong.boss.phase.CamPath.Key(T / 3, 2.4f * sc, 1.4f * sc, 1.6f * sc, 0, 0, 65, 0.4f * sc),
-                new com.hukhong.boss.phase.CamPath.Key(T * 2 / 3, -2.2f * sc, 0.8f * sc, 2.4f * sc, 0, 0, 58, 0.5f * sc),
-                new com.hukhong.boss.phase.CamPath.Key(T, 0, 2.6f * sc, 5.0f * sc, 0, 8, 75, 0.3f * sc));
-        var subs = new java.util.ArrayList<com.hukhong.boss.phase.BossPhaseConfig.SubLine>();
-        subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(6, 50, "hukhong.dialog.nttd.death.1"));
-        if (ally != null) {
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 95, "hukhong.dialog.nttd.death.dk.1"));
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(95, 140, "hukhong.dialog.nttd.death.dk.2"));
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(140, T - 4, "hukhong.dialog.nttd.death.end"));
-        } else {
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 110, "hukhong.dialog.nttd.death.flee"));
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(110, T - 4, "hukhong.dialog.nttd.death.end"));
-        }
-        com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, null, at, boss.yBodyRot, T, cam, subs);
-        if (ally != null) OUTRO_DK.put(ally.getUUID(), T + 20);
+        int T = NttdEnding.start(sl, boss, dkMemory);
+        long now = sl.getServer().getTickCount();
         for (ServerPlayer p : sl.players()) {
             if (p.distanceToSqr(boss) > 200 * 200) continue;
             p.displayClientMessage(Component.translatable("hukhong.endgame.boss.slain"), false);
@@ -178,15 +161,22 @@ public final class EndgameService {
             DialogueService.setQuest(p, q.withFlag(F_PENDING));
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, T + 40, 4, false, false));
             PENDING_PROMPT.put(p.getUUID(), T + 4); // màn chọn hiện ngay sau cutscene
+            OUTRO_START.put(p.getUUID(), now);
         }
     }
 
-    /** Thời lượng cutscene kết trước màn chọn (tick). */
-    public static final int OUTRO_TICKS = 190;
     /** Người chơi chờ mở màn chọn: uuid -> tick còn lại. */
     static final java.util.Map<java.util.UUID, Integer> PENDING_PROMPT = new java.util.HashMap<>();
-    /** Dạ Khuyết đồng minh chờ rời đi sau cutscene: uuid -> tick còn lại. */
-    static final java.util.Map<java.util.UUID, Integer> OUTRO_DK = new java.util.HashMap<>();
+    /** Tick server lúc bắt đầu cutscene kết (để kiểm bỏ qua phía server). */
+    static final java.util.Map<java.util.UUID, Long> OUTRO_START = new java.util.HashMap<>();
+
+    /** Client xin bỏ qua cutscene kết: chỉ chấp nhận sau NttdEnding.MIN_SKIP tick, rồi mở màn chọn ngay. */
+    public static void skipOutro(ServerPlayer p) {
+        Long st = OUTRO_START.get(p.getUUID());
+        if (st == null || !PENDING_PROMPT.containsKey(p.getUUID())) return;
+        if (p.getServer().getTickCount() - st < NttdEnding.MIN_SKIP) return; // bỏ qua sớm: phớt lờ
+        PENDING_PROMPT.put(p.getUUID(), 2);
+    }
 
     private static void outroTick(MinecraftServer s) {
         var it = PENDING_PROMPT.entrySet().iterator();
@@ -195,20 +185,9 @@ public final class EndgameService {
             int left = en.getValue() - 1;
             if (left > 0) { en.setValue(left); continue; }
             it.remove();
+            OUTRO_START.remove(en.getKey());
             ServerPlayer p = s.getPlayerList().getPlayer(en.getKey());
             if (p != null && !hasEnding(DialogueService.quest(p))) promptChoice(p);
-        }
-        var it2 = OUTRO_DK.entrySet().iterator();
-        while (it2.hasNext()) {
-            var en = it2.next();
-            int left = en.getValue() - 1;
-            if (left > 0) { en.setValue(left); continue; }
-            it2.remove();
-            ServerLevel dim = s.getLevel(EndgameRegistry.DIM);
-            if (dim != null && dim.getEntity(en.getKey()) instanceof DaKhuyet d) {
-                dim.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, d.getX(), d.getY() + 1.5, d.getZ(), 60, 0.8, 1.5, 0.8, 0.08);
-                d.discard();
-            }
         }
     }
 
@@ -306,7 +285,7 @@ public final class EndgameService {
         MinecraftServer s = e.getServer();
         long t = s.getTickCount();
         if (!CUTSCENE.isEmpty()) cutsceneTick(s);
-        if (!PENDING_PROMPT.isEmpty() || !OUTRO_DK.isEmpty()) outroTick(s);
+        if (!PENDING_PROMPT.isEmpty()) outroTick(s);
         ServerLevel ow = s.getLevel(Level.OVERWORLD);
         if (ow != null && t % 100 == 0 && !ow.players().isEmpty()) gatewayTick(ow);
         if (t % 10 == 0) {

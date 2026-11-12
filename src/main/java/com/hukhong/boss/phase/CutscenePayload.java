@@ -16,7 +16,12 @@ import java.util.List;
  * server không khoá ai. entityId &lt; 0 = neo tĩnh tại (ax, ay, az) (cutscene giải phóng vùng).
  */
 public record CutscenePayload(int entityId, double ax, double ay, double az, float refYaw, int ticks,
-                              List<CamPath.Key> keys, List<SubLine> subs) implements CustomPacketPayload {
+                              List<CamPath.Key> keys, List<SubLine> subs, int minSkip) implements CustomPacketPayload {
+    /** minSkip = tick sớm nhất được phép bỏ qua (0 = như cũ, chỉ chờ ân hạn ngắn). */
+    public CutscenePayload(int entityId, double ax, double ay, double az, float refYaw, int ticks, List<CamPath.Key> keys, List<SubLine> subs) {
+        this(entityId, ax, ay, az, refYaw, ticks, keys, subs, 0);
+    }
+
     public static final Type<CutscenePayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "boss_cutscene"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, CutscenePayload> STREAM_CODEC = StreamCodec.of(
@@ -30,6 +35,7 @@ public record CutscenePayload(int entityId, double ax, double ay, double az, flo
                 }
                 b.writeVarInt(p.subs.size());
                 for (SubLine s : p.subs) { b.writeVarInt(s.from()); b.writeVarInt(s.to()); b.writeUtf(s.key(), 128); }
+                b.writeVarInt(p.minSkip);
             },
             b -> {
                 int id = b.readVarInt();
@@ -43,7 +49,8 @@ public record CutscenePayload(int entityId, double ax, double ay, double az, flo
                 int ns = Math.min(32, b.readVarInt());
                 List<SubLine> subs = new ArrayList<>();
                 for (int i = 0; i < ns; i++) subs.add(new SubLine(b.readVarInt(), b.readVarInt(), b.readUtf(128)));
-                return new CutscenePayload(id, ax, ay, az, yaw, ticks, keys, subs);
+                int minSkip = b.readVarInt();
+                return new CutscenePayload(id, ax, ay, az, yaw, ticks, keys, subs, minSkip);
             });
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }

@@ -122,6 +122,7 @@ public class StoryNpc extends PathfinderMob implements software.bernie.geckolib.
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
+        if (getTags().contains(com.hukhong.endgame.NttdAllies.MO_TAG)) return InteractionResult.PASS; // Mộ Dao trợ chiến trận cuối: không mở thoại
         if (level().isClientSide) return InteractionResult.SUCCESS;
         if (player instanceof ServerPlayer sp) {
             if (sp.getData(StoryRegistry.STORY.get()).mode() != StoryData.MODE_STORY)

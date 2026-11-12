@@ -99,6 +99,16 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
             BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.NOTCHED_20);
     private int skillCd = 100, windup, pending = -1, last = -1, invulTicks, intro, appliedPlayers = 1, dkDelay = -1;
     private boolean daKhuyetSpawned;
+    /** Tất sát (dạng 2, có Dạ Khuyết): hồi chiêu, tick gồng còn lại, tâm kết giới. */
+    private int sureCd = 1300, sureT;
+    private Vec3 barrierAt;
+    public static final int SURE_TELE = 60;
+    public static final float BARRIER_R = 7f;
+    /** Dạ Khuyết đã hy sinh ở cutscene vào pha 4; Mộ Dao đã đến (pha 4). */
+    private boolean dkSacrificed, moSpawned;
+    private int moBeat;
+    public static final int GRAND_T = 240;
+    public boolean daKhuyetSacrificed() { return dkSacrificed; }
     private Vec3 pendingAt = Vec3.ZERO, pendingDir = new Vec3(0, 0, 1);
     /** Dạng 1: tick đã trôi của chiêu đang chạy; morph = tick còn lại của biến hình; cine = bất tử trong cutscene tối thượng. */
     private int actT, morph, cine, f1Ults;
@@ -172,7 +182,13 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
     @Override public boolean isPushable() { return false; }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
-    @Override public boolean isImmobile() { return super.isImmobile() || windup > 0 || intro > 0 || morph > 0; }
+    @Override public boolean isImmobile() { return super.isImmobile() || windup > 0 || intro > 0 || morph > 0 || sureT > 0; }
+
+    /** Đồng minh cốt truyện (Dạ Khuyết, Mộ Dao) không bao giờ thành mục tiêu: không cướp aggro của người chơi. */
+    @Override public void setTarget(LivingEntity t) {
+        if (t != null && DaKhuyet.isStoryAlly(t)) return;
+        super.setTarget(t);
+    }
 
     @Override public boolean hurt(DamageSource src, float amt) {
         if ((intro > 0 || invulTicks > 0 || morph > 0 || cine > 0) && !src.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
@@ -184,7 +200,11 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
 
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); if (!lv10Shade()) bar.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
-    @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
+    @Override public void remove(RemovalReason r) {
+        super.remove(r);
+        bar.removeAllPlayers();
+        if (r == RemovalReason.DISCARDED && level() instanceof ServerLevel sl && !lv10Shade()) NttdAllies.dismissMo(sl, position()); // trận bị huỷ: Mộ Dao rời đi
+    }
 
     @Override public void onAddedToLevel() {
         super.onAddedToLevel();
@@ -197,6 +217,8 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         tag.putBoolean("NtdDak", daKhuyetSpawned);
         tag.putInt("NtdForm", form());
         tag.putInt("NtdF1Ults", f1Ults);
+        tag.putBoolean("NtdDkSac", dkSacrificed);
+        tag.putBoolean("NtdMo", moSpawned);
     }
 
     @Override public void readAdditionalSaveData(CompoundTag tag) {
@@ -205,6 +227,8 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         daKhuyetSpawned = tag.getBoolean("NtdDak");
         entityData.set(FORM, tag.contains("NtdForm") ? Math.max(1, Math.min(2, tag.getInt("NtdForm"))) : 2);
         f1Ults = tag.getInt("NtdF1Ults");
+        dkSacrificed = tag.getBoolean("NtdDkSac");
+        moSpawned = tag.getBoolean("NtdMo");
         setF1Hp(form() == 1);
         setNoGravity(form() == 2);
         applyPhaseEffects(phase());
@@ -263,6 +287,9 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
 
         LivingEntity t = getTarget();
         if (pending >= 0) { stepWindup(sl); return; }
+        // tất sát: chỉ khi Dạ Khuyết đồng minh còn ở đây để chắn (pha 3)
+        DaKhuyet dk = allyDk(sl);
+        if (dk != null && phase() < 4 && own == O_NONE && sureT == 0 && !com.hukhong.boss.ai.BossBrain.busy(this) && --sureCd <= 0) { startSureKill(sl, dk); return; }
         if (skillCd > -1000) skillCd--;
         if (t == null || !t.isAlive() || distanceToSqr(t) > 40 * 40) return;
         // chiêu lớn do BossBrain xin qua brainBigMove(); dự phòng nếu lâu không được xin (brain bận / không có mục tiêu hợp lệ)
@@ -307,6 +334,8 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
             if (morph > 0) { bar.setProgress(getHealth() / getMaxHealth()); stepMorph(sl); }
             else if (intro > 0) { bar.setProgress(getHealth() / getMaxHealth()); stepIntro(sl); }
             else if (windup > 0 && pending >= 0) { if (form() == 1) stepF1(sl); else stepWindup(sl); }
+            if (sureT > 0) stepSureKill(sl);
+            if (form() == 2 && morph == 0 && intro == 0) moAllyTick(sl);
             if (morph == 0 && intro == 0) brainSideTick(sl);
             com.hukhong.boss.ai.BossBrain.tickFor(sl, this, this); // tự nhường khi frozen()/ownMoveActive(); profile đổi theo DẠNG
         }
@@ -944,10 +973,16 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         applyPhaseEffects(ph);
         bar.setName(barName());
         invulTicks = EndgameKit.PHASE_INVUL_TICKS;
-        phaseCutscene(sl, ph);
+        sureT = 0;
+        DaKhuyet dk = ph == 4 ? allyDk(sl) : null;
+        if (dk != null) { invulTicks = GRAND_T; grandSacrifice(sl, dk); } // pha 3 -> 4: Dạ Khuyết đỡ đại chiêu, hy sinh; Mộ Dao đến
+        else {
+            phaseCutscene(sl, ph);
+            if (ph == 4 && !moSpawned) later(EndgameKit.PHASE_INVUL_TICKS - 10, () -> arriveMo(sl, true));
+        }
         pending = -1;
         windup = 0;
-        skillCd = EndgameKit.PHASE_INVUL_TICKS + 20;
+        skillCd = invulTicks + 20;
         triggerAnim("skill", "phase");
         sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 2, getZ(), 1, 0, 0, 0, 0);
         sl.sendParticles(ModParticles.HU_KHONG.get(), getX(), getY() + 2, getZ(), 120, 3, 2.5, 3, 0.12);
@@ -975,6 +1010,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
     }
 
     private void spawnDaKhuyet(ServerLevel sl) {
+        if (phase() >= 4) { daKhuyetSpawned = true; return; } // nhảy thẳng qua pha 3: không còn kịp đồng hành
         if (!redeemedNear(sl)) return; // chỉ đồng hành khi người chơi quanh đây đã cải tà Dạ Khuyết (cờ dk_redeemed)
         daKhuyetSpawned = true;
         DaKhuyet d = EndgameRegistry.DA_KHUYET.get().create(sl);
@@ -989,6 +1025,153 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         for (ServerPlayer p : sl.players())
             if (p.distanceToSqr(this) <= 120 * 120 && com.hukhong.story.npc.DialogueService.quest(p).has(EndgameService.F_DK_REDEEMED)) return true;
         return false;
+    }
+
+    // ------------------------------------------------------------ đồng minh cốt truyện: tất sát / hy sinh / Mộ Dao
+    private DaKhuyet allyDk(ServerLevel sl) {
+        for (DaKhuyet d : sl.getEntitiesOfClass(DaKhuyet.class, getBoundingBox().inflate(80), DaKhuyet::allyReady)) return d;
+        return null;
+    }
+
+    /** Hướng từ boss về phía người chơi (trung bình), dùng đặt kết giới / Mộ Dao. */
+    private Vec3 towardPlayers(ServerLevel sl) {
+        Vec3 c = Vec3.ZERO;
+        int n = 0;
+        for (Player p : players(sl, position(), 48)) { c = c.add(p.position()); n++; }
+        Vec3 d = n == 0 ? pendingDir : c.scale(1.0 / n).subtract(position()).multiply(1, 0, 1);
+        return d.lengthSqr() < 1e-3 ? new Vec3(0, 0, 1) : d.normalize();
+    }
+
+    private Vec3 groundAt(ServerLevel sl, Vec3 v) {
+        net.minecraft.core.BlockPos g = sl.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, net.minecraft.core.BlockPos.containing(v));
+        return new Vec3(v.x, Math.min(g.getY(), getY() + 4), v.z);
+    }
+
+    private void startSureKill(ServerLevel sl, DaKhuyet dk) {
+        sureT = SURE_TELE;
+        sureCd = 1200 + random.nextInt(600); // 60-90s
+        barrierAt = null;
+        getNavigation().stop();
+        triggerAnim("skill", "phase");
+        playSound(SoundEvents.WITHER_SPAWN, 4f, 0.5f);
+        Fx.telegraphCircle(sl, null, position(), 40f, SURE_TELE, 0xFF2030);
+        Fx.rune(sl, null, position().add(0, 22, 0), 16f, 0xFF2030, SURE_TELE + 10, 9);
+        for (ServerPlayer p : sl.players()) {
+            if (p.distanceToSqr(this) > 80 * 80) continue;
+            p.connection.send(new ClientboundSetTitlesAnimationPacket(4, SURE_TELE, 10));
+            p.connection.send(new ClientboundSetTitleTextPacket(Component.translatable("hukhong.endgame.surekill.title")));
+            p.connection.send(new ClientboundSetSubtitleTextPacket(Component.translatable("hukhong.endgame.surekill.sub")));
+        }
+    }
+
+    /** Tất Sát "Tịch Diệt Chung Yên": gồng 3s -> Dạ Khuyết lướt tới dựng kết giới -> nổ: ngoài kết giới chết chắc, trong kết giới vô sự. */
+    private void stepSureKill(ServerLevel sl) {
+        sureT--;
+        getNavigation().stop();
+        if (sureT % 2 == 0) {
+            sl.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY() + 3, getZ(), 30, 8, 4, 8, 0.8);
+            sl.sendParticles(new DustParticleOptions(new Vector3f(1f, 0.1f, 0.15f), 2f), getX(), getY() + getBbHeight() * 0.7, getZ(), 10, 2, 2, 2, 0.02);
+        }
+        DaKhuyet dk = allyDk(sl);
+        if (sureT == SURE_TELE - 15) {
+            if (dk == null) { sureT = 0; return; } // không có người chắn: huỷ, không dùng chiêu
+            barrierAt = groundAt(sl, position().add(towardPlayers(sl).scale(Math.max(7, getBbWidth() * 0.5 + 5))));
+            dk.guardBarrier(sl, barrierAt, this, BARRIER_R, sureT + 20);
+            Fx.shake(sl, barrierAt, 1.5f, 12, 40f);
+            NttdAllies.say(sl, this, "hukhong.endgame.dakhuyet.guard." + (1 + random.nextInt(3)));
+        }
+        if (barrierAt != null && sureT % 4 == 0) Fx.groundRing(sl, null, barrierAt, BARRIER_R, 0x8FA8FF, 6);
+        if (sureT > 0) return;
+        if (barrierAt == null) return; // bị huỷ trước khi có kết giới
+        Fx.elem(sl, null, Fx.E_NUKE, position(), Vec3.ZERO, 14f, 0xFF2030, 0);
+        Fx.shake(sl, position(), 5f, 25, 80f);
+        sl.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY() + 2, getZ(), 4, 6, 1, 6, 0);
+        playSound(SoundEvents.GENERIC_EXPLODE.value(), 5f, 0.4f);
+        for (Player p : players(sl, position(), 48)) {
+            if (p.isCreative() || p.isSpectator()) continue;
+            double dx = p.getX() - barrierAt.x, dz = p.getZ() - barrierAt.z;
+            if (dx * dx + dz * dz <= (BARRIER_R + 0.5) * (BARRIER_R + 0.5)) {
+                sl.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1, p.getZ(), 20, 0.5, 1, 0.5, 0.1);
+                continue; // kết giới trăng khuyết hoá giải hoàn toàn
+            }
+            p.hurt(damageSources().indirectMagic(this, this), (p.getMaxHealth() + p.getAbsorptionAmount()) * 4f);
+        }
+        Fx.elem(sl, null, Fx.E_HALOS, barrierAt.add(0, 1.5, 0), Vec3.ZERO, BARRIER_R, 0x8FA8FF, 0);
+        sl.sendParticles(ParticleTypes.END_ROD, barrierAt.x, barrierAt.y + 2, barrierAt.z, 80, BARRIER_R * 0.5, 2, BARRIER_R * 0.5, 0.1);
+        barrierAt = null;
+        skillCd = 60;
+    }
+
+    /** Cutscene lớn cuối pha 3: Nguyên Thủy tung đại chiêu, Dạ Khuyết lấy thân chắn rồi tan biến; Mộ Dao xuất hiện. */
+    private void grandSacrifice(ServerLevel sl, DaKhuyet dk) {
+        int T = GRAND_T;
+        Vec3 dir = towardPlayers(sl);
+        float yaw = (float) (Math.atan2(-dir.x, dir.z) * 180 / Math.PI);
+        setYRot(yaw); yBodyRot = yaw; yHeadRot = yaw;
+        float s = (float) Math.max(2.0, getBbHeight() * 0.5);
+        double front = Math.max(7, getBbWidth() * 0.5 + 5);
+        Vec3 guard = groundAt(sl, position().add(dir.scale(front)));
+        float f = (float) front;
+        var cam = java.util.List.of(
+                new com.hukhong.boss.phase.CamPath.Key(0, 0, 0.6f * s, 1.8f * s, 0, 0, 50, 0.9f * s),
+                new com.hukhong.boss.phase.CamPath.Key(50, 1.2f * s, 1.4f * s, 2.4f * s, 0, -6, 62, 1.0f * s),
+                new com.hukhong.boss.phase.CamPath.Key(90, 3.2f, 1.8f, f + 5, 0, 0, 62, 2f),
+                new com.hukhong.boss.phase.CamPath.Key(135, 1.8f, 1.4f, f + 4.5f, 0, 0, 56, 1.8f),
+                new com.hukhong.boss.phase.CamPath.Key(180, -2.2f, 1.4f, f + 3.2f, 0, 0, 48, 1.6f),
+                new com.hukhong.boss.phase.CamPath.Key(T, 0, 4.5f, f + 12, 0, 0, 72, 2f));
+        com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, this, position(), yaw, T, cam, java.util.List.of(
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(6, 50, "hukhong.dialog.nttd.grand.1"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(50, 95, "hukhong.dialog.nttd.grand.2"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(95, 135, "hukhong.dialog.nttd.grand.3"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(135, 175, "hukhong.dialog.nttd.grand.4"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(175, 210, "hukhong.dialog.nttd.grand.5"),
+                new com.hukhong.boss.phase.BossPhaseConfig.SubLine(210, T - 4, "hukhong.dialog.nttd.grand.6")));
+        Fx.rune(sl, null, position().add(0, 24, 0), 22f, VOIDC, 140, 9);
+        later(30, () -> Fx.telegraphCircle(sl, null, position(), 36f, 80, 0xFF2030));
+        later(70, () -> { if (dk.isAlive()) dk.guardBarrier(sl, guard, this, 9f, 120); Fx.shake(sl, guard, 1.5f, 10, 40f); });
+        for (int i = 0; i < 6; i++) {
+            int at = 110 + i * 10;
+            later(at, () -> {
+                Fx.ribbonHelix(sl, null, position().add(0, getBbHeight() * 0.6, 0), guard.add(0, 1.5, 0), 1.2, at * 0.3, 8, 0, 0.6f, VOIDC);
+                sl.sendParticles(ParticleTypes.SONIC_BOOM, guard.x, guard.y + 1.5, guard.z, 2, 1.5, 1, 1.5, 0);
+                Fx.shake(sl, guard, 2.5f, 8, 50f);
+            });
+        }
+        later(110, () -> { Fx.elem(sl, null, Fx.E_NUKE, guard, Vec3.ZERO, 8f, VOIDC, 0); playSound(SoundEvents.GENERIC_EXPLODE.value(), 5f, 0.4f); });
+        later(160, () -> Fx.groundCrack(sl, null, guard, 9f, 0x8FA8FF, 12, 80));
+        later(175, () -> {
+            dkSacrificed = true;
+            if (dk.isAlive()) {
+                Vec3 p = dk.position();
+                sl.sendParticles(ParticleTypes.CHERRY_LEAVES, p.x, p.y + 1.5, p.z, 220, 1.5, 2, 1.5, 0.08);
+                sl.sendParticles(ParticleTypes.END_ROD, p.x, p.y + 1.5, p.z, 120, 0.8, 2.5, 0.8, 0.12);
+                Fx.groundRing(sl, null, p, 6f, 0x8FA8FF, 60);
+                Fx.ribbon(sl, null, p.add(0, 1.5, 0), p.add(0, 18, 0), 0, 30, 0, 0.5f, 0x8FA8FF);
+                dk.playSound(SoundEvents.AMETHYST_BLOCK_RESONATE, 4f, 0.5f);
+                dk.discard();
+            }
+            NttdAllies.say(sl, this, "hukhong.endgame.dakhuyet.sacrifice");
+        });
+        later(212, () -> arriveMo(sl, false));
+    }
+
+    /** Mộ Dao đến trợ chiến pha 4. */
+    private void arriveMo(ServerLevel sl, boolean announce) {
+        if (!isAlive() || moSpawned) return;
+        Vec3 at = groundAt(sl, position().add(towardPlayers(sl).scale(11)));
+        if (NttdAllies.spawnMo(sl, at, position()) == null) return;
+        moSpawned = true;
+        Fx.shake(sl, at, 1f, 10, 30f);
+        if (announce) NttdAllies.say(sl, this, "hukhong.dialog.nttd.grand.6");
+        NttdAllies.say(sl, this, "hukhong.endgame.modao.ally");
+    }
+
+    /** Pha 4: Mộ Dao đánh / hộ thể theo nhịp 3.5s. */
+    private void moAllyTick(ServerLevel sl) {
+        if (!moSpawned || phase() < 4 || invulTicks > 0 || tickCount % 70 != 0) return;
+        com.hukhong.story.npc.StoryNpc mo = NttdAllies.findMo(sl, position());
+        if (mo == null) { moSpawned = false; arriveMo(sl, false); return; } // mất (dỡ chunk) -> gọi lại
+        NttdAllies.moTick(sl, this, mo, moBeat++);
     }
 
     private void applyPhaseEffects(int ph) {
@@ -1136,7 +1319,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
     // ---- BossBrain.Host
     @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return form() == 1 ? BRAIN_F1 : BRAIN_F2; }
     @Override public int currentPhase() { return form() == 1 ? 1 : phase(); }
-    @Override public boolean frozen() { return intro > 0 || morph > 0 || cine > 0 || invulTicks > 0; }
+    @Override public boolean frozen() { return intro > 0 || morph > 0 || cine > 0 || invulTicks > 0 || sureT > 0; }
     @Override public boolean ownMoveActive() { return pending >= 0 || own != O_NONE; }
     @Override public float moveDamage(double mult) { return (float) atk(mult); }
     @Override public void playBrainAnim(String name) { triggerAnim(com.hukhong.boss.ai.BrainAnims.CONTROLLER, (form() == 1 ? "f1_" : "f2_") + name); }

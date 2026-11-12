@@ -114,7 +114,10 @@ public final class CutsceneClient {
         if (mc.level == null || mc.player == null || !mc.player.isAlive() || cam == null || cam.level() != mc.level) { end(); return; }
         if (mc.isPaused()) return;
         elapsed++;
-        while (BossKeys.SKIP.consumeClick()) if (elapsed > SKIP_GRACE) skip = true;
+        while (BossKeys.SKIP.consumeClick()) if (elapsed > Math.max(SKIP_GRACE, cur.minSkip())) skip = true;
+        if (skip && cur.minSkip() > 0) { // cutscene có khoá bỏ qua: báo server (server tự kiểm lại thời điểm)
+            try { net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.hukhong.endgame.EndgameNet.SkipOutro()); } catch (RuntimeException ignored) { }
+        }
         if (skip || elapsed >= total() || (elapsed > 4 && mc.player.hurtTime > 0)) { end(); return; }
         // neo theo boss (nếu có)
         if (cur.entityId() >= 0) {
@@ -235,7 +238,9 @@ public final class CutsceneClient {
         g.fill(0, h - bar, w, h, 0xFF000000);
         Font font = mc.font;
         // gợi ý phím bỏ qua
-        Component hint = Component.translatable("hukhong.cutscene.skip", BossKeys.SKIP.getTranslatedKeyMessage());
+        int lock = cur.minSkip() - elapsed;
+        Component hint = lock > 0 ? Component.translatable("hukhong.cutscene.skip_locked", (lock + 19) / 20)
+                : Component.translatable("hukhong.cutscene.skip", BossKeys.SKIP.getTranslatedKeyMessage());
         if (bar > 12) g.drawString(font, hint, w - font.width(hint) - 8, Math.max(2, bar - 12), 0x99FFFFFF, false);
         // phụ đề
         for (SubLine s : cur.subs()) {

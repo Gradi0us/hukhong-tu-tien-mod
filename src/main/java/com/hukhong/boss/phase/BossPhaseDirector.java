@@ -141,7 +141,12 @@ public final class BossPhaseDirector {
     }
 
     public static void sendCutscene(ServerLevel sl, net.minecraft.world.entity.Entity anchor, Vec3 at, float yaw, int ticks, List<CamPath.Key> cam, List<BossPhaseConfig.SubLine> subs) {
-        CutscenePayload pl = new CutscenePayload(anchor == null ? -1 : anchor.getId(), at.x, at.y, at.z, yaw, ticks, cam, subs);
+        sendCutscene(sl, anchor, at, yaw, ticks, cam, subs, 0);
+    }
+
+    /** Như trên, kèm minSkip: chỉ được bỏ qua sau tick này (client hiện "Có thể bỏ qua sau Xs"). */
+    public static void sendCutscene(ServerLevel sl, net.minecraft.world.entity.Entity anchor, Vec3 at, float yaw, int ticks, List<CamPath.Key> cam, List<BossPhaseConfig.SubLine> subs, int minSkip) {
+        CutscenePayload pl = new CutscenePayload(anchor == null ? -1 : anchor.getId(), at.x, at.y, at.z, yaw, ticks, cam, subs, minSkip);
         for (ServerPlayer p : sl.players()) {
             if (p.distanceToSqr(at) > CUTSCENE_RANGE * CUTSCENE_RANGE) continue;
             try { PacketDistributor.sendToPlayer(p, pl); } catch (RuntimeException ignored) { }
