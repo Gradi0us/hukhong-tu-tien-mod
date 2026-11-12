@@ -70,7 +70,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
 
     public static AttributeSupplier.Builder attrs() {
         return Monster.createMonsterAttributes()
-                .add(Attributes.MAX_HEALTH, 6000).add(Attributes.ATTACK_DAMAGE, 34).add(Attributes.ARMOR, 18)
+                .add(Attributes.MAX_HEALTH, TRIAL_HP).add(Attributes.ATTACK_DAMAGE, TRIAL_DMG).add(Attributes.ARMOR, TRIAL_ARMOR)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.8).add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.FOLLOW_RANGE, 48);
     }
@@ -136,6 +136,9 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     }
 
     /** Thua (máu chạm 1): không chết. Quỳ, cutscene cải tà, rồi cờ dk_redeemed và tan biến. */
+    /** Dev demo: chạy thẳng cutscene cải tà. */
+    public void devRedeem() { startRedeem(); }
+
     private void startRedeem() {
         if (redeeming || !(level() instanceof ServerLevel sl)) return;
         redeeming = true;
