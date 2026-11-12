@@ -1014,7 +1014,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
 
     private void spawnDaKhuyet(ServerLevel sl) {
         if (phase() >= 4) { daKhuyetSpawned = true; return; } // nhảy thẳng qua pha 3: không còn kịp đồng hành
-        if (!redeemedNear(sl)) return; // chỉ đồng hành khi người chơi quanh đây đã cải tà Dạ Khuyết (cờ dk_redeemed)
+        // cổng Endgame đã chặn người chưa cải tà Dạ Khuyết (EndgameService.enter), nên không kiểm tra lại ở đây
         daKhuyetSpawned = true;
         DaKhuyet d = EndgameRegistry.DA_KHUYET.get().create(sl);
         if (d == null) return;
