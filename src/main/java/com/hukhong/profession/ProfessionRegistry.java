@@ -70,6 +70,7 @@ public final class ProfessionRegistry {
         BE_TYPES.register(bus);
         MENUS.register(bus);
         bus.addListener((RegisterPayloadHandlersEvent e) -> ProfessionNet.register(e.registrar("1")));
+        bus.addListener((RegisterPayloadHandlersEvent e) -> com.hukhong.profession.khi.ForgeNet.register(e.registrar("1")));
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
                 e.accept(PHU_AN_ITEM.get());

@@ -70,6 +70,16 @@ def scroll(band):
     return im
 
 
+def dau_thu():
+    """Dau Thu: binh nut mau nau, nap go (Doan Tao Dai - buoc toi)."""
+    im = canvas(); d = ImageDraw.Draw(im)
+    d.rectangle((6, 1, 9, 3), fill=(110, 80, 40, 255))
+    d.rounded_rectangle((4, 4, 11, 14), 3, fill=(170, 110, 40, 235), outline=(90, 55, 20, 255))
+    d.rectangle((5, 8, 10, 13), fill=(210, 150, 70, 235))
+    d.point((6, 6), fill=(250, 220, 160, 255))
+    return im
+
+
 TEX = {
     "chu_sa": chu_sa(),
     "phu_chi_ha": phu_chi((150, 170, 120)),
@@ -77,6 +87,7 @@ TEX = {
     "phu_chi_thuong": phu_chi((70, 130, 220)),
     "linh_mac": linh_mac(),
     "toi_dich": toi_dich(),
+    "dau_thu": dau_thu(),
     "linh_than": linh_than(),
     "dan_phuong": scroll((70, 170, 90)),
     "phu_pho": scroll((230, 200, 60)),
