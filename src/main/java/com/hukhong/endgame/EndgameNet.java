@@ -58,6 +58,8 @@ public final class EndgameNet {
                 (p, ctx) -> ctx.enqueueWork(() -> com.hukhong.client.endgame.EndgameClient.openChoice(p)));
         r.playToClient(PlayCutscene.TYPE, PlayCutscene.CODEC,
                 (p, ctx) -> ctx.enqueueWork(() -> com.hukhong.client.endgame.EndgameClient.playCutscene(p.ending())));
+        r.playToClient(VoidMark.Sync.TYPE, VoidMark.Sync.CODEC,
+                (p, ctx) -> ctx.enqueueWork(() -> com.hukhong.client.endgame.VoidMarkClient.set(p.player(), p.mark(), p.fade())));
         r.playToServer(ChooseEnding.TYPE, ChooseEnding.CODEC, (p, ctx) -> ctx.enqueueWork(() -> {
             if (ctx.player() instanceof ServerPlayer sp) EndgameService.choose(sp, p.ending());
         }));

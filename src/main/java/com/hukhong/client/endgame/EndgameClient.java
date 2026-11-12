@@ -10,7 +10,8 @@ public final class EndgameClient {
 
     public static void openChoice(EndgameNet.OpenChoice c) { Minecraft.getInstance().setScreen(new EndingChoiceScreen(c)); }
 
-    public static void playCutscene(int ending) { Minecraft.getInstance().setScreen(new CutsceneScreen(ending)); }
+    /** Outro trong thế giới (EndingOutro) đã diễn xong phía server: chỉ còn credits. */
+    public static void playCutscene(int ending) { Minecraft.getInstance().setScreen(new CreditsScreen(ending)); }
 
     /** Cutscene + credits xong (hoặc bỏ qua): báo server đưa về thế giới. */
     public static void finish() {
