@@ -109,7 +109,10 @@ public final class QuestService {
         ServerLevel sl = p.serverLevel();
         if (q.tmpl == Quest.Tmpl.ESCORT || q.tmpl == Quest.Tmpl.GUIDE) {
             AmbientNpc n = spawnNpc(sl, p.blockPosition().offset(2, 0, 1), q, AmbientNpc.CITIZEN);
-            if (n != null) q.entity = n.getUUID();
+            if (n != null) {
+                q.entity = n.getUUID();
+                if (q.tmpl == Quest.Tmpl.ESCORT) LivingEscort.start(p, n, walkDest(sl, q));
+            }
         } else if (q.tmpl == Quest.Tmpl.DELIVER) {
             ItemStack letter = new ItemStack(Items.PAPER);
             letter.set(DataComponents.CUSTOM_NAME, Tx.t("hukhong.living.letter", "Thư gửi nhờ", "Letter to deliver"));
@@ -198,6 +201,7 @@ public final class QuestService {
     }
 
     static void cleanup(ServerLevel sl, Quest q) {
+        LivingEscort.remove(q.entity);
         String tag = TAG + q.id;
         for (ServerLevel l : sl.getServer().getAllLevels()) {
             if (q.entity != null) {
@@ -308,6 +312,11 @@ public final class QuestService {
         return new BlockPos(t.getX(), sl.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, t.getX(), t.getZ()), t.getZ());
     }
 
+    /** Dich cho walker ESCORT: mat dat neu chunk da nap, nguoc lai dung y goc (walker chi dung X/Z). */
+    static BlockPos walkDest(ServerLevel sl, Quest q) {
+        return sl.hasChunkAt(q.target) ? ground(sl, q.target) : q.target;
+    }
+
     static Mob spawnBrigand(ServerLevel sl, BlockPos pos, Quest q, boolean elite, int level) {
         Mob m = EntityType.VINDICATOR.create(sl);
         if (m == null) return null;
@@ -352,12 +361,22 @@ public final class QuestService {
                 Entity ent = q.entity == null ? null : sl.getEntity(q.entity);
                 if (!(ent instanceof AmbientNpc n)) { // mat dau (chunk): sinh lai canh nguoi choi
                     AmbientNpc nn = spawnNpc(sl, p.blockPosition().offset(2, 0, 1), q, AmbientNpc.CITIZEN);
-                    if (nn != null) q.entity = nn.getUUID();
+                    if (nn != null) {
+                        LivingEscort.remove(q.entity);
+                        q.entity = nn.getUUID();
+                        if (q.tmpl == Quest.Tmpl.ESCORT) LivingEscort.start(p, nn, walkDest(sl, q));
+                    }
                     return;
                 }
+                if (q.tmpl == Quest.Tmpl.ESCORT) { // NPC tu di toi dich; nguoi choi chi can o gan de nhan
+                    LivingEscort.ensure(p, n, walkDest(sl, q));
+                    if (LivingEscort.arrived(n.getUUID()) && n.distanceTo(p) < 16) complete(p, q);
+                    return;
+                }
+                // GUIDE: NPC di theo nguoi choi (dung y do)
                 double d = n.distanceTo(p);
                 if (d > 48) { n.teleportTo(p.getX() + 2, p.getY(), p.getZ() + 1); d = n.distanceTo(p); }
-                else if (d > (q.tmpl == Quest.Tmpl.GUIDE ? 9 : 5)) n.getNavigation().moveTo(p, 1.15);
+                else if (d > 9) n.getNavigation().moveTo(p, 1.15);
                 if (dxz < 9 && d < 14) complete(p, q);
             }
             case DELIVER, FIND_LOST -> {

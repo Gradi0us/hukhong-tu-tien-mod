@@ -29,6 +29,7 @@ public final class NpcLife {
     /** Moi tick may chu cua NPC (AmbientNpc.tick goi). */
     public static void tick(AmbientNpc n) {
         if (n.tickCount % 20 != 0) return;
+        if (n.getTags().contains(LivingEscort.TAG)) return; // dang hop tac: LivingEscort dieu khien di chuyen, khong bat/tat AI
         ServerLevel sl = (ServerLevel) n.level();
         // vay thanh (tru ne/chien dau/an nap) la hanh vi chinh: luon bat AI du khong co nguoi choi gan
         boolean near = sl.getNearestPlayer(n, AI_RANGE) != null || n.siegeMode() != AmbientNpc.SIEGE_NONE || n.hiddenInside();
