@@ -77,6 +77,9 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
     private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(NguyenThuyTichDiet.class, EntityDataSerializers.INT);
     /** 1 = hoá thân (tu sĩ bị chiếm), 2 = Nguyên Thủy Tịch Diệt thật. Client đổi model/texture theo giá trị này. */
     private static final EntityDataAccessor<Integer> FORM = SynchedEntityData.defineId(NguyenThuyTichDiet.class, EntityDataSerializers.INT);
+    /** Tag bóng tạm trong cutscene Lv10 (không nhạc boss, không đấu trường, không thanh máu, không AI). */
+    public static final String LV10_TAG = "hk_lv10_shade";
+    public boolean lv10Shade() { return getTags().contains(LV10_TAG); }
     private static final ResourceLocation F1_HP = ResourceLocation.fromNamespaceAndPath(HuKhong.MODID, "ntd_form1_hp");
     /** Dạng 1 có 40% lượng máu của dạng 2. */
     public static final double FORM1_HP_FRAC = 0.4;
@@ -179,13 +182,13 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         return r;
     }
 
-    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); bar.addPlayer(p); }
+    @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); if (!lv10Shade()) bar.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
 
     @Override public void onAddedToLevel() {
         super.onAddedToLevel();
-        if (!level().isClientSide) { com.hukhong.audio.BossMusic.watch(this, "final_boss"); com.hukhong.arena.BossArena.attach(this, EndgameKit.MAIN_RADIUS - 1, null, false, (level().dimension().location().getPath().equals("hu_khong_ban_nguyen") ? new net.minecraft.core.BlockPos(0, EndgameKit.CENTER_Y, 0) : blockPosition())); }
+        if (!level().isClientSide && !lv10Shade()) { com.hukhong.audio.BossMusic.watch(this, "final_boss"); com.hukhong.arena.BossArena.attach(this, EndgameKit.MAIN_RADIUS - 1, null, false, (level().dimension().location().getPath().equals("hu_khong_ban_nguyen") ? new net.minecraft.core.BlockPos(0, EndgameKit.CENTER_Y, 0) : blockPosition())); }
     }
 
     @Override public void addAdditionalSaveData(CompoundTag tag) {
@@ -296,6 +299,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
      */
     @Override public void tick() {
         super.tick();
+        if (lv10Shade()) return; // bóng cutscene Lv10: đứng yên, không chạy brain/chiêu
         if (level() instanceof ServerLevel sl && isAlive()) {
             if (cine > 0) cine--;
             runSched();

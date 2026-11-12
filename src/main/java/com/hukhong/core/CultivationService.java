@@ -127,6 +127,7 @@ public final class CultivationService {
         p.setData(ModAttachments.CULTIVATION, next);
         if (next.level() > old.level()) {
             levelUpEffect(p, next.realmIndex() != old.realmIndex());
+            if (old.level() < 10 && next.level() >= 10) Lv10Cutscene.onReach10(p); // cutscene một lần khi đạt cấp 10
             if (next.level() % 10 == 0) com.hukhong.breakthrough.BreakthroughEffects.play(p, next);
         }
         SyncPayload.send(p);
