@@ -34,6 +34,7 @@ public final class NttdEnding {
         final ServerLevel sl;
         final Vec3 o, fwd, right;
         final boolean dk;
+        DaKhuyet ghost;
         int t;
         Run(ServerLevel sl, Vec3 o, float yaw, boolean dk) {
             this.sl = sl; this.o = o; this.dk = dk;
@@ -96,7 +97,7 @@ public final class NttdEnding {
         var it = RUNS.iterator();
         while (it.hasNext()) {
             Run r = it.next();
-            if (r.t > T + 10 || r.sl.getServer() != e.getServer()) { it.remove(); continue; }
+            if (r.t > T + 10 || r.sl.getServer() != e.getServer()) { if (r.ghost != null) r.ghost.discard(); it.remove(); continue; }
             step(r, r.t++);
         }
     }
@@ -125,6 +126,18 @@ public final class NttdEnding {
             sl.sendParticles(ParticleTypes.CHERRY_LEAVES, mem.x, mem.y + 1.5, mem.z, 8, 0.5, 1.0, 0.5, 0.02);
             sl.sendParticles(ParticleTypes.END_ROD, mem.x, mem.y + 1.0, mem.z, 4, 0.3, 0.9, 0.3, 0.01);
         }
+        // ảnh ảo Dạ Khuyết thật (model, phát sáng, noAi): đứng idle trong cánh hoa, mở cánh trăng rồi tan (PLAN §7.3)
+        if (r.dk && t == 500) {
+            r.ghost = EndingOutroAbsorb.daKhuyet(sl, mem, e -> { e.addTag(GHOST_TAG); e.setInvulnerable(true); e.setSilent(true);
+                if (e instanceof net.minecraft.world.entity.Mob m) m.setNoAi(true); e.setGlowingTag(true); return e; });
+            if (r.ghost != null) {
+                Vec3 to = o.subtract(mem);
+                float y = (float) Math.toDegrees(Math.atan2(-to.x, to.z));
+                r.ghost.setYRot(y); r.ghost.setYHeadRot(y); r.ghost.setYBodyRot(y);
+            }
+        }
+        if (r.ghost != null && t == 600) { r.ghost.triggerAnim("skill", "rise"); DaKhuyetMoves.wingsFx(sl, r.ghost, MOON, 90); }
+        if (r.ghost != null && t == 700) { r.ghost.discard(); r.ghost = null; }
         if (r.dk && t == 520) {
             Fx.groundRing(sl, null, mem, 2.5f, MOON, 180);
             Fx.elem(sl, null, Fx.E_HALOS, mem.add(0, 1.5, 0), Vec3.ZERO, 1.6f, MOON, 160);
@@ -145,6 +158,16 @@ public final class NttdEnding {
         if (t == 760) { Fx.groundRing(sl, null, o, 34f, GOLD, 120); sound(sl, o, SoundEvents.AMETHYST_BLOCK_CHIME, 0.8f); }
         // kết: Mộ Dao rời đi
         if (t == T + 10) NttdAllies.dismissMo(sl, o);
+    }
+
+    static final String GHOST_TAG = "hk_ending_dk_ghost";
+
+    /** Dọn ảnh ảo sót lại nếu server tắt giữa cutscene. */
+    @SubscribeEvent
+    public static void onLogin(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) {
+        if (!RUNS.isEmpty() || !(e.getEntity().level() instanceof ServerLevel sl)) return;
+        for (var x : new ArrayList<>(sl.getEntities((net.minecraft.world.entity.Entity) null, e.getEntity().getBoundingBox().inflate(160),
+                x -> x.getTags().contains(GHOST_TAG)))) x.discard();
     }
 
     private static Vec3 ground(ServerLevel sl, Vec3 v) {

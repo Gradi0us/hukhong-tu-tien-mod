@@ -24,10 +24,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
 
 /** Server Bước 25-26: mở cổng, vào/ra Hư Không Bản Nguyên, boss cuối, chọn kết thúc, cutscene, Tầng Thế Giới II. */
 @EventBusSubscriber(modid = HuKhong.MODID)
@@ -37,8 +33,6 @@ public final class EndgameService {
     public static final String F_PENDING = "ending_pending", F_SEAL = "ending_seal", F_ABSORB = "ending_absorb", F_TRUTH = "ending_truth";
     /** Đã thắng khảo hạch Dạ Khuyết (cải tà): mở trận NTTD và cho Dạ Khuyết đồng hành. */
     public static final String F_DK_REDEEMED = "dk_redeemed";
-    /** uuid -> {ending, ticksLeft}. */
-    private static final Map<UUID, int[]> CUTSCENE = new HashMap<>();
 
     public static boolean hasEnding(QuestData q) { return q.has(F_SEAL) || q.has(F_ABSORB) || q.has(F_TRUTH); }
 
@@ -172,6 +166,7 @@ public final class EndgameService {
 
     /** Client xin bỏ qua cutscene kết: chỉ chấp nhận sau NttdEnding.MIN_SKIP tick, rồi mở màn chọn ngay. */
     public static void skipOutro(ServerPlayer p) {
+        if (EndingOutro.skip(p)) return; // outro 3 kết (Phong Ấn / Hấp Thụ / Siêu Độ)
         Long st = OUTRO_START.get(p.getUUID());
         if (st == null || !PENDING_PROMPT.containsKey(p.getUUID())) return;
         if (p.getServer().getTickCount() - st < NttdEnding.MIN_SKIP) return; // bỏ qua sớm: phớt lờ
@@ -215,13 +210,15 @@ public final class EndgameService {
         playEnding(p, ending);
     }
 
-    /** Hieu ung chung sau khi chot ket thuc: bat tu + dung hinh trong cutscene, phat man cutscene + credits. */
+    /**
+     * Hieu ung chung sau khi chot ket thuc: bat tu + dung hinh, dien outro trong the gioi ({@link EndingOutro});
+     * outro xong (hoac bo qua sau nua thoi luong) moi gui PlayCutscene -> client mo credits.
+     */
     static void playEnding(ServerPlayer p, int ending) {
-        int dur = EndgameKit.CUTSCENE_TICKS + 200;
+        int dur = EndgameKit.CUTSCENE_TICKS + 1200; // + credits
         p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, dur, 4, false, false));
         p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, dur, 6, false, false));
-        CUTSCENE.put(p.getUUID(), new int[]{ending, EndgameKit.CUTSCENE_TICKS});
-        PacketDistributor.sendToPlayer(p, new EndgameNet.PlayCutscene(ending));
+        EndingOutro.start(p, ending);
     }
 
     /**
@@ -250,33 +247,16 @@ public final class EndgameService {
     /** Client báo xong cutscene + credits (hoặc bỏ qua): trả người chơi về thế giới. */
     public static void finish(ServerPlayer p) {
         QuestData q = DialogueService.quest(p);
-        if (!hasEnding(q) || p.serverLevel().dimension() != EndgameRegistry.DIM) return;
-        CUTSCENE.remove(p.getUUID());
-        p.removeEffect(MobEffects.DAMAGE_RESISTANCE);
-        p.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        if (!hasEnding(q) || EndingOutro.running(p)) return;
+        var res = p.getEffect(MobEffects.DAMAGE_RESISTANCE);
+        if (res != null && res.getAmplifier() == 4 && !res.isVisible()) p.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+        var slow = p.getEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        if (slow != null && slow.getAmplifier() == 6 && !slow.isVisible()) p.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        if (p.serverLevel().dimension() != EndgameRegistry.DIM) return; // Sieu Do co the ket o Overworld: chi go hieu ung
         leave(p);
-        p.displayClientMessage(Component.translatable(q.has(F_SEAL) ? "hukhong.endgame.return.seal" : q.has(F_TRUTH) ? "hukhong.endgame.return.truth" : "hukhong.endgame.return.absorb"), false);
-    }
-
-    private static void cutsceneTick(MinecraftServer server) {
-        Iterator<Map.Entry<UUID, int[]>> it = CUTSCENE.entrySet().iterator();
-        while (it.hasNext()) {
-            var en = it.next();
-            ServerPlayer p = server.getPlayerList().getPlayer(en.getKey());
-            int[] st = en.getValue();
-            if (p == null || --st[1] <= 0) { it.remove(); continue; }
-            if (st[1] % 2 != 0) continue;
-            ServerLevel sl = p.serverLevel();
-            int t = EndgameKit.CUTSCENE_TICKS - st[1];
-            double ang = t * 0.12;
-            boolean seal = st[0] == EndgameKit.ENDING_SEAL;
-            for (int i = 0; i < 3; i++) {
-                double a = ang + i * Math.PI * 2 / 3, r = seal ? 2.5 + (t % 60) * 0.03 : 6.0 - (t % 80) * 0.07;
-                sl.sendParticles(seal ? ParticleTypes.END_ROD : ParticleTypes.SOUL_FIRE_FLAME,
-                        p.getX() + Math.cos(a) * r, p.getY() + 0.3 + (t % 100) * 0.03, p.getZ() + Math.sin(a) * r, 1, 0, 0.02, 0, 0.0);
-            }
-            sl.sendParticles(seal ? ParticleTypes.ENCHANT : ParticleTypes.REVERSE_PORTAL, p.getX(), p.getY() + 1, p.getZ(), 6, 2, 1, 2, 0.1);
-        }
+        String k = q.has(F_SEAL) ? "seal" : q.has(F_TRUTH) ? "truth" : "absorb";
+        p.displayClientMessage(Component.translatable("hukhong.endgame.return." + k), false);
+        p.displayClientMessage(Component.translatable("hukhong.endgame.mark." + k), false);
     }
 
     // ------------------------------------------------------------ sự kiện
@@ -284,7 +264,6 @@ public final class EndgameService {
     public static void onServerTick(ServerTickEvent.Post e) {
         MinecraftServer s = e.getServer();
         long t = s.getTickCount();
-        if (!CUTSCENE.isEmpty()) cutsceneTick(s);
         if (!PENDING_PROMPT.isEmpty()) outroTick(s);
         ServerLevel ow = s.getLevel(Level.OVERWORLD);
         if (ow != null && t % 100 == 0 && !ow.players().isEmpty()) gatewayTick(ow);
@@ -312,6 +291,4 @@ public final class EndgameService {
         }
     }
 
-    @SubscribeEvent
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) { CUTSCENE.remove(e.getEntity().getUUID()); }
 }
