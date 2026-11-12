@@ -64,6 +64,11 @@ public final class HuKhongCommand {
                     msg(c.getSource(), "thien kiep passed for milestone " + m);
                     return 1;
                 }))
+                .then(Commands.literal("lv10cutscene").executes(c -> { // dev: chạy lại cutscene cấp 10 (bỏ qua cờ đã xem)
+                    boolean ok = com.hukhong.core.Lv10Cutscene.replay(c.getSource().getPlayerOrException());
+                    msg(c.getSource(), ok ? "lv10 cutscene started" : "khong chay duoc (dang o Hu Khong / trong tran / cutscene dang chay)");
+                    return ok ? 1 : 0;
+                }))
                 .then(Commands.literal("give_altar").executes(c -> {
                     ServerPlayer p = c.getSource().getPlayerOrException();
                     var st = new net.minecraft.world.item.ItemStack(com.hukhong.item.ModItems.AN_HON_DAI.get());
