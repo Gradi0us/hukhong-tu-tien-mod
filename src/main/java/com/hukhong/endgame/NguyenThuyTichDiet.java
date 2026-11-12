@@ -971,6 +971,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
     }
 
     private void spawnDaKhuyet(ServerLevel sl) {
+        if (!redeemedNear(sl)) return; // chỉ đồng hành khi người chơi quanh đây đã cải tà Dạ Khuyết (cờ dk_redeemed)
         daKhuyetSpawned = true;
         DaKhuyet d = EndgameRegistry.DA_KHUYET.get().create(sl);
         if (d == null) return;
@@ -978,6 +979,12 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         d.finalizeSpawn(sl, sl.getCurrentDifficultyAt(d.blockPosition()), MobSpawnType.EVENT, null);
         d.begin(sl, this);
         sl.addFreshEntity(d);
+    }
+
+    private boolean redeemedNear(ServerLevel sl) {
+        for (ServerPlayer p : sl.players())
+            if (p.distanceToSqr(this) <= 120 * 120 && com.hukhong.story.npc.DialogueService.quest(p).has(EndgameService.F_DK_REDEEMED)) return true;
+        return false;
     }
 
     private void applyPhaseEffects(int ph) {

@@ -35,6 +35,8 @@ public final class EndgameService {
     private EndgameService() {}
 
     public static final String F_PENDING = "ending_pending", F_SEAL = "ending_seal", F_ABSORB = "ending_absorb", F_TRUTH = "ending_truth";
+    /** Đã thắng khảo hạch Dạ Khuyết (cải tà): mở trận NTTD và cho Dạ Khuyết đồng hành. */
+    public static final String F_DK_REDEEMED = "dk_redeemed";
     /** uuid -> {ending, ticksLeft}. */
     private static final Map<UUID, int[]> CUTSCENE = new HashMap<>();
 
@@ -102,7 +104,13 @@ public final class EndgameService {
         p.teleportTo(dim, EndgameArena.ARRIVE.getX() + 0.5, EndgameArena.ARRIVE.getY(), EndgameArena.ARRIVE.getZ() + 0.5, 180f, 0f);
         p.displayClientMessage(Component.translatable("hukhong.endgame.enter"), false);
         QuestData q = DialogueService.quest(p);
-        if (!hasEnding(q) && !q.has(F_PENDING) && bossAlive(dim) == null) spawnBoss(dim);
+        // Khảo hạch: chưa cải tà Dạ Khuyết thì chặn trận NTTD (người đã thắng NTTD trước đây không bị chặn)
+        boolean gated = !q.has(F_DK_REDEEMED) && !hasEnding(q) && !q.has(F_PENDING);
+        if (gated) {
+            if (DaKhuyet.findTrial(dim) == null)
+                DaKhuyet.spawnTrial(dim, new net.minecraft.world.phys.Vec3(EndgameArena.ARRIVE.getX() + 0.5, EndgameArena.ARRIVE.getY(), EndgameArena.ARRIVE.getZ() - 7.5), 0f);
+            p.displayClientMessage(Component.translatable("hukhong.endgame.dk_gate"), true);
+        } else if (!hasEnding(q) && !q.has(F_PENDING) && bossAlive(dim) == null) spawnBoss(dim);
         else if (q.has(F_PENDING) && !hasEnding(q)) promptChoice(p);
     }
 

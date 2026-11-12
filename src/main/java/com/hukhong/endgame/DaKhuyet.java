@@ -3,6 +3,7 @@ package com.hukhong.endgame;
 import com.hukhong.flight.FlightBans;
 import com.hukhong.item.ModItems;
 import com.hukhong.vfx.ModParticles;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
@@ -15,6 +16,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -27,6 +29,9 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -48,6 +53,13 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
             BossEvent.BossBarColor.BLUE, BossEvent.BossBarOverlay.PROGRESS);
     private int skillCd = 80;
     private final com.hukhong.boss.phase.BossPhaseDirector director = new com.hukhong.boss.phase.BossPhaseDirector(this);
+
+    /** Trận khảo hạch (cổng Endgame, lần đầu): máu ≈ 90% NTTD (510000), nhân theo số người như NTTD; thua không chết mà cải tà. */
+    public static final double TRIAL_HP = 459000, TRIAL_DMG = 47, TRIAL_ARMOR = 14;
+    public static final int REDEEM_TICKS = 300, FADE_TICKS = 50;
+    private static final int MOON_RED = 0xB01E28, MOON_WHITE = 0xF4F4FF;
+    private boolean trial, redeeming;
+    private int trialPlayers, redeemT, fadeT;
 
     public DaKhuyet(EntityType<? extends Monster> t, Level l) {
         super(t, l);
@@ -73,6 +85,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         super.addAdditionalSaveData(tag);
         tag.putInt("DkPhase", phase());
         tag.putBoolean("DkAlly", ally);
+        tag.putBoolean("DkTrial", trial);
     }
 
     @Override public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
@@ -80,6 +93,110 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         if (getTags().contains("hk_nemesis_avatar")) entityData.set(AVATAR, true);
         if (tag.contains("DkPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("DkPhase"))));
         ally = tag.getBoolean("DkAlly");
+        trial = tag.getBoolean("DkTrial");
+    }
+
+    // ------------------------------------------------------------ trận khảo hạch (story)
+    public boolean trial() { return trial; }
+
+    /** Đổi sang chỉ số khảo hạch (máu/công/giáp). Chỉ gọi cho trận khảo hạch. */
+    public void markTrial() {
+        trial = true;
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(TRIAL_HP);
+        getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(TRIAL_DMG);
+        getAttribute(Attributes.ARMOR).setBaseValue(TRIAL_ARMOR);
+        setHealth(getMaxHealth());
+    }
+
+    /** Scale máu khảo hạch theo số người chơi gần (như NTTD: hpMul), giữ tỉ lệ máu hiện tại. */
+    private void rescaleTrial(ServerLevel sl) {
+        int n = com.hukhong.events.BossScaling.clamp(sl.getEntitiesOfClass(Player.class, getBoundingBox().inflate(80), p -> !p.isSpectator()).size());
+        if (n == trialPlayers) return;
+        trialPlayers = n;
+        float frac = getHealth() / getMaxHealth();
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(TRIAL_HP * com.hukhong.events.BossScaling.hpMul(n));
+        setHealth(Math.max(1f, getMaxHealth() * frac));
+    }
+
+    /** Dạ Khuyết khảo hạch đang tồn tại trong thế giới này (null nếu không có). */
+    public static DaKhuyet findTrial(ServerLevel sl) {
+        var l = sl.getEntitiesOfClass(DaKhuyet.class, new AABB(-400, -64, -400, 400, 400, 400), d -> d.trial && d.isAlive());
+        return l.isEmpty() ? null : l.get(0);
+    }
+
+    /** Triệu hồi Dạ Khuyết khảo hạch tại {@code at}. */
+    public static DaKhuyet spawnTrial(ServerLevel sl, Vec3 at, float yaw) {
+        DaKhuyet d = EndgameRegistry.DA_KHUYET.get().create(sl);
+        if (d == null) return null;
+        d.moveTo(at.x, at.y, at.z, yaw, 0f);
+        d.finalizeSpawn(sl, sl.getCurrentDifficultyAt(d.blockPosition()), MobSpawnType.EVENT, null);
+        d.markTrial();
+        sl.addFreshEntity(d);
+        return d;
+    }
+
+    /** Thua (máu chạm 1): không chết. Quỳ, cutscene cải tà, rồi cờ dk_redeemed và tan biến. */
+    private void startRedeem() {
+        if (redeeming || !(level() instanceof ServerLevel sl)) return;
+        redeeming = true;
+        redeemT = REDEEM_TICKS;
+        setHealth(1f);
+        endMove();
+        pools.clear();
+        setTarget(null);
+        getNavigation().stop();
+        bar.setColor(BossEvent.BossBarColor.WHITE);
+        triggerAnim("skill", "phase"); // quỳ: đứng yên qua isImmobile(), không có anim quỳ riêng
+        playSound(SoundEvents.AMETHYST_BLOCK_RESONATE, 3f, 0.6f);
+        int T = REDEEM_TICKS;
+        float sc = (float) Math.max(2.5, getBbHeight() * 0.5);
+        var cam = java.util.List.of(
+                new com.hukhong.boss.phase.CamPath.Key(0, 0, 0.6f * sc, 2.6f * sc, 0, 0, 60, 0.6f * sc),
+                new com.hukhong.boss.phase.CamPath.Key(T / 3, 2.4f * sc, 1.4f * sc, 1.6f * sc, 0, 0, 65, 0.4f * sc),
+                new com.hukhong.boss.phase.CamPath.Key(T * 2 / 3, -2.2f * sc, 0.8f * sc, 2.4f * sc, 0, 0, 58, 0.5f * sc),
+                new com.hukhong.boss.phase.CamPath.Key(T, 0, 2.6f * sc, 5.0f * sc, 0, 8, 75, 0.3f * sc));
+        var subs = new java.util.ArrayList<com.hukhong.boss.phase.BossPhaseConfig.SubLine>();
+        for (int i = 1; i <= 6; i++) {
+            int from = i == 1 ? 6 : 6 + (i - 1) * 48, to = i == 6 ? T - 4 : 6 + i * 48 - 2;
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(from, to, "hukhong.dialog.dakhuyet.redeem." + i));
+        }
+        com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, this, T, cam, subs);
+    }
+
+    /** Màu trăng máu -> trăng bạc theo k (0..1). */
+    private static DustParticleOptions moonDust(float k) {
+        int a = MOON_RED, b = MOON_WHITE;
+        float r = ((a >> 16) & 0xFF) + ((((b >> 16) & 0xFF) - ((a >> 16) & 0xFF)) * k);
+        float g = ((a >> 8) & 0xFF) + ((((b >> 8) & 0xFF) - ((a >> 8) & 0xFF)) * k);
+        float bl = (a & 0xFF) + (((b & 0xFF) - (a & 0xFF)) * k);
+        return new DustParticleOptions(new Vector3f(r / 255f, g / 255f, bl / 255f), 1.6f);
+    }
+
+    private void tickRedeem(ServerLevel sl) {
+        if (redeemT > 0) {
+            redeemT--;
+            int el = REDEEM_TICKS - redeemT;
+            if (el % 4 == 0) sl.sendParticles(moonDust(el / (float) REDEEM_TICKS), getX(), getY() + 2.2, getZ(), 10, 0.8, 1.2, 0.8, 0);
+            if (el % 10 == 0) sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 3, getZ(), 8, 1, 1.5, 1, 0.03);
+            if (redeemT == 0) {
+                for (ServerPlayer p : sl.players()) {
+                    if (p.isSpectator() || p.distanceToSqr(this) > 64 * 64) continue;
+                    var q = com.hukhong.story.npc.DialogueService.quest(p);
+                    com.hukhong.story.npc.DialogueService.setQuest(p, q.withFlag(EndgameService.F_DK_REDEEMED));
+                }
+                fadeT = FADE_TICKS;
+                playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 1.2f);
+            }
+            return;
+        }
+        if (fadeT > 0) {
+            fadeT--;
+            sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 6, 0.6, 1.2, 0.6, 0.04);
+            if (fadeT == 0) {
+                sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 60, 0.8, 1.5, 0.8, 0.08);
+                discard();
+            }
+        }
     }
 
     public int phase() { return entityData.get(PHASE); }
@@ -116,6 +233,13 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override public boolean hurt(DamageSource src, float amt) {
         if (ally && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false; // đồng minh cốt truyện: không chết
         if (director != null && director.invulnerable() && !src.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false;
+        if (trial) {
+            if (redeeming) return false;
+            // khảo hạch: không để máu xuống dưới 1; chỉ cải tà khi đòn thật sự trúng (không tính khung bất tử)
+            boolean ok = super.hurt(src, Math.max(0f, Math.min(amt, getHealth() - 1f)));
+            if (ok && getHealth() <= 1.01f) startRedeem();
+            return ok;
+        }
         return super.hurt(src, amt);
     }
 
@@ -139,7 +263,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override public Component getDisplayName() { if (avatar()) return super.getDisplayName(); return com.hukhong.entity.BossLevel.tag(super.getDisplayName(), EndgameKit.BOSS_LEVEL); }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public boolean canUsePortal(boolean allowPassengers) { return false; }
-    @Override public boolean isImmobile() { return super.isImmobile() || mv != null || (director != null && director.frozen()); }
+    @Override public boolean isImmobile() { return super.isImmobile() || mv != null || redeeming || (director != null && director.frozen()); }
     @Override public void startSeenByPlayer(ServerPlayer p) { super.startSeenByPlayer(p); if (!avatar() && !ally) bar.addPlayer(p); }
     @Override public void stopSeenByPlayer(ServerPlayer p) { super.stopSeenByPlayer(p); bar.removePlayer(p); }
     @Override public void remove(RemovalReason r) { super.remove(r); bar.removeAllPlayers(); }
@@ -304,6 +428,8 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override public void tick() {
         super.tick();
         if (!(level() instanceof ServerLevel sl) || !isAlive()) return;
+        if (redeeming) { tickRedeem(sl); return; }
+        if (trial && (trialPlayers == 0 || tickCount % 100 == 1)) rescaleTrial(sl);
         if (!avatar() && !ally) director.tick(sl);
         else if (!ally) com.hukhong.boss.ai.BossBrain.tickFor(sl, this, this); // phân thân: không director nhưng vẫn có brain
         if (!ally) brainFollowUps(sl);
@@ -318,6 +444,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         super.customServerAiStep();
         ServerLevel sl = (ServerLevel) level();
         if (ally) { allyStep(sl); return; }
+        if (redeeming) return;
         bar.setProgress(getHealth() / getMaxHealth());
         if (aeoniaCd > 0) aeoniaCd--;
         if (mv != null || (director != null && director.frozen())) return;
@@ -330,6 +457,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         startMove(sl, id, t);
     }
     @Override public void die(DamageSource src) {
+        if (trial) { setHealth(1f); startRedeem(); return; } // khảo hạch không bao giờ chết
         super.die(src);
         if (!(level() instanceof ServerLevel sl) || avatar()) return;
         for (ServerPlayer p : sl.players())
