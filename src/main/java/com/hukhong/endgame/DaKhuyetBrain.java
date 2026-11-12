@@ -32,6 +32,8 @@ public final class DaKhuyetBrain {
     static final PhaseVals P1 = new PhaseVals(3, 5, 0.22, 24f, 0.30, 30, 14, 22);
     static final PhaseVals P2 = new PhaseVals(4, 8, 0.24, 28f, 0.45, 24, 10, 18);
     static final PhaseVals P3 = new PhaseVals(2, 6, 0.26, 32f, 0.55, 18, 6, 14);
+    /** Đồng minh (PLAN nttd-story-rework §4.1): tốc độ pha 3, nghỉ dài hơn x1.3 để người chơi là nhân vật chính. */
+    public static final PhaseVals ALLY = new PhaseVals(3, 7, 0.26, 32f, 0.6, 18, 8, 18);
     public static final PhaseVals ENRAGED = new PhaseVals(2, 6, 0.28, 32f, 0.55, 16, 4, 8);
 
     // Hit(windup, active, recovery, reach, arc°, dmg, lunge, recoil, delayed, heavy, unblockable)

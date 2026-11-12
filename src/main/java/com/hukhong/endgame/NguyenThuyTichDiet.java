@@ -1118,9 +1118,14 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         var cam = java.util.List.of(
                 new com.hukhong.boss.phase.CamPath.Key(0, 0, 0.6f * s, 1.8f * s, 0, 0, 50, 0.9f * s),
                 new com.hukhong.boss.phase.CamPath.Key(50, 1.2f * s, 1.4f * s, 2.4f * s, 0, -6, 62, 1.0f * s),
+                new com.hukhong.boss.phase.CamPath.Key(70, 4f, 2f, f + 6, 0, 0, 64, 2f),           // Dạ Khuyết lướt vào
                 new com.hukhong.boss.phase.CamPath.Key(90, 3.2f, 1.8f, f + 5, 0, 0, 62, 2f),
                 new com.hukhong.boss.phase.CamPath.Key(135, 1.8f, 1.4f, f + 4.5f, 0, 0, 56, 1.8f),
-                new com.hukhong.boss.phase.CamPath.Key(180, -2.2f, 1.4f, f + 3.2f, 0, 0, 48, 1.6f),
+                new com.hukhong.boss.phase.CamPath.Key(150, 1.5f, 1.0f, f + 2.5f, 0, 0, 50, 1.2f),   // thấp, cận lúc quỳ
+                new com.hukhong.boss.phase.CamPath.Key(170, -1.2f, 1.4f, f + 1.6f, 0, 0, 40, 1.5f),  // cận mặt khi quay lại
+                new com.hukhong.boss.phase.CamPath.Key(185, -2.2f, 1.4f, f + 3.2f, 0, 0, 48, 1.6f),
+                new com.hukhong.boss.phase.CamPath.Key(200, 0, 1.5f, f + 14, 0, 0, 60, 14f),         // nhìn lên trời: Mộ Dao lao xuống
+                new com.hukhong.boss.phase.CamPath.Key(214, 1.0f, 1.4f, f + 8.5f, 0, 0, 55, 2f),     // cận Mộ Dao đáp
                 new com.hukhong.boss.phase.CamPath.Key(T, 0, 4.5f, f + 12, 0, 0, 72, 2f));
         com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, this, position(), yaw, T, cam, java.util.List.of(
                 new com.hukhong.boss.phase.BossPhaseConfig.SubLine(6, 50, "hukhong.dialog.nttd.grand.1"),
@@ -1130,8 +1135,14 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
                 new com.hukhong.boss.phase.BossPhaseConfig.SubLine(175, 210, "hukhong.dialog.nttd.grand.5"),
                 new com.hukhong.boss.phase.BossPhaseConfig.SubLine(210, T - 4, "hukhong.dialog.nttd.grand.6")));
         Fx.rune(sl, null, position().add(0, 24, 0), 22f, VOIDC, 140, 9);
+        triggerAnim("skill", "skill_c"); // t0-60: tụ đại chiêu (anim thật, vòng ring_* xoay)
+        later(60, () -> triggerAnim("skill", "skill_c"));
         later(30, () -> Fx.telegraphCircle(sl, null, position(), 36f, 80, 0xFF2030));
+        // t70: Dạ Khuyết LƯỚT (8 tick) từ chỗ đang đứng tới vị trí chắn, rồi rise + kết giới (DaKhuyet.guardBarrier)
         later(70, () -> { if (dk.isAlive()) dk.guardBarrier(sl, guard, this, 9f, 120); Fx.shake(sl, guard, 1.5f, 10, 40f); });
+        later(150, () -> { if (dk.isAlive()) dk.sacrificeKneel(sl, guard, this); });   // quỳ dần, kết giới nứt
+        later(170, () -> { if (dk.isAlive()) dk.sacrificeLookBack(sl); });           // ngoái nhìn người chơi
+        later(194, () -> { Vec3 m = groundAt(sl, position().add(dir.scale(11))); Fx.ribbon(sl, null, m.add(0, 26, 0), m.add(0, 12, 0), 0, 6, 0, 0.5f, 0xE8F0FF); });
         for (int i = 0; i < 6; i++) {
             int at = 110 + i * 10;
             later(at, () -> {
@@ -1155,7 +1166,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
             }
             NttdAllies.say(sl, this, "hukhong.endgame.dakhuyet.sacrifice");
         });
-        later(212, () -> arriveMo(sl, false));
+        later(200, () -> arriveMo(sl, false)); // Mộ Dao đến (NttdAllies.spawnMo, giữ nguyên entry point)
     }
 
     /** Mộ Dao đến trợ chiến pha 4. */

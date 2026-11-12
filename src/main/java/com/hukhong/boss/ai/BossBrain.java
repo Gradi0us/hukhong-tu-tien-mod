@@ -77,6 +77,11 @@ public final class BossBrain {
         default void onBrainStrike(ServerLevel sl, String combo, int hit, net.minecraft.world.entity.LivingEntity target) {}
         default void onBrainEvade(ServerLevel sl, BossProfile.Evade kind, net.minecraft.world.entity.LivingEntity target) {}
         default boolean brainReact(ServerLevel sl, net.minecraft.world.entity.LivingEntity target, String id) { return false; }
+        /**
+         * Chế độ phe (PLAN nttd-story-rework §2.2): brain chỉ được gây sát thương / phản ứng với thực thể mà hook này trả true.
+         * Boss thường: luôn true. Đồng minh của người chơi: chỉ mục tiêu của mình (Nguyên Thủy / Hư mob), không bao giờ Player.
+         */
+        default boolean brainCanHit(LivingEntity e) { return true; }
 
         static Host of(PhasedBoss pb) {
             return new Host() {
@@ -109,7 +114,7 @@ public final class BossBrain {
         BossBrain b = BRAINS.get(boss);
         BossProfile p = host.brainProfile();
         if (p == null) { if (b != null) BRAINS.remove(boss); return; }
-        if (b == null || b.prof != p) BRAINS.put(boss, b = new BossBrain(boss, host, p));
+        if (b == null || b.prof != p || b.pb != host) BRAINS.put(boss, b = new BossBrain(boss, host, p)); // đổi host (vd. boss -> đồng minh) => brain mới
         b.tick(sl);
     }
 
@@ -160,6 +165,14 @@ public final class BossBrain {
 
     private boolean yielding() { return pb.frozen() || pb.ownMoveActive(); }
 
+    /** Khoảng cách tính tới MÉP mục tiêu khi mục tiêu to (vd. Nguyên Thủy rộng 3 block); mục tiêu cỡ người: như distanceTo. */
+    double dist(LivingEntity t) { return edgeDist(mob, t); }
+
+    public static double edgeDist(Mob m, LivingEntity t) {
+        double d = m.distanceTo(t), w = t.getBbWidth();
+        return w > 1.5 ? Math.max(0.5, d - (w - 1.0) * 0.5) : d;
+    }
+
     // ------------------------------------------------------------------ tick
     void tick(ServerLevel sl) {
         if (!mob.isAlive()) return;
@@ -198,7 +211,7 @@ public final class BossBrain {
     private void strafe(ServerLevel sl, LivingEntity t) {
         PhaseVals v = pv();
         Vec3 to = flat(t.position().subtract(mob.position()));
-        double d = to.length();
+        double d = t.getBbWidth() > 1.5 ? Math.max(0.5, to.length() - (t.getBbWidth() - 1.0) * 0.5) : to.length();
         if (prof.locomotion() != null) prof.locomotion().step(sl, mob, mv, t, v, strafeDir);
         else strafeMove(t, v, to, d);
         if (mv.blocked || --flipIn <= 0) {
@@ -245,7 +258,7 @@ public final class BossBrain {
     // ------------------------------------------------------------------ GAP_CLOSE
     private void startGap(ServerLevel sl, LivingEntity t, String thenCombo) {
         set(State.GAP_CLOSE);
-        GapClose g = pb.brainGapClose(sl, t, mob.distanceTo(t));
+        GapClose g = pb.brainGapClose(sl, t, dist(t));
         gap = g != null ? g : prof.gapClose();
         pending = thenCombo;
         pb.playBrainAnim(gap.anim());
@@ -256,7 +269,7 @@ public final class BossBrain {
         String follow = pending != null ? pending : gap.followCombo();
         endGap();
         Combo c = follow != null ? prof.combo(follow) : null;
-        if (c == null) c = pickCombo(mob.distanceTo(t));
+        if (c == null) c = pickCombo(dist(t));
         if (c != null && allowAttacks) startCombo(c, t); else { toStrafe(true); rest = 6; }
     }
 
@@ -274,7 +287,7 @@ public final class BossBrain {
 
     private void beginHit(LivingEntity t) {
         stage = 0; stageT = 0; hitSet.clear();
-        refDist = mob.distanceTo(t);
+        refDist = dist(t);
         refAngle = angleAround(t);
     }
 
@@ -286,7 +299,7 @@ public final class BossBrain {
         if (stage == 0) {                          // M3 lấy đà: bám mục tiêu
             if (stageT == 0) { pb.playBrainAnim("combo_" + combo.id() + "_" + (hitIdx + 1)); pb.brainHitEvent(sl, combo.id(), hitIdx, 0, t); }
             mv.face(t.position(), pv().turnRate());
-            double d = mob.distanceTo(t);
+            double d = dist(t);
             mv.drive(d > h.reach() * 0.8 ? mv.forward().scale(prof.moveSpeed() * 0.6) : Vec3.ZERO, false);
             if (stageT == (h.delayed() ? 0 : Math.max(0, windup - 6))) glint(sl, h.unblockable());
             if (++stageT >= windup) { stage = 1; stageT = 0; }
@@ -303,7 +316,7 @@ public final class BossBrain {
     }
 
     private void nextHit(LivingEntity t) {
-        double d = mob.distanceTo(t);
+        double d = dist(t);
         double moved = Math.abs(Mth.wrapDegrees(angleAround(t) - refAngle));
         for (Branch b : combo.branches()) {
             if (b.afterHit() != hitIdx) continue;
@@ -331,6 +344,7 @@ public final class BossBrain {
         for (LivingEntity e : sl.getEntitiesOfClass(LivingEntity.class, mob.getBoundingBox().inflate(reach, 1.5, reach))) {
             if (e == mob || !e.isAlive() || e.isSpectator() || e.getClass() == mob.getClass() || hitSet.contains(e.getUUID())) continue;
             if (!(e instanceof Player) && e != mob.getTarget()) continue;
+            if (!pb.brainCanHit(e)) continue; // đồng minh: không bao giờ chém trúng người chơi
             Vec3 to = flat(e.position().subtract(c));
             double dist = to.length() - e.getBbWidth() * 0.5;
             if (dist > reach) continue;
@@ -452,15 +466,15 @@ public final class BossBrain {
         if (stateT < 6) return;
         Combo c = pending == null ? null : prof.combo(pending);
         if (c == null && pending != null && allowAttacks && pb.brainReact(sl, t, pending)) { toStrafe(false); return; }
-        if (c == null) c = pickCombo(mob.distanceTo(t));
+        if (c == null) c = pickCombo(dist(t));
         if (c == null || !allowAttacks) { toStrafe(true); return; }
-        if (mob.distanceTo(t) <= c.rangeMax()) { pending = null; startCombo(c, t); }
+        if (dist(t) <= c.rangeMax()) { pending = null; startCombo(c, t); }
         else startGap(sl, t, c.id());
     }
 
     // ------------------------------------------------------------------ dò mối đe dọa phía server
     private void scanThreats(ServerLevel sl, LivingEntity t) {
-        for (Player p : sl.getEntitiesOfClass(Player.class, mob.getBoundingBox().inflate(5.5), pl -> !pl.isSpectator())) {
+        for (Player p : sl.getEntitiesOfClass(Player.class, mob.getBoundingBox().inflate(5.5), pl -> !pl.isSpectator() && pb.brainCanHit(pl))) { // đồng minh: người chơi vung kiếm không phải mối đe dọa
             Boolean was = swinging.put(p.getUUID(), p.swinging);
             if (p.swinging && (was == null || !was)) onThreat(Threat.MELEE);
         }
@@ -468,6 +482,7 @@ public final class BossBrain {
         Vec3 c = mob.position().add(0, mob.getBbHeight() * 0.5, 0);
         for (Projectile pr : sl.getEntitiesOfClass(Projectile.class, mob.getBoundingBox().inflate(8))) {
             if (pr.getOwner() == mob || pr.getId() == lastProj) continue;
+            if (pr.getOwner() instanceof LivingEntity o && !pb.brainCanHit(o)) continue; // đạn của phe mình
             Vec3 v = pr.getDeltaMovement();
             if (v.lengthSqr() < 0.09) continue;
             Vec3 dir = v.normalize(), rel = c.subtract(pr.position());

@@ -86,6 +86,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         tag.putInt("DkPhase", phase());
         tag.putBoolean("DkAlly", ally);
         tag.putBoolean("DkTrial", trial);
+        tag.putFloat("DkAllyDealt", allyDealt);
     }
 
     @Override public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
@@ -94,6 +95,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         if (tag.contains("DkPhase")) entityData.set(PHASE, Math.max(1, Math.min(3, tag.getInt("DkPhase"))));
         ally = tag.getBoolean("DkAlly");
         trial = tag.getBoolean("DkTrial");
+        allyDealt = tag.getFloat("DkAllyDealt");
     }
 
     // ------------------------------------------------------------ trận khảo hạch (story)
@@ -139,6 +141,12 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     /** Dev demo: chạy thẳng cutscene cải tà. */
     public void devRedeem() { startRedeem(); }
 
+    /**
+     * Cải tà (PLAN nttd-story-rework §7.1), el = REDEEM_TICKS - redeemT:
+     * 0 khựng (stagger) + hit-stop, CRIT, rung · 6 lảo đảo lùi · 14 quỳ một gối cắm katana (kneel -> kneel_idle), nứt đất đỏ
+     * 40-120 thoại, trăng máu nhỏ dần · 130 ngẩng lên (look_up), dải sáng từ trời, trăng máu -> bạc
+     * 180 dâng kiếm (offer_blade), END_ROD dọc lưỡi · 240 đứng dậy (rise), cánh trăng · T tan (FADE_TICKS)
+     */
     private void startRedeem() {
         if (redeeming || !(level() instanceof ServerLevel sl)) return;
         redeeming = true;
@@ -149,21 +157,103 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         setTarget(null);
         getNavigation().stop();
         bar.setColor(BossEvent.BossBarColor.WHITE);
-        triggerAnim("skill", "phase"); // quỳ: đứng yên qua isImmobile(), không có anim quỳ riêng
+        Player near = sl.getNearestPlayer(this, 48); // quay mặt về người chơi: camera dựng theo hướng thân lúc bắt đầu
+        if (near != null) faceTo(near.position());
+        triggerAnim(CINE, "stagger");
+        playSound(SoundEvents.PLAYER_ATTACK_CRIT, 3f, 0.6f);
         playSound(SoundEvents.AMETHYST_BLOCK_RESONATE, 3f, 0.6f);
-        int T = REDEEM_TICKS;
-        float sc = (float) Math.max(2.5, getBbHeight() * 0.5);
-        var cam = java.util.List.of(
-                new com.hukhong.boss.phase.CamPath.Key(0, 0, 0.6f * sc, 2.6f * sc, 0, 0, 60, 0.6f * sc),
-                new com.hukhong.boss.phase.CamPath.Key(T / 3, 2.4f * sc, 1.4f * sc, 1.6f * sc, 0, 0, 65, 0.4f * sc),
-                new com.hukhong.boss.phase.CamPath.Key(T * 2 / 3, -2.2f * sc, 0.8f * sc, 2.4f * sc, 0, 0, 58, 0.5f * sc),
-                new com.hukhong.boss.phase.CamPath.Key(T, 0, 2.6f * sc, 5.0f * sc, 0, 8, 75, 0.3f * sc));
-        var subs = new java.util.ArrayList<com.hukhong.boss.phase.BossPhaseConfig.SubLine>();
-        for (int i = 1; i <= 6; i++) {
-            int from = i == 1 ? 6 : 6 + (i - 1) * 48, to = i == 6 ? T - 4 : 6 + i * 48 - 2;
-            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(from, to, "hukhong.dialog.dakhuyet.redeem." + i));
+        sl.sendParticles(ParticleTypes.CRIT, getX(), getY() + 2, getZ(), 40, 0.6, 1.0, 0.6, 0.4);
+        com.hukhong.vfx.Fx.shake(sl, position(), 2.5f, 10, 32f);
+        for (Player p : sl.getEntitiesOfClass(Player.class, getBoundingBox().inflate(10), p -> !p.isSpectator())) { // hit-stop 6 tick
+            p.setDeltaMovement(Vec3.ZERO); p.hurtMarked = true;
+            p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 6, 9, false, false, false));
         }
+        int T = REDEEM_TICKS;
+        var cam = java.util.List.of(
+                ck(0, 0, 2.2f, 6.5f, 0, 62, 2.0f),
+                ck(12, 1.2f, 1.2f, 4.2f, 0, 55, 1.6f),
+                ck(22, 1.5f, 0.5f, 2.4f, 6, 42, 0.7f),     // cận tay cắm kiếm
+                ck(40, 2.0f, 0.8f, 2.9f, 4, 46, 1.0f),
+                ck(110, -2.6f, 1.6f, 4.0f, 0, 55, 1.8f),
+                ck(130, 0, 1.6f, 2.3f, 0, 38, 2.3f),        // cận mặt khi ngẩng lên
+                ck(175, 0.6f, 1.7f, 2.1f, 0, 38, 2.4f),
+                ck(188, 1.4f, 1.2f, 3.0f, 0, 48, 1.3f),     // lưỡi kiếm dâng ngang
+                ck(232, -1.4f, 1.2f, 3.4f, 0, 50, 1.5f),
+                ck(246, 0, 0.3f, 4.4f, 0, 60, 3.0f),        // góc thấp nhìn lên lúc đứng dậy
+                ck(T, 0, 2.0f, 8.0f, 0, 72, 2.2f));
+        int[][] at = {{16, 62}, {62, 104}, {104, 130}, {130, 180}, {180, 240}, {240, T - 4}};
+        var subs = new java.util.ArrayList<com.hukhong.boss.phase.BossPhaseConfig.SubLine>();
+        for (int i = 0; i < at.length; i++)
+            subs.add(new com.hukhong.boss.phase.BossPhaseConfig.SubLine(at[i][0], at[i][1], "hukhong.dialog.dakhuyet.redeem." + (i + 1)));
         com.hukhong.boss.phase.BossPhaseDirector.sendCutscene(sl, this, T, cam, subs);
+    }
+
+    private static com.hukhong.boss.phase.CamPath.Key ck(int t, float dx, float dy, float dz, float pitch, float fov, float lookH) {
+        return new com.hukhong.boss.phase.CamPath.Key(t, dx, dy, dz, 0, pitch, fov, lookH);
+    }
+
+    private void faceTo(Vec3 p) {
+        Vec3 d = p.subtract(position());
+        if (d.horizontalDistanceSqr() < 1e-4) return;
+        float yaw = (float) (Math.atan2(-d.x, d.z) * 180 / Math.PI);
+        setYRot(yaw); yBodyRot = yaw; yHeadRot = yaw;
+    }
+
+    private Vec3 fwd() { float a = yBodyRot * ((float) Math.PI / 180f); return new Vec3(-Math.sin(a), 0, Math.cos(a)); }
+
+    /** Một nhịp của cutscene cải tà (el = số tick đã chạy). */
+    private void redeemBeat(ServerLevel sl, int el) {
+        Vec3 f = fwd(), side = new Vec3(-f.z, 0, f.x);
+        float k = Math.min(1f, Math.max(0f, (el - 130) / 40f)); // 0 = trăng máu, 1 = trăng bạc
+        switch (el) {
+            case 6 -> {
+                setDeltaMovement(f.x * -0.55, 0.18, f.z * -0.55); hurtMarked = true;
+                sl.sendParticles(ParticleTypes.CLOUD, getX(), getY() + 0.1, getZ(), 10, 0.4, 0.05, 0.4, 0.03);
+            }
+            case 14 -> {
+                triggerAnim(CINE, "kneel");
+                Vec3 blade = position().add(f.scale(0.9)).add(side.scale(0.5));
+                com.hukhong.vfx.Fx.groundCrack(sl, null, blade, 2.2f, MOON_RED, 7, 60);
+                sl.sendParticles(ParticleTypes.CRIT, blade.x, blade.y + 0.2, blade.z, 20, 0.2, 0.1, 0.2, 0.2);
+                com.hukhong.vfx.Fx.shake(sl, blade, 1.2f, 6, 24f);
+                playSound(SoundEvents.ANVIL_LAND, 1.6f, 0.5f);
+            }
+            case 40 -> com.hukhong.vfx.Fx.elem(sl, null, com.hukhong.vfx.Fx.E_HALOS, position().add(0, 3.6, 0), Vec3.ZERO, 2.0f, MOON_RED, 45);
+            case 85 -> com.hukhong.vfx.Fx.elem(sl, null, com.hukhong.vfx.Fx.E_HALOS, position().add(0, 3.4, 0), Vec3.ZERO, 1.3f, MOON_RED, 45);
+            case 130 -> {
+                triggerAnim(CINE, "look_up");
+                Vec3 head = position().add(0, 2.6, 0);
+                com.hukhong.vfx.Fx.ribbon(sl, null, head.add(0, 22, 0), head, 0, 14, 0, 0.7f, MOON_WHITE);
+                com.hukhong.vfx.Fx.elem(sl, null, com.hukhong.vfx.Fx.E_HALOS, position().add(0, 3.8, 0), Vec3.ZERO, 2.4f, MOON_WHITE, 160);
+                playSound(SoundEvents.BEACON_ACTIVATE, 2.5f, 1.4f);
+            }
+            case 180 -> {
+                triggerAnim(CINE, "offer_blade");
+                playSound(SoundEvents.ARMOR_EQUIP_NETHERITE.value(), 2f, 0.7f);
+            }
+            case 240 -> {
+                triggerAnim(CINE, "rise");
+                DaKhuyetMoves.wingsFx(sl, this, DaKhuyetMoves.MOON, 60);
+                com.hukhong.vfx.Fx.groundRing(sl, null, position(), 5f, MOON_WHITE, 40);
+                playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 0.8f);
+            }
+            default -> {}
+        }
+        if (el >= 14 && el < 130 && el % 6 == 0) { // trăng máu trên đầu nhỏ dần
+            double r = 1.4 * (1 - (el - 14) / 116.0) + 0.3;
+            for (int i = 0; i < 10; i++) {
+                double a = el * 0.2 + i * Math.PI / 5;
+                sl.sendParticles(moonDust(0), getX() + Math.cos(a) * r, getY() + 3.6, getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
+            }
+        }
+        if (el >= 180 && el < 240 && el % 4 == 0) { // ánh bạc dọc lưỡi kiếm dâng ngang
+            Vec3 c = position().add(f.scale(1.1)).add(0, 1.15, 0);
+            for (int i = -4; i <= 4; i++) {
+                Vec3 q = c.add(side.scale(i * 0.22));
+                sl.sendParticles(ParticleTypes.END_ROD, q.x, q.y, q.z, 1, 0.02, 0.02, 0.02, 0.005);
+            }
+        }
+        if (el % 4 == 0) sl.sendParticles(moonDust(k), getX(), getY() + 2.2, getZ(), 6, 0.8, 1.2, 0.8, 0);
     }
 
     /** Màu trăng máu -> trăng bạc theo k (0..1). */
@@ -178,9 +268,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     private void tickRedeem(ServerLevel sl) {
         if (redeemT > 0) {
             redeemT--;
-            int el = REDEEM_TICKS - redeemT;
-            if (el % 4 == 0) sl.sendParticles(moonDust(el / (float) REDEEM_TICKS), getX(), getY() + 2.2, getZ(), 10, 0.8, 1.2, 0.8, 0);
-            if (el % 10 == 0) sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 3, getZ(), 8, 1, 1.5, 1, 0.03);
+            redeemBeat(sl, REDEEM_TICKS - redeemT);
             if (redeemT == 0) {
                 for (ServerPlayer p : sl.players()) {
                     if (p.isSpectator() || p.distanceToSqr(this) > 64 * 64) continue;
@@ -334,98 +422,181 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         return best;
     }
 
-    private void allyStep(ServerLevel sl) {
+    /**
+     * Đồng minh pha 3 (PLAN nttd-story-rework §4): dùng ĐỦ bộ chiêu boss qua BossBrain (host riêng {@link #allyHost}) nhắm Nguyên Thủy.
+     * Ở đây chỉ còn: màn xuất hiện, chọn mục tiêu, lướt tới / giữ kết giới, Nguyệt Quang theo timer, né chiêu Nguyên Thủy.
+     */
+    private void allyTick(ServerLevel sl) {
         if (allyIntro > 0) {
             allyIntro--;
             getNavigation().stop();
             if (allyIntro % 5 == 0) sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1.5, getZ(), 6, 0.8, 1.2, 0.8, 0.02);
             return;
         }
-        LivingEntity t = allyTarget(sl);
-        if (getTarget() != t) setTarget(t);
-        if (guarding > 0) { guarding--; getNavigation().stop(); return; } // đang giữ kết giới đỡ chiêu tất sát
-        if (t != null && distanceToSqr(t) > 14 * 14 && tickCount % 10 == 0) getNavigation().moveTo(t, 1.1);
-        if (allyCd-- > 0) return;
-        allyCd = 45 + random.nextInt(25);
-        allyBeat++;
-        if (allyBeat % 5 == 4) { // Nguyệt Quang: hồi máu + giải hiệu ứng xấu
-            for (ServerPlayer p : sl.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(32), q -> !q.isSpectator())) {
-                p.heal(p.getMaxHealth() * 0.12f);
-                p.removeEffect(MobEffects.BLINDNESS); p.removeEffect(MobEffects.WEAKNESS); p.removeEffect(MobEffects.POISON);
-                p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 1));
-                sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, p.getX(), p.getY() + 1, p.getZ(), 12, 0.5, 0.8, 0.5, 0.05);
-            }
-            DaKhuyetMoves.wingsFx(sl, this, DaKhuyetMoves.MOON, 30);
-            triggerAnim("skill", "skill_b");
-            playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 1.2f);
-            return;
-        }
+        if (aeoniaCd > 0) aeoniaCd--;
+        if (dashT > 0) { stepDash(sl); return; }
+        if (guarding > 0) { guarding--; getNavigation().stop(); return; }
+        LivingEntity cur = getTarget();
+        LivingEntity t = tickCount % 20 == 0 || cur == null || !cur.isAlive() ? allyTarget(sl) : cur;
+        if (cur != t) setTarget(t);
+        com.hukhong.boss.ai.BossBrain.tickFor(sl, this, allyHost);
+        brainFollowUps(sl);
         if (t == null) return;
-        allyAttack(sl, t, random.nextInt(3));
+        allyDodge(sl, t);
+        double edge = com.hukhong.boss.ai.BossBrain.edgeDist(this, t);
+        if (edge > 40 && tickCount % 10 == 0) getNavigation().moveTo(t, 1.2);
+        if (--allyHealCd <= 0 && mv == null && !com.hukhong.boss.ai.BossBrain.busy(this)) { allyHealCd = 240 + random.nextInt(60); moonlight(sl); }
+        else if (edge > 24 && mv == null && --allyCd <= 0) { allyCd = 80; allyAttack(sl, t); }
     }
 
-    /** Đếm nhịp chiêu đồng minh; kết giới đang giữ (tick). */
-    private int allyBeat, guarding;
+    /** Nguyệt Quang: hồi 12% máu + giải mù/yếu/độc cho người chơi quanh nàng. */
+    private void moonlight(ServerLevel sl) {
+        for (ServerPlayer p : sl.getEntitiesOfClass(ServerPlayer.class, getBoundingBox().inflate(32), q -> !q.isSpectator())) {
+            p.heal(p.getMaxHealth() * 0.12f);
+            p.removeEffect(MobEffects.BLINDNESS); p.removeEffect(MobEffects.WEAKNESS); p.removeEffect(MobEffects.POISON);
+            p.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 1));
+            sl.sendParticles(ParticleTypes.HAPPY_VILLAGER, p.getX(), p.getY() + 1, p.getZ(), 12, 0.5, 0.8, 0.5, 0.05);
+        }
+        DaKhuyetMoves.wingsFx(sl, this, DaKhuyetMoves.MOON, 30);
+        triggerAnim("skill", "skill_b");
+        playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 1.2f);
+    }
 
-    /**
-     * Đòn đồng minh vào Nguyên Thủy Tịch Diệt / Hư mob, mượn hình ảnh chiêu thật (DaKhuyetMoves): sát thương THẤP cố định
-     * 0.3-0.5% máu tối đa mục tiêu (boss) để không cướp công người chơi. NTTD bỏ qua Dạ Khuyết khi chọn mục tiêu (setTarget).
-     */
-    private void allyAttack(ServerLevel sl, LivingEntity t, int kind) {
-        net.minecraft.world.phys.Vec3 a = position().add(0, 1.4, 0), b = t.position().add(0, t.getBbHeight() * 0.5, 0);
-        net.minecraft.world.phys.Vec3 dir = b.subtract(a).multiply(1, 0, 1);
-        if (dir.lengthSqr() < 1e-4) dir = new net.minecraft.world.phys.Vec3(0, 0, 1);
+    /** §4.2: Nguyên Thủy bắt đầu chiêu riêng / lấy đà nhát brain gần nàng => báo đe dọa cho brain (né, backflip nối Nguyệt Luân). */
+    private void allyDodge(ServerLevel sl, LivingEntity t) {
+        com.hukhong.boss.ai.BossBrain me = com.hukhong.boss.ai.BossBrain.get(this);
+        if (me == null) return;
+        boolean cast = t instanceof NguyenThuyTichDiet n && n.ownMoveActive();
+        com.hukhong.boss.ai.BossBrain tb = com.hukhong.boss.ai.BossBrain.get(t);
+        boolean swing = tb != null && tb.hitStage() == 0 && com.hukhong.boss.ai.BossBrain.edgeDist(this, t) < 7;
+        if (cast && !foeCasting && distanceTo(t) < 28) me.onThreat(com.hukhong.boss.ai.BossBrain.Threat.SKILL);
+        else if (swing && !foeSwinging) me.onThreat(com.hukhong.boss.ai.BossBrain.Threat.MELEE);
+        foeCasting = cast; foeSwinging = swing;
+    }
+
+    private boolean foeCasting, foeSwinging;
+    private int allyHealCd = 200;
+    /** Phần máu tối đa Nguyên Thủy nàng đã gây (trần {@link #ALLY_TOTAL_CAP}). */
+    private float allyDealt;
+    /** §4.3: 0.25% máu Nguyên Thủy x hệ số chiêu, trần 0.8%/đòn, tổng 12% cả pha 3; Hư mob 8%/đòn. */
+    public static final float ALLY_FRAC = 0.0025f, ALLY_HIT_CAP = 0.008f, ALLY_TOTAL_CAP = 0.12f, ALLY_MOB_FRAC = 0.08f;
+    public float allyDealt() { return allyDealt; }
+
+    /** Host brain khi là đồng minh: profile boss đầy đủ (pha 3), nghỉ dài hơn, chỉ chém mục tiêu của mình. */
+    private final com.hukhong.boss.ai.BossBrain.Host allyHost = new com.hukhong.boss.ai.BossBrain.Host() {
+        public com.hukhong.boss.ai.BossProfile brainProfile() { return DaKhuyetBrain.PROFILE; }
+        public int currentPhase() { return 3; }
+        public boolean frozen() { return allyIntro > 0 || guarding > 0 || dashT > 0 || redeeming; }
+        public boolean ownMoveActive() { return mv != null; }
+        public boolean brainBigMove(ServerLevel sl, LivingEntity t) { return allyBigMove(sl, t); }
+        public float moveDamage(double mult) { return DaKhuyet.this.moveDamage(mult); }
+        public void playBrainAnim(String name) { DaKhuyet.this.playBrainAnim(name); }
+        public com.hukhong.boss.ai.GapClose brainGapClose(ServerLevel sl, LivingEntity t, double d) { return DaKhuyetBrain.gapClose(3, random); }
+        public com.hukhong.boss.ai.BossProfile.PhaseVals brainVals(com.hukhong.boss.ai.BossProfile p) { return DaKhuyetBrain.ALLY; }
+        public boolean brainStrike(LivingEntity v, DamageSource src, float dmg) { return strike(v, dmg); }
+        public boolean brainCanHit(LivingEntity e) { return !(e instanceof Player) && !isStoryAlly(e) && (e == getTarget() || e instanceof com.hukhong.entity.HuMob); }
+    };
+
+    private boolean allyBigMove(ServerLevel sl, LivingEntity t) {
+        if (mv != null) return false;
+        double edge = com.hukhong.boss.ai.BossBrain.edgeDist(this, t);
+        if (edge > 24) return false;
+        String id = DaKhuyetMoves.pick(random, 3, aeoniaCd <= 0, (float) edge);
+        return startMove(sl, id, t);
+    }
+
+    /** Kết giới đang giữ (tick). */
+    private int guarding;
+
+    /** Dự phòng khi Nguyên Thủy ngoài tầm chiêu: ba lưỡi trăng bay tới (qua {@link #strike}, chịu trần sát thương). */
+    private void allyAttack(ServerLevel sl, LivingEntity t) {
+        Vec3 a = position().add(0, 1.4, 0), b = t.position().add(0, t.getBbHeight() * 0.5, 0);
+        Vec3 dir = b.subtract(a).multiply(1, 0, 1);
+        if (dir.lengthSqr() < 1e-4) dir = new Vec3(0, 0, 1);
         dir = dir.normalize();
         aim = dir;
         getLookControl().setLookAt(t, 60, 60);
-        float frac = t instanceof NguyenThuyTichDiet ? 0.003f + random.nextFloat() * 0.002f : 0.08f;
-        float dmg = t.getMaxHealth() * frac;
-        switch (kind) {
-            case 0 -> { // Nguyệt Luân: ba lưỡi trăng khuyết
-                for (int i = -1; i <= 1; i++) {
-                    double ang = Math.toRadians(i * 12), c = Math.cos(ang), sn = Math.sin(ang);
-                    net.minecraft.world.phys.Vec3 d = new net.minecraft.world.phys.Vec3(dir.x * c - dir.z * sn, 0, dir.x * sn + dir.z * c);
-                    com.hukhong.vfx.Fx.qi(sl, a, d.scale(Math.min(18, a.distanceTo(b))), 2.0f, DaKhuyetMoves.MOON, i * 30, 12);
-                }
-                triggerAnim("skill", "skill_b");
-                playSound(SoundEvents.TRIDENT_THROW.value(), 2.5f, 0.6f);
-            }
-            case 1 -> { // Thủy Điểu: lướt tới chém liên hoàn
-                net.minecraft.world.phys.Vec3 to = t.position().subtract(dir.scale(Math.max(3, t.getBbWidth() * 0.6 + 2)));
-                com.hukhong.vfx.Fx.ribbon(sl, null, a, to.add(0, 1.2, 0), 0.6, 6, 0, 0.35f, DaKhuyetMoves.MOON);
-                teleportTo(to.x, Math.max(to.y, getY()), to.z);
-                for (int i = 0; i < 3; i++) com.hukhong.vfx.Fx.qi(sl, to.add(0, 1.3, 0), dir.scale(4), 2.4f, DaKhuyetMoves.MOON, -40 + i * 40, 8);
-                triggerAnim("skill", "skill_a");
-                playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 2.5f, 0.8f);
-            }
-            default -> { // Đâm Xuyên: tia trăng thẳng vào boss
-                com.hukhong.vfx.Fx.ribbonHelix(sl, null, a, b, 0.5, 0, 6, 0, 0.18f, DaKhuyetMoves.MOON);
-                sl.sendParticles(ParticleTypes.SONIC_BOOM, b.x, b.y, b.z, 1, 0, 0, 0, 0);
-                triggerAnim("skill", "skill_a");
-                playSound(SoundEvents.TRIDENT_RIPTIDE_3.value(), 2f, 0.8f);
-            }
+        for (int i = -1; i <= 1; i++) {
+            double ang = Math.toRadians(i * 12), c = Math.cos(ang), sn = Math.sin(ang);
+            Vec3 d = new Vec3(dir.x * c - dir.z * sn, 0, dir.x * sn + dir.z * c);
+            com.hukhong.vfx.Fx.qi(sl, a, d.scale(Math.min(18, a.distanceTo(b))), 2.0f, DaKhuyetMoves.MOON, i * 30, 12);
         }
-        t.hurt(damageSources().mobAttack(this), dmg);
+        triggerAnim("skill", "skill_b");
+        playSound(SoundEvents.TRIDENT_THROW.value(), 2.5f, 0.6f);
+        strike(t, moveDamage(1.0));
         sl.sendParticles(ParticleTypes.END_ROD, b.x, b.y, b.z, 12, 0.6, 0.6, 0.6, 0.08);
     }
 
-    /** Chiêu tất sát của boss: lướt tới chắn trước, dựng Khuyết Nguyệt Kết Giới bán kính r trong {@code hold} tick. */
-    public void guardBarrier(ServerLevel sl, net.minecraft.world.phys.Vec3 at, LivingEntity boss, float r, int hold) {
-        com.hukhong.vfx.Fx.ribbon(sl, null, position().add(0, 1.2, 0), at.add(0, 1.2, 0), 0.8, 6, 0, 0.4f, DaKhuyetMoves.MOON);
-        teleportTo(at.x, at.y, at.z);
+    /** Chiêu tất sát / hy sinh: LƯỚT tới (8 tick, không dịch chuyển), rồi dựng Khuyết Nguyệt Kết Giới bán kính r trong {@code hold} tick. */
+    public void guardBarrier(ServerLevel sl, Vec3 at, LivingEntity boss, float r, int hold) {
+        endMove();
+        com.hukhong.boss.ai.BossBrain.tickFor(sl, this, allyHost); // brain đứng yên ngay (frozen)
+        dashFrom = position(); dashTo = at; dashBoss = boss; dashR = r; dashHold = hold; dashT = DASH_TICKS;
         getNavigation().stop();
-        getLookControl().setLookAt(boss, 90, 90);
+        setNoGravity(true);
+        triggerAnim(com.hukhong.boss.ai.BrainAnims.CONTROLLER, "dash");
+        com.hukhong.vfx.Fx.ribbon(sl, null, position().add(0, 1.2, 0), at.add(0, 1.2, 0), 0.8, DASH_TICKS, 0, 0.4f, DaKhuyetMoves.MOON);
+        playSound(SoundEvents.PHANTOM_FLAP, 2f, 1.3f);
+    }
+
+    public static final int DASH_TICKS = 8;
+    private int dashT, dashHold;
+    private float dashR;
+    private Vec3 dashFrom, dashTo;
+    private LivingEntity dashBoss;
+
+    private void stepDash(ServerLevel sl) {
+        dashT--;
+        double k = 1 - dashT / (double) DASH_TICKS;
+        k = k * k * (3 - 2 * k);
+        Vec3 p = dashFrom.lerp(dashTo, k);
+        setDeltaMovement(Vec3.ZERO);
+        faceTo(dashTo.add(dashTo.subtract(dashFrom)));
+        moveTo(p.x, p.y, p.z, getYRot(), getXRot());
+        sl.sendParticles(ParticleTypes.END_ROD, getX(), getY() + 1, getZ(), 3, 0.3, 0.5, 0.3, 0.01);
+        if (dashT > 0) return;
+        setNoGravity(false);
+        raiseBarrier(sl, dashTo, dashBoss, dashR, dashHold);
+    }
+
+    private void raiseBarrier(ServerLevel sl, Vec3 at, LivingEntity boss, float r, int hold) {
+        getNavigation().stop();
+        if (boss != null) { faceTo(boss.position()); getLookControl().setLookAt(boss, 90, 90); }
         guarding = hold;
-        triggerAnim("skill", "rise");
+        triggerAnim(CINE, "rise");
         DaKhuyetMoves.wingsFx(sl, this, DaKhuyetMoves.MOON, hold);
         com.hukhong.vfx.Fx.groundRing(sl, null, at, r, DaKhuyetMoves.MOON, hold);
         com.hukhong.vfx.Fx.rune(sl, null, at.add(0, 0.1, 0), r * 0.8f, DaKhuyetMoves.MOON, hold, 8);
-        com.hukhong.vfx.Fx.elem(sl, null, com.hukhong.vfx.Fx.E_HALOS, at.add(0, 2, 0), net.minecraft.world.phys.Vec3.ZERO, r * 0.5f, DaKhuyetMoves.MOON, hold);
+        com.hukhong.vfx.Fx.elem(sl, null, com.hukhong.vfx.Fx.E_HALOS, at.add(0, 2, 0), Vec3.ZERO, r * 0.5f, DaKhuyetMoves.MOON, hold);
+        sl.sendParticles(ParticleTypes.CLOUD, getX(), getY() + 0.1, getZ(), 12, 0.6, 0.05, 0.6, 0.05);
         playSound(SoundEvents.BEACON_ACTIVATE, 3f, 0.7f);
     }
 
+    // ---- hy sinh pha 3 -> 4 (PLAN §7.2; NguyenThuyTichDiet.grandSacrifice gọi theo dòng thời gian)
+    /** t150: quỳ dần dưới áp lực, kết giới nứt. */
+    public void sacrificeKneel(ServerLevel sl, Vec3 guard, LivingEntity boss) {
+        guarding = Math.max(guarding, 60);
+        triggerAnim(CINE, "kneel");
+        com.hukhong.vfx.Fx.groundCrack(sl, null, guard, 6f, DaKhuyetMoves.MOON, 10, 50);
+        Vec3 f = boss == null ? fwd() : boss.position().subtract(guard).multiply(1, 0, 1);
+        f = f.lengthSqr() < 1e-4 ? fwd() : f.normalize();
+        Vec3 side = new Vec3(-f.z, 0, f.x);
+        com.hukhong.vfx.Fx.rift(sl, null, guard.add(f.scale(2.5)).add(0, 2.2, 0), side.scale(2.5), 2.4f, DaKhuyetMoves.MOON, 30);
+        com.hukhong.vfx.Fx.shake(sl, guard, 2f, 10, 40f);
+        playSound(SoundEvents.GLASS_BREAK, 3f, 0.5f);
+        playSound(SoundEvents.ANVIL_LAND, 1.5f, 0.6f);
+    }
+
+    /** t170: quay lại nhìn người chơi lần cuối (vẫn quỳ, ngẩng đầu). */
+    public void sacrificeLookBack(ServerLevel sl) {
+        Player p = sl.getNearestPlayer(this, 64);
+        if (p != null) { faceTo(p.position()); getLookControl().setLookAt(p, 90, 90); }
+        triggerAnim(CINE, "look_up");
+        com.hukhong.vfx.Fx.elem(sl, null, com.hukhong.vfx.Fx.E_HALOS, position().add(0, 3.6, 0), Vec3.ZERO, 1.6f, MOON_WHITE, 10);
+    }
+
     /** Sau khi boss ngã: dừng đánh, đứng yên cho cutscene kết. */
-    public void standDown() { allyIntro = Integer.MAX_VALUE; setTarget(null); }
+    public void standDown() { allyIntro = Integer.MAX_VALUE; endMove(); pools.clear(); setTarget(null); }
 
     // ================================================================ chiến đấu kiểu Malenia (xem DaKhuyetMoves)
     /** Chiêu đang thi triển (id trong BossPhases "da_khuyet" hoặc dk_dem_khuyet), null = rảnh. */
@@ -462,12 +633,38 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
 
     /** Đòn của Dạ Khuyết trúng người chơi: sát thương + hồi máu (lifesteal) + hiệu ứng hút máu. */
     public boolean strike(LivingEntity p, float dmg) {
+        if (ally) return allyStrike(p, dmg);
         boolean ok = p.hurt(damageSources().mobAttack(this), dmg);
         if (ok && !ally) {
             heal(dmg * LIFESTEAL);
             if (level() instanceof ServerLevel sl) DaKhuyetMoves.drainFx(sl, this, p);
         }
         return ok;
+    }
+
+    /** Đòn của đồng minh: không bao giờ trúng người chơi / đồng minh; % máu mục tiêu có trần (§4.3); trúng => hồi 1% máu người chơi gần nhất. */
+    private boolean allyStrike(LivingEntity v, float dmg) {
+        if (v == this || v instanceof Player || isStoryAlly(v)) return false;
+        float frac;
+        if (v instanceof NguyenThuyTichDiet) {
+            double mult = dmg / Math.max(1.0, getAttributeValue(Attributes.ATTACK_DAMAGE));
+            frac = (float) Math.min(ALLY_HIT_CAP, ALLY_FRAC * mult);
+            frac = Math.min(frac, ALLY_TOTAL_CAP - allyDealt);
+        } else frac = v instanceof com.hukhong.entity.HuMob ? ALLY_MOB_FRAC : 0f;
+        if (frac <= 0) { // hết trần: vẫn có hình ảnh trúng đòn
+            if (level() instanceof ServerLevel sl) sl.sendParticles(ParticleTypes.END_ROD, v.getX(), v.getY() + v.getBbHeight() * 0.5, v.getZ(), 4, 0.4, 0.4, 0.4, 0.05);
+            return false;
+        }
+        if (!v.hurt(damageSources().mobAttack(this), v.getMaxHealth() * frac)) return false;
+        if (v instanceof NguyenThuyTichDiet) allyDealt += frac;
+        if (level() instanceof ServerLevel sl) {
+            Player p = sl.getNearestPlayer(this, 32);
+            if (p != null && !p.isSpectator()) {
+                p.heal(p.getMaxHealth() * 0.01f);
+                sl.sendParticles(moonDust(1f), p.getX(), p.getY() + 1.2, p.getZ(), 3, 0.3, 0.4, 0.3, 0);
+            }
+        }
+        return true;
     }
 
     @Override public boolean doHurtTarget(net.minecraft.world.entity.Entity e) {
@@ -486,11 +683,14 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         if (!(level() instanceof ServerLevel sl) || !isAlive()) return;
         if (redeeming) { tickRedeem(sl); return; }
         if (trial && (trialPlayers == 0 || tickCount % 100 == 1)) rescaleTrial(sl);
-        if (!avatar() && !ally) director.tick(sl);
-        else if (!ally) com.hukhong.boss.ai.BossBrain.tickFor(sl, this, this); // phân thân: không director nhưng vẫn có brain
-        if (!ally) brainFollowUps(sl);
+        if (ally) allyTick(sl); // đồng minh: brain với host riêng (allyHost), nhắm Nguyên Thủy
+        else {
+            if (!avatar()) director.tick(sl);
+            else com.hukhong.boss.ai.BossBrain.tickFor(sl, this, this); // phân thân: không director nhưng vẫn có brain
+            brainFollowUps(sl);
+        }
         if (mv != null) {
-            if (ally || director.transitioning()) endMove();
+            if (ally ? (allyIntro > 0 || guarding > 0 || dashT > 0) : director.transitioning()) endMove();
             else if (!DaKhuyetMoves.step(sl, this, mt++)) { endMove(); skillCd = (int) Math.round(com.hukhong.events.BossBuff.cd(70) * cdMul()); }
         }
         if (!pools.isEmpty()) DaKhuyetMoves.tickPools(sl, this);
@@ -499,7 +699,7 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     @Override protected void customServerAiStep() {
         super.customServerAiStep();
         ServerLevel sl = (ServerLevel) level();
-        if (ally) { allyStep(sl); return; }
+        if (ally) return; // đồng minh chạy trong tick() (allyTick)
         if (redeeming) return;
         bar.setProgress(getHealth() / getMaxHealth());
         if (aeoniaCd > 0) aeoniaCd--;
@@ -537,12 +737,23 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
         for (String a : new String[]{"attack", "skill_a", "skill_b", "skill_c", "phase", "thrust", "flurry", "rise", "dive"})
             sk.triggerableAnim(a, RawAnimation.begin().then(n + a, Animation.LoopType.PLAY_ONCE));
         c.add(sk);
+        // cutscene cải tà / hy sinh (PLAN §7.1-7.2): thêm SAU cùng để đè các controller khác khi đang chạy
+        AnimationController<DaKhuyet> cine = new AnimationController<>(this, CINE, 3, s -> PlayState.STOP);
+        cine.triggerableAnim("stagger", RawAnimation.begin().then(n + "stagger", Animation.LoopType.HOLD_ON_LAST_FRAME));
+        cine.triggerableAnim("kneel", RawAnimation.begin().then(n + "kneel", Animation.LoopType.PLAY_ONCE).thenLoop(n + "kneel_idle"));
+        cine.triggerableAnim("look_up", RawAnimation.begin().then(n + "look_up", Animation.LoopType.HOLD_ON_LAST_FRAME));
+        cine.triggerableAnim("offer_blade", RawAnimation.begin().then(n + "offer_blade", Animation.LoopType.HOLD_ON_LAST_FRAME));
+        cine.triggerableAnim("rise", RawAnimation.begin().then(n + "rise", Animation.LoopType.PLAY_ONCE));
+        c.add(cine);
     }
+
+    /** Controller animation cutscene. */
+    public static final String CINE = "cine";
 
     @Override public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }
 
     // ================================================================ BossBrain (PLAN-v1 §2, xem DaKhuyetBrain)
-    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return ally ? null : DaKhuyetBrain.PROFILE; }
+    @Override public com.hukhong.boss.ai.BossProfile brainProfile() { return DaKhuyetBrain.PROFILE; } // đồng minh cũng có brain (allyHost)
     @Override public com.hukhong.boss.ai.GapClose brainGapClose(ServerLevel sl, LivingEntity t, double dist) { return DaKhuyetBrain.gapClose(phase(), random); }
     @Override public com.hukhong.boss.ai.BossProfile.PhaseVals brainPhaseVals(com.hukhong.boss.ai.BossProfile.PhaseVals base) {
         return phase() >= 3 && getHealth() < getMaxHealth() * 0.3f ? DaKhuyetBrain.ENRAGED : base;

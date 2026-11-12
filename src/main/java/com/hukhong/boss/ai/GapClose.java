@@ -41,7 +41,7 @@ public interface GapClose {
     GapClose DASH = new GapClose() {
         public String anim() { return "dash"; }
         public boolean step(ServerLevel sl, Mob b, BossMovement mv, LivingEntity t, int i) {
-            double d = b.distanceTo(t);
+            double d = BossBrain.edgeDist(b, t);
             if (i > 14 || d < 2.8) { mv.freeze(); return false; }
             mv.face(t.position(), 30f);
             mv.drive(mv.forward().scale(Math.min(0.85, d * 0.3)), true);
@@ -56,7 +56,7 @@ public interface GapClose {
         public boolean step(ServerLevel sl, Mob b, BossMovement mv, LivingEntity t, int i) {
             if (i == 0) {
                 Vec3 to = t.position().subtract(b.position());
-                double h = Math.max(0, to.horizontalDistance() - 2.5);
+                double h = Math.max(0, to.horizontalDistance() - 2.5 - big(t));
                 Vec3 dir = new Vec3(to.x, 0, to.z).normalize();
                 mv.face(t.position(), 180f);
                 mv.drive(dir.scale(h / 14.0), true);
@@ -84,7 +84,7 @@ public interface GapClose {
             if (i < 6) return true;
             Vec3 off = b.position().subtract(t.position()).multiply(1, 0, 1);
             off = off.lengthSqr() < 1e-3 ? new Vec3(1, 0, 0) : off.normalize();
-            Vec3 at = t.position().add(off.scale(2.5));
+            Vec3 at = t.position().add(off.scale(2.5 + big(t)));
             b.teleportTo(at.x, t.getY(), at.z);
             b.playSound(SoundEvents.ENDERMAN_TELEPORT, 1f, 0.8f);
             mv.face(t.position(), 360f);
@@ -102,19 +102,19 @@ public interface GapClose {
             mv.face(t.position(), 40f);
             if (i == 0) { b.setNoGravity(true); b.playSound(SoundEvents.PHANTOM_FLAP, 1.6f, 0.8f); }
             Vec3 to = t.position().subtract(b.position()).multiply(1, 0, 1);
-            double d = to.length();
+            double d = to.length(), r = 3 + big(t);
             Vec3 n = d < 1e-3 ? mv.forward() : to.scale(1 / d);
             if (i < 8) {                                   // bốc lên, trôi về phía mục tiêu
                 b.setDeltaMovement(b.getDeltaMovement().x, 0.42, b.getDeltaMovement().z);
                 mv.drive(n.scale(Math.min(0.5, d * 0.08)), true);
             } else if (i < 24) {                           // lượn vòng bán kính ~3 quanh đỉnh đầu mục tiêu
                 double a = Math.atan2(-to.z, -to.x) + 0.18;
-                Vec3 want = t.position().add(Math.cos(a) * 3, 0, Math.sin(a) * 3).subtract(b.position()).multiply(1, 0, 1);
+                Vec3 want = t.position().add(Math.cos(a) * r, 0, Math.sin(a) * r).subtract(b.position()).multiply(1, 0, 1);
                 mv.drive(want.scale(0.35), true);
                 b.setDeltaMovement(b.getDeltaMovement().x, Math.sin(i * 0.5) * 0.04, b.getDeltaMovement().z);
                 if (i % 3 == 0) sl.sendParticles(ParticleTypes.END_ROD, b.getX(), b.getY() + 0.5, b.getZ(), 2, 0.4, 0.2, 0.4, 0.01);
             } else {                                       // lao xuống
-                mv.drive(n.scale(Math.min(0.9, Math.max(0, d - 1.8) * 0.45)), true);
+                mv.drive(n.scale(Math.min(0.9, Math.max(0, d - 1.8 - big(t)) * 0.45)), true);
                 b.setDeltaMovement(b.getDeltaMovement().x, -1.0, b.getDeltaMovement().z);
                 if ((b.onGround() && i > 24) || i >= 34) {
                     end(b);
@@ -153,6 +153,9 @@ public interface GapClose {
         public void end(Mob b) { b.setInvisible(false); }
     };
 
+    /** Bán kính thêm khi mục tiêu to (rộng &gt; 1.5 block, vd. Nguyên Thủy): đáp / dừng ở mép thay vì trong thân. */
+    static double big(LivingEntity t) { double w = t.getBbWidth(); return w > 1.5 ? (w - 1.0) * 0.5 : 0; }
+
     /** Điểm sau lưng mục tiêu (ngược hướng nhìn), lùi về phía xa / gần nếu ra ngoài sân. */
     static Vec3 behind(Mob b, LivingEntity t) {
         Vec3 look = t.getLookAngle().multiply(1, 0, 1);
@@ -160,7 +163,8 @@ public interface GapClose {
         dir = dir.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : dir.normalize();
         look = look.lengthSqr() < 1e-4 ? dir.scale(-1) : look.normalize();
         double[] a = BossArena.bounds(b);
-        for (Vec3 c : new Vec3[]{t.position().subtract(look.scale(2.2)), t.position().add(dir.scale(2.2)), t.position().subtract(dir.scale(2.2))}) {
+        double k = 2.2 + big(t);
+        for (Vec3 c : new Vec3[]{t.position().subtract(look.scale(k)), t.position().add(dir.scale(k)), t.position().subtract(dir.scale(k))}) {
             if (a == null || Math.hypot(c.x - a[0], c.z - a[1]) <= a[2] - 2.5) return c;
         }
         return b.position();

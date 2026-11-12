@@ -89,11 +89,12 @@ public final class DaKhuyetMoves {
         if (t != null) d.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, t.getEyePosition());
         boolean ult = d.mv.equals("dk_huyet_hoa");
         Component name = Component.translatable("hukhong.boss.move." + d.mv);
-        for (ServerPlayer p : sl.players())
-            if (p.distanceToSqr(d) < 48 * 48) p.displayClientMessage(ult ? name.copy().withStyle(ChatFormatting.RED, ChatFormatting.BOLD) : name, true);
+        if (!d.ally()) // đồng minh: không chiếm thanh hành động (cảnh báo chiêu của Nguyên Thủy quan trọng hơn)
+            for (ServerPlayer p : sl.players())
+                if (p.distanceToSqr(d) < 48 * 48) p.displayClientMessage(ult ? name.copy().withStyle(ChatFormatting.RED, ChatFormatting.BOLD) : name, true);
         d.playSound(SoundEvents.AMETHYST_BLOCK_RESONATE, 2f, ult ? 0.4f : 0.7f);
         if (ult) d.aeoniaCd = 900;
-        if (ult && !d.avatar()) ultScene(sl, d);
+        if (ult && !d.avatar() && !d.ally()) ultScene(sl, d);
     }
 
     private static Vec3 tpos(DaKhuyet d) {
@@ -230,11 +231,11 @@ public final class DaKhuyetMoves {
     private static void slash(ServerLevel sl, DaKhuyet d, double rad, double half, double roll, double mul, int rgb) {
         double cos = Math.cos(Math.toRadians(half));
         Vec3 c = d.position();
-        for (Player p : players(sl, c, rad)) {
-            Vec3 rel = p.position().subtract(c).multiply(1, 0, 1);
+        for (LivingEntity p : victims(sl, d, c, rad)) {
+            Vec3 rel = at(d, p, c).subtract(c).multiply(1, 0, 1);
             double dist = rel.length();
             if (dist > rad || (dist > 1.2 && rel.normalize().dot(d.aim) < cos)) continue;
-            if (d.strike(p, d.moveDamage(mult(d.mv) * mul))) PhaseMoves.applyHit(p, Hit.NONE);
+            if (d.strike(p, d.moveDamage(mult(d.mv) * mul)) && p instanceof Player pl) PhaseMoves.applyHit(pl, Hit.NONE);
         }
         Fx.qi(sl, c.add(0, 1.4, 0), d.aim.scale(rad * 0.8), (float) (rad * 0.6), rgb, roll, 10);
         d.playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 2.5f, mul > 1 ? 0.5f : 0.8f);
@@ -265,8 +266,8 @@ public final class DaKhuyetMoves {
             Fx.ribbon(sl, null, d.position(), s, 0, 3, 0, 0.6f, rgb);
             d.teleportTo(s.x, s.y, s.z);
             d.setDeltaMovement(Vec3.ZERO);
-            for (Player p : players(sl, s, rad))
-                if (flat2(p.position(), s) <= rad * rad && d.strike(p, d.moveDamage(mult(d.mv)))) PhaseMoves.applyHit(p, Hit.KNOCK_UP);
+            for (LivingEntity p : victims(sl, d, s, rad))
+                if (flat2(at(d, p, s), s) <= rad * rad && d.strike(p, d.moveDamage(mult(d.mv))) && p instanceof Player pl) PhaseMoves.applyHit(pl, Hit.KNOCK_UP);
             Fx.groundCrack(sl, null, s, (float) rad, rgb, 8, 40);
             Fx.groundRing(sl, null, s, (float) rad * 1.3f, rgb, 20);
             Fx.shake(sl, s, 2.5f, 16, 32f);
@@ -289,11 +290,11 @@ public final class DaKhuyetMoves {
             for (int i = -1; i <= 1; i++) {
                 Vec3 dir = rot(d.aim, i * 25);
                 Fx.qi(sl, d.from.add(0, 1.2, 0), dir.scale(len), 2.2f, MOON, i * 30, 14);
-                for (Player p : players(sl, d.from, len)) {
+                for (LivingEntity p : victims(sl, d, d.from, len)) {
                     Vec3 rel = p.position().subtract(d.from).multiply(1, 0, 1);
                     double along = rel.dot(dir);
-                    if (along < 0 || along > len || rel.subtract(dir.scale(along)).length() > 1.6) continue;
-                    if (d.hitOnce.add(p.getUUID()) && d.strike(p, d.moveDamage(mult(d.mv)))) PhaseMoves.applyHit(p, Hit.SLOW);
+                    if (along < 0 || along > len + p.getBbWidth() * 0.5 || rel.subtract(dir.scale(along)).length() > 1.6 + Math.max(0, p.getBbWidth() - 1) * 0.5) continue;
+                    if (d.hitOnce.add(p.getUUID()) && d.strike(p, d.moveDamage(mult(d.mv))) && p instanceof Player pl) PhaseMoves.applyHit(pl, Hit.SLOW);
                 }
             }
             d.playSound(SoundEvents.TRIDENT_THROW.value(), 2.5f, 0.6f);
@@ -314,8 +315,8 @@ public final class DaKhuyetMoves {
             d.triggerAnim("skill", "skill_b");
         }
         if (t == 30) {
-            for (Player p : players(sl, d.position(), 10)) {
-                if (flat2(p.position(), d.position()) > 100) continue;
+            for (LivingEntity p : victims(sl, d, d.position(), 10)) {
+                if (flat2(at(d, p, d.position()), d.position()) > 100) continue;
                 if (d.strike(p, d.moveDamage(mult(d.mv)))) {
                     p.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 80, 0));
                     p.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 120, 1));
@@ -370,8 +371,8 @@ public final class DaKhuyetMoves {
             Fx.ribbon(sl, null, d.position(), s, 0, 3, 0, 1.0f, SCARLET);
             d.teleportTo(s.x, s.y, s.z);
             d.setDeltaMovement(Vec3.ZERO);
-            for (Player p : players(sl, s, AE_RAD))
-                if (flat2(p.position(), s) <= AE_RAD * AE_RAD && d.strike(p, d.moveDamage(mult(d.mv)))) PhaseMoves.applyHit(p, Hit.WEAK);
+            for (LivingEntity p : victims(sl, d, s, AE_RAD))
+                if (flat2(at(d, p, s), s) <= AE_RAD * AE_RAD && d.strike(p, d.moveDamage(mult(d.mv))) && p instanceof Player pl) PhaseMoves.applyHit(pl, Hit.WEAK);
             bloomFx(sl, s, AE_RAD);
             addPool(sl, d, s, 9, 200, 0.25);
             d.playSound(SoundEvents.GENERIC_EXPLODE.value(), 4f, 0.5f);
@@ -386,14 +387,36 @@ public final class DaKhuyetMoves {
         return sl.getEntitiesOfClass(Player.class, new AABB(c, c).inflate(r, 4, r), p -> !p.isSpectator() && p.isAlive());
     }
 
+    /**
+     * Nạn nhân của chiêu (PLAN nttd-story-rework §2.3): Dạ Khuyết thường -> người chơi như cũ; Dạ Khuyết đồng minh -> CHỈ mục tiêu
+     * của nàng (Nguyên Thủy) + Hư mob trong vùng, không bao giờ người chơi / đồng minh cốt truyện.
+     */
+    static List<? extends LivingEntity> victims(ServerLevel sl, DaKhuyet d, Vec3 c, double r) {
+        if (!d.ally()) return players(sl, c, r);
+        List<LivingEntity> out = new java.util.ArrayList<>();
+        LivingEntity t = d.mTarget != null ? d.mTarget : d.getTarget();
+        AABB box = new AABB(c, c).inflate(r, 4, r);
+        if (t != null && t.isAlive() && t.getBoundingBox().intersects(box)) out.add(t);
+        for (LivingEntity m : sl.getEntitiesOfClass(LivingEntity.class, box, e -> e.isAlive() && e instanceof com.hukhong.entity.HuMob))
+            if (m != t) out.add(m);
+        return out;
+    }
+
+    /** Điểm của nạn nhân dùng để đo vùng: đồng minh đo tới điểm gần nhất trên thân (Nguyên Thủy to), còn lại = vị trí chân. */
+    private static Vec3 at(DaKhuyet d, LivingEntity v, Vec3 c) {
+        if (!d.ally() || v.getBbWidth() <= 1.5) return v.position();
+        AABB b = v.getBoundingBox();
+        return new Vec3(net.minecraft.util.Mth.clamp(c.x, b.minX, b.maxX), v.getY(), net.minecraft.util.Mth.clamp(c.z, b.minZ, b.maxZ));
+    }
+
     private static double flat2(Vec3 a, Vec3 b) { double dx = a.x - b.x, dz = a.z - b.z; return dx * dx + dz * dz; }
 
     /** Trúng người chơi quanh điểm (mỗi người tối đa 1 lần / đợt nếu once). */
     private static void hitAround(ServerLevel sl, DaKhuyet d, Vec3 c, double r, double mul, Hit h, boolean once) {
-        for (Player p : players(sl, c, r)) {
-            if (flat2(p.position(), c) > r * r || Math.abs(p.getY() - c.y) > 3) continue;
+        for (LivingEntity p : victims(sl, d, c, r)) {
+            if (flat2(at(d, p, c), c) > r * r || Math.abs(p.getY() - c.y) > 3 + (d.ally() ? p.getBbHeight() : 0)) continue;
             if (once && !d.hitOnce.add(p.getUUID())) continue;
-            if (d.strike(p, d.moveDamage(mul))) PhaseMoves.applyHit(p, h);
+            if (d.strike(p, d.moveDamage(mul)) && p instanceof Player pl) PhaseMoves.applyHit(pl, h);
         }
     }
 
@@ -409,8 +432,9 @@ public final class DaKhuyetMoves {
             if (--p.left <= 0) { it.remove(); continue; }
             if (p.left % 5 == 0) sl.sendParticles(ParticleTypes.CRIMSON_SPORE, p.c.x, p.c.y + 0.3, p.c.z, 6, p.r * 0.5, 0.1, p.r * 0.5, 0.01);
             if (p.left % 10 != 0) continue;
-            for (Player pl : players(sl, p.c, p.r)) {
-                if (flat2(pl.position(), p.c) > p.r * p.r || Math.abs(pl.getY() - p.c.y) > 2) continue;
+            for (LivingEntity pl : victims(sl, d, p.c, p.r)) {
+                if (flat2(at(d, pl, p.c), p.c) > p.r * p.r || Math.abs(pl.getY() - p.c.y) > 2) continue;
+                if (d.ally()) { d.strike(pl, p.dmg); continue; } // đồng minh: qua strike() để chịu trần sát thương
                 pl.hurt(d.damageSources().magic(), p.dmg);
                 pl.addEffect(new MobEffectInstance(MobEffects.POISON, 40, 0));
             }
