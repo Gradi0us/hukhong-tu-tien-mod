@@ -104,7 +104,7 @@ public final class SellPrices {
         }
         if (it instanceof SkillUpgradeScrollItem) return ShopCatalog.SCROLL_PRICE * BUYBACK_PCT / 100;
         if (it instanceof com.hukhong.phapkhi.PhapKhiItem pk) { // Phap Khi: thu mua theo so lan con lai
-            return Math.max(1, pk.kind.price(pk.tier) * BUYBACK_PCT / 100 * com.hukhong.phapkhi.PhapKhiItem.usesLeft(s) / Math.max(1, pk.maxUses()));
+            return Math.max(1, pk.kind.price(pk.tier) * BUYBACK_PCT / 100 * com.hukhong.phapkhi.PhapKhiItem.usesLeft(s) / Math.max(1, pk.maxUses(s)));
         }
         Long cat = catalog().get(it);
         if (cat != null) return Math.max(1, cat * BUYBACK_PCT * qualityPct(s) / 10_000);

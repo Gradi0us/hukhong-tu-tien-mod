@@ -33,6 +33,7 @@ public class ProfessionStationBlockEntity extends RandomizableContainerBlockEnti
     /** Nut menu: chi nhan id 0 (che tao). */
     public void craft(ServerPlayer sp) {
         if (station() == ProfessionStationBlock.Station.DOAN_TAO_DAI) { say(sp, "hukhong.forge.use_forge"); return; }
+        if (station() == ProfessionStationBlock.Station.PHU_AN) { say(sp, "hukhong.phu.use_draw"); return; }
         if (!items.get(OUT).isEmpty()) { say(sp, "hukhong.station.out_full"); return; }
         List<ItemStack> in = List.of(items.get(0), items.get(1), items.get(2));
         ProfessionRecipes.Recipe r = ProfessionRecipes.find(station().recipes(), in);

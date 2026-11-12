@@ -3844,5 +3844,21 @@
   "hukhong.forge.dismantled": "Dismantled, 50% of the materials returned.",
   "hukhong.forge.use_forge": "The Forging Station uses the Heat – Hammer – Quench process.",
   "hukhong.forge.refine.tip": "Refined +%s (stats +%s%%)",
-  "hukhong.forge.stat.tip": "Stat multiplier ×%s (quality × refine)"
+  "hukhong.forge.stat.tip": "Stat multiplier ×%s (quality × refine)",
+  "hukhong.phu.draw": "Draw talisman",
+  "hukhong.phu.quick": "Quick draw",
+  "hukhong.phu.quick_low": "Quick draw needs profession level 12.",
+  "hukhong.phu.quick_need": "Quick draw needs %s of each ingredient.",
+  "hukhong.phu.quick_done": "Quick draw done: Medium quality.",
+  "hukhong.phu.use_draw": "Talisman Desk: press Draw talisman.",
+  "hukhong.phu.bad_trace": "Invalid stroke data.",
+  "hukhong.phu.fail": "Talisman failed: lost Talisman Paper and Spirit Ink.",
+  "hukhong.phu.done": "Talisman drawn: %s",
+  "hukhong.phu.title": "Draw talisman: %s",
+  "hukhong.phu.hint": "Hold left mouse at the start and trace the rune. Leaving the tube for over 1 second ruins the talisman.",
+  "hukhong.phu.info": "Tier %s · Tube ±%s px",
+  "hukhong.phu.time": "Time: %s / %s s",
+  "hukhong.phu.in_tube": "In the tube",
+  "hukhong.phu.out_tube": "Off the tube: %s s",
+  "hukhong.phu.cancel": "Cancel"
 }

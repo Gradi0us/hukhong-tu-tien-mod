@@ -127,19 +127,20 @@ final class PhapKhiAttack {
 
     // ------------------------------------------------------------------ entry
 
-    static boolean fire(ServerPlayer p, PhapKhiKind kind, PhapKhiTier tier, boolean skillMode) {
+    /** qm = hệ số phẩm chế (CraftQuality.mult), nhân vào mọi hệ số sát thương. */
+    static boolean fire(ServerPlayer p, PhapKhiKind kind, PhapKhiTier tier, boolean skillMode, double qm) {
         if (!(p.level() instanceof ServerLevel lv)) return false;
         Vec3 at = aim(lv, p, RANGE);
-        if (skillMode) skill(lv, p, kind, tier, at); else full(lv, p, kind, tier, at);
+        if (skillMode) skill(lv, p, kind, tier, at, qm); else full(lv, p, kind, tier, at, qm);
         return true;
     }
 
     // ------------------------------------------------------------------ Toàn Lực
 
-    private static void full(ServerLevel lv, ServerPlayer p, PhapKhiKind kind, PhapKhiTier tier, Vec3 at) {
+    private static void full(ServerLevel lv, ServerPlayer p, PhapKhiKind kind, PhapKhiTier tier, Vec3 at, double qm) {
         int t = tier.ordinal();
         double r = PhapKhiTier.FULL_RADIUS[t];
-        double coef = PhapKhiTier.FULL_COEF[t];
+        double coef = PhapKhiTier.FULL_COEF[t] * qm;
         List<LivingEntity> targets = around(lv, p, at, r);
         for (LivingEntity e : targets) hit(p, e, coef, kind == PhapKhiKind.MA);
         Vec3 g = at.add(0, 0.06, 0);
@@ -263,9 +264,9 @@ final class PhapKhiAttack {
 
     // ------------------------------------------------------------------ Kỹ Năng
 
-    private static void skill(ServerLevel lv, ServerPlayer p, PhapKhiKind kind, PhapKhiTier tier, Vec3 at) {
+    private static void skill(ServerLevel lv, ServerPlayer p, PhapKhiKind kind, PhapKhiTier tier, Vec3 at, double qm) {
         int t = tier.ordinal();
-        double c = PhapKhiTier.SKILL_COEF[t];
+        double c = PhapKhiTier.SKILL_COEF[t] * qm;
         Vec3 look = p.getLookAngle();
         Vec3 flat = flatLook(p);
         Vec3 eyeLow = p.getEyePosition().subtract(0, 0.5, 0);

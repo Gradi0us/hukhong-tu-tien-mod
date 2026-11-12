@@ -47,13 +47,14 @@ public final class PhapKhiDefense {
     private static final Map<UUID, Buff> REDUCTION = new HashMap<>();
     private static final Map<UUID, Long> INVULN = new HashMap<>();
 
-    static boolean use(ServerPlayer p, PhapKhiKind kind, PhapKhiTier tier) {
+    /** qm = hệ số phẩm chế; nhân vào khiên Hộ Thân. */
+    static boolean use(ServerPlayer p, PhapKhiKind kind, PhapKhiTier tier, double qm) {
         if (!(p.level() instanceof ServerLevel lv)) return false;
         int t = tier.ordinal();
         long now = lv.getGameTime();
         switch (kind) {
             case HO_THAN -> {
-                float shield = (float) (p.getMaxHealth() * SHIELD_PCT[t]);
+                float shield = (float) (p.getMaxHealth() * SHIELD_PCT[t] * qm);
                 int amp = Math.min(250, Math.max(0, (int) Math.ceil(shield / 4f) - 1));
                 p.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, SHIELD_TICKS, amp, false, false));
                 p.setAbsorptionAmount(Math.max(p.getAbsorptionAmount(), shield));

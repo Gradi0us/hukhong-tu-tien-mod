@@ -29,8 +29,17 @@ public final class PhapKhiItem extends Item {
 
     public int maxUses() { return kind.maxUses(tier); }
 
+    /** Lần dùng tối đa của stack: theo loại/phẩm + thưởng phẩm chế (Thượng +1, Cực +2). */
+    public int maxUses(ItemStack s) { return kind.maxUses(tier) + qualityUses(s); }
+
+    /** Thưởng số lần từ phẩm chế ra (Phù An). Không có component = Trung = 0. */
+    static int qualityUses(ItemStack s) {
+        int q = com.hukhong.craft.CraftQuality.ordinal(s);
+        return q == com.hukhong.craft.CraftQuality.THUONG ? 1 : q == com.hukhong.craft.CraftQuality.CUC ? 2 : 0;
+    }
+
     public static int usesLeft(ItemStack s) {
-        int max = s.getItem() instanceof PhapKhiItem i ? i.maxUses() : 0;
+        int max = s.getItem() instanceof PhapKhiItem i ? i.maxUses(s) : 0;
         return Math.min(max, s.getOrDefault(PhapKhiRegistry.USES.get(), max));
     }
 
@@ -49,7 +58,7 @@ public final class PhapKhiItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext ctx, List<Component> tip, TooltipFlag flag) {
         tip.add(Component.translatableWithFallback("hukhong.phapkhi.tip.tier", "Phẩm: %s", tierName()).withStyle(ChatFormatting.GRAY));
-        tip.add(Component.translatableWithFallback("hukhong.phapkhi.tip.uses", "Còn %s lần", usesLeft(stack) + "/" + maxUses())
+        tip.add(Component.translatableWithFallback("hukhong.phapkhi.tip.uses", "Còn %s lần", usesLeft(stack) + "/" + maxUses(stack))
                 .withStyle(ChatFormatting.YELLOW));
         tip.add(Component.translatableWithFallback("hukhong.phapkhi.tip." + kind.id, PhapKhiText.tip(kind)).withStyle(ChatFormatting.AQUA));
         if (kind.cat == PhapKhiKind.Cat.ATTACK) {
@@ -63,10 +72,10 @@ public final class PhapKhiItem extends Item {
     }
 
     @Override
-    public boolean isBarVisible(ItemStack s) { return usesLeft(s) < maxUses(); }
+    public boolean isBarVisible(ItemStack s) { return usesLeft(s) < maxUses(s); }
 
     @Override
-    public int getBarWidth(ItemStack s) { return Math.round(13f * usesLeft(s) / Math.max(1, maxUses())); }
+    public int getBarWidth(ItemStack s) { return Math.round(13f * usesLeft(s) / Math.max(1, maxUses(s))); }
 
     @Override
     public int getBarColor(ItemStack s) { return tier.rgb; }
@@ -89,9 +98,10 @@ public final class PhapKhiItem extends Item {
     /** Thi triển + trừ 1 lần + hồi chiêu cả loại. false = không thi triển được (không trừ lần). Dùng cho cả GameTest. */
     public static boolean activate(ServerPlayer sp, ItemStack st) {
         if (!(st.getItem() instanceof PhapKhiItem it) || usesLeft(st) <= 0) return false;
+        double qm = com.hukhong.craft.CraftQuality.mult(com.hukhong.craft.CraftQuality.ordinal(st)); // phẩm chế: sát thương / khiên
         boolean ok = switch (it.kind.cat) {
-            case ATTACK -> PhapKhiAttack.fire(sp, it.kind, it.tier, skillMode(st));
-            case DEFENSE -> PhapKhiDefense.use(sp, it.kind, it.tier);
+            case ATTACK -> PhapKhiAttack.fire(sp, it.kind, it.tier, skillMode(st), qm);
+            case DEFENSE -> PhapKhiDefense.use(sp, it.kind, it.tier, qm);
             case ZONE -> PhapKhiZones.place(sp, it.kind, it.tier);
         };
         if (!ok) return false;

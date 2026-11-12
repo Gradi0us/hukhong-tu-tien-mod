@@ -1,8 +1,10 @@
 package com.hukhong.client.screen.profession;
 
 import com.hukhong.HuKhong;
+import com.hukhong.profession.ClientProfession;
 import com.hukhong.profession.ProfessionRecipes;
 import com.hukhong.profession.Profession;
+import com.hukhong.profession.phu.PhuDraw;
 import com.hukhong.profession.ProfessionRegistry;
 import com.hukhong.profession.station.ProfessionStationBlock;
 import com.hukhong.profession.station.StationMenu;
@@ -33,9 +35,20 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> {
     @Override
     protected void init() {
         super.init();
-        addRenderableWidget(Button.builder(Component.translatable("hukhong.station.craft"),
-                        b -> Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, 0))
-                .bounds(leftPos + 30, topPos + 44, 84, 16).build());
+        if (menu.station == ProfessionStationBlock.Station.PHU_AN) {
+            addRenderableWidget(Button.builder(Component.translatable("hukhong.phu.draw"),
+                            b -> PhuDrawScreen.open(this, menu))
+                    .bounds(leftPos + 30, topPos + 44, 40, 16).build());
+            Button quick = Button.builder(Component.translatable("hukhong.phu.quick"),
+                            b -> Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, 1))
+                    .bounds(leftPos + 74, topPos + 44, 40, 16).build();
+            quick.active = ClientProfession.get().level() >= PhuDraw.QUICK_LEVEL;
+            addRenderableWidget(quick);
+        } else {
+            addRenderableWidget(Button.builder(Component.translatable("hukhong.station.craft"),
+                            b -> Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, 0))
+                    .bounds(leftPos + 30, topPos + 44, 84, 16).build());
+        }
         Profession prof = menu.station == ProfessionStationBlock.Station.PHU_AN ? Profession.PHU_VAN : Profession.DOAN_TAO;
         book = new RecipeBookPanel(font, prof, leftPos - RecipeBookPanel.W - 4, topPos);
     }
