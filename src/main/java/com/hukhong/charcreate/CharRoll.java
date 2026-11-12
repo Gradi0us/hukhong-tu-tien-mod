@@ -45,6 +45,16 @@ public record CharRoll(long seed, int slots, Map<Path, Aptitude> aptitude, Origi
         return new CharRoll(seed, slots, apt, origin, START_AGES[r.nextInt(START_AGES.length)]);
     }
 
+    /** Bản sao với mọi tư chất bị kẹp không vượt {@code cap} (Trùng Sinh). Các trường khác giữ nguyên. */
+    public CharRoll withAptitudeCap(Aptitude cap) {
+        Map<Path, Aptitude> m = new EnumMap<>(Path.class);
+        for (Map.Entry<Path, Aptitude> e : aptitude.entrySet()) {
+            Aptitude a = e.getValue();
+            m.put(e.getKey(), a.ordinal() > cap.ordinal() ? cap : a);
+        }
+        return new CharRoll(seed, slots, m, origin, startAge);
+    }
+
     private static <T> T pick(Random r, T[] vals, ToIntFunction<T> w) {
         int total = 0;
         for (T v : vals) total += w.applyAsInt(v);

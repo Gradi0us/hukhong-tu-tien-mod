@@ -3747,5 +3747,12 @@
   "hukhong.hothe.tip.phi_van_ngoa": "Boots: +move speed (+3%..+15%), lower stamina cost for dodging.",
   "hukhong.hothe.only": "Only Defensive Spirit Gear can be worn",
   "hukhong.hothe.tip.only": "Only Defensive Spirit Gear can be worn",
-  "hukhong.station.level_low": "Profession level too low (need Lv %s)."
+  "hukhong.station.level_low": "Profession level too low (need Lv %s).",
+  "item.hukhong.trung_sinh_dan": "Rebirth Pill",
+  "hukhong.trung_sinh.tip": "Rebirth: re-choose your path, aptitude cannot exceed the original, reset to level 10. Usable once per player.",
+  "hukhong.trung_sinh.warn": "Rebirth Pill: your chosen paths will be erased for re-selection. Use again within 10 seconds to confirm.",
+  "hukhong.trung_sinh.used": "You have already used a Rebirth Pill; each player may use one only.",
+  "hukhong.trung_sinh.need_path": "You have not chosen a path yet, so you cannot rebirth.",
+  "hukhong.trung_sinh.title": "Rebirth",
+  "hukhong.trung_sinh.subtitle": "Choose your path again"
 }

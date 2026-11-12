@@ -22,6 +22,11 @@ public final class ModAttachments {
             () -> AttachmentType.builder(() -> AgeData.DEFAULT)
                     .serialize(AgeData.CODEC).copyOnDeath().build());
 
+    /** Trùng Sinh: đã dùng đan, cửa sổ xác nhận, cờ chờ chọn lại đạo (giữ khi chết). */
+    public static final Supplier<AttachmentType<com.hukhong.trungsinh.TrungSinhData>> TRUNG_SINH = ATTACHMENTS.register("trung_sinh",
+            () -> AttachmentType.builder(() -> com.hukhong.trungsinh.TrungSinhData.DEFAULT)
+                    .serialize(com.hukhong.trungsinh.TrungSinhData.CODEC).copyOnDeath().build());
+
     /** Thể Lực + Lách Né (không giữ khi chết: hồi sinh đầy). */
     public static final Supplier<AttachmentType<com.hukhong.dodge.DodgeData>> DODGE = ATTACHMENTS.register("dodge",
             () -> AttachmentType.builder(() -> com.hukhong.dodge.DodgeData.DEFAULT)

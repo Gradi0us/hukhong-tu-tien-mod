@@ -56,7 +56,7 @@ public final class CharCreateService {
         open(p, roll);
     }
 
-    private static void open(ServerPlayer p, CharRoll roll) {
+    public static void open(ServerPlayer p, CharRoll roll) {
         PacketDistributor.sendToPlayer(p, new OpenCharCreatePayload(roll));
     }
 
@@ -80,17 +80,22 @@ public final class CharCreateService {
         for (Path x : set) apt.put(x, roll.aptitude().get(x));
         com.hukhong.phaptu.PhapTu.setElement(p, set.contains(Path.PHAP) ? chosen : null); // tự chọn (trước: roll ngẫu nhiên)
         CultivationData nd = d.withCharacter(set, apt, roll.origin().id, roll);
+        boolean rebirth = com.hukhong.trungsinh.TrungSinhService.isPending(p); // Trùng Sinh: cấp về 10, không spawn lại
         // Tiên Thiên: cấp khởi đầu (đơn đạo 1..10; đa đạo tới 20). Đặt trực tiếp, không qua EXP.
-        nd = applyStartLevel(nd, TienThien.startLevel(apt.values(), roll.seed()));
+        nd = rebirth ? com.hukhong.trungsinh.TrungSinhService.rebirthLevel(nd)
+                : applyStartLevel(nd, TienThien.startLevel(apt.values(), roll.seed()));
         p.setData(ModAttachments.CULTIVATION, nd);
         SyncPayload.send(p);
         com.hukhong.stats.StatService.refresh(p);
-        try { com.hukhong.world.OriginSpawn.apply(p, roll.origin(), set, roll.seed()); }
-        catch (RuntimeException ex) { com.mojang.logging.LogUtils.getLogger().warn("OriginSpawn failed", ex); }
+        if (!rebirth) {
+            try { com.hukhong.world.OriginSpawn.apply(p, roll.origin(), set, roll.seed()); }
+            catch (RuntimeException ex) { com.mojang.logging.LogUtils.getLogger().warn("OriginSpawn failed", ex); }
+        }
         if (set.contains(Path.KIEM)) com.hukhong.banmenh.BanMenhService.grant(p); // Kiếm Tu nhận Bản Mệnh Kiếm
         if (set.contains(Path.PHAP)) com.hukhong.phaptu.linhtruong.LinhTruongService.grant(p); // Pháp Tu nhận Linh Trượng
         com.hukhong.onboarding.GuideBook.give(p, set); // sách hướng dẫn theo đạo đã chọn
         com.hukhong.story.StoryService.promptIfNeeded(p); // Bước 19: chọn Truyện/Tự do
+        if (rebirth) com.hukhong.trungsinh.TrungSinhService.completeRebirth(p); // tắt cờ chờ, title + hiệu ứng
     }
 
     /**

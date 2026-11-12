@@ -46,6 +46,10 @@ public final class ModItems {
     public static final DeferredItem<PhaCanhDanItem> TIEU_BAN_THAN_DAN = ITEMS.register("tieu_ban_than_dan",
             () -> new PhaCanhDanItem(9, 98, new Item.Properties().stacksTo(16)));
 
+    /** Trùng Sinh Đan: tái sinh chọn lại đạo, dùng 1 lần mỗi người (xem trungsinh/TrungSinhService). */
+    public static final DeferredItem<com.hukhong.trungsinh.TrungSinhDanItem> TRUNG_SINH_DAN = ITEMS.register("trung_sinh_dan",
+            () -> new com.hukhong.trungsinh.TrungSinhDanItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC)));
+
     public static final DeferredItem<Item> HON_TINH = ITEMS.register("hon_tinh", () -> new Item(new Item.Properties()));
     public static final DeferredItem<NguyenKhongTinhItem> NGUYEN_KHONG_TINH_HA = ITEMS.register("nguyen_khong_tinh_ha",
             () -> new NguyenKhongTinhItem(0.03, new Item.Properties().stacksTo(64)));
@@ -83,6 +87,7 @@ public final class ModItems {
                 e.accept(NGUNG_NGUYEN_DAN.get());
                 e.accept(TIEU_KINH_DAN_V.get());
                 e.accept(TIEU_BAN_THAN_DAN.get());
+                e.accept(TRUNG_SINH_DAN.get());
                 e.accept(HON_TINH.get());
                 e.accept(TIEM_NANG_THACH.get());
                 e.accept(NGUYEN_KHONG_TINH_HA.get());

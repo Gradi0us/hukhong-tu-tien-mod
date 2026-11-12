@@ -3747,5 +3747,12 @@
   "hukhong.hothe.tip.phi_van_ngoa": "Giày: tăng tốc chạy (+3%..+15%), giảm thể lực khi lách né.",
   "hukhong.hothe.only": "Chỉ mặc được pháp khí hộ thể",
   "hukhong.hothe.tip.only": "Chỉ mặc được pháp khí hộ thể",
-  "hukhong.station.level_low": "Chưa đủ cấp nghề (cần Lv %s)."
+  "hukhong.station.level_low": "Chưa đủ cấp nghề (cần Lv %s).",
+  "item.hukhong.trung_sinh_dan": "Trùng Sinh Đan",
+  "hukhong.trung_sinh.tip": "Tái sinh: chọn lại đạo, tư chất không vượt quá ban đầu, cấp về 10. Mỗi người chỉ dùng được 1 lần.",
+  "hukhong.trung_sinh.warn": "Trùng Sinh Đan: đạo đã chọn sẽ bị xóa để chọn lại. Dùng lại trong 10 giây để xác nhận.",
+  "hukhong.trung_sinh.used": "Ngươi đã dùng Trùng Sinh Đan rồi, mỗi người chỉ được một lần.",
+  "hukhong.trung_sinh.need_path": "Ngươi chưa nhập đạo, chưa thể Trùng Sinh.",
+  "hukhong.trung_sinh.title": "Trùng Sinh",
+  "hukhong.trung_sinh.subtitle": "Chọn lại đạo"
 }

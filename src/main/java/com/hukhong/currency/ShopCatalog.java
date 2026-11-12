@@ -69,6 +69,7 @@ public final class ShopCatalog {
                 add(o, 8 * mul, AlchemyRegistry.THO_NGUYEN_DAN.get(), 1);
                 add(o, 600, AlchemyRegistry.THONG_HUYEN_DAN.get(), 1, 2);
                 add(o, 2500, AlchemyRegistry.TU_VUONG_DAN.get(), 1, 2);
+                add(o, 25000, ModItems.TRUNG_SINH_DAN.get(), 1, 3); // 10x đan đắt nhất ở quầy (Tu Vương 2500 Hạ)
             }
             case 2, 3, 5 -> { /* weapon / armor / general cu: chi co hang vanilla -> khong ban nua (cho chi ban do mod) */ }
             case 4 -> {
