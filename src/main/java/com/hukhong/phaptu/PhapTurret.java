@@ -434,7 +434,7 @@ public class PhapTurret extends PathfinderMob implements software.bernie.geckoli
     }
 
     private boolean enemy(LivingEntity e) {
-        return e != this && e.isAlive() && !(e instanceof Player) && !(e instanceof PhapTurret)
+        return e != this && e.isAlive() && !(e instanceof Player) && !(e instanceof PhapTurret) && !com.hukhong.endgame.DaKhuyet.isStoryAlly(e)
                 && !e.isInvulnerable() && !(e instanceof net.minecraft.world.entity.npc.Npc)
                 && !(e instanceof net.minecraft.world.entity.animal.IronGolem) && !(e instanceof net.minecraft.world.entity.TamableAnimal ta && ta.isTame())
                 && (e instanceof Enemy || (e instanceof Mob m && (m.getTarget() instanceof Player || m.getTarget() instanceof PhapTurret)));

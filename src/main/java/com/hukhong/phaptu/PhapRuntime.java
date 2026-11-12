@@ -570,5 +570,5 @@ public final class PhapRuntime {
     public static void reset(Player p) { STATE.remove(p.getUUID()); }
 
     /** Danh sách kẻ địch trong bán kính (kỹ năng dùng). */
-    static boolean isEnemyLike(LivingEntity e) { return e instanceof Enemy; }
+    static boolean isEnemyLike(LivingEntity e) { return e instanceof Enemy && !com.hukhong.endgame.DaKhuyet.isStoryAlly(e); }
 }

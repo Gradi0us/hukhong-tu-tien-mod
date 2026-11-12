@@ -303,6 +303,8 @@ public class DaKhuyet extends Monster implements GeoEntity, com.hukhong.boss.pha
     private int allyIntro, allyCd = 60;
     public static final int ALLY_INTRO_TICKS = 160;
     public boolean ally() { return ally; }
+    /** Đồng minh cốt truyện: trụ/pháp thuật của người chơi không được nhắm. */
+    public static boolean isStoryAlly(net.minecraft.world.entity.LivingEntity e) { return e instanceof DaKhuyet d && d.ally; }
 
     @Override public boolean canAttack(LivingEntity t) {
         if (ally && t instanceof Player) return false;
