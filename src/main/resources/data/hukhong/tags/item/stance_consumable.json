@@ -11,6 +11,10 @@
     "hukhong:chi_huyet_dan",
     "hukhong:hoi_xuan_dan",
     "hukhong:giai_doc_dan",
-    "hukhong:tho_nguyen_dan"
+    "hukhong:tho_nguyen_dan",
+    "hukhong:hoi_khi_dan",
+    "hukhong:cuong_huyet_dan",
+    "hukhong:kim_cuong_chien_dan",
+    "hukhong:phong_hanh_chien_dan"
   ]
 }

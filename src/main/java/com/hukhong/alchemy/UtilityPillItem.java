@@ -34,10 +34,10 @@ public class UtilityPillItem extends Item {
         var q = AlchemyRegistry.qualityOf(stack);
         double mult = AlchemyMath.effectMult(DanDoc.get(sp));
         if (kind == Kind.HEAL) {
-            sp.heal((float) (sp.getMaxHealth() * base * q.effect * mult));
+            sp.heal((float) (sp.getMaxHealth() * base * com.hukhong.craft.CraftQuality.mult(q.ordinal()) * mult));
             DanDoc.consume(sp, coef, tier, q);
         } else {
-            DanDoc.set(sp, DanDoc.get(sp) - base * q.effect);
+            DanDoc.set(sp, DanDoc.get(sp) - base * com.hukhong.craft.CraftQuality.mult(q.ordinal()));
             sp.sendSystemMessage(Component.translatable("hukhong.dandoc.status", (int) DanDoc.get(sp)));
         }
         stack.shrink(1);

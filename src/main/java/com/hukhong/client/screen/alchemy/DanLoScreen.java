@@ -88,6 +88,8 @@ public class DanLoScreen extends AbstractContainerScreen<DanLoMenu> {
         g.drawString(font, Component.translatable("hukhong.alchemy.band", menu.data.get(7) * 100 / total), leftPos + 112, topPos + 66, 0xFFFFFF, false);
         g.drawString(font, Component.translatable(menu.data.get(5) > 0 ? "hukhong.alchemy.burning" : "hukhong.alchemy.cold"),
                 leftPos + 26, topPos + 48, menu.data.get(5) > 0 ? 0xFFB74D : 0x9E9E9E, false);
+        if (brewing && heat > com.hukhong.alchemy.AlchemyMath.OVERHEAT_HEAT)
+            g.drawString(font, Component.translatable("hukhong.alchemy.overheat"), leftPos + 26, topPos + 58, 0xFF3D3D, false);
     }
 
     @Override

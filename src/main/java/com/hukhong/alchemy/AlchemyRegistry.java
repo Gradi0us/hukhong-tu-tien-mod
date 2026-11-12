@@ -34,6 +34,7 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /** Registry Bước 12 (Đan Lô). Gắn vào bus qua ModItems.register -> AlchemyRegistry.register. */
@@ -91,6 +92,18 @@ public final class AlchemyRegistry {
     public static final DeferredItem<UtilityPillItem> GIAI_DOC_DAN = ITEMS.register("giai_doc_dan",
             () -> new UtilityPillItem(UtilityPillItem.Kind.DETOX, 2, 30, 0, new Item.Properties().stacksTo(16)));
 
+    // Đan chiến đấu (PLAN-v1-profession-crafting §1.4) - hồi chiêu chung 30s
+    public static final DeferredItem<CombatPillItem> HOI_KHI_DAN = ITEMS.register("hoi_khi_dan",
+            () -> new CombatPillItem(CombatPillItem.Kind.HOI_KHI, new Item.Properties().stacksTo(16)));
+    public static final DeferredItem<CombatPillItem> CUONG_HUYET_DAN = ITEMS.register("cuong_huyet_dan",
+            () -> new CombatPillItem(CombatPillItem.Kind.CUONG_HUYET, new Item.Properties().stacksTo(16)));
+    public static final DeferredItem<CombatPillItem> KIM_CUONG_CHIEN_DAN = ITEMS.register("kim_cuong_chien_dan",
+            () -> new CombatPillItem(CombatPillItem.Kind.KIM_CUONG, new Item.Properties().stacksTo(16)));
+    public static final DeferredItem<CombatPillItem> PHONG_HANH_CHIEN_DAN = ITEMS.register("phong_hanh_chien_dan",
+            () -> new CombatPillItem(CombatPillItem.Kind.PHONG_HANH, new Item.Properties().stacksTo(16)));
+    public static final List<Supplier<CombatPillItem>> COMBAT_PILLS =
+            List.of(HOI_KHI_DAN, CUONG_HUYET_DAN, KIM_CUONG_CHIEN_DAN, PHONG_HANH_CHIEN_DAN);
+
     public static final DeferredItem<com.hukhong.age.ThoNguyenDanItem> THO_NGUYEN_DAN = ITEMS.register("tho_nguyen_dan",
             () -> new com.hukhong.age.ThoNguyenDanItem(5, new Item.Properties().stacksTo(16)));
 
@@ -115,6 +128,7 @@ public final class AlchemyRegistry {
                 for (var i : new Supplier[]{LINH_THAO, HUYET_THAM, HOA_LIEN, THANH_DIEP, DI_HOA_CHAU, THONG_HUYEN_DAN,
                         TU_VUONG_DAN, HOANG_CUC_DAN, DE_HOAN_DAN, CHI_HUYET_DAN, HOI_XUAN_DAN, GIAI_DOC_DAN, THO_NGUYEN_DAN})
                     e.accept((Item) i.get());
+                for (var i : COMBAT_PILLS) e.accept(i.get());
             }
         });
     }

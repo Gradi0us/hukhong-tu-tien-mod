@@ -46,7 +46,7 @@ public final class AlchemyRecipes {
             new Recipe("thanh_co", 8, List.of(n(ResourceRegistry.herbItem("tu_linh_thao"), 3), n(ResourceRegistry.herbItem("ngung_hon_hoa"), 2),
                     n(ResourceRegistry.herbItem("kim_tinh_thao"), 2)), ResourceRegistry.THANH_CO_DAN, 1),
             new Recipe("than_dan", 9, List.of(n(ResourceRegistry.herbItem("ngung_hon_hoa"), 3), n(ResourceRegistry.herbItem("tu_linh_thao"), 3),
-                    n(AlchemyRegistry.HUYET_THAM, 3), n(() -> ResourceRegistry.MATERIALS.get("tinh_than_sa").get(), 1)), ResourceRegistry.THAN_DAN, 1),
+                    n(() -> ResourceRegistry.MATERIALS.get("tinh_than_sa").get(), 1)), ResourceRegistry.THAN_DAN, 1),
             // ---- 2026-11-06: linh duoc tu linh thao moi ----
             new Recipe("hoi_linh", 2, List.of(n(ResourceRegistry.herbItem("hoang_tinh"), 2), n(ResourceRegistry.herbItem("thuy_tam_thao"), 1)),
                     ResourceRegistry.linhDuoc("hoi_linh_dan"), 2),
@@ -63,7 +63,16 @@ public final class AlchemyRecipes {
             new Recipe("phong_hanh", 3, List.of(n(ResourceRegistry.herbItem("phong_linh_diep"), 2), n(ResourceRegistry.herbItem("loi_kich_moc"), 1)),
                     ResourceRegistry.linhDuoc("phong_hanh_dan"), 1),
             new Recipe("van_nien", 7, List.of(n(ResourceRegistry.herbItem("van_nien_linh_chi"), 1), n(AlchemyRegistry.HUYET_THAM, 2),
-                    n(ResourceRegistry.herbItem("tinh_than_hoa"), 1)), ResourceRegistry.linhDuoc("van_nien_linh_dich"), 1));
+                    n(ResourceRegistry.herbItem("tinh_than_hoa"), 1)), ResourceRegistry.linhDuoc("van_nien_linh_dich"), 1),
+            // ---- Dan chien dau (PLAN-v1-profession-crafting §1.4): dung trong the tu luyen, chung hoi chieu 30s ----
+            new Recipe("hoi_khi", 2, List.of(n(AlchemyRegistry.LINH_THAO, 3), n(AlchemyRegistry.THANH_DIEP, 1)),
+                    AlchemyRegistry.HOI_KHI_DAN, 2),
+            new Recipe("phong_hanh_chien", 2, List.of(n(AlchemyRegistry.LINH_THAO, 2), n(AlchemyRegistry.THANH_DIEP, 1), n(AlchemyRegistry.HOA_LIEN, 1)),
+                    AlchemyRegistry.PHONG_HANH_CHIEN_DAN, 2),
+            new Recipe("cuong_huyet", 3, List.of(n(AlchemyRegistry.HUYET_THAM, 2), n(AlchemyRegistry.HOA_LIEN, 2)),
+                    AlchemyRegistry.CUONG_HUYET_DAN, 1),
+            new Recipe("kim_cuong_chien", 4, List.of(n(AlchemyRegistry.HOA_LIEN, 3), n(AlchemyRegistry.THANH_DIEP, 1)),
+                    AlchemyRegistry.KIM_CUONG_CHIEN_DAN, 1));
 
     private static int total(List<ItemStack> in, Item item) {
         int c = 0;

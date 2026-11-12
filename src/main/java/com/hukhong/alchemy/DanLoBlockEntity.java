@@ -1,6 +1,10 @@
 package com.hukhong.alchemy;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -34,6 +38,8 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
     /** Nguoi bat dau me dan + cap Luyen Dan Su luc bat dau (nghe phu). */
     private java.util.UUID brewer;
     private int brewLevel;
+    /** Phẩm trung bình của nguyên liệu thảo dược đã dùng (CraftQuality ordinal). */
+    private int ingQ = com.hukhong.craft.CraftQuality.TRUNG;
 
     public DanLoBlockEntity(BlockPos pos, BlockState state) {
         super(AlchemyRegistry.DAN_LO_BE.get(), pos, state);
@@ -58,7 +64,7 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
 
     private int half() {
         int tier = brewing ? AlchemyRecipes.ALL.get(recipeIdx).tier() : 3;
-        return AlchemyMath.bandHalf(tier, diHoa);
+        return AlchemyMath.bandHalf(tier, diHoa, brewing ? brewLevel : 0);
     }
 
     // ---- nút từ menu ----
@@ -82,17 +88,23 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         if (player == null || !com.hukhong.craft.RecipeBook.knows(player, com.hukhong.craft.RecipeBook.DAN + r.id())) {
             say(player, "hukhong.recipe.unknown"); return;
         }
-        if (r.tier() > lv / 2 + 1) { say(player, "hukhong.profession.tier_locked", Math.max(1, 2 * (r.tier() - 1))); return; }
+        if (r.tier() > lv / 4 + 1) { say(player, "hukhong.profession.tier_locked", 4 * (r.tier() - 1)); return; } // = RecipeBook.requiredLevel
         if (items.get(FUEL).getBurnTime(RecipeType.SMELTING) <= 0) { say(player, "hukhong.alchemy.no_fuel"); return; }
         brewer = player.getUUID();
         brewLevel = lv;
+        int sumQ = 0, cntQ = 0;
         for (var nd : r.needs()) {
             int left = nd.count();
             for (int i = HERB0; i < HERB0 + 3 && left > 0; i++) {
                 ItemStack s = items.get(i);
-                if (s.is(nd.item().get())) { int t = Math.min(left, s.getCount()); s.shrink(t); left -= t; }
+                if (s.is(nd.item().get())) {
+                    int t = Math.min(left, s.getCount());
+                    sumQ += com.hukhong.craft.CraftQuality.ordinal(s) * t; cntQ += t;
+                    s.shrink(t); left -= t;
+                }
             }
         }
+        ingQ = cntQ == 0 ? com.hukhong.craft.CraftQuality.TRUNG : (int) Math.round(sumQ / (double) cntQ);
         diHoa = items.get(DI_HOA).is(AlchemyRegistry.DI_HOA_CHAU.get());
         if (diHoa) items.get(DI_HOA).shrink(1);
         recipeIdx = AlchemyRecipes.ALL.indexOf(r);
@@ -129,10 +141,15 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         be.heat = AlchemyMath.passive(be.heat, be.tick, be.diHoa);
         if (!burning && be.tick % 4 == 0) be.heat = AlchemyMath.clampHeat(be.heat - 1);
         if (AlchemyMath.inBand(be.heat, be.half())) be.inBand++;
-        be.hot = be.heat >= 95 ? be.hot + 1 : Math.max(0, be.hot - 1);
+        be.hot = be.heat > AlchemyMath.OVERHEAT_HEAT ? be.hot + 1 : Math.max(0, be.hot - 1);
         be.cold = be.heat <= 5 ? be.cold + 1 : 0;
         if (be.tick % 20 == 0) level.playSound(null, pos, SoundEvents.FURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 0.6f, 1f);
-        if (be.hot > 30) { be.fail(level, pos, true); return; }
+        if (be.hot >= AlchemyMath.OVERHEAT_TICKS) { // lua tren 95 lien tuc 3 giay
+            if (be.brewLevel >= AlchemyMath.CALM_LEVEL && level.getRandom().nextDouble() >= 0.5) {
+                be.hot = 0; // Luyen Dan Su cap cao: 50% lua tu ha nhiet, khong no
+                be.notifyNear(level, pos, "hukhong.alchemy.overheat_saved");
+            } else { be.fail(level, pos, true); return; }
+        }
         if (be.cold > 100) { be.fail(level, pos, false); return; }
         if (be.tick >= AlchemyMath.BREW_TICKS) be.finish(level, pos);
         be.setChanged();
@@ -141,8 +158,30 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
     private void fail(Level level, BlockPos pos, boolean explode) {
         brewing = false;
         setChanged();
-        if (explode) level.explode(null, pos.getX() + .5, pos.getY() + 1.0, pos.getZ() + .5, 1.5f, Level.ExplosionInteraction.NONE);
+        if (explode) {
+            blast(level, pos);
+            ServerPlayer bp = brewerOn(level);
+            if (bp != null) com.hukhong.profession.ProfessionService.addCraftXp(bp,
+                    com.hukhong.profession.Profession.LUYEN_DAN, AlchemyRecipes.ALL.get(recipeIdx).tier());
+        }
         notifyNear(level, pos, explode ? "hukhong.alchemy.exploded" : "hukhong.alchemy.wasted");
+    }
+
+    /** Nổ nhỏ: không phá khối, sát thương 4 cho sinh vật gần lò, khói đen. */
+    private static void blast(Level level, BlockPos pos) {
+        level.playSound(null, pos, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 0.8f, 1f);
+        if (level instanceof net.minecraft.server.level.ServerLevel sl) {
+            double x = pos.getX() + .5, y = pos.getY() + 1.0, z = pos.getZ() + .5;
+            sl.sendParticles(ParticleTypes.LARGE_SMOKE, x, y, z, 30, .4, .4, .4, .02);
+            sl.sendParticles(ParticleTypes.SMOKE, x, y, z, 20, .4, .3, .4, .01);
+        }
+        for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, new AABB(pos).inflate(3)))
+            le.hurt(level.damageSources().generic(), 4f);
+    }
+
+    private ServerPlayer brewerOn(Level level) {
+        return brewer != null && level.getServer() != null
+                && level.getServer().getPlayerList().getPlayer(brewer) instanceof ServerPlayer sp ? sp : null;
     }
 
     private void finish(Level level, BlockPos pos) {
@@ -152,25 +191,26 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
             ratio = Math.min(1.0, ratio + com.hukhong.society.SectBuffs.alchemyBonus(sp)); // buff Đan Đỉnh Tông
         var q = AlchemyMath.qualityFor(ratio);
         if (q == null) { notifyNear(level, pos, "hukhong.alchemy.wasted"); return; }
+        var r = AlchemyRecipes.ALL.get(recipeIdx);
         // Đan Tâm: Đan Tu đứng gần lò được +1 bậc phẩm chất (Quality.of kẹp trong [HA, CUC])
         if (level.getNearestPlayer(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 8, false) instanceof net.minecraft.server.level.ServerPlayer brewer
                 && brewer.getData(com.hukhong.core.ModAttachments.CULTIVATION).paths().contains(com.hukhong.core.Path.DAN)) {
             q = AlchemyMath.Quality.of(q.ordinal() + com.hukhong.dan.DanMath.DAN_LO_QUALITY_BONUS);
         }
-        var r = AlchemyRecipes.ALL.get(recipeIdx);
+        // Phẩm cuối = phẩm lửa + (nguyên liệu - Trung) + 1 nếu cấp nghề >= bậc × 3; kẹp [Hạ, Cực]
+        int qi = q.ordinal() + (ingQ - com.hukhong.craft.CraftQuality.TRUNG) + (brewLevel >= r.tier() * 3 ? 1 : 0);
+        q = AlchemyMath.Quality.of(qi);
         int yield = r.yield();
         // Luyen Dan Su: cap cang cao, cang co hoi them 1 vien (3%/cap)
         if (level.getRandom().nextDouble() < brewLevel * com.hukhong.profession.ProfessionMath.PILL_BONUS_PER_LEVEL) yield++;
         ItemStack out = new ItemStack(r.result().get(), yield);
         out.set(AlchemyRegistry.PILL_QUALITY.get(), q.ordinal());
-        String crafterName = brewer != null && level.getServer() != null
-                && level.getServer().getPlayerList().getPlayer(brewer) instanceof net.minecraft.server.level.ServerPlayer nm
-                ? nm.getName().getString() : null;
-        com.hukhong.craft.CraftQuality.stamp(out, q.ordinal(), crafterName);
+        ServerPlayer bp = brewerOn(level);
+        com.hukhong.craft.CraftQuality.stamp(out, q.ordinal(), bp == null ? null : bp.getName().getString());
         items.set(OUT, out);
-        if (brewer != null && level.getServer() != null
-                && level.getServer().getPlayerList().getPlayer(brewer) instanceof net.minecraft.server.level.ServerPlayer bp)
-            com.hukhong.profession.ProfessionService.addCraftXp(bp, com.hukhong.profession.Profession.LUYEN_DAN, 5L * r.tier());
+        if (bp != null) // XP: 5 x bậc x (1 + 0.25 x phẩm)
+            com.hukhong.profession.ProfessionService.addCraftXp(bp, com.hukhong.profession.Profession.LUYEN_DAN,
+                    Math.round(5.0 * r.tier() * (1 + 0.25 * q.ordinal())));
         level.playSound(null, pos, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 1f, 1f);
         notifyNear(level, pos, "hukhong.alchemy.done." + q.name().toLowerCase());
     }
@@ -198,6 +238,7 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         tag.putInt("burnLeft", burnLeft); tag.putInt("recipe", recipeIdx);
         if (brewer != null) tag.putUUID("brewer", brewer);
         tag.putInt("brewLevel", brewLevel);
+        tag.putInt("ingQ", ingQ);
     }
 
     @Override
@@ -210,5 +251,6 @@ public class DanLoBlockEntity extends RandomizableContainerBlockEntity {
         recipeIdx = Math.max(0, Math.min(AlchemyRecipes.ALL.size() - 1, tag.getInt("recipe")));
         brewer = tag.hasUUID("brewer") ? tag.getUUID("brewer") : null;
         brewLevel = tag.getInt("brewLevel");
+        ingQ = tag.contains("ingQ") ? tag.getInt("ingQ") : com.hukhong.craft.CraftQuality.TRUNG;
     }
 }

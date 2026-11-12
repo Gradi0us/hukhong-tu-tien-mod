@@ -23,7 +23,17 @@ public final class AlchemyMath {
         return null;
     }
 
-    public static int bandHalf(int tier, boolean diHoa) { return Math.max(5, 16 - 2 * tier) + (diHoa ? 4 : 0); }
+    /** Lửa trên ngưỡng này liên tục OVERHEAT_TICKS tick (3 giây) thì nổ lò. */
+    public static final int OVERHEAT_HEAT = 95, OVERHEAT_TICKS = 60;
+    /** Cấp Luyện Đan Sư từ đây trở đi: xác suất nổ còn một nửa. */
+    public static final int CALM_LEVEL = 10;
+
+    public static int bandHalf(int tier, boolean diHoa) { return bandHalf(tier, diHoa, 0); }
+
+    /** Nửa dải lửa: +1 nửa mỗi 4 cấp nghề (cấp cao dễ giữ lửa hơn). */
+    public static int bandHalf(int tier, boolean diHoa, int profLevel) {
+        return Math.max(5, 16 - 2 * tier) + Math.max(0, profLevel) / 4 + (diHoa ? 4 : 0);
+    }
 
     public static boolean inBand(int heat, int half) { return Math.abs(heat - BAND_CENTER) <= half; }
 

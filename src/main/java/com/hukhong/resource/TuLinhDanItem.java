@@ -21,7 +21,7 @@ public class TuLinhDanItem extends Item {
     public TuLinhDanItem(Properties p) { super(p); }
 
     public static long expFor(int level, AlchemyMath.Quality q, double toxMult) {
-        return Math.max(1, Math.round(CultivationService.expToNext(level) * FRACTION * q.effect * toxMult));
+        return Math.max(1, Math.round(CultivationService.expToNext(level) * FRACTION * com.hukhong.craft.CraftQuality.mult(q.ordinal()) * toxMult));
     }
 
     @Override

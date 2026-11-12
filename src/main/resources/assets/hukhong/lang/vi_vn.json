@@ -3785,5 +3785,16 @@
   "hukhong.recipe.book.ingredients": "Nguyên liệu:",
   "hukhong.scroll.wrong_prof": "Cần nghề %s để học quyển phổ này.",
   "hukhong.scroll.known": "Đã biết công thức này.",
-  "hukhong.scroll.learned": "Đã lĩnh hội: %s"
+  "hukhong.scroll.learned": "Đã lĩnh hội: %s",
+  "item.hukhong.hoi_khi_dan": "Hồi Khí Đan",
+  "item.hukhong.cuong_huyet_dan": "Cuồng Huyết Đan",
+  "item.hukhong.kim_cuong_chien_dan": "Kim Cương Chiến Đan",
+  "item.hukhong.phong_hanh_chien_dan": "Phong Hành Chiến Đan",
+  "hukhong.combat_pill.hoi_khi": "Hồi 30% linh lực tối đa.",
+  "hukhong.combat_pill.cuong_huyet": "Sức Mạnh I trong 20 giây, sau đó Suy Yếu 10 giây.",
+  "hukhong.combat_pill.kim_cuong": "Kháng Cự II trong 15 giây.",
+  "hukhong.combat_pill.phong_hanh": "Hồi đầy Thể Lực, Tốc Độ I trong 10 giây.",
+  "hukhong.combat_pill.cooldown": "Chung hồi chiêu đan chiến đấu: 30 giây.",
+  "hukhong.alchemy.overheat": "Lửa quá mạnh! Lò sắp nổ",
+  "hukhong.alchemy.overheat_saved": "Lửa đã hạ, lò thoát nổ"
 }

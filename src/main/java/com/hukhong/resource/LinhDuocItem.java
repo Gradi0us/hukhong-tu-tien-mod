@@ -37,14 +37,14 @@ public class LinhDuocItem extends Item {
         boolean cleanser = kind == Kind.THANH_TAM || kind == Kind.TAY_TUY;
         if (!cleanser && !DanDoc.canUse(sp)) return InteractionResultHolder.fail(stack);
         var q = AlchemyRegistry.qualityOf(stack);
-        double mult = AlchemyMath.effectMult(DanDoc.get(sp)) * q.effect;
+        double mult = AlchemyMath.effectMult(DanDoc.get(sp)) * com.hukhong.craft.CraftQuality.mult(q.ordinal());
         int max = CultivationService.get(sp).resourceMax();
         switch (kind) {
             case MANA_35 -> Resources.add(sp, (int) Math.round(max * 0.35 * mult));
             case MANA_80 -> Resources.add(sp, (int) Math.round(max * 0.80 * mult));
             case THANH_TAM -> {
-                com.hukhong.pathrules.MaRules.addAcTinh(sp, -30 * q.effect);
-                DanDoc.set(sp, DanDoc.get(sp) - 20 * q.effect);
+                com.hukhong.pathrules.MaRules.addAcTinh(sp, -30 * com.hukhong.craft.CraftQuality.mult(q.ordinal()));
+                DanDoc.set(sp, DanDoc.get(sp) - 20 * com.hukhong.craft.CraftQuality.mult(q.ordinal()));
             }
             case TAY_TUY -> {
                 DanDoc.set(sp, 0);

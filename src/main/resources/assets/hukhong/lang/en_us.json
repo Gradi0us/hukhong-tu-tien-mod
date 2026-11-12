@@ -3785,5 +3785,16 @@
   "hukhong.recipe.book.ingredients": "Ingredients:",
   "hukhong.scroll.wrong_prof": "You need the %s profession to study this manual.",
   "hukhong.scroll.known": "You already know this recipe.",
-  "hukhong.scroll.learned": "Learned: %s"
+  "hukhong.scroll.learned": "Learned: %s",
+  "item.hukhong.hoi_khi_dan": "Qi-Restoring Pill",
+  "item.hukhong.cuong_huyet_dan": "Frenzy Blood Pill",
+  "item.hukhong.kim_cuong_chien_dan": "Diamond Battle Pill",
+  "item.hukhong.phong_hanh_chien_dan": "Windstride Battle Pill",
+  "hukhong.combat_pill.hoi_khi": "Restores 30% of max Qi.",
+  "hukhong.combat_pill.cuong_huyet": "Strength I for 20s, then Weakness for 10s.",
+  "hukhong.combat_pill.kim_cuong": "Resistance II for 15s.",
+  "hukhong.combat_pill.phong_hanh": "Fully restores Stamina, Speed I for 10s.",
+  "hukhong.combat_pill.cooldown": "Shared battle-pill cooldown: 30s.",
+  "hukhong.alchemy.overheat": "Too hot! The furnace may explode",
+  "hukhong.alchemy.overheat_saved": "The fire cooled down, the furnace survived"
 }
