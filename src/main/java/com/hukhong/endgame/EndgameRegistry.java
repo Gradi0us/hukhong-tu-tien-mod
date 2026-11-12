@@ -41,6 +41,10 @@ public final class EndgameRegistry {
     public static final DeferredHolder<EntityType<?>, EntityType<DaKhuyet>> DA_KHUYET = TYPES.register("da_khuyet",
             () -> EntityType.Builder.of(DaKhuyet::new, MobCategory.MONSTER)
                     .sized(1.1f, 3.5f).fireImmune().clientTrackingRange(12).build("da_khuyet"));
+    /** Mộ Dao chiến đấu (Lv10 cutscene, trợ chiến pha 4, ending). updateInterval 1: lướt nhanh mượt. */
+    public static final DeferredHolder<EntityType<?>, EntityType<MoDaoCombat>> MO_DAO_COMBAT = TYPES.register("mo_dao_combat",
+            () -> EntityType.Builder.<MoDaoCombat>of(MoDaoCombat::new, MobCategory.MISC)
+                    .sized(0.6f, 1.95f).fireImmune().clientTrackingRange(10).updateInterval(1).build("mo_dao_combat"));
 
     public static void register(IEventBus bus) {
         BLOCKS.register(bus);
@@ -50,6 +54,7 @@ public final class EndgameRegistry {
         bus.addListener((EntityAttributeCreationEvent e) -> {
             e.put(BOSS.get(), NguyenThuyTichDiet.attrs().build());
             e.put(DA_KHUYET.get(), DaKhuyet.attrs().build());
+            e.put(MO_DAO_COMBAT.get(), com.hukhong.story.npc.StoryNpc.attrs().build());
         });
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) e.accept(PORTAL_ITEM.get());
