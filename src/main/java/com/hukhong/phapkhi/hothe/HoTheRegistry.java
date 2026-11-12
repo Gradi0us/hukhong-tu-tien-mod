@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 
 /**
  * 20 Pháp Khí hộ thể (4 loại x 5 phẩm) + 5 ArmorMaterial (một cho mỗi phẩm, dùng cho lớp render giáp).
- * Công thức rèn Đoán Tạo Đài: 4 loại x 5 phẩm, cấp nghề tối thiểu = 4 * phẩm + 1 (phẩm 1 cần Lv 1, phẩm 5 cần Lv 17).
+ * Công thức rèn Đoán Tạo Đài: 4 loại x 5 phẩm, cấp nghề tối thiểu = 4 * phẩm + 1, bậc công thức = phẩm + 1 (phẩm 1 cần Lv 1, phẩm 5 cần Lv 17).
  */
 public final class HoTheRegistry {
     private HoTheRegistry() {}
@@ -106,7 +106,7 @@ public final class HoTheRegistry {
                             new ProfessionRecipes.Need(k::catalyst, 1)),
                     20 + 15 * i,
                     (lv, up) -> stack(k, PhapKhiTier.of(Math.min(4, tier + (up ? 1 : 0)))),
-                    4 * i + 1));
+                    4 * i + 1, i + 1));
         }
     }
 }

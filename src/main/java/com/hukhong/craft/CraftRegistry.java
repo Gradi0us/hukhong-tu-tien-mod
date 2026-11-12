@@ -38,6 +38,9 @@ public final class CraftRegistry {
     /** Ten nguoi che. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> CRAFTER =
             COMPONENTS.registerComponentType("crafter", b -> b.persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8));
+    /** Cap tinh luyen Phap Khi ho the (0..5, PLAN-v1 §3.5). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> REFINE =
+            COMPONENTS.registerComponentType("refine", b -> b.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
     /** Id cong thuc ghi tren quyen pho (vd dan:khai_mach). */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<String>> RECIPE_ID =
             COMPONENTS.registerComponentType("recipe_id", b -> b.persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8));
@@ -55,6 +58,8 @@ public final class CraftRegistry {
     /** Toi Dich (Linh Tuyen Thuy): pham Trung gan san boi cong thuc. */
     public static final DeferredItem<Item> TOI_DICH = ITEMS.registerSimpleItem("toi_dich");
     public static final DeferredItem<Item> LINH_THAN = ITEMS.registerSimpleItem("linh_than");
+    /** Dau Thu: chat toi rui ro (Doan Tao Dai, PLAN-v1 §3.3). */
+    public static final DeferredItem<Item> DAU_THU = ITEMS.registerSimpleItem("dau_thu");
 
     // ---- 0.2 quyen pho ----
     public static final DeferredItem<RecipeScrollItem> DAN_PHUONG = ITEMS.register("dan_phuong",
@@ -83,7 +88,7 @@ public final class CraftRegistry {
         bus.addListener((BuildCreativeModeTabContentsEvent e) -> {
             if (e.getTabKey() == CreativeModeTabs.INGREDIENTS) {
                 for (DeferredItem<?> i : new DeferredItem<?>[]{CHU_SA, PHU_CHI_HA, PHU_CHI_TRUNG, PHU_CHI_THUONG,
-                        LINH_MAC, TOI_DICH, LINH_THAN, DAN_PHUONG, PHU_PHO, KHI_PHO})
+                        LINH_MAC, TOI_DICH, LINH_THAN, DAU_THU, DAN_PHUONG, PHU_PHO, KHI_PHO})
                     e.accept(i.get());
             }
         });

@@ -82,7 +82,13 @@ public class StationScreen extends AbstractContainerScreen<StationMenu> {
 
         @SubscribeEvent
         public static void onRegister(RegisterMenuScreensEvent e) {
-            e.register(ProfessionRegistry.STATION_MENU.get(), StationScreen::new);
+            e.register(ProfessionRegistry.STATION_MENU.get(), StationScreen::open);
         }
+    }
+
+    /** Dang ky man hinh: Doan Tao Dai dung ForgeScreen (Nung-Ron-Toi), tram khac dung man hinh cu. */
+    public static AbstractContainerScreen<StationMenu> open(StationMenu m, Inventory inv, Component t) {
+        return m.station == ProfessionStationBlock.Station.DOAN_TAO_DAI
+                ? new ForgeScreen(m, inv, t) : new StationScreen(m, inv, t);
     }
 }

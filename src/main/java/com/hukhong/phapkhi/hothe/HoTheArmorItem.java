@@ -77,7 +77,10 @@ public final class HoTheArmorItem extends ArmorItem {
     @Override
     public Component getName(ItemStack stack) {
         MutableComponent n = Component.translatableWithFallback(kind.langKey(), kind.vi).withColor(tier.rgb);
-        return n.append(Component.literal(" · ").withStyle(ChatFormatting.DARK_GRAY)).append(tierName());
+        n.append(Component.literal(" · ").withStyle(ChatFormatting.DARK_GRAY)).append(tierName());
+        int r = HoTheStats.refine(stack);
+        if (r > 0) n.append(Component.literal(" +" + r).withStyle(ChatFormatting.GOLD));
+        return n;
     }
 
     @Override
@@ -85,5 +88,10 @@ public final class HoTheArmorItem extends ArmorItem {
         tip.add(Component.translatableWithFallback(kind.tipKey(), kind.id).withStyle(ChatFormatting.AQUA));
         tip.add(Component.translatableWithFallback("hukhong.hothe.tip.only", "Chỉ mặc được pháp khí hộ thể")
                 .withStyle(ChatFormatting.DARK_GRAY));
+        int r = HoTheStats.refine(stack);
+        if (r > 0) tip.add(Component.translatable("hukhong.forge.refine.tip", r, Math.round(r * HoTheStats.REFINE_STEP * 100))
+                .withStyle(ChatFormatting.GOLD));
+        tip.add(Component.translatable("hukhong.forge.stat.tip", String.format("%.2f", HoTheStats.factor(stack)))
+                .withStyle(ChatFormatting.GRAY));
     }
 }

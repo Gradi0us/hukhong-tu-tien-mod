@@ -54,6 +54,12 @@ public class StationMenu extends AbstractContainerMenu {
         if (stillValid(sp) && box instanceof ProfessionStationBlockEntity be) be.arrange(sp, recipeId);
     }
 
+    /** Thao tac Doan Tao Dai (Nung/Ron/Toi/Tinh luyen/Sua/Phan ra), chi tram DOAN_TAO_DAI. */
+    public void forge(ServerPlayer sp, int op, long tick) {
+        if (station == ProfessionStationBlock.Station.DOAN_TAO_DAI && stillValid(sp))
+            com.hukhong.profession.khi.ForgeService.handle(sp, box, op, tick);
+    }
+
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         Slot slot = slots.get(index);
