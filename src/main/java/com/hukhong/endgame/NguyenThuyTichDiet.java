@@ -104,6 +104,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
     private int actT, morph, cine, f1Ults;
     private final java.util.List<Vec3> marks = new java.util.ArrayList<>();
     private final java.util.List<Sched> sched = new java.util.ArrayList<>();
+    final NttdExtraMoves.State xs = new NttdExtraMoves.State();
     private final java.util.List<Orb> orbs = new java.util.ArrayList<>();
 
     /** Việc hẹn giờ (theo tickCount) - chạy trong tick(), không lưu save; xoá khi biến hình/chết. */
@@ -326,7 +327,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
     }
 
     // ------------------------------------------------------------ hẹn giờ, tiện ích chung
-    private void later(int delay, Runnable r) { sched.add(new Sched(tickCount + Math.max(1, delay), r)); }
+    void later(int delay, Runnable r) { sched.add(new Sched(tickCount + Math.max(1, delay), r)); }
 
     private void runSched() {
         if (sched.isEmpty()) return;
@@ -335,12 +336,12 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         for (Sched x : due) if (isAlive()) x.r().run();
     }
 
-    private java.util.List<Player> players(ServerLevel sl, Vec3 c, double r) {
+    java.util.List<Player> players(ServerLevel sl, Vec3 c, double r) {
         return sl.getEntitiesOfClass(Player.class, new AABB(c, c).inflate(r, 6, r),
                 p -> !p.isSpectator() && !p.isCreative() && p.position().multiply(1, 0, 1).distanceToSqr(c.multiply(1, 0, 1)) <= r * r);
     }
 
-    private double atk(double mul) { return getAttributeValue(Attributes.ATTACK_DAMAGE) * mul; }
+    double atk(double mul) { return getAttributeValue(Attributes.ATTACK_DAMAGE) * mul; }
 
     private Vec3 faceTo(Vec3 at) {
         Vec3 d = at.subtract(position()).multiply(1, 0, 1);
@@ -382,8 +383,8 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
 
     // ------------------------------------------------------------ DẠNG 1: hoá thân bị chiếm (moveset kiểu Radagon)
     private static final int A_SLAM = 0, A_COMBO = 1, A_TELE = 2, A_PILLAR = 3, A_ULT = 4;
-    private static final int[] A_LEN = {44, 48, 36, 40, 112};
-    private static final String[] A_ANIM = {"f1_slam", "f1_combo", "f1_teleport", "f1_pillars", "f1_ult"};
+    private static final int[] A_LEN = {44, 48, 36, 40, 112, 40, 44, 42};   // 5-7: NttdExtraMoves (chain/star/shock)
+    private static final String[] A_ANIM = {"f1_slam", "f1_combo", "f1_teleport", "f1_pillars", "f1_ult", "f1_pillars", "f1_slam", "f1_combo"};
 
     private void form1Ai(ServerLevel sl) {
         if (tickCount % 8 == 0)
@@ -405,6 +406,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         if (d > 12) a = r < 60 ? A_TELE : A_PILLAR;
         else if (d < 6) a = r < 40 ? A_SLAM : r < 85 ? A_COMBO : A_PILLAR;
         else a = r < 35 ? A_TELE : r < 60 ? A_SLAM : r < 85 ? A_PILLAR : A_COMBO;
+        a = NttdExtraMoves.f1Swap(random, d, a);   // ~35%: chiêu bổ sung (xích / sao / chấn)
         if (a == last) a = (a + 1 + random.nextInt(3)) % 4;
         beginF1(sl, t, a);
     }
@@ -433,6 +435,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
             case A_TELE -> f1Teleport(sl, t, at);
             case A_PILLAR -> f1Pillars(sl, at);
             case A_ULT -> f1Ult(sl, at);
+            case NttdExtraMoves.A_CHAIN, NttdExtraMoves.A_STAR, NttdExtraMoves.A_SHOCK -> NttdExtraMoves.f1(sl, this, pending, at, pendingAt, marks);
             default -> { }
         }
         if (--windup <= 0) {
@@ -785,7 +788,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         }
     }
 
-    private void hit(Player p, double dmg, Vec3 from, boolean knock) {
+    void hit(Player p, double dmg, Vec3 from, boolean knock) {
         p.hurt(damageSources().mobAttack(this), (float) dmg);
         HuSkill.hu(p, 140);
         if (knock) {
@@ -1119,8 +1122,12 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
             "backflip", "backstep", "dash", "leap", "blink", "teleport", "escape", "teleport");
     private static final java.util.Set<String> F2_ANIMS = java.util.Set.of("float", "orbit_l", "orbit_r", "dive_under", "emerge", "charge", "crush",
             "an_quang", "star_beam", "combo_quet_tinh_ha_1", "combo_quet_tinh_ha_2");
-    private static final java.util.Map<String, String> F2_ALIAS = java.util.Map.of("strafe_l", "orbit_l", "strafe_r", "orbit_r", "dash", "charge",
-            "sidestep_l", "orbit_l", "sidestep_r", "orbit_r", "backstep", "float", "backflip", "float", "leap", "crush");
+    private static final java.util.Map<String, String> F2_ALIAS = java.util.Map.ofEntries(
+            java.util.Map.entry("strafe_l", "orbit_l"), java.util.Map.entry("strafe_r", "orbit_r"), java.util.Map.entry("dash", "charge"),
+            java.util.Map.entry("sidestep_l", "orbit_l"), java.util.Map.entry("sidestep_r", "orbit_r"), java.util.Map.entry("backstep", "float"),
+            java.util.Map.entry("backflip", "float"), java.util.Map.entry("leap", "crush"),
+            java.util.Map.entry("gravity_well", "an_quang"), java.util.Map.entry("time_freeze", "star_beam"),
+            java.util.Map.entry("mirror_echo", "emerge"));
 
     private static void brainAnims(AnimationController<NguyenThuyTichDiet> c, String key, String prefix, com.hukhong.boss.ai.BossProfile p,
                                    java.util.Set<String> have, java.util.Map<String, String> alias, String walk) {
@@ -1155,6 +1162,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
             return false;
         }
         double d = distanceTo(t);
+        if (random.nextFloat() < 0.3f && NttdExtraMoves.startF2(this, t)) return true;   // hố trọng lực / tia băng / phân thân
         for (int k = 0; k < 5; k++) {   // §3.3 nhịp: Cầu Truy Hồn -> Lao Xuyên -> (Quét Tinh Hà do brain) -> lặn -> Ấn Quang -> chiêu lớn
             switch (f2Rot++ % 5) {
                 case 0 -> { if (d >= 8) { startF2Skill(sl, t, ORBS_IDX); return true; } }
@@ -1324,11 +1332,12 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
         if (hurtAt.size() >= 3 && own != O_BURST) { hurtAt.clear(); queued = O_BURST; }  // bị đánh liên tục: nổ sóng (không né)
     }
 
-    private static final String[] OWN_ANIM = new String[16];
+    private static final String[] OWN_ANIM = new String[24];
     static {
         OWN_ANIM[O_STRUGGLE] = "struggle"; OWN_ANIM[O_ESCAPE] = "escape"; OWN_ANIM[O_BURST] = "burst"; OWN_ANIM[O_THROW] = "throw";
         OWN_ANIM[O_CHARGE] = "charge"; OWN_ANIM[O_DIVE] = "dive_under"; OWN_ANIM[O_CRUSH] = "crush"; OWN_ANIM[O_ANQUANG] = "an_quang";
         OWN_ANIM[O_STARBEAM] = "star_beam";
+        OWN_ANIM[NttdExtraMoves.O_GRAVITY] = "gravity_well"; OWN_ANIM[NttdExtraMoves.O_FREEZE] = "time_freeze"; OWN_ANIM[NttdExtraMoves.O_ECHO] = "mirror_echo";
     }
 
     /** Bắt đầu chiêu di chuyển/phản ứng riêng (public cho gametest). Brain nhường quyền trong lúc chạy. */
@@ -1378,7 +1387,7 @@ public class NguyenThuyTichDiet extends Monster implements GeoEntity, com.hukhon
             case O_CRUSH -> crush(sl, t, i);
             case O_ANQUANG -> anQuang(sl, t, i);
             case O_STARBEAM -> starBeam(sl, t, i);
-            default -> true;
+            default -> NttdExtraMoves.stepF2(this, sl, t, own, i);
         };
         if (done) { if (own == O_DIVE) setInvisible(false); own = O_NONE; }
     }
