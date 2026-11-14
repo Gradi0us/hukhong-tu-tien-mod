@@ -64,6 +64,7 @@ public final class ZoneManager {
     private static final int GUARD_COOLDOWN = 1200, REVERT_PER_TICK = 6, QUEUE_MAX = 4096;
 
     private static final Set<UUID> INSIDE = new HashSet<>();
+    private static final java.util.Map<UUID, String> ANNOUNCED = new java.util.concurrent.ConcurrentHashMap<>();
     private static final Map<Integer, Long> GUARD_AT = new HashMap<>();
     private static final ConcurrentLinkedQueue<Long> LOADED = new ConcurrentLinkedQueue<>();
     private static final AtomicInteger LOADED_N = new AtomicInteger();
@@ -232,7 +233,7 @@ public final class ZoneManager {
             p.displayClientMessage(Component.translatableWithFallback("hukhong.zone.tracker",
                     "Giải Phóng %s: tâm cách %s block, cấp gợi ý %s", z.name, (int) dist, z.level), true);
         }
-        if (first) p.sendSystemMessage(Component.translatableWithFallback("hukhong.zone.enter",
+        if (first && !z.name.equals(ANNOUNCED.put(p.getUUID(), z.name))) p.sendSystemMessage(Component.translatableWithFallback("hukhong.zone.enter",
                 "Bạn bước vào vùng xâm thực %s (cấp %s). Hạ Hư Vương ở tâm vùng để giải phóng.", z.name, z.level));
     }
 

@@ -229,7 +229,13 @@ public final class StatService {
 
     @SubscribeEvent
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p) refresh(p);
+        if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        refresh(p);
+        p.setHealth(p.getMaxHealth());
+        // các module khác (Hồn Cốt, Bản Mệnh...) có thể cộng máu tối đa sau; hồi đầy lại vài tick sau
+        p.server.tell(new net.minecraft.server.TickTask(p.server.getTickCount() + 5, () -> {
+            if (p.isAlive() && !p.hasDisconnected()) { refresh(p); p.setHealth(p.getMaxHealth()); }
+        }));
     }
 
     @SubscribeEvent
